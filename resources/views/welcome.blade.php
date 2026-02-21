@@ -10,11 +10,11 @@
         </p>
         <div class="flex items-center justify-center gap-4 flex-wrap">
             @if (Route::has('register'))
-                <a href="{{ route('register') }}" class="inline-block px-6 py-2.5 bg-[#1b1b18] dark:bg-[#EDEDEC] text-white dark:text-[#1b1b18] rounded-sm text-sm font-medium leading-normal hover:bg-[#3d3d38] dark:hover:bg-white transition-all">
+                <a href="{{ route('register') }}" class="inline-block px-6 py-2.5 bg-primary dark:bg-primary-surface text-primary-foreground dark:text-primary rounded-sm text-sm font-medium leading-normal hover:bg-primary-hover dark:hover:bg-primary-foreground transition-all">
                     Get started free
                 </a>
             @endif
-            <a href="{{ route('about') }}" class="inline-block px-6 py-2.5 border border-[#19140035] dark:border-[#3E3E3A] hover:border-[#1915014a] dark:hover:border-[#62605b] text-[#1b1b18] dark:text-[#EDEDEC] rounded-sm text-sm font-medium leading-normal transition-all">
+            <a href="{{ route('about') }}" class="inline-block px-6 py-2.5 border border-[#19140035] dark:border-[#3E3E3A] hover:border-[#1915014a] dark:hover:border-[#62605b] text-primary dark:text-primary-surface rounded-sm text-sm font-medium leading-normal transition-all">
                 Learn more
             </a>
         </div>
@@ -38,7 +38,7 @@
                 [2, 'Bob Chen', 'bob@example.com', '2025-03-09'],
                 [3, 'Carol Adams', 'carol@example.com', '2025-03-07'],
             ] as $row)
-                <div class="grid grid-cols-4 px-4 py-2 border-b border-[#e3e3e0] dark:border-[#3E3E3A] last:border-b-0 text-[#1b1b18] dark:text-[#EDEDEC]">
+                <div class="grid grid-cols-4 px-4 py-2 border-b border-[#e3e3e0] dark:border-[#3E3E3A] last:border-b-0 text-primary dark:text-primary-surface">
                     <span class="text-[#706f6c] dark:text-[#A1A09A]">{{ $row[0] }}</span>
                     <span>{{ $row[1] }}</span>
                     <span class="truncate">{{ $row[2] }}</span>
@@ -120,18 +120,18 @@
     </section>
 
     {{-- CTA --}}
-    <section class="mb-8 bg-[#1b1b18] dark:bg-white rounded-lg p-12 lg:p-16 text-center">
-        <h2 class="text-3xl font-semibold text-white dark:text-[#1b1b18] leading-tight mb-4">Ready to get started?</h2>
+    <section class="mb-8 bg-primary dark:bg-primary-foreground rounded-lg p-12 lg:p-16 text-center">
+        <h2 class="text-3xl font-semibold text-primary-foreground dark:text-primary leading-tight mb-4">Ready to get started?</h2>
         <p class="text-[#A1A09A] dark:text-[#706f6c] leading-normal mb-8 max-w-md mx-auto">
             Join thousands of teams already using GetRows to make smarter, faster decisions with their data.
         </p>
         <div class="flex items-center justify-center gap-4 flex-wrap">
             @if (Route::has('register'))
-                <a href="{{ route('register') }}" class="inline-block px-6 py-2.5 bg-white dark:bg-[#1b1b18] text-[#1b1b18] dark:text-white rounded-sm text-sm font-medium leading-normal hover:bg-neutral-100 dark:hover:bg-[#3d3d38] transition-all">
+                <a href="{{ route('register') }}" class="inline-block px-6 py-2.5 bg-primary-foreground dark:bg-primary text-primary dark:text-primary-foreground rounded-sm text-sm font-medium leading-normal hover:bg-neutral-100 dark:hover:bg-primary-hover transition-all">
                     Create a free account
                 </a>
             @endif
-            <a href="{{ route('contact') }}" class="inline-block px-6 py-2.5 border border-[#3E3E3A] dark:border-[#19140035] hover:border-[#62605b] text-white dark:text-[#1b1b18] rounded-sm text-sm font-medium leading-normal transition-all">
+            <a href="{{ route('contact') }}" class="inline-block px-6 py-2.5 border border-[#3E3E3A] dark:border-[#19140035] hover:border-[#62605b] text-primary-foreground dark:text-primary rounded-sm text-sm font-medium leading-normal transition-all">
                 Talk to us
             </a>
         </div>

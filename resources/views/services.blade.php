@@ -59,7 +59,7 @@
                     <p class="text-[#706f6c] dark:text-[#A1A09A] text-sm leading-normal mb-4">{{ $service['description'] }}</p>
                     <ul class="space-y-1.5">
                         @foreach ($service['features'] as $feature)
-                            <li class="flex items-center gap-2 text-sm text-[#1b1b18] dark:text-[#EDEDEC]">
+                            <li class="flex items-center gap-2 text-sm text-primary dark:text-primary-surface">
                                 <flux:icon name="check-circle" variant="micro" class="text-green-500 dark:text-green-400 shrink-0" />
                                 {{ $feature }}
                             </li>
@@ -112,7 +112,7 @@
                 @php $isPrimary = $plan['variant'] === 'primary'; @endphp
                 <div @class([
                     'rounded-lg p-6',
-                    'bg-[#1b1b18] dark:bg-white shadow-[inset_0px_0px_0px_1px_rgba(255,255,255,0.1)] dark:shadow-[inset_0px_0px_0px_1px_rgba(26,26,0,0.16)]' => $isPrimary,
+                    'bg-primary dark:bg-primary-foreground shadow-[inset_0px_0px_0px_1px_rgba(255,255,255,0.1)] dark:shadow-[inset_0px_0px_0px_1px_rgba(26,26,0,0.16)]' => $isPrimary,
                     'bg-white dark:bg-[#161615] shadow-[inset_0px_0px_0px_1px_rgba(26,26,0,0.16)] dark:shadow-[inset_0px_0px_0px_1px_#fffaed2d]' => ! $isPrimary,
                 ])>
                     <p @class([
@@ -123,8 +123,8 @@
                     <div class="flex items-end gap-1 mb-1">
                         <span @class([
                             'text-3xl font-semibold',
-                            'text-white dark:text-[#1b1b18]' => $isPrimary,
-                            'text-[#1b1b18] dark:text-[#EDEDEC]' => ! $isPrimary,
+                            'text-primary-foreground dark:text-primary' => $isPrimary,
+                            'text-primary dark:text-primary-surface' => ! $isPrimary,
                         ])>{{ $plan['price'] }}</span>
                         @if ($plan['period'])
                             <span @class([
@@ -148,8 +148,8 @@
                                     'text-green-500 dark:text-green-400' => ! $isPrimary,
                                 ]) />
                                 <span @class([
-                                    'text-white dark:text-[#1b1b18]' => $isPrimary,
-                                    'text-[#1b1b18] dark:text-[#EDEDEC]' => ! $isPrimary,
+                                    'text-primary-foreground dark:text-primary' => $isPrimary,
+                                    'text-primary dark:text-primary-surface' => ! $isPrimary,
                                 ])>{{ $feature }}</span>
                             </li>
                         @endforeach
@@ -157,14 +157,14 @@
                     @if ($plan['name'] === 'Enterprise')
                         <a href="{{ route('contact') }}" @class([
                             'block text-center px-4 py-2.5 rounded-sm text-sm font-medium leading-normal transition-all',
-                            'bg-white dark:bg-[#1b1b18] text-[#1b1b18] dark:text-white hover:bg-neutral-100 dark:hover:bg-[#3d3d38]' => $isPrimary,
-                            'border border-[#19140035] dark:border-[#3E3E3A] hover:border-[#1915014a] dark:hover:border-[#62605b] text-[#1b1b18] dark:text-[#EDEDEC]' => ! $isPrimary,
+                            'bg-primary-foreground dark:bg-primary text-primary dark:text-primary-foreground hover:bg-neutral-100 dark:hover:bg-primary-hover' => $isPrimary,
+                            'border border-[#19140035] dark:border-[#3E3E3A] hover:border-[#1915014a] dark:hover:border-[#62605b] text-primary dark:text-primary-surface' => ! $isPrimary,
                         ])>{{ $plan['cta'] }}</a>
                     @elseif (Route::has('register'))
                         <a href="{{ route('register') }}" @class([
                             'block text-center px-4 py-2.5 rounded-sm text-sm font-medium leading-normal transition-all',
-                            'bg-white dark:bg-[#1b1b18] text-[#1b1b18] dark:text-white hover:bg-neutral-100 dark:hover:bg-[#3d3d38]' => $isPrimary,
-                            'border border-[#19140035] dark:border-[#3E3E3A] hover:border-[#1915014a] dark:hover:border-[#62605b] text-[#1b1b18] dark:text-[#EDEDEC]' => ! $isPrimary,
+                            'bg-primary-foreground dark:bg-primary text-primary dark:text-primary-foreground hover:bg-neutral-100 dark:hover:bg-primary-hover' => $isPrimary,
+                            'border border-[#19140035] dark:border-[#3E3E3A] hover:border-[#1915014a] dark:hover:border-[#62605b] text-primary dark:text-primary-surface' => ! $isPrimary,
                         ])>{{ $plan['cta'] }}</a>
                     @endif
                 </div>
@@ -173,18 +173,18 @@
     </section>
 
     {{-- CTA --}}
-    <section class="mb-8 bg-[#1b1b18] dark:bg-white rounded-lg p-12 lg:p-16 text-center">
-        <h2 class="text-3xl font-semibold text-white dark:text-[#1b1b18] leading-tight mb-4">Ready to explore your data?</h2>
+    <section class="mb-8 bg-primary dark:bg-primary-foreground rounded-lg p-12 lg:p-16 text-center">
+        <h2 class="text-3xl font-semibold text-primary-foreground dark:text-primary leading-tight mb-4">Ready to explore your data?</h2>
         <p class="text-[#A1A09A] dark:text-[#706f6c] leading-normal mb-8 max-w-md mx-auto">
             Sign up for free and connect your first database in under a minute.
         </p>
         <div class="flex items-center justify-center gap-4 flex-wrap">
             @if (Route::has('register'))
-                <a href="{{ route('register') }}" class="inline-block px-6 py-2.5 bg-white dark:bg-[#1b1b18] text-[#1b1b18] dark:text-white rounded-sm text-sm font-medium leading-normal hover:bg-neutral-100 dark:hover:bg-[#3d3d38] transition-all">
+                <a href="{{ route('register') }}" class="inline-block px-6 py-2.5 bg-primary-foreground dark:bg-primary text-primary dark:text-primary-foreground rounded-sm text-sm font-medium leading-normal hover:bg-neutral-100 dark:hover:bg-primary-hover transition-all">
                     Get started free
                 </a>
             @endif
-            <a href="{{ route('contact') }}" class="inline-block px-6 py-2.5 border border-[#3E3E3A] dark:border-[#19140035] hover:border-[#62605b] text-white dark:text-[#1b1b18] rounded-sm text-sm font-medium leading-normal transition-all">
+            <a href="{{ route('contact') }}" class="inline-block px-6 py-2.5 border border-[#3E3E3A] dark:border-[#19140035] hover:border-[#62605b] text-primary-foreground dark:text-primary rounded-sm text-sm font-medium leading-normal transition-all">
                 Talk to us
             </a>
         </div>
