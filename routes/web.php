@@ -8,6 +8,8 @@ Route::get('/', function () {
 
 Route::view('about', 'about')->name('about');
 
+Route::view('services', 'services')->name('services');
+
 Route::livewire('contact', 'pages::contact')->name('contact');
 
 Route::view('dashboard', 'dashboard')
