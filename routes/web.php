@@ -6,6 +6,10 @@ Route::get('/', function () {
     return view('welcome');
 })->name('home');
 
+Route::view('about', 'about')->name('about');
+
+Route::livewire('contact', 'pages::contact')->name('contact');
+
 Route::view('dashboard', 'dashboard')
     ->middleware(['auth', 'verified'])
     ->name('dashboard');
