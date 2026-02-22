@@ -24,6 +24,7 @@ class Post extends Model
         'status',
         'published_at',
         'featured_image',
+        'featured_image_alt',
         'layout',
     ];
 

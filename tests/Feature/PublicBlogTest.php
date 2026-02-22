@@ -193,3 +193,27 @@ it('does not render cta buttons when none are set', function (): void {
         ->assertOk()
         ->assertDontSee('rel="noopener noreferrer"');
 });
+
+it('uses the featured image alt text on the show page', function (): void {
+    $post = Post::factory()->published()->create([
+        'title' => 'My Post',
+        'featured_image_alt' => 'Custom alt text for the image',
+        'featured_image' => 'posts/some-image.jpg',
+    ]);
+
+    $this->get(route('blog.show', $post->slug))
+        ->assertOk()
+        ->assertSee('alt="Custom alt text for the image"', false);
+});
+
+it('falls back to the post title as alt text when no alt text is set', function (): void {
+    $post = Post::factory()->published()->create([
+        'title' => 'My Post Title',
+        'featured_image_alt' => null,
+        'featured_image' => 'posts/some-image.jpg',
+    ]);
+
+    $this->get(route('blog.show', $post->slug))
+        ->assertOk()
+        ->assertSee('alt="My Post Title"', false);
+});

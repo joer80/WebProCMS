@@ -394,3 +394,37 @@ it('updates cta buttons when editing a post', function (): void {
         ['text' => 'Sign Up', 'url' => 'https://example.com/signup', 'target' => '_self'],
     ]);
 });
+
+it('saves featured image alt text when creating a post', function (): void {
+    $user = User::factory()->create();
+
+    Livewire::actingAs($user)
+        ->test('pages::dashboard.blog.create')
+        ->set('title', 'Alt Text Post')
+        ->set('content', 'Content.')
+        ->set('featuredImageAlt', 'A descriptive alt text')
+        ->call('save');
+
+    expect(Post::where('title', 'Alt Text Post')->value('featured_image_alt'))->toBe('A descriptive alt text');
+});
+
+it('saves featured image alt text when editing a post', function (): void {
+    $user = User::factory()->create();
+    $post = Post::factory()->create(['featured_image_alt' => null]);
+
+    Livewire::actingAs($user)
+        ->test('pages::dashboard.blog.edit', ['post' => $post])
+        ->set('featuredImageAlt', 'Updated alt text')
+        ->call('save');
+
+    expect($post->fresh()->featured_image_alt)->toBe('Updated alt text');
+});
+
+it('loads existing featured image alt text when editing a post', function (): void {
+    $user = User::factory()->create();
+    $post = Post::factory()->create(['featured_image_alt' => 'Existing alt text']);
+
+    Livewire::actingAs($user)
+        ->test('pages::dashboard.blog.edit', ['post' => $post])
+        ->assertSet('featuredImageAlt', 'Existing alt text');
+});

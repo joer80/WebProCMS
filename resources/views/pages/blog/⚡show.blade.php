@@ -99,7 +99,7 @@ new #[Layout('layouts.public')] class extends Component {
                 <div class="lg:sticky lg:top-8">
                     <img
                         src="{{ $post->featuredImageUrl() }}"
-                        alt="{{ $post->title }}"
+                        alt="{{ $post->featured_image_alt ?? $post->title }}"
                         class="w-full rounded-lg object-cover"
                     />
                 </div>
@@ -117,7 +117,7 @@ new #[Layout('layouts.public')] class extends Component {
             @if ($post->featured_image)
                 <img
                     src="{{ $post->featuredImageUrl() }}"
-                    alt="{{ $post->title }}"
+                    alt="{{ $post->featured_image_alt ?? $post->title }}"
                     class="w-full rounded-lg object-cover max-h-96 mb-8"
                 />
             @endif

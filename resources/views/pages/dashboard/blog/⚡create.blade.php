@@ -33,6 +33,9 @@ new #[Layout('layouts.app')] #[Title('New Post')] class extends Component {
     #[Validate('nullable|image|max:51200')]
     public $featuredImage = null;
 
+    #[Validate('nullable|string|max:255')]
+    public string $featuredImageAlt = '';
+
     #[Validate([
         'ctaButtons.*.text' => 'nullable|string|max:255',
         'ctaButtons.*.url' => 'nullable|url|max:2048',
@@ -95,6 +98,7 @@ new #[Layout('layouts.app')] #[Title('New Post')] class extends Component {
             'layout' => $this->layout,
             'category_id' => $this->categoryId,
             'featured_image' => $imagePath,
+            'featured_image_alt' => $this->featuredImageAlt ?: null,
             'published_at' => in_array($this->status, ['published', 'unlisted']) ? now() : null,
         ]);
     }
@@ -318,6 +322,12 @@ new #[Layout('layouts.app')] #[Title('New Post')] class extends Component {
                             class="block w-full text-sm text-zinc-600 dark:text-zinc-400 file:mr-3 file:py-1.5 file:px-3 file:rounded-sm file:border file:border-zinc-300 dark:file:border-zinc-600 file:text-sm file:font-medium file:bg-zinc-50 dark:file:bg-zinc-800 file:text-zinc-700 dark:file:text-zinc-300 hover:file:bg-zinc-100 dark:hover:file:bg-zinc-700 transition-colors"
                         />
                         <flux:error name="featuredImage" />
+
+                        <flux:field>
+                            <flux:label>Alt Text</flux:label>
+                            <flux:input wire:model="featuredImageAlt" type="text" :placeholder="$title ?: 'Defaults to post title'" />
+                            <flux:error name="featuredImageAlt" />
+                        </flux:field>
                     </div>
 
                     {{-- Layout --}}
