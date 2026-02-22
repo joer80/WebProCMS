@@ -45,19 +45,19 @@ new #[Layout('layouts.public', ['description' => 'Get in touch with the GetRows 
             <div class="space-y-6 text-sm">
                 <div>
                     <p class="font-semibold mb-1">Email</p>
-                    <p class="text-[#706f6c] dark:text-[#A1A09A]">{{ config('business.email') }}</p>
+                    <p class="text-[#706f6c] dark:text-[#A1A09A]">{!! \App\Support\ShortcodeProcessor::process('[[business-email]]') !!}</p>
                 </div>
                 <div>
                     <p class="font-semibold mb-1">Phone</p>
-                    <p class="text-[#706f6c] dark:text-[#A1A09A]">{{ config('business.phone') }}</p>
+                    <p class="text-[#706f6c] dark:text-[#A1A09A]">{!! \App\Support\ShortcodeProcessor::process('[[business-phone]]') !!}</p>
                 </div>
                 <div>
                     <p class="font-semibold mb-1">Office</p>
-                    <p class="text-[#706f6c] dark:text-[#A1A09A]">{{ config('business.address.street') }}<br>{{ config('business.address.city_state_zip') }}</p>
+                    <p class="text-[#706f6c] dark:text-[#A1A09A]">{!! \App\Support\ShortcodeProcessor::process('[[business-address-street]]') !!}<br>{!! \App\Support\ShortcodeProcessor::process('[[business-address-city-state-zip]]') !!}</p>
                 </div>
                 <div>
                     <p class="font-semibold mb-1">Hours</p>
-                    <p class="text-[#706f6c] dark:text-[#A1A09A]">{{ config('business.hours') }}</p>
+                    <p class="text-[#706f6c] dark:text-[#A1A09A]">{!! \App\Support\ShortcodeProcessor::process('[[business-hours]]') !!}</p>
                 </div>
             </div>
         </div>
