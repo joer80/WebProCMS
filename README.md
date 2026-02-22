@@ -199,6 +199,23 @@ The route name mirrors the view path using dot notation (`services.instant-query
 
 When a section index page (e.g. `services.blade.php`) links to a detail page, the link is conditional — the service data carries a `'route'` key that is either a named route string or `null`. This keeps the index page template clean and makes it trivial to add or remove detail pages later without touching the loop structure.
 
+### When to use Livewire vs Blade
+
+**Use a static Blade view** when the page is read-only and the data doesn't change based on user input — marketing pages, about, terms, etc.
+
+**Use a full-page Livewire component** the moment you need the server to react to something the user does without a full page reload:
+
+| Use case | Examples |
+|---|---|
+| **Reactive filtering/search** | Search bars, sortable tables, faceted filters (price, category, status) |
+| **State-toggling actions** | Like/bookmark/follow buttons, inline editing, voting |
+| **Multi-step flows** | Wizards, onboarding, checkout, branching surveys |
+| **Real-time / polling** | Order status, notification feeds, live dashboards |
+| **Pagination without reload** | Load more, infinite scroll, in-place pagination |
+| **File uploads** | Upload with progress, preview, and server-side validation — no JS needed |
+| **Complex form state** | Dependent dropdowns, conditional fields, draft autosave |
+| **Contact/enquiry forms** | Any form that submits and shows feedback without a page change |
+
 ## Adding Environment Variables
 
 1. Add the var to `.env`: `MY_VAR=value`
