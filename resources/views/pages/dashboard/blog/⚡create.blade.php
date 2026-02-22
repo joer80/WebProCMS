@@ -278,30 +278,27 @@ new #[Layout('layouts.app')] #[Title('New Post')] class extends Component {
                     </div>
 
                     {{-- Actions --}}
-                    <div class="flex flex-col gap-2">
-                        <flux:button.group class="w-full">
-                            <flux:button
-                                type="submit"
-                                variant="primary"
-                                class="flex-1 justify-center"
-                                wire:loading.attr="disabled"
-                                wire:target="save"
-                            >
-                                Save Post
-                            </flux:button>
-                            <flux:dropdown position="bottom" align="end">
-                                <flux:button variant="primary" icon="chevron-down" wire:loading.attr="disabled" />
-                                <flux:menu>
-                                    <flux:menu.item wire:click="saveAndExit" icon="arrow-left">Save + Exit</flux:menu.item>
-                                    <flux:menu.item wire:click="saveAndView" icon="arrow-top-right-on-square">Save + View</flux:menu.item>
-                                    <flux:menu.item wire:click="saveAndAddNew" icon="document-plus">Save + Add New</flux:menu.item>
-                                </flux:menu>
-                            </flux:dropdown>
-                        </flux:button.group>
-                        <flux:button href="{{ route('dashboard.blog.index') }}" variant="ghost" wire:navigate class="w-full justify-center">
-                            Cancel
+                    <flux:button.group class="w-full">
+                        <flux:button
+                            type="submit"
+                            variant="primary"
+                            class="flex-1 justify-center"
+                            wire:loading.attr="disabled"
+                            wire:target="save"
+                        >
+                            Save Post
                         </flux:button>
-                    </div>
+                        <flux:dropdown position="bottom" align="end">
+                            <flux:button variant="primary" icon="chevron-down" wire:loading.attr="disabled" />
+                            <flux:menu>
+                                <flux:menu.item wire:click="saveAndExit" icon="arrow-left">Save + Exit</flux:menu.item>
+                                <flux:menu.item wire:click="saveAndView" icon="arrow-top-right-on-square">Save + View</flux:menu.item>
+                                <flux:menu.item wire:click="saveAndAddNew" icon="document-plus">Save + Add New</flux:menu.item>
+                                <flux:menu.separator />
+                                <flux:menu.item :href="route('dashboard.blog.index')" wire:navigate icon="x-mark">Cancel</flux:menu.item>
+                            </flux:menu>
+                        </flux:dropdown>
+                    </flux:button.group>
 
                 </div>
             </div>
