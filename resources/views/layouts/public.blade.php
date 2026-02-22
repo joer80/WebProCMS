@@ -7,8 +7,8 @@
     <body class="bg-[#FDFDFC] dark:bg-[#0a0a0a] text-[#1b1b18] dark:text-[#EDEDEC] flex p-6 lg:p-8 min-h-screen flex-col antialiased" style="font-family: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif;">
         <header class="w-full max-w-4xl mx-auto text-sm mb-10">
             <nav class="flex items-center justify-between gap-4">
-                <a href="{{ route('home') }}" class="font-semibold text-[#1b1b18] dark:text-[#EDEDEC]">
-                    {{ config('app.name') }}
+                <a href="{{ route('home') }}">
+                    <img src="{{ asset('images/logo.svg') }}" alt="{{ config('app.name') }}" class="h-8 w-auto" />
                 </a>
                 <div class="flex items-center gap-4">
                     <a href="{{ route('about') }}" class="inline-block px-5 py-1.5 dark:text-[#EDEDEC] text-[#1b1b18] border border-transparent hover:border-[#19140035] dark:hover:border-[#3E3E3A] rounded-sm text-sm leading-normal">
