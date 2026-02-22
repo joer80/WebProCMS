@@ -17,6 +17,13 @@
 
 Livewire page components live in `resources/views/pages/` and are registered using `Route::livewire()` with the `pages::` view namespace (e.g. `pages::contact`). Plain Blade views live at the root of `resources/views/` and use `Route::view()`.
 
+## Adding Environment Variables
+
+1. Add the var to `.env`: `MY_VAR=value`
+2. Add it to `.env.example`: `MY_VAR=`
+3. Add it to an existing config file (e.g. `config/business.php`) or create a new `config/my-file.php` that reads it with `env('MY_VAR')`
+4. Use it in code via `config('my-file.key')` — never call `env()` directly outside of config files, as it returns `null` when config is cached in production
+
 ## Layouts
 
 | Layout | Used for |
