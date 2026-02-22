@@ -124,7 +124,7 @@ new #[Layout('layouts.public')] class extends Component {
 
             @if ($post->excerpt)
                 <p class="text-lg text-[#706f6c] dark:text-[#A1A09A] leading-relaxed mb-8 border-l-2 border-[#e3e3e0] dark:border-[#3E3E3A] pl-4">
-                    {{ $post->excerpt }}
+                    {!! $this->processedExcerpt !!}
                 </p>
             @endif
 
