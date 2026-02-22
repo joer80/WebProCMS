@@ -45,19 +45,19 @@ new #[Layout('layouts.public')] #[Title('Contact Us')] class extends Component {
             <div class="space-y-6 text-sm">
                 <div>
                     <p class="font-semibold mb-1">Email</p>
-                    <p class="text-[#706f6c] dark:text-[#A1A09A]">hello@getrows.com</p>
+                    <p class="text-[#706f6c] dark:text-[#A1A09A]">{{ config('business.email') }}</p>
                 </div>
                 <div>
                     <p class="font-semibold mb-1">Phone</p>
-                    <p class="text-[#706f6c] dark:text-[#A1A09A]">+1 (555) 123-4567</p>
+                    <p class="text-[#706f6c] dark:text-[#A1A09A]">{{ config('business.phone') }}</p>
                 </div>
                 <div>
                     <p class="font-semibold mb-1">Office</p>
-                    <p class="text-[#706f6c] dark:text-[#A1A09A]">123 Maple Street, Suite 400<br>Austin, TX 78701</p>
+                    <p class="text-[#706f6c] dark:text-[#A1A09A]">{{ config('business.address.street') }}<br>{{ config('business.address.city_state_zip') }}</p>
                 </div>
                 <div>
                     <p class="font-semibold mb-1">Hours</p>
-                    <p class="text-[#706f6c] dark:text-[#A1A09A]">Monday – Friday, 9am – 5pm CT</p>
+                    <p class="text-[#706f6c] dark:text-[#A1A09A]">{{ config('business.hours') }}</p>
                 </div>
             </div>
         </div>
