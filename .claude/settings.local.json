@@ -5,7 +5,8 @@
       "Bash(php:*)",
       "Bash(npm run build:*)",
       "Bash(node:*)",
-      "Bash(vendor/bin/pint:*)"
+      "Bash(vendor/bin/pint:*)",
+      "WebFetch(domain:fluxui.dev)"
     ]
   }
 }
