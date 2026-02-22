@@ -15,21 +15,21 @@ new #[Layout('layouts.public', ['description' => 'Insights, updates, and news fr
     public string $search = '';
 
     #[Url(as: 'category')]
-    public ?int $categoryId = null;
+    public ?string $categorySlug = null;
 
     public function updatedSearch(): void
     {
         $this->resetPage();
     }
 
-    public function updatedCategoryId(): void
+    public function updatedCategorySlug(): void
     {
         $this->resetPage();
     }
 
-    public function filterByCategory(?int $id): void
+    public function filterByCategory(?string $slug): void
     {
-        $this->categoryId = $id;
+        $this->categorySlug = $slug;
         $this->resetPage();
     }
 
@@ -40,7 +40,7 @@ new #[Layout('layouts.public', ['description' => 'Insights, updates, and news fr
             ->published()
             ->with('category')
             ->when($this->search, fn ($q) => $q->where('title', 'like', "%{$this->search}%"))
-            ->when($this->categoryId, fn ($q) => $q->where('category_id', $this->categoryId))
+            ->when($this->categorySlug, fn ($q) => $q->whereHas('category', fn ($q) => $q->where('slug', $this->categorySlug)))
             ->latest('published_at')
             ->paginate(9);
     }
@@ -77,15 +77,15 @@ new #[Layout('layouts.public', ['description' => 'Insights, updates, and news fr
         <div class="flex flex-wrap items-center gap-2">
             <button
                 wire:click="filterByCategory(null)"
-                class="inline-block px-4 py-1.5 text-sm rounded-sm border transition-all {{ $categoryId === null ? 'bg-[#1b1b18] dark:bg-[#EDEDEC] text-white dark:text-[#1b1b18] border-transparent' : 'border-[#19140035] dark:border-[#3E3E3A] text-[#1b1b18] dark:text-[#EDEDEC] hover:border-[#1915014a] dark:hover:border-[#62605b]' }}"
+                class="inline-block px-4 py-1.5 text-sm rounded-sm border transition-all {{ $categorySlug === null ? 'bg-[#1b1b18] dark:bg-[#EDEDEC] text-white dark:text-[#1b1b18] border-transparent' : 'border-[#19140035] dark:border-[#3E3E3A] text-[#1b1b18] dark:text-[#EDEDEC] hover:border-[#1915014a] dark:hover:border-[#62605b]' }}"
             >
                 All
             </button>
 
             @foreach ($this->categories as $category)
                 <button
-                    wire:click="filterByCategory({{ $category->id }})"
-                    class="inline-block px-4 py-1.5 text-sm rounded-sm border transition-all {{ $categoryId === $category->id ? 'bg-[#1b1b18] dark:bg-[#EDEDEC] text-white dark:text-[#1b1b18] border-transparent' : 'border-[#19140035] dark:border-[#3E3E3A] text-[#1b1b18] dark:text-[#EDEDEC] hover:border-[#1915014a] dark:hover:border-[#62605b]' }}"
+                    wire:click="filterByCategory('{{ $category->slug }}')"
+                    class="inline-block px-4 py-1.5 text-sm rounded-sm border transition-all {{ $categorySlug === $category->slug ? 'bg-[#1b1b18] dark:bg-[#EDEDEC] text-white dark:text-[#1b1b18] border-transparent' : 'border-[#19140035] dark:border-[#3E3E3A] text-[#1b1b18] dark:text-[#EDEDEC] hover:border-[#1915014a] dark:hover:border-[#62605b]' }}"
                 >
                     {{ $category->name }}
                 </button>
@@ -121,7 +121,10 @@ new #[Layout('layouts.public', ['description' => 'Insights, updates, and news fr
 
                     <div class="p-6 flex flex-col {{ $post->featured_image ? '' : 'h-full' }}">
                         @if ($post->category)
-                            <span class="text-xs font-semibold uppercase tracking-wider text-[#706f6c] dark:text-[#A1A09A] mb-3">
+                            <span
+                                wire:click.stop="filterByCategory('{{ $post->category->slug }}')"
+                                class="text-xs font-semibold uppercase tracking-wider text-[#706f6c] dark:text-[#A1A09A] mb-3 cursor-pointer hover:text-[#1b1b18] dark:hover:text-[#EDEDEC] transition-colors w-fit"
+                            >
                                 {{ $post->category->name }}
                             </span>
                         @endif

@@ -45,7 +45,7 @@ it('filters posts by category', function (): void {
     ]);
 
     Livewire::test('pages::blog.index')
-        ->call('filterByCategory', $category->id)
+        ->call('filterByCategory', $category->slug)
         ->assertSeeText('Engineering Post')
         ->assertDontSeeText('Design Post');
 });
@@ -87,4 +87,41 @@ it('is linked from the public navigation', function (): void {
         ->assertOk()
         ->assertSee(route('blog.index'))
         ->assertSeeText('Blog');
+});
+
+it('shows the 3 most recent published posts on the homepage', function (): void {
+    $oldest = Post::factory()->published()->create(['title' => 'Oldest Post', 'published_at' => now()->subDays(10)]);
+    $middle = Post::factory()->published()->create(['title' => 'Middle Post', 'published_at' => now()->subDays(5)]);
+    $newest = Post::factory()->published()->create(['title' => 'Newest Post', 'published_at' => now()->subDay()]);
+    $fourth = Post::factory()->published()->create(['title' => 'Fourth Post', 'published_at' => now()]);
+
+    $this->get(route('home'))
+        ->assertOk()
+        ->assertSeeText('Fourth Post')
+        ->assertSeeText('Newest Post')
+        ->assertSeeText('Middle Post')
+        ->assertDontSeeText('Oldest Post');
+});
+
+it('does not show draft posts in the homepage blog section', function (): void {
+    Post::factory()->draft()->create(['title' => 'Unpublished Post']);
+
+    $this->get(route('home'))
+        ->assertOk()
+        ->assertDontSeeText('Unpublished Post');
+});
+
+it('hides the blog section on the homepage when there are no published posts', function (): void {
+    $this->get(route('home'))
+        ->assertOk()
+        ->assertDontSeeText('From the blog');
+});
+
+it('links the category on homepage cards to the filtered blog index', function (): void {
+    $category = Category::factory()->create(['name' => 'Engineering']);
+    Post::factory()->published()->create(['title' => 'A Post', 'category_id' => $category->id]);
+
+    $this->get(route('home'))
+        ->assertOk()
+        ->assertSee(route('blog.index', ['category' => $category->slug]));
 });

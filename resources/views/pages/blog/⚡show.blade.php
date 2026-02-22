@@ -28,7 +28,7 @@ new #[Layout('layouts.public')] class extends Component {
         <a href="{{ route('blog.index') }}" class="hover:text-[#1b1b18] dark:hover:text-[#EDEDEC] transition-colors">Blog</a>
         <span>/</span>
         @if ($post->category)
-            <span>{{ $post->category->name }}</span>
+            <a href="{{ route('blog.index', ['category' => $post->category->slug]) }}" class="hover:text-[#1b1b18] dark:hover:text-[#EDEDEC] transition-colors">{{ $post->category->name }}</a>
             <span>/</span>
         @endif
         <span class="text-[#1b1b18] dark:text-[#EDEDEC] truncate">{{ $post->title }}</span>
@@ -36,9 +36,9 @@ new #[Layout('layouts.public')] class extends Component {
 
     <article class="max-w-2xl">
         @if ($post->category)
-            <span class="text-xs font-semibold uppercase tracking-wider text-[#706f6c] dark:text-[#A1A09A]">
+            <a href="{{ route('blog.index', ['category' => $post->category->slug]) }}" class="text-xs font-semibold uppercase tracking-wider text-[#706f6c] dark:text-[#A1A09A] hover:text-[#1b1b18] dark:hover:text-[#EDEDEC] transition-colors">
                 {{ $post->category->name }}
-            </span>
+            </a>
         @endif
 
         <h1 class="text-4xl font-semibold leading-tight mt-2 mb-4">{{ $post->title }}</h1>

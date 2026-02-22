@@ -142,6 +142,66 @@
         </div>
     </section>
 
+    {{-- Latest blog posts --}}
+    @if ($recentPosts->isNotEmpty())
+        <section class="mb-24">
+            <div class="flex items-end justify-between mb-10">
+                <div>
+                    <span class="inline-block text-xs font-semibold tracking-widest uppercase text-[#706f6c] dark:text-[#A1A09A] mb-3">From the blog</span>
+                    <h2 class="text-3xl font-semibold leading-tight">Latest posts.</h2>
+                </div>
+                <a href="{{ route('blog.index') }}" class="text-sm font-medium text-[#706f6c] dark:text-[#A1A09A] hover:text-primary dark:hover:text-primary-surface transition-colors shrink-0 ml-6">
+                    View all →
+                </a>
+            </div>
+
+            <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                @foreach ($recentPosts as $post)
+                    <div class="bg-white dark:bg-[#161615] rounded-lg shadow-[inset_0px_0px_0px_1px_rgba(26,26,0,0.16)] dark:shadow-[inset_0px_0px_0px_1px_#fffaed2d] overflow-hidden">
+                        @if ($post->featured_image)
+                            <a href="{{ route('blog.show', $post->slug) }}">
+                                <img
+                                    src="{{ $post->featuredImageUrl() }}"
+                                    alt="{{ $post->title }}"
+                                    class="w-full h-44 object-cover"
+                                />
+                            </a>
+                        @endif
+
+                        <div class="p-6 flex flex-col {{ $post->featured_image ? '' : 'h-full' }}">
+                            @if ($post->category)
+                                <a
+                                    href="{{ route('blog.index', ['category' => $post->category->slug]) }}"
+                                    class="text-xs font-semibold uppercase tracking-wider text-[#706f6c] dark:text-[#A1A09A] mb-3 hover:text-[#1b1b18] dark:hover:text-[#EDEDEC] transition-colors w-fit"
+                                >
+                                    {{ $post->category->name }}
+                                </a>
+                            @endif
+
+                            <h3 class="font-semibold text-base leading-snug mb-2">
+                                <a href="{{ route('blog.show', $post->slug) }}" class="hover:text-[#706f6c] dark:hover:text-[#A1A09A] transition-colors">
+                                    {{ $post->title }}
+                                </a>
+                            </h3>
+
+                            @if ($post->excerpt)
+                                <p class="text-sm text-[#706f6c] dark:text-[#A1A09A] leading-relaxed mb-4 line-clamp-3">
+                                    {{ $post->excerpt }}
+                                </p>
+                            @endif
+
+                            <div class="mt-auto pt-4 border-t border-[#e3e3e0] dark:border-[#3E3E3A]">
+                                <span class="text-xs text-[#706f6c] dark:text-[#A1A09A]">
+                                    {{ $post->published_at?->format('M j, Y') }}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                @endforeach
+            </div>
+        </section>
+    @endif
+
     {{-- CTA --}}
     <section class="mb-8 bg-primary dark:bg-primary-foreground rounded-lg p-12 lg:p-16 text-center">
         <h2 class="text-3xl font-semibold text-primary-foreground dark:text-primary leading-tight mb-4">Ready to get started?</h2>
