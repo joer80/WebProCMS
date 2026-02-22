@@ -12,6 +12,8 @@ Route::view('services/instant-query-editor', 'services.instant-query-editor')->n
 
 Route::livewire('contact', 'pages::contact')->name('contact');
 
+Route::livewire('locations', 'pages::locations')->name('locations');
+
 Route::view('dashboard', 'dashboard')
     ->middleware(['auth', 'verified'])
     ->name('dashboard');
