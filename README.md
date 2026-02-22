@@ -223,6 +223,8 @@ When a section index page (e.g. `services.blade.php`) links to a detail page, th
 3. Add it to an existing config file (e.g. `config/business.php`) or create a new `config/my-file.php` that reads it with `env('MY_VAR')`
 4. Use it in code via `config('my-file.key')` — never call `env()` directly outside of config files, as it returns `null` when config is cached in production
 
+> **Note:** `.env` changes take effect immediately on the next request during local development (no command needed). If the config cache is active (e.g. in production after running `php artisan config:cache`), you must run `php artisan config:cache` again — or `php artisan config:clear` — for changes to be picked up.
+
 ## Components vs Partials
 
 | Folder | Used with | Use when |
