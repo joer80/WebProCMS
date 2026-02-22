@@ -17,36 +17,42 @@
                     'title' => 'Instant Query Editor',
                     'description' => 'Write SQL with intelligent autocomplete, syntax highlighting, and real-time error hints. Results appear as you type — no page reload, no waiting.',
                     'features' => ['Syntax highlighting', 'Autocomplete with schema awareness', 'Real-time error detection', 'Multi-tab support'],
+                    'route' => 'services.instant-query-editor',
                 ],
                 [
                     'icon' => 'cursor-arrow-rays',
                     'title' => 'Visual Query Builder',
                     'description' => 'Not a SQL expert? Build queries by clicking — filter, sort, group, and join tables without writing a single line of code.',
                     'features' => ['Drag-and-drop interface', 'Join tables visually', 'Filter & sort builder', 'Auto-generates SQL'],
+                    'route' => null,
                 ],
                 [
                     'icon' => 'share',
                     'title' => 'Live Shared Results',
                     'description' => 'Share a query result as a live link. Recipients always see up-to-date data without needing database access or a GetRows account.',
                     'features' => ['Public & private links', 'Auto-refreshing data', 'Password protection', 'Expiry controls'],
+                    'route' => null,
                 ],
                 [
                     'icon' => 'arrow-down-tray',
                     'title' => 'Export Anywhere',
                     'description' => 'Download results as CSV, JSON, or Excel. Push directly to Google Sheets, Notion, or your favourite BI tool in one click.',
                     'features' => ['CSV, JSON & Excel', 'Google Sheets integration', 'Notion export', 'Scheduled exports'],
+                    'route' => null,
                 ],
                 [
                     'icon' => 'clock',
                     'title' => 'Query History',
                     'description' => 'Every query is saved automatically. Search, replay, and fork previous queries in one click. Never lose work again.',
                     'features' => ['Full query log', 'Full-text search', 'Fork & remix', 'Team-shared history'],
+                    'route' => null,
                 ],
                 [
                     'icon' => 'shield-check',
                     'title' => 'Role-based Access',
                     'description' => 'Keep sensitive tables safe. Grant read-only access to specific users or teams without touching database permissions.',
                     'features' => ['Custom roles & permissions', 'Table-level restrictions', 'Audit logs', 'SSO support'],
+                    'route' => null,
                 ],
             ] as $service)
                 <div class="bg-white dark:bg-[#161615] rounded-lg shadow-[inset_0px_0px_0px_1px_rgba(26,26,0,0.16)] dark:shadow-[inset_0px_0px_0px_1px_#fffaed2d] p-6">
@@ -57,7 +63,7 @@
                         <h3 class="font-semibold">{{ $service['title'] }}</h3>
                     </div>
                     <p class="text-[#706f6c] dark:text-[#A1A09A] text-sm leading-normal mb-4">{{ $service['description'] }}</p>
-                    <ul class="space-y-1.5">
+                    <ul class="space-y-1.5 mb-4">
                         @foreach ($service['features'] as $feature)
                             <li class="flex items-center gap-2 text-sm text-primary dark:text-primary-surface">
                                 <flux:icon name="check-circle" variant="micro" class="text-green-500 dark:text-green-400 shrink-0" />
@@ -65,6 +71,12 @@
                             </li>
                         @endforeach
                     </ul>
+                    @if ($service['route'])
+                        <a href="{{ route($service['route']) }}" class="inline-flex items-center gap-1 text-sm font-medium text-primary dark:text-primary-surface hover:underline">
+                            Learn more
+                            <flux:icon name="arrow-right" variant="micro" />
+                        </a>
+                    @endif
                 </div>
             @endforeach
         </div>
