@@ -70,7 +70,7 @@ new #[Layout('layouts.public')] #[Title('Locations')] class extends Component {
     @if (count($this->filteredLocations) > 0)
         <div class="grid sm:grid-cols-3 gap-6">
             @foreach ($this->filteredLocations as $location)
-                <div wire:key="location-{{ $location['city'] }}" class="bg-white dark:bg-[#161615] rounded-lg shadow-[inset_0px_0px_0px_1px_rgba(26,26,0,0.16)] dark:shadow-[inset_0px_0px_0px_1px_#fffaed2d] overflow-hidden">
+                <div wire:key="location-{{ $location['city'] }}" wire:transition class="bg-white dark:bg-[#161615] rounded-lg shadow-[inset_0px_0px_0px_1px_rgba(26,26,0,0.16)] dark:shadow-[inset_0px_0px_0px_1px_#fffaed2d] overflow-hidden">
                     <img
                         src="{{ $location['photo'] }}"
                         alt="{{ $location['name'] }}"
