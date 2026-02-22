@@ -21,6 +21,8 @@ class Post extends Model
         'excerpt',
         'content',
         'cta_buttons',
+        'gallery_images',
+        'gallery_columns',
         'status',
         'published_at',
         'featured_image',
@@ -39,6 +41,10 @@ class Post extends Model
         static::deleted(function (Post $post): void {
             if ($post->featured_image) {
                 Storage::disk('public')->delete($post->featured_image);
+            }
+
+            if ($post->gallery_images) {
+                Storage::disk('public')->delete($post->gallery_images);
             }
         });
     }
@@ -73,6 +79,8 @@ class Post extends Model
         return [
             'published_at' => 'datetime',
             'cta_buttons' => 'array',
+            'gallery_images' => 'array',
+            'gallery_columns' => 'integer',
         ];
     }
 
@@ -91,5 +99,14 @@ class Post extends Model
     public function featuredImageUrl(): ?string
     {
         return $this->featured_image ? Storage::disk('public')->url($this->featured_image) : null;
+    }
+
+    /** @return list<string> */
+    public function galleryImageUrls(): array
+    {
+        return array_map(
+            fn (string $path) => Storage::disk('public')->url($path),
+            $this->gallery_images ?? []
+        );
     }
 }

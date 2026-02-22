@@ -46,6 +46,14 @@ new #[Layout('layouts.app')] #[Title('Edit Post')] class extends Component {
     ])]
     public array $ctaButtons = [];
 
+    #[Validate('nullable|image|max:51200')]
+    public $newGalleryImage = null;
+
+    public array $galleryImages = [];
+
+    #[Validate('required|integer|in:2,3,4,5')]
+    public int $galleryColumns = 4;
+
     public string $newCategoryName = '';
 
     public function mount(Post $post): void
@@ -63,6 +71,9 @@ new #[Layout('layouts.app')] #[Title('Edit Post')] class extends Component {
             'url' => $btn['url'] ?? '',
             'newTab' => ($btn['target'] ?? '_self') === '_blank',
         ], $post->cta_buttons ?? []);
+
+        $this->galleryImages = $post->gallery_images ?? [];
+        $this->galleryColumns = $post->gallery_columns ?? 4;
     }
 
     public function addCtaButton(): void
@@ -87,6 +98,28 @@ new #[Layout('layouts.app')] #[Title('Edit Post')] class extends Component {
         $this->newCategoryName = '';
         $this->categoryId = $category->id;
         $this->dispatch('category-created');
+    }
+
+    public function addGalleryImage(): void
+    {
+        $this->validateOnly('newGalleryImage');
+
+        $path = $this->newGalleryImage->store('posts', 'public');
+        ImageResizer::resizeToMaxWidth($path);
+
+        $this->galleryImages[] = $path;
+        $this->reset('newGalleryImage');
+    }
+
+    public function removeGalleryImage(int $index): void
+    {
+        $path = $this->galleryImages[$index] ?? null;
+
+        if ($path) {
+            Storage::disk('public')->delete($path);
+            array_splice($this->galleryImages, $index, 1);
+            $this->galleryImages = array_values($this->galleryImages);
+        }
     }
 
     public function removeFeaturedImage(): void
@@ -128,6 +161,8 @@ new #[Layout('layouts.app')] #[Title('Edit Post')] class extends Component {
             'excerpt' => $this->excerpt ?: null,
             'content' => $this->content,
             'cta_buttons' => $ctaButtons ?: null,
+            'gallery_images' => ! empty($this->galleryImages) ? $this->galleryImages : null,
+            'gallery_columns' => $this->galleryColumns,
             'status' => $this->status,
             'layout' => $this->layout,
             'category_id' => $this->categoryId,
@@ -264,6 +299,118 @@ new #[Layout('layouts.app')] #[Title('Edit Post')] class extends Component {
                         @else
                             <p class="text-sm text-center text-zinc-400 dark:text-zinc-500 py-1">No buttons added yet.</p>
                         @endif
+                    </div>
+
+                    {{-- Photo Gallery --}}
+                    <div class="rounded-lg border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-900 p-4 space-y-4">
+                        <div>
+                            <flux:label class="mb-0">
+                                Photo Gallery
+                                <flux:badge size="sm" variant="outline" class="ml-1">Optional</flux:badge>
+                            </flux:label>
+                            <flux:description class="mt-0.5">Displayed below the post content and buttons.</flux:description>
+                        </div>
+
+                        @if (count($galleryImages) > 0)
+                            <div class="grid grid-cols-4 gap-2">
+                                @foreach ($galleryImages as $index => $path)
+                                    <div class="relative group aspect-square" wire:key="gallery-{{ $index }}">
+                                        <img
+                                            src="{{ Storage::disk('public')->url($path) }}"
+                                            alt="Gallery image {{ $index + 1 }}"
+                                            class="w-full h-full object-cover rounded-md"
+                                        />
+                                        <div class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/30 rounded-md">
+                                            <button
+                                                type="button"
+                                                wire:click="removeGalleryImage({{ $index }})"
+                                                wire:confirm="Remove this image from the gallery?"
+                                                class="bg-red-600 text-white text-xs px-2 py-1 rounded hover:bg-red-700 transition-colors"
+                                            >Remove</button>
+                                        </div>
+                                    </div>
+                                @endforeach
+                            </div>
+                        @else
+                            <p class="text-sm text-center text-zinc-400 dark:text-zinc-500 py-1">No photos added yet.</p>
+                        @endif
+
+                        <div
+                            x-data="{
+                                uploading: false,
+                                handleFile(event) {
+                                    const file = event.target.files[0];
+                                    if (!file) return;
+
+                                    const maxWidth = 1920;
+                                    const reader = new FileReader();
+
+                                    reader.onload = (e) => {
+                                        const img = new Image();
+                                        img.onload = () => {
+                                            if (img.width <= maxWidth) {
+                                                this.uploading = true;
+                                                $wire.upload('newGalleryImage', file, () => {
+                                                    $wire.call('addGalleryImage').then(() => {
+                                                        this.uploading = false;
+                                                        this.$refs.galleryFileInput.value = '';
+                                                    });
+                                                });
+                                                return;
+                                            }
+
+                                            const scale = maxWidth / img.width;
+                                            const canvas = document.createElement('canvas');
+                                            canvas.width = maxWidth;
+                                            canvas.height = Math.round(img.height * scale);
+                                            canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+
+                                            this.uploading = true;
+
+                                            canvas.toBlob((blob) => {
+                                                $wire.upload(
+                                                    'newGalleryImage',
+                                                    new File([blob], file.name, { type: blob.type }),
+                                                    () => {
+                                                        $wire.call('addGalleryImage').then(() => {
+                                                            this.uploading = false;
+                                                            this.$refs.galleryFileInput.value = '';
+                                                        });
+                                                    }
+                                                );
+                                            }, file.type, 0.90);
+                                        };
+                                        img.src = e.target.result;
+                                    };
+
+                                    reader.readAsDataURL(file);
+                                }
+                            }"
+                        >
+                            <div class="flex items-center gap-3">
+                                <input
+                                    type="file"
+                                    x-ref="galleryFileInput"
+                                    @change="handleFile($event)"
+                                    accept="image/*"
+                                    :disabled="uploading"
+                                    class="block w-full text-sm text-zinc-600 dark:text-zinc-400 file:mr-3 file:py-1.5 file:px-3 file:rounded-sm file:border file:border-zinc-300 dark:file:border-zinc-600 file:text-sm file:font-medium file:bg-zinc-50 dark:file:bg-zinc-800 file:text-zinc-700 dark:file:text-zinc-300 hover:file:bg-zinc-100 dark:hover:file:bg-zinc-700 transition-colors disabled:opacity-50"
+                                />
+                                <span x-show="uploading" class="text-xs text-zinc-500 dark:text-zinc-400 shrink-0">Uploading…</span>
+                            </div>
+                            <flux:error name="newGalleryImage" />
+                        </div>
+
+                        <flux:field>
+                            <flux:label>Photos per row</flux:label>
+                            <flux:select wire:model="galleryColumns">
+                                <flux:select.option value="2">2 per row</flux:select.option>
+                                <flux:select.option value="3">3 per row</flux:select.option>
+                                <flux:select.option value="4">4 per row (default)</flux:select.option>
+                                <flux:select.option value="5">5 per row</flux:select.option>
+                            </flux:select>
+                            <flux:error name="galleryColumns" />
+                        </flux:field>
                     </div>
                 </div>
 

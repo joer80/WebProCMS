@@ -149,6 +149,119 @@ new #[Layout('layouts.public')] class extends Component {
         </article>
     @endif
 
+    @if ($post->gallery_images)
+        <div
+            class="mt-10"
+            x-data="{
+                images: @js($post->galleryImageUrls()),
+                isOpen: false,
+                currentIndex: 0,
+                open(index) {
+                    this.currentIndex = index;
+                    this.isOpen = true;
+                    document.body.style.overflow = 'hidden';
+                },
+                close() {
+                    this.isOpen = false;
+                    document.body.style.overflow = '';
+                },
+                prev() {
+                    this.currentIndex = (this.currentIndex - 1 + this.images.length) % this.images.length;
+                },
+                next() {
+                    this.currentIndex = (this.currentIndex + 1) % this.images.length;
+                }
+            }"
+            @keydown.escape.window="if (isOpen) close()"
+            @keydown.arrow-left.window="if (isOpen) prev()"
+            @keydown.arrow-right.window="if (isOpen) next()"
+        >
+            <div
+                class="grid gap-2"
+                style="grid-template-columns: repeat({{ $post->gallery_columns ?? 4 }}, minmax(0, 1fr))"
+            >
+                @foreach ($post->galleryImageUrls() as $index => $url)
+                    <button
+                        type="button"
+                        @click="open({{ $index }})"
+                        class="aspect-square overflow-hidden rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1b1b18] dark:focus:ring-[#EDEDEC] focus:ring-offset-2"
+                    >
+                        <img
+                            src="{{ $url }}"
+                            alt="Gallery photo {{ $index + 1 }}"
+                            class="w-full h-full object-cover hover:scale-105 transition-transform duration-200"
+                        />
+                    </button>
+                @endforeach
+            </div>
+
+            {{-- Lightbox overlay --}}
+            <div
+                x-show="isOpen"
+                x-cloak
+                class="fixed inset-0 z-50 flex items-center justify-center bg-black/90"
+                @click.self="close()"
+            >
+                {{-- Close button --}}
+                <button
+                    type="button"
+                    @click="close()"
+                    class="absolute top-4 right-4 text-white/80 hover:text-white transition-colors p-2"
+                    aria-label="Close"
+                >
+                    <svg xmlns="http://www.w3.org/2000/svg" class="size-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
+                    </svg>
+                </button>
+
+                {{-- Prev button --}}
+                <button
+                    type="button"
+                    @click="prev()"
+                    x-show="images.length > 1"
+                    class="absolute left-4 text-white/80 hover:text-white transition-colors p-2"
+                    aria-label="Previous photo"
+                >
+                    <svg xmlns="http://www.w3.org/2000/svg" class="size-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5" />
+                    </svg>
+                </button>
+
+                {{-- Image --}}
+                <div class="max-w-5xl max-h-screen w-full px-16 py-8 flex items-center justify-center">
+                    <template x-for="(url, i) in images" :key="i">
+                        <img
+                            x-show="currentIndex === i"
+                            :src="url"
+                            :alt="`Gallery photo ${i + 1}`"
+                            class="max-w-full max-h-[85vh] object-contain rounded-lg shadow-2xl"
+                        />
+                    </template>
+                </div>
+
+                {{-- Next button --}}
+                <button
+                    type="button"
+                    @click="next()"
+                    x-show="images.length > 1"
+                    class="absolute right-4 text-white/80 hover:text-white transition-colors p-2"
+                    aria-label="Next photo"
+                >
+                    <svg xmlns="http://www.w3.org/2000/svg" class="size-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
+                    </svg>
+                </button>
+
+                {{-- Counter --}}
+                <div
+                    x-show="images.length > 1"
+                    x-text="`${currentIndex + 1} / ${images.length}`"
+                    class="absolute bottom-4 left-1/2 -translate-x-1/2 text-white/70 text-sm tabular-nums"
+                ></div>
+            </div>
+        </div>
+    @endif
+
     <div class="mt-12 pt-8 border-t border-[#e3e3e0] dark:border-[#3E3E3A] flex items-center justify-between gap-4">
         <a
             href="{{ route('blog.index') }}"

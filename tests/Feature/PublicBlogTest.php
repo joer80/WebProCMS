@@ -2,6 +2,8 @@
 
 use App\Models\Category;
 use App\Models\Post;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 use Livewire\Livewire;
 
 it('renders the blog index page', function (): void {
@@ -216,4 +218,40 @@ it('falls back to the post title as alt text when no alt text is set', function 
     $this->get(route('blog.show', $post->slug))
         ->assertOk()
         ->assertSee('alt="My Post Title"', false);
+});
+
+it('renders gallery images on the post show page', function (): void {
+    Storage::fake('public');
+    $path1 = UploadedFile::fake()->image('photo1.jpg')->store('posts', 'public');
+    $path2 = UploadedFile::fake()->image('photo2.jpg')->store('posts', 'public');
+    $post = Post::factory()->published()->create([
+        'gallery_images' => [$path1, $path2],
+        'gallery_columns' => 3,
+    ]);
+
+    $this->get(route('blog.show', $post->slug))
+        ->assertOk()
+        ->assertSee(Storage::disk('public')->url($path1))
+        ->assertSee(Storage::disk('public')->url($path2));
+});
+
+it('does not render the gallery section when no gallery images are set', function (): void {
+    $post = Post::factory()->published()->create(['gallery_images' => null]);
+
+    $this->get(route('blog.show', $post->slug))
+        ->assertOk()
+        ->assertDontSee('Gallery photo');
+});
+
+it('uses configured gallery columns on the post show page', function (): void {
+    Storage::fake('public');
+    $path = UploadedFile::fake()->image('photo.jpg')->store('posts', 'public');
+    $post = Post::factory()->published()->create([
+        'gallery_images' => [$path],
+        'gallery_columns' => 2,
+    ]);
+
+    $this->get(route('blog.show', $post->slug))
+        ->assertOk()
+        ->assertSee('repeat(2, minmax(0, 1fr))', false);
 });

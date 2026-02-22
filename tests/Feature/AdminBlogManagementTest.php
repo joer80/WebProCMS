@@ -428,3 +428,131 @@ it('loads existing featured image alt text when editing a post', function (): vo
         ->test('pages::dashboard.blog.edit', ['post' => $post])
         ->assertSet('featuredImageAlt', 'Existing alt text');
 });
+
+it('can add a gallery image when creating a post', function (): void {
+    Storage::fake('public');
+    $user = User::factory()->create();
+
+    Livewire::actingAs($user)
+        ->test('pages::dashboard.blog.create')
+        ->set('newGalleryImage', UploadedFile::fake()->image('photo.jpg'))
+        ->call('addGalleryImage')
+        ->assertCount('galleryImages', 1);
+});
+
+it('stores a gallery image to disk when added', function (): void {
+    Storage::fake('public');
+    $user = User::factory()->create();
+
+    $component = Livewire::actingAs($user)
+        ->test('pages::dashboard.blog.create')
+        ->set('newGalleryImage', UploadedFile::fake()->image('photo.jpg'))
+        ->call('addGalleryImage');
+
+    $path = $component->get('galleryImages')[0];
+    Storage::disk('public')->assertExists($path);
+});
+
+it('resets newGalleryImage after adding to gallery', function (): void {
+    Storage::fake('public');
+    $user = User::factory()->create();
+
+    Livewire::actingAs($user)
+        ->test('pages::dashboard.blog.create')
+        ->set('newGalleryImage', UploadedFile::fake()->image('photo.jpg'))
+        ->call('addGalleryImage')
+        ->assertSet('newGalleryImage', null);
+});
+
+it('can remove a gallery image', function (): void {
+    Storage::fake('public');
+    $user = User::factory()->create();
+    $path = UploadedFile::fake()->image('photo.jpg')->store('posts', 'public');
+    $post = Post::factory()->create(['gallery_images' => [$path]]);
+
+    Livewire::actingAs($user)
+        ->test('pages::dashboard.blog.edit', ['post' => $post])
+        ->call('removeGalleryImage', 0)
+        ->assertCount('galleryImages', 0);
+
+    Storage::disk('public')->assertMissing($path);
+});
+
+it('saves gallery images when creating a post', function (): void {
+    Storage::fake('public');
+    $user = User::factory()->create();
+
+    $component = Livewire::actingAs($user)
+        ->test('pages::dashboard.blog.create')
+        ->set('title', 'Post With Gallery')
+        ->set('content', 'Content.')
+        ->set('newGalleryImage', UploadedFile::fake()->image('photo.jpg'))
+        ->call('addGalleryImage')
+        ->set('galleryColumns', 3)
+        ->call('save');
+
+    $post = Post::where('title', 'Post With Gallery')->first();
+    expect($post->gallery_images)->toHaveCount(1);
+    expect($post->gallery_columns)->toBe(3);
+});
+
+it('saves gallery images when editing a post', function (): void {
+    Storage::fake('public');
+    $user = User::factory()->create();
+    $post = Post::factory()->create(['gallery_images' => null]);
+
+    $component = Livewire::actingAs($user)
+        ->test('pages::dashboard.blog.edit', ['post' => $post])
+        ->set('newGalleryImage', UploadedFile::fake()->image('photo.jpg'))
+        ->call('addGalleryImage')
+        ->set('galleryColumns', 2)
+        ->call('save');
+
+    expect($post->fresh()->gallery_images)->toHaveCount(1);
+    expect($post->fresh()->gallery_columns)->toBe(2);
+});
+
+it('defaults gallery columns to 4', function (): void {
+    $user = User::factory()->create();
+
+    Livewire::actingAs($user)
+        ->test('pages::dashboard.blog.create')
+        ->assertSet('galleryColumns', 4);
+});
+
+it('loads existing gallery images and columns when editing a post', function (): void {
+    Storage::fake('public');
+    $user = User::factory()->create();
+    $path = UploadedFile::fake()->image('photo.jpg')->store('posts', 'public');
+    $post = Post::factory()->create(['gallery_images' => [$path], 'gallery_columns' => 3]);
+
+    Livewire::actingAs($user)
+        ->test('pages::dashboard.blog.edit', ['post' => $post])
+        ->assertSet('galleryImages', [$path])
+        ->assertSet('galleryColumns', 3);
+});
+
+it('deletes gallery images when a post is deleted', function (): void {
+    Storage::fake('public');
+    $user = User::factory()->create();
+    $path = UploadedFile::fake()->image('photo.jpg')->store('posts', 'public');
+    $post = Post::factory()->create(['gallery_images' => [$path]]);
+
+    Livewire::actingAs($user)
+        ->test('pages::dashboard.blog.index')
+        ->call('deletePost', $post->id);
+
+    Storage::disk('public')->assertMissing($path);
+});
+
+it('stores null for gallery_images when no gallery images on create', function (): void {
+    $user = User::factory()->create();
+
+    Livewire::actingAs($user)
+        ->test('pages::dashboard.blog.create')
+        ->set('title', 'No Gallery Post')
+        ->set('content', 'Content.')
+        ->call('save');
+
+    expect(Post::where('title', 'No Gallery Post')->value('gallery_images'))->toBeNull();
+});
