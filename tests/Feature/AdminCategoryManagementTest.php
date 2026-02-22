@@ -20,6 +20,8 @@ it('shows the categories dashboard to authenticated users', function (): void {
 });
 
 it('lists all categories with their post counts', function (): void {
+    \Livewire\Features\SupportLazyLoading\SupportLazyLoading::disableWhileTesting();
+
     $user = User::factory()->create();
     $category = Category::factory()->create(['name' => 'Engineering']);
     Post::factory(3)->create(['category_id' => $category->id]);

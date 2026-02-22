@@ -16,6 +16,7 @@ class Location extends Model
         'address',
         'city',
         'state',
+        'state_full',
         'zip',
         'phone',
         'photo',

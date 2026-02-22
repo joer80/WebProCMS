@@ -2,6 +2,7 @@
 
 use App\Models\Location;
 use App\Support\ImageResizer;
+use App\Support\States;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
 use Livewire\Attributes\Validate;
@@ -23,6 +24,8 @@ new #[Layout('layouts.app')] #[Title('New Location')] class extends Component {
     #[Validate('required|string|size:2')]
     public string $state = '';
 
+    public string $state_full = '';
+
     #[Validate('required|string|max:10')]
     public string $zip = '';
 
@@ -31,6 +34,13 @@ new #[Layout('layouts.app')] #[Title('New Location')] class extends Component {
 
     #[Validate('nullable|image|max:51200')]
     public $photo = null;
+
+    public function updatedState(string $value): void
+    {
+        if (strlen($value) === 2) {
+            $this->state_full = States::fullName(strtoupper($value));
+        }
+    }
 
     public function save(): void
     {
@@ -48,6 +58,7 @@ new #[Layout('layouts.app')] #[Title('New Location')] class extends Component {
             'address' => $this->address,
             'city' => $this->city,
             'state' => strtoupper($this->state),
+            'state_full' => $this->state_full,
             'zip' => $this->zip,
             'phone' => $this->phone,
             'photo' => $photoPath,
@@ -77,7 +88,7 @@ new #[Layout('layouts.app')] #[Title('New Location')] class extends Component {
                 <flux:error name="address" />
             </flux:field>
 
-            <div class="grid grid-cols-2 gap-4">
+            <div class="grid grid-cols-3 gap-4">
                 <flux:field>
                     <flux:label>City</flux:label>
                     <flux:input wire:model="city" type="text" placeholder="e.g. Nashville" required />
@@ -86,9 +97,21 @@ new #[Layout('layouts.app')] #[Title('New Location')] class extends Component {
 
                 <flux:field>
                     <flux:label>State</flux:label>
-                    <flux:input wire:model="state" type="text" placeholder="e.g. TN" maxlength="2" required />
+                    <flux:select wire:model.live="state" required>
+                        <option value="">Select a state</option>
+                        @foreach(\App\Support\States::all() as $abbr => $name)
+                            <option value="{{ $abbr }}">{{ $abbr }}</option>
+                        @endforeach
+                    </flux:select>
                     <flux:error name="state" />
                 </flux:field>
+
+                <div class="opacity-50">
+                    <flux:field>
+                        <flux:label>State (Full Name)</flux:label>
+                        <flux:input wire:model="state_full" type="text" readonly />
+                    </flux:field>
+                </div>
             </div>
 
             <div class="grid grid-cols-2 gap-4">

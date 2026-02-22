@@ -21,6 +21,8 @@ it('shows the locations dashboard to authenticated users', function (): void {
 });
 
 it('lists all locations', function (): void {
+    \Livewire\Features\SupportLazyLoading\SupportLazyLoading::disableWhileTesting();
+
     $user = User::factory()->create();
     Location::factory()->create(['name' => 'GetRows Nashville', 'city' => 'Nashville', 'state' => 'TN']);
 
@@ -40,6 +42,7 @@ it('creates a new location without a photo', function (): void {
         ->set('address', '1600 Glenarm Place')
         ->set('city', 'Denver')
         ->set('state', 'CO')
+        ->set('state_full', 'Colorado')
         ->set('zip', '80202')
         ->set('phone', '(303) 555-0101')
         ->call('save');
@@ -57,6 +60,7 @@ it('uploads a photo when creating a location', function (): void {
         ->set('address', '1 N Central Ave')
         ->set('city', 'Phoenix')
         ->set('state', 'AZ')
+        ->set('state_full', 'Arizona')
         ->set('zip', '85004')
         ->set('phone', '(602) 555-0101')
         ->set('photo', UploadedFile::fake()->image('location.jpg'))
@@ -142,11 +146,21 @@ it('uppercases state on save', function (): void {
         ->set('address', '1 SW Broadway')
         ->set('city', 'Portland')
         ->set('state', 'or')
+        ->set('state_full', 'Oregon')
         ->set('zip', '97201')
         ->set('phone', '(503) 555-0101')
         ->call('save');
 
     expect(Location::where('name', 'GetRows Portland')->first()->state)->toBe('OR');
+});
+
+it('auto-fills state_full when state abbreviation is set', function (): void {
+    $user = User::factory()->create();
+
+    Livewire::actingAs($user)
+        ->test('pages::dashboard.locations.create')
+        ->set('state', 'TX')
+        ->assertSet('state_full', 'Texas');
 });
 
 it('deletes a location and its photo from storage', function (): void {

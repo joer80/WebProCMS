@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use App\Support\States;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -19,11 +20,14 @@ class LocationFactory extends Factory
         $city = fake()->city();
         $seed = strtolower(str_replace(' ', '-', $city));
 
+        $state = fake()->stateAbbr();
+
         return [
             'name' => 'GetRows '.$city,
             'address' => fake()->streetAddress(),
             'city' => $city,
-            'state' => fake()->stateAbbr(),
+            'state' => $state,
+            'state_full' => States::fullName($state),
             'zip' => fake()->postcode(),
             'phone' => fake()->phoneNumber(),
             'photo' => 'https://picsum.photos/seed/getrows-'.$seed.'/600/400',

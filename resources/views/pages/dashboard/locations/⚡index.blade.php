@@ -2,10 +2,23 @@
 
 use App\Models\Location;
 use Livewire\Attributes\Layout;
+use Livewire\Attributes\Lazy;
 use Livewire\Attributes\Title;
 use Livewire\Component;
 
-new #[Layout('layouts.app')] #[Title('Locations')] class extends Component {
+new #[Layout('layouts.app')] #[Title('Locations')] #[Lazy] class extends Component {
+    public function placeholder(): string
+    {
+        return <<<'HTML'
+        <div class="flex items-center justify-center py-32">
+            <svg class="animate-spin size-8 text-zinc-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 22 6.477 22 12h-4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+        </div>
+        HTML;
+    }
+
     public ?int $confirmingDelete = null;
 
     public function deleteLocation(int $locationId): void

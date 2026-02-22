@@ -2,6 +2,7 @@
 
 use App\Models\Location;
 use App\Support\ImageResizer;
+use App\Support\States;
 use Illuminate\Support\Facades\Storage;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
@@ -26,6 +27,8 @@ new #[Layout('layouts.app')] #[Title('Edit Location')] class extends Component {
     #[Validate]
     public string $state = '';
 
+    public string $state_full = '';
+
     #[Validate]
     public string $zip = '';
 
@@ -42,6 +45,7 @@ new #[Layout('layouts.app')] #[Title('Edit Location')] class extends Component {
         $this->address = $location->address;
         $this->city = $location->city;
         $this->state = $location->state;
+        $this->state_full = $location->state_full ?? States::fullName($location->state);
         $this->zip = $location->zip;
         $this->phone = $location->phone;
     }
@@ -58,6 +62,13 @@ new #[Layout('layouts.app')] #[Title('Edit Location')] class extends Component {
             'phone' => ['required', 'string', 'max:20'],
             'photo' => ['nullable', 'image', 'max:51200'],
         ];
+    }
+
+    public function updatedState(string $value): void
+    {
+        if (strlen($value) === 2) {
+            $this->state_full = States::fullName(strtoupper($value));
+        }
     }
 
     public function removePhoto(): void
@@ -87,6 +98,7 @@ new #[Layout('layouts.app')] #[Title('Edit Location')] class extends Component {
             'address' => $this->address,
             'city' => $this->city,
             'state' => strtoupper($this->state),
+            'state_full' => $this->state_full,
             'zip' => $this->zip,
             'phone' => $this->phone,
             'photo' => $photoPath,
@@ -116,7 +128,7 @@ new #[Layout('layouts.app')] #[Title('Edit Location')] class extends Component {
                 <flux:error name="address" />
             </flux:field>
 
-            <div class="grid grid-cols-2 gap-4">
+            <div class="grid grid-cols-3 gap-4">
                 <flux:field>
                     <flux:label>City</flux:label>
                     <flux:input wire:model="city" type="text" required />
@@ -125,9 +137,21 @@ new #[Layout('layouts.app')] #[Title('Edit Location')] class extends Component {
 
                 <flux:field>
                     <flux:label>State</flux:label>
-                    <flux:input wire:model="state" type="text" maxlength="2" required />
+                    <flux:select wire:model.live="state" required>
+                        <option value="">Select a state</option>
+                        @foreach(\App\Support\States::all() as $abbr => $name)
+                            <option value="{{ $abbr }}">{{ $abbr }}</option>
+                        @endforeach
+                    </flux:select>
                     <flux:error name="state" />
                 </flux:field>
+
+                <div class="opacity-50">
+                    <flux:field>
+                        <flux:label>State (Full Name)</flux:label>
+                        <flux:input wire:model="state_full" type="text" readonly />
+                    </flux:field>
+                </div>
             </div>
 
             <div class="grid grid-cols-2 gap-4">
