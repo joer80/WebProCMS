@@ -11,7 +11,9 @@
       "WebFetch(domain:livewire.laravel.com)",
       "Bash(git stash:*)",
       "Bash(git stash pop:*)",
-      "Bash(find:*)"
+      "Bash(find:*)",
+      "Bash(cat:*)",
+      "Bash(wc -l:*)"
     ]
   }
 }

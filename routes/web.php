@@ -29,6 +29,10 @@ Route::middleware(['auth', 'verified'])->group(function (): void {
     Route::livewire('dashboard/shortcodes', 'pages::dashboard.shortcodes.index')->name('dashboard.shortcodes.index');
     Route::livewire('dashboard/shortcodes/create', 'pages::dashboard.shortcodes.create')->name('dashboard.shortcodes.create');
     Route::livewire('dashboard/shortcodes/{shortcode}/edit', 'pages::dashboard.shortcodes.edit')->name('dashboard.shortcodes.edit');
+
+    Route::livewire('dashboard/locations', 'pages::dashboard.locations.index')->name('dashboard.locations.index');
+    Route::livewire('dashboard/locations/create', 'pages::dashboard.locations.create')->name('dashboard.locations.create');
+    Route::livewire('dashboard/locations/{location}/edit', 'pages::dashboard.locations.edit')->name('dashboard.locations.edit');
 });
 
 Route::view('dashboard', 'dashboard')
