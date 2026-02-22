@@ -194,3 +194,80 @@ it('replaces the featured image when a new one is uploaded on edit', function ()
     Storage::disk('public')->assertMissing($oldPath);
     expect($post->fresh()->featured_image)->not->toBe($oldPath);
 });
+
+it('save on create redirects to the edit page for the new post', function (): void {
+    $user = User::factory()->create();
+
+    $component = Livewire::actingAs($user)
+        ->test('pages::dashboard.blog.create')
+        ->set('title', 'Redirect Test Post')
+        ->set('content', 'Content.')
+        ->call('save');
+
+    $post = Post::where('title', 'Redirect Test Post')->firstOrFail();
+    $component->assertRedirect(route('dashboard.blog.edit', $post));
+});
+
+it('save on edit stays on the edit page', function (): void {
+    $user = User::factory()->create();
+    $post = Post::factory()->draft()->create(['title' => 'Stay On Page']);
+
+    Livewire::actingAs($user)
+        ->test('pages::dashboard.blog.edit', ['post' => $post])
+        ->set('title', 'Stayed')
+        ->call('save')
+        ->assertNoRedirect();
+
+    expect($post->fresh()->title)->toBe('Stayed');
+});
+
+it('saveAndExit redirects to the blog index', function (): void {
+    $user = User::factory()->create();
+    $post = Post::factory()->draft()->create();
+
+    Livewire::actingAs($user)
+        ->test('pages::dashboard.blog.edit', ['post' => $post])
+        ->call('saveAndExit')
+        ->assertRedirect(route('dashboard.blog.index'));
+});
+
+it('saveAndView redirects to the public post page', function (): void {
+    $user = User::factory()->create();
+    $post = Post::factory()->published()->create();
+
+    Livewire::actingAs($user)
+        ->test('pages::dashboard.blog.edit', ['post' => $post])
+        ->call('saveAndView')
+        ->assertRedirect(route('blog.show', $post->slug));
+});
+
+it('saveAndAddNew redirects to the create page', function (): void {
+    $user = User::factory()->create();
+    $post = Post::factory()->draft()->create();
+
+    Livewire::actingAs($user)
+        ->test('pages::dashboard.blog.edit', ['post' => $post])
+        ->call('saveAndAddNew')
+        ->assertRedirect(route('dashboard.blog.create'));
+});
+
+it('saveAndNext redirects to the next post edit page', function (): void {
+    $user = User::factory()->create();
+    $first = Post::factory()->draft()->create();
+    $second = Post::factory()->draft()->create();
+
+    Livewire::actingAs($user)
+        ->test('pages::dashboard.blog.edit', ['post' => $first])
+        ->call('saveAndNext')
+        ->assertRedirect(route('dashboard.blog.edit', $second));
+});
+
+it('saveAndNext redirects to the blog index when there is no next post', function (): void {
+    $user = User::factory()->create();
+    $post = Post::factory()->draft()->create();
+
+    Livewire::actingAs($user)
+        ->test('pages::dashboard.blog.edit', ['post' => $post])
+        ->call('saveAndNext')
+        ->assertRedirect(route('dashboard.blog.index'));
+});

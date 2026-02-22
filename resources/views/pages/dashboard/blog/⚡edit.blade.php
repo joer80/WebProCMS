@@ -64,7 +64,7 @@ new #[Layout('layouts.app')] #[Title('Edit Post')] class extends Component {
         }
     }
 
-    public function save(): void
+    private function performSave(): void
     {
         $this->validate();
 
@@ -90,8 +90,46 @@ new #[Layout('layouts.app')] #[Title('Edit Post')] class extends Component {
             'featured_image' => $imagePath,
             'published_at' => $isGoingLive && ! $wasLive ? now() : $this->post->published_at,
         ]);
+    }
 
+    public function save(): void
+    {
+        $this->performSave();
+        $this->dispatch('notify', message: 'Post saved.');
+    }
+
+    public function saveAndExit(): void
+    {
+        $this->performSave();
         $this->redirect(route('dashboard.blog.index'), navigate: true);
+    }
+
+    public function saveAndView(): void
+    {
+        $this->performSave();
+        $this->redirect(route('blog.show', $this->post->slug));
+    }
+
+    public function saveAndAddNew(): void
+    {
+        $this->performSave();
+        $this->redirect(route('dashboard.blog.create'), navigate: true);
+    }
+
+    public function saveAndNext(): void
+    {
+        $this->performSave();
+
+        $nextPost = Post::query()
+            ->where('id', '>', $this->post->id)
+            ->orderBy('id')
+            ->first();
+
+        if ($nextPost) {
+            $this->redirect(route('dashboard.blog.edit', $nextPost), navigate: true);
+        } else {
+            $this->redirect(route('dashboard.blog.index'), navigate: true);
+        }
     }
 
     /** @return \Illuminate\Database\Eloquent\Collection<int, Category> */
@@ -303,10 +341,27 @@ new #[Layout('layouts.app')] #[Title('Edit Post')] class extends Component {
 
                     {{-- Actions --}}
                     <div class="flex flex-col gap-2">
-                        <flux:button type="submit" variant="primary" wire:loading.attr="disabled" class="w-full justify-center">
-                            <span wire:loading.remove>Update Post</span>
-                            <span wire:loading>Saving…</span>
-                        </flux:button>
+                        <flux:button.group class="w-full">
+                            <flux:button
+                                type="submit"
+                                variant="primary"
+                                class="flex-1 justify-center"
+                                wire:loading.attr="disabled"
+                                wire:target="save"
+                            >
+                                Update Post
+                            </flux:button>
+                            <flux:dropdown position="bottom" align="end">
+                                <flux:button variant="primary" icon="chevron-down" wire:loading.attr="disabled" />
+                                <flux:menu>
+                                    <flux:menu.item wire:click="saveAndExit" icon="arrow-left">Save + Exit</flux:menu.item>
+                                    <flux:menu.item wire:click="saveAndView" icon="arrow-top-right-on-square">Save + View</flux:menu.item>
+                                    <flux:menu.item wire:click="saveAndAddNew" icon="document-plus">Save + Add New</flux:menu.item>
+                                    <flux:menu.separator />
+                                    <flux:menu.item wire:click="saveAndNext" icon="chevron-right">Save + Next</flux:menu.item>
+                                </flux:menu>
+                            </flux:dropdown>
+                        </flux:button.group>
                         <flux:button href="{{ route('dashboard.blog.index') }}" variant="ghost" wire:navigate class="w-full justify-center">
                             Cancel
                         </flux:button>
