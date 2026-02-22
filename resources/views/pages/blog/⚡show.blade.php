@@ -10,7 +10,7 @@ new #[Layout('layouts.public')] class extends Component {
     public function mount(string $slug): void
     {
         $this->post = Post::query()
-            ->published()
+            ->accessible()
             ->with('category')
             ->where('slug', $slug)
             ->firstOrFail();

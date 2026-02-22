@@ -21,7 +21,7 @@ new #[Layout('layouts.app')] #[Title('New Post')] class extends Component {
     #[Validate('required|string')]
     public string $content = '';
 
-    #[Validate('required|in:draft,published')]
+    #[Validate('required|in:draft,published,unlisted,unpublished')]
     public string $status = 'published';
 
     #[Validate('nullable|integer|exists:categories,id')]
@@ -61,7 +61,7 @@ new #[Layout('layouts.app')] #[Title('New Post')] class extends Component {
             'status' => $this->status,
             'category_id' => $this->categoryId,
             'featured_image' => $imagePath,
-            'published_at' => $this->status === 'published' ? now() : null,
+            'published_at' => in_array($this->status, ['published', 'unlisted']) ? now() : null,
         ]);
 
         $this->redirect(route('dashboard.blog.index'), navigate: true);
@@ -199,7 +199,15 @@ new #[Layout('layouts.app')] #[Title('New Post')] class extends Component {
                             <flux:select wire:model="status">
                                 <flux:select.option value="draft">Draft</flux:select.option>
                                 <flux:select.option value="published">Published</flux:select.option>
+                                <flux:select.option value="unlisted">Unlisted</flux:select.option>
+                                <flux:select.option value="unpublished">Unpublished</flux:select.option>
                             </flux:select>
+                            <div x-data>
+                                <flux:description x-show="$wire.status === 'draft'">Saved but not yet visible to the public.</flux:description>
+                                <flux:description x-show="$wire.status === 'published'">Live and visible in listings and search.</flux:description>
+                                <flux:description x-show="$wire.status === 'unlisted'">Accessible via direct link, but hidden from listings and search.</flux:description>
+                                <flux:description x-show="$wire.status === 'unpublished'">Removed from public access — visitors will see a 404.</flux:description>
+                            </div>
                             <flux:error name="status" />
                         </flux:field>
 

@@ -78,6 +78,12 @@ class Post extends Model
         $query->where('status', 'published');
     }
 
+    /** @param Builder<Post> $query */
+    public function scopeAccessible(Builder $query): void
+    {
+        $query->whereIn('status', ['published', 'unlisted']);
+    }
+
     public function featuredImageUrl(): ?string
     {
         return $this->featured_image ? Storage::disk('public')->url($this->featured_image) : null;

@@ -22,13 +22,14 @@ it('shows the blog dashboard to authenticated users', function (): void {
 });
 
 it('lists all posts (including drafts) in the dashboard', function (): void {
+    \Livewire\Features\SupportLazyLoading\SupportLazyLoading::disableWhileTesting();
+
     $user = User::factory()->create();
     Post::factory()->published()->create(['title' => 'Published Post']);
     Post::factory()->draft()->create(['title' => 'Draft Post']);
 
-    $this->actingAs($user)
-        ->get(route('dashboard.blog.index'))
-        ->assertOk()
+    Livewire::actingAs($user)
+        ->test('pages::dashboard.blog.index')
         ->assertSeeText('Published Post')
         ->assertSeeText('Draft Post');
 });

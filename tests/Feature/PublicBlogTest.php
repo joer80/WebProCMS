@@ -77,6 +77,32 @@ it('returns 404 for draft posts on the show page', function (): void {
         ->assertNotFound();
 });
 
+it('returns 404 for unpublished posts on the show page', function (): void {
+    $post = Post::factory()->unpublished()->create();
+
+    $this->get(route('blog.show', $post->slug))
+        ->assertNotFound();
+});
+
+it('renders an unlisted post via direct URL', function (): void {
+    $post = Post::factory()->unlisted()->create([
+        'title' => 'Unlisted Post',
+        'content' => 'Unlisted content.',
+    ]);
+
+    $this->get(route('blog.show', $post->slug))
+        ->assertOk()
+        ->assertSeeText('Unlisted Post');
+});
+
+it('does not show unlisted posts in the blog index listing', function (): void {
+    Post::factory()->unlisted()->create(['title' => 'Unlisted Post']);
+
+    $this->get(route('blog.index'))
+        ->assertOk()
+        ->assertDontSeeText('Unlisted Post');
+});
+
 it('returns 404 for a non-existent slug', function (): void {
     $this->get(route('blog.show', 'no-such-post'))
         ->assertNotFound();

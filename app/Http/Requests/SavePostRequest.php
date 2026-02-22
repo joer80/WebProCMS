@@ -26,7 +26,7 @@ class SavePostRequest extends FormRequest
             'title' => ['required', 'string', 'max:255'],
             'excerpt' => ['nullable', 'string', 'max:500'],
             'content' => ['required', 'string'],
-            'status' => ['required', Rule::in(['draft', 'published'])],
+            'status' => ['required', Rule::in(['draft', 'published', 'unlisted', 'unpublished'])],
             'category_id' => ['nullable', 'integer', Rule::exists('categories', 'id')],
         ];
     }

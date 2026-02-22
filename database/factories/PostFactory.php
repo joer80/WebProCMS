@@ -48,6 +48,22 @@ class PostFactory extends Factory
         ]);
     }
 
+    public function unlisted(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'status' => 'unlisted',
+            'published_at' => now(),
+        ]);
+    }
+
+    public function unpublished(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'status' => 'unpublished',
+            'published_at' => null,
+        ]);
+    }
+
     public function withoutCategory(): static
     {
         return $this->state(fn (array $attributes) => [

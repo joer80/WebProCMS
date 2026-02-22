@@ -83,7 +83,15 @@ new #[Layout('layouts.app')] #[Title('Blog Posts')] #[Lazy] class extends Compon
                                     {{ $post->category?->name ?? '—' }}
                                 </td>
                                 <td class="px-4 py-3 hidden md:table-cell">
-                                    <flux:badge variant="{{ $post->status === 'published' ? 'green' : 'zinc' }}" size="sm">
+                                    @php
+                                        $badgeVariant = match($post->status) {
+                                            'published' => 'green',
+                                            'unlisted' => 'blue',
+                                            'unpublished' => 'red',
+                                            default => 'zinc',
+                                        };
+                                    @endphp
+                                    <flux:badge variant="{{ $badgeVariant }}" size="sm">
                                         {{ ucfirst($post->status) }}
                                     </flux:badge>
                                 </td>
@@ -92,7 +100,7 @@ new #[Layout('layouts.app')] #[Title('Blog Posts')] #[Lazy] class extends Compon
                                 </td>
                                 <td class="px-4 py-3">
                                     <div class="flex items-center justify-end gap-2">
-                                        @if ($post->status === 'published')
+                                        @if (in_array($post->status, ['published', 'unlisted']))
                                             <flux:button
                                                 href="{{ route('blog.show', $post->slug) }}"
                                                 variant="ghost"
