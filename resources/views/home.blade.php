@@ -119,6 +119,27 @@
         </div>
     </section>
 
+    {{-- Flux card example --}}
+    <section class="mb-24">
+        <div class="text-center mb-12">
+            <span class="inline-block text-xs font-semibold tracking-widest uppercase text-[#706f6c] dark:text-[#A1A09A] mb-3">Built for speed</span>
+            <h2 class="text-3xl font-semibold leading-tight">From connection to insight in minutes.</h2>
+        </div>
+        <div class="grid md:grid-cols-3 gap-6">
+            @foreach ([
+                ['Connect', 'circle-stack', 'Paste your database URL and GetRows handles the rest. Supports PostgreSQL, MySQL, and SQLite.'],
+                ['Query', 'code-bracket', 'Write SQL or use the visual builder. Autocomplete and inline hints keep you moving fast.'],
+                ['Share', 'share', 'Send a live link to your results. No logins, no exports — just a URL that always shows fresh data.'],
+            ] as [$title, $icon, $desc])
+                <flux:card class="flex flex-col gap-3">
+                    <flux:icon :name="$icon" class="size-6 text-[#706f6c] dark:text-[#A1A09A]" />
+                    <flux:heading size="lg">{{ $title }}</flux:heading>
+                    <flux:text>{{ $desc }}</flux:text>
+                </flux:card>
+            @endforeach
+        </div>
+    </section>
+
     {{-- CTA --}}
     <section class="mb-8 bg-primary dark:bg-primary-foreground rounded-lg p-12 lg:p-16 text-center">
         <h2 class="text-3xl font-semibold text-primary-foreground dark:text-primary leading-tight mb-4">Ready to get started?</h2>
