@@ -54,7 +54,7 @@ new #[Layout('layouts.public')] class extends Component {
             <article>
                 <h1 class="text-4xl font-semibold leading-tight mb-4">{{ $post->title }}</h1>
 
-                <p class="text-sm text-[#706f6c] dark:text-[#A1A09A] mb-8">
+                <p class="text-sm text-[#706f6c] dark:text-[#A1A09A] mb-4">
                     {{ $post->published_at?->format('F j, Y') }}
                 </p>
 
