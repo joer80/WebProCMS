@@ -151,3 +151,21 @@ it('links the category on homepage cards to the filtered blog index', function (
         ->assertOk()
         ->assertSee(route('blog.index', ['category' => $category->slug]));
 });
+
+it('shows next post link on the show page when a newer post exists', function (): void {
+    $first = Post::factory()->published()->create(['title' => 'First Post', 'published_at' => now()->subDay()]);
+    $second = Post::factory()->published()->create(['title' => 'Second Post', 'published_at' => now()]);
+
+    $this->get(route('blog.show', $first->slug))
+        ->assertOk()
+        ->assertSee(route('blog.show', $second->slug))
+        ->assertSeeText('Second Post');
+});
+
+it('shows no next post link on the show page when there is no newer post', function (): void {
+    $post = Post::factory()->published()->create(['title' => 'Only Post', 'published_at' => now()]);
+
+    $this->get(route('blog.show', $post->slug))
+        ->assertOk()
+        ->assertDontSee(route('blog.show', $post->slug).'">');
+});

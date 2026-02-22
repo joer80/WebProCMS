@@ -23,6 +23,7 @@ class Post extends Model
         'status',
         'published_at',
         'featured_image',
+        'layout',
     ];
 
     protected static function booted(): void

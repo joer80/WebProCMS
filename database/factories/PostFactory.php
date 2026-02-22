@@ -29,6 +29,7 @@ class PostFactory extends Factory
             'content' => implode("\n\n", fake()->paragraphs(5)),
             'status' => 'draft',
             'published_at' => null,
+            'layout' => 'image-top',
         ];
     }
 

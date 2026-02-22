@@ -27,6 +27,9 @@ new #[Layout('layouts.app')] #[Title('Edit Post')] class extends Component {
     #[Validate('required|in:draft,published,unlisted,unpublished')]
     public string $status = 'draft';
 
+    #[Validate('required|in:image-top,image-right')]
+    public string $layout = 'image-top';
+
     #[Validate('nullable|integer|exists:categories,id')]
     public ?int $categoryId = null;
 
@@ -42,6 +45,7 @@ new #[Layout('layouts.app')] #[Title('Edit Post')] class extends Component {
         $this->excerpt = $post->excerpt ?? '';
         $this->content = $post->content;
         $this->status = $post->status;
+        $this->layout = $post->layout ?? 'image-top';
         $this->categoryId = $post->category_id;
     }
 
@@ -86,6 +90,7 @@ new #[Layout('layouts.app')] #[Title('Edit Post')] class extends Component {
             'excerpt' => $this->excerpt ?: null,
             'content' => $this->content,
             'status' => $this->status,
+            'layout' => $this->layout,
             'category_id' => $this->categoryId,
             'featured_image' => $imagePath,
             'published_at' => $isGoingLive && ! $wasLive ? now() : $this->post->published_at,
@@ -274,6 +279,43 @@ new #[Layout('layouts.app')] #[Title('Edit Post')] class extends Component {
                             class="block w-full text-sm text-zinc-600 dark:text-zinc-400 file:mr-3 file:py-1.5 file:px-3 file:rounded-sm file:border file:border-zinc-300 dark:file:border-zinc-600 file:text-sm file:font-medium file:bg-zinc-50 dark:file:bg-zinc-800 file:text-zinc-700 dark:file:text-zinc-300 hover:file:bg-zinc-100 dark:hover:file:bg-zinc-700 transition-colors"
                         />
                         <flux:error name="featuredImage" />
+                    </div>
+
+                    {{-- Layout --}}
+                    <div class="rounded-lg border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-900 p-4 space-y-3">
+                        <flux:label>Layout</flux:label>
+                        <div class="grid grid-cols-2 gap-2">
+                            <label class="cursor-pointer">
+                                <input type="radio" wire:model="layout" value="image-top" class="sr-only peer" />
+                                <div class="rounded-md border-2 border-zinc-200 dark:border-zinc-700 peer-checked:border-blue-500 dark:peer-checked:border-blue-400 p-2 transition-colors">
+                                    {{-- Mini preview: image-top --}}
+                                    <div class="space-y-1 mb-2">
+                                        <div class="h-6 w-full bg-zinc-300 dark:bg-zinc-600 rounded-sm"></div>
+                                        <div class="h-1.5 w-full bg-zinc-200 dark:bg-zinc-700 rounded-sm"></div>
+                                        <div class="h-1.5 w-4/5 bg-zinc-200 dark:bg-zinc-700 rounded-sm"></div>
+                                        <div class="h-1.5 w-full bg-zinc-200 dark:bg-zinc-700 rounded-sm"></div>
+                                    </div>
+                                    <p class="text-xs text-center text-zinc-600 dark:text-zinc-400 font-medium">Image Top</p>
+                                </div>
+                            </label>
+                            <label class="cursor-pointer">
+                                <input type="radio" wire:model="layout" value="image-right" class="sr-only peer" />
+                                <div class="rounded-md border-2 border-zinc-200 dark:border-zinc-700 peer-checked:border-blue-500 dark:peer-checked:border-blue-400 p-2 transition-colors">
+                                    {{-- Mini preview: image-right --}}
+                                    <div class="flex gap-1 mb-2">
+                                        <div class="flex-1 space-y-1">
+                                            <div class="h-1.5 w-full bg-zinc-200 dark:bg-zinc-700 rounded-sm"></div>
+                                            <div class="h-1.5 w-4/5 bg-zinc-200 dark:bg-zinc-700 rounded-sm"></div>
+                                            <div class="h-1.5 w-full bg-zinc-200 dark:bg-zinc-700 rounded-sm"></div>
+                                            <div class="h-1.5 w-3/4 bg-zinc-200 dark:bg-zinc-700 rounded-sm"></div>
+                                        </div>
+                                        <div class="w-8 h-full bg-zinc-300 dark:bg-zinc-600 rounded-sm self-stretch min-h-8"></div>
+                                    </div>
+                                    <p class="text-xs text-center text-zinc-600 dark:text-zinc-400 font-medium">Image Right</p>
+                                </div>
+                            </label>
+                        </div>
+                        <flux:error name="layout" />
                     </div>
 
                     {{-- Status & Category --}}

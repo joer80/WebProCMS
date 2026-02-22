@@ -271,3 +271,29 @@ it('saveAndNext redirects to the blog index when there is no next post', functio
         ->call('saveAndNext')
         ->assertRedirect(route('dashboard.blog.index'));
 });
+
+it('saves the layout when creating a post', function (): void {
+    $user = User::factory()->create();
+
+    Livewire::actingAs($user)
+        ->test('pages::dashboard.blog.create')
+        ->set('title', 'Layout Test Post')
+        ->set('content', 'Content.')
+        ->set('layout', 'image-right')
+        ->call('save');
+
+    expect(Post::where('title', 'Layout Test Post')->value('layout'))->toBe('image-right');
+});
+
+it('saves the layout when editing a post', function (): void {
+    $user = User::factory()->create();
+    $post = Post::factory()->create(['layout' => 'image-top']);
+
+    Livewire::actingAs($user)
+        ->test('pages::dashboard.blog.edit', ['post' => $post])
+        ->assertSet('layout', 'image-top')
+        ->set('layout', 'image-right')
+        ->call('save');
+
+    expect($post->fresh()->layout)->toBe('image-right');
+});
