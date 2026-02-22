@@ -21,6 +21,9 @@
                     <flux:sidebar.item icon="tag" :href="route('dashboard.categories.index')" :current="request()->routeIs('dashboard.categories.*')" wire:navigate>
                         {{ __('Categories') }}
                     </flux:sidebar.item>
+                    <flux:sidebar.item icon="code-bracket" :href="route('dashboard.shortcodes.index')" :current="request()->routeIs('dashboard.shortcodes.*')" wire:navigate>
+                        {{ __('Shortcodes') }}
+                    </flux:sidebar.item>
                 </flux:sidebar.group>
             </flux:sidebar.nav>
 

@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\Post;
+use App\Support\ShortcodeProcessor;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 
@@ -19,6 +20,11 @@ new #[Layout('layouts.public')] class extends Component {
     public function title(): string
     {
         return $this->post->title.' — GetRows';
+    }
+
+    public function getProcessedContentProperty(): string
+    {
+        return ShortcodeProcessor::process($this->post->content);
     }
 
     public function getNextPostProperty(): ?Post
@@ -65,7 +71,7 @@ new #[Layout('layouts.public')] class extends Component {
                 @endif
 
                 <div class="leading-relaxed text-[#1b1b18] dark:text-[#EDEDEC] whitespace-pre-wrap">
-                    {{ $post->content }}
+                    {!! $this->processedContent !!}
                 </div>
 
                 @if ($post->cta_buttons)
@@ -118,7 +124,7 @@ new #[Layout('layouts.public')] class extends Component {
             @endif
 
             <div class="leading-relaxed text-[#1b1b18] dark:text-[#EDEDEC] whitespace-pre-wrap">
-                {{ $post->content }}
+                {!! $this->processedContent !!}
             </div>
 
             @if ($post->cta_buttons)

@@ -25,6 +25,10 @@ Route::middleware(['auth', 'verified'])->group(function (): void {
     Route::livewire('dashboard/categories', 'pages::dashboard.categories.index')->name('dashboard.categories.index');
     Route::livewire('dashboard/categories/create', 'pages::dashboard.categories.create')->name('dashboard.categories.create');
     Route::livewire('dashboard/categories/{category}/edit', 'pages::dashboard.categories.edit')->name('dashboard.categories.edit');
+
+    Route::livewire('dashboard/shortcodes', 'pages::dashboard.shortcodes.index')->name('dashboard.shortcodes.index');
+    Route::livewire('dashboard/shortcodes/create', 'pages::dashboard.shortcodes.create')->name('dashboard.shortcodes.create');
+    Route::livewire('dashboard/shortcodes/{shortcode}/edit', 'pages::dashboard.shortcodes.edit')->name('dashboard.shortcodes.edit');
 });
 
 Route::view('dashboard', 'dashboard')
