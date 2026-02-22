@@ -1,4 +1,4 @@
-<x-layouts::public title="GetRows — Query Your Data in Seconds">
+<x-layouts::public title="GetRows — Query Your Data in Seconds" description="GetRows turns your database into an instant, shareable workspace. Write a query, explore results, and share insights — no SQL expertise required.">
     {{-- Hero --}}
     <section class="text-center py-16 lg:py-24">
         <span class="inline-block text-xs font-semibold tracking-widest uppercase text-[#706f6c] dark:text-[#A1A09A] mb-4">Now in public beta</span>

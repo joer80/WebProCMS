@@ -1,4 +1,4 @@
-<x-layouts::public title="Instant Query Editor — GetRows">
+<x-layouts::public title="Instant Query Editor — GetRows" description="Write SQL with intelligent autocomplete, syntax highlighting, and real-time error hints. Results appear as you type — no page reload, no waiting.">
     {{-- Breadcrumb --}}
     <nav class="mb-8 text-sm text-[#706f6c] dark:text-[#A1A09A]">
         <a href="{{ route('services') }}" class="hover:text-primary dark:hover:text-primary-surface transition-colors">Services</a>

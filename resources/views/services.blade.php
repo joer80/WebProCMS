@@ -1,4 +1,4 @@
-<x-layouts::public title="Services — GetRows">
+<x-layouts::public title="Services — GetRows" description="Explore GetRows services: instant SQL query editor, visual query builder, live shared results, flexible exports, query history, and role-based access control.">
     {{-- Hero --}}
     <section class="mb-16 text-center">
         <span class="inline-block text-xs font-semibold tracking-widest uppercase text-[#706f6c] dark:text-[#A1A09A] mb-4">What we offer</span>

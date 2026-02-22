@@ -1,4 +1,4 @@
-<x-layouts::public title="About Us">
+<x-layouts::public title="About Us — GetRows" description="Learn about GetRows — our story, mission, and the team behind the data tool built for everyone. Founded in 2023 to make data accessible and actionable.">
     {{-- Hero --}}
     <section class="mb-16 text-center">
         <h1 class="text-4xl font-semibold leading-tight mb-4">About GetRows</h1>

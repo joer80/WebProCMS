@@ -4,7 +4,7 @@ use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
 use Livewire\Component;
 
-new #[Layout('layouts.public')] #[Title('Locations')] class extends Component {
+new #[Layout('layouts.public', ['description' => 'Find a GetRows office near you. We have locations across the South and Midwest including Dallas, Houston, Little Rock, Fayetteville, and Oklahoma City.'])] #[Title('Locations — GetRows')] class extends Component {
     public string $selectedState = '';
 
     /** @return array<int, array<string, string>> */

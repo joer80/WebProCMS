@@ -5,7 +5,7 @@ use Livewire\Attributes\Title;
 use Livewire\Attributes\Validate;
 use Livewire\Component;
 
-new #[Layout('layouts.public')] #[Title('Contact Us')] class extends Component {
+new #[Layout('layouts.public', ['description' => 'Get in touch with the GetRows team. We respond within one business day. Ask us about pricing, enterprise plans, or anything else.'])] #[Title('Contact Us — GetRows')] class extends Component {
     #[Validate('required|string|max:100')]
     public string $firstName = '';
 
