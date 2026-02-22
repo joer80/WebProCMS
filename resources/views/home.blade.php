@@ -70,6 +70,7 @@
                 ['Team-friendly', 'Share queries and results with a single link.'],
                 ['Always fast', 'Optimised query execution for big datasets.'],
             ] as [$title, $desc])
+                {{-- Example of card without using Flux --}}
                 <div class="bg-white dark:bg-[#161615] rounded-lg shadow-[inset_0px_0px_0px_1px_rgba(26,26,0,0.16)] dark:shadow-[inset_0px_0px_0px_1px_#fffaed2d] p-5">
                     <p class="font-semibold text-sm mb-1">{{ $title }}</p>
                     <p class="text-[#706f6c] dark:text-[#A1A09A] text-xs leading-normal">{{ $desc }}</p>
@@ -111,6 +112,7 @@
                     'description' => 'Keep sensitive tables safe. Grant read-only access to specific users or teams without touching database permissions.',
                 ],
             ] as $service)
+                {{-- Example of card without using Flux --}}
                 <div class="bg-white dark:bg-[#161615] rounded-lg shadow-[inset_0px_0px_0px_1px_rgba(26,26,0,0.16)] dark:shadow-[inset_0px_0px_0px_1px_#fffaed2d] p-6">
                     <h3 class="font-semibold mb-2">{{ $service['title'] }}</h3>
                     <p class="text-[#706f6c] dark:text-[#A1A09A] text-sm leading-normal">{{ $service['description'] }}</p>
