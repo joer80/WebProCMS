@@ -23,16 +23,6 @@ return [
     ],
 
     [
-        'name' => 'GetRows Austin',
-        'address' => '910 Congress Avenue',
-        'city' => 'Austin',
-        'state' => 'TX',
-        'zip' => '78701',
-        'phone' => '(512) 555-0303',
-        'photo' => 'https://picsum.photos/seed/getrows-austin/600/400',
-    ],
-
-    [
         'name' => 'GetRows Little Rock',
         'address' => '321 W Markham Street',
         'city' => 'Little Rock',
@@ -53,16 +43,6 @@ return [
     ],
 
     [
-        'name' => 'GetRows Fort Smith',
-        'address' => '789 Garrison Avenue',
-        'city' => 'Fort Smith',
-        'state' => 'AR',
-        'zip' => '72901',
-        'phone' => '(479) 555-0606',
-        'photo' => 'https://picsum.photos/seed/getrows-fortsmith/600/400',
-    ],
-
-    [
         'name' => 'GetRows Oklahoma City',
         'address' => '150 N Robinson Avenue',
         'city' => 'Oklahoma City',
@@ -70,36 +50,6 @@ return [
         'zip' => '73102',
         'phone' => '(405) 555-0707',
         'photo' => 'https://picsum.photos/seed/getrows-okc/600/400',
-    ],
-
-    [
-        'name' => 'GetRows New Orleans',
-        'address' => '200 Magazine Street',
-        'city' => 'New Orleans',
-        'state' => 'LA',
-        'zip' => '70130',
-        'phone' => '(504) 555-0808',
-        'photo' => 'https://picsum.photos/seed/getrows-neworleans/600/400',
-    ],
-
-    [
-        'name' => 'GetRows Nashville',
-        'address' => '305 Broadway',
-        'city' => 'Nashville',
-        'state' => 'TN',
-        'zip' => '37201',
-        'phone' => '(615) 555-0909',
-        'photo' => 'https://picsum.photos/seed/getrows-nashville/600/400',
-    ],
-
-    [
-        'name' => 'GetRows St. Louis',
-        'address' => '720 Olive Street',
-        'city' => 'St. Louis',
-        'state' => 'MO',
-        'zip' => '63101',
-        'phone' => '(314) 555-1010',
-        'photo' => 'https://picsum.photos/seed/getrows-stlouis/600/400',
     ],
 
 ];
