@@ -47,8 +47,44 @@
             {{ $slot }}
         </main>
 
-        <footer class="w-full max-w-4xl mx-auto border-t border-[#e3e3e0] dark:border-[#3E3E3A] pt-6 pb-4 mt-16 text-center text-sm text-[#706f6c] dark:text-[#A1A09A]">
-            &copy; {{ date('Y') }} {{ config('app.name') }}. All rights reserved.
+        <footer class="w-full max-w-4xl mx-auto border-t border-[#e3e3e0] dark:border-[#3E3E3A] mt-16 pt-10 pb-8">
+            <div class="flex flex-col gap-8 sm:flex-row sm:justify-between">
+                <div class="flex flex-col gap-3">
+                    <a href="{{ route('home') }}">
+                        <img src="{{ asset('images/logo.svg') }}" alt="{{ config('app.name') }}" class="h-7 w-auto" />
+                    </a>
+                    <p class="text-sm text-[#706f6c] dark:text-[#A1A09A] max-w-xs">
+                        Query your data in seconds.
+                    </p>
+                </div>
+                <div class="flex gap-12">
+                    <div class="flex flex-col gap-3">
+                        <p class="text-xs font-semibold uppercase tracking-wider text-[#706f6c] dark:text-[#A1A09A]">Company</p>
+                        <nav class="flex flex-col gap-2">
+                            <a href="{{ route('about') }}" class="text-sm text-[#1b1b18] dark:text-[#EDEDEC] hover:text-[#706f6c] dark:hover:text-[#A1A09A] transition-colors">About</a>
+                            <a href="{{ route('services') }}" class="text-sm text-[#1b1b18] dark:text-[#EDEDEC] hover:text-[#706f6c] dark:hover:text-[#A1A09A] transition-colors">Services</a>
+                            <a href="{{ route('locations') }}" class="text-sm text-[#1b1b18] dark:text-[#EDEDEC] hover:text-[#706f6c] dark:hover:text-[#A1A09A] transition-colors">Locations</a>
+                            <a href="{{ route('contact') }}" class="text-sm text-[#1b1b18] dark:text-[#EDEDEC] hover:text-[#706f6c] dark:hover:text-[#A1A09A] transition-colors">Contact</a>
+                        </nav>
+                    </div>
+                    <div class="flex flex-col gap-3">
+                        <p class="text-xs font-semibold uppercase tracking-wider text-[#706f6c] dark:text-[#A1A09A]">Account</p>
+                        <nav class="flex flex-col gap-2">
+                            @auth
+                                <a href="{{ url('/dashboard') }}" class="text-sm text-[#1b1b18] dark:text-[#EDEDEC] hover:text-[#706f6c] dark:hover:text-[#A1A09A] transition-colors">Dashboard</a>
+                            @else
+                                <a href="{{ route('login') }}" class="text-sm text-[#1b1b18] dark:text-[#EDEDEC] hover:text-[#706f6c] dark:hover:text-[#A1A09A] transition-colors">Log in</a>
+                                @if (Route::has('register'))
+                                    <a href="{{ route('register') }}" class="text-sm text-[#1b1b18] dark:text-[#EDEDEC] hover:text-[#706f6c] dark:hover:text-[#A1A09A] transition-colors">Register</a>
+                                @endif
+                            @endauth
+                        </nav>
+                    </div>
+                </div>
+            </div>
+            <div class="mt-10 border-t border-[#e3e3e0] dark:border-[#3E3E3A] pt-6">
+                <p class="text-xs text-[#706f6c] dark:text-[#A1A09A]">&copy; {{ date('Y') }} {{ config('app.name') }}. All rights reserved.</p>
+            </div>
         </footer>
 
         @fluxScripts
