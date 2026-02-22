@@ -15,19 +15,22 @@
                     <flux:sidebar.item icon="home" :href="route('dashboard')" :current="request()->routeIs('dashboard')" wire:navigate>
                         {{ __('Dashboard') }}
                     </flux:sidebar.item>
+                    <flux:sidebar.item icon="document-text" :href="route('dashboard.blog.index')" :current="request()->routeIs('dashboard.blog.*')" wire:navigate>
+                        {{ __('Blog') }}
+                    </flux:sidebar.item>
+                    <flux:sidebar.item icon="tag" :href="route('dashboard.categories.index')" :current="request()->routeIs('dashboard.categories.*')" wire:navigate>
+                        {{ __('Categories') }}
+                    </flux:sidebar.item>
                 </flux:sidebar.group>
             </flux:sidebar.nav>
 
             <flux:spacer />
 
             <flux:sidebar.nav>
-                <flux:sidebar.item icon="folder-git-2" href="https://github.com/laravel/livewire-starter-kit" target="_blank">
-                    {{ __('Repository') }}
+                <flux:sidebar.item icon="globe-alt" :href="route('home')" wire:navigate>
+                    {{ __('View Website') }}
                 </flux:sidebar.item>
 
-                <flux:sidebar.item icon="book-open-text" href="https://laravel.com/docs/starter-kits#livewire" target="_blank">
-                    {{ __('Documentation') }}
-                </flux:sidebar.item>
             </flux:sidebar.nav>
 
             <x-desktop-user-menu class="hidden lg:block" :name="auth()->user()->name" />
@@ -91,6 +94,8 @@
 
         {{ $slot }}
 
+        <script type="text/javascript" src="https://unpkg.com/trix@2.1.1/dist/trix.umd.min.js"></script>
+        @stack('scripts')
         @fluxScripts
     </body>
 </html>
