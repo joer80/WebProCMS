@@ -67,6 +67,21 @@ new #[Layout('layouts.public')] class extends Component {
                 <div class="leading-relaxed text-[#1b1b18] dark:text-[#EDEDEC] whitespace-pre-wrap">
                     {{ $post->content }}
                 </div>
+
+                @if ($post->cta_buttons)
+                    <div class="mt-8 flex flex-wrap gap-3">
+                        @foreach ($post->cta_buttons as $button)
+                            <a
+                                href="{{ $button['url'] }}"
+                                target="{{ $button['target'] ?? '_self' }}"
+                                @if (($button['target'] ?? '_self') === '_blank') rel="noopener noreferrer" @endif
+                                class="inline-flex items-center px-6 py-3 bg-[#1b1b18] dark:bg-[#EDEDEC] text-[#EDEDEC] dark:text-[#1b1b18] rounded-lg font-medium hover:opacity-90 transition-opacity"
+                            >
+                                {{ $button['text'] }}
+                            </a>
+                        @endforeach
+                    </div>
+                @endif
             </article>
 
             @if ($post->featured_image)
@@ -105,6 +120,21 @@ new #[Layout('layouts.public')] class extends Component {
             <div class="leading-relaxed text-[#1b1b18] dark:text-[#EDEDEC] whitespace-pre-wrap">
                 {{ $post->content }}
             </div>
+
+            @if ($post->cta_buttons)
+                <div class="mt-8 flex flex-wrap gap-3">
+                    @foreach ($post->cta_buttons as $button)
+                        <a
+                            href="{{ $button['url'] }}"
+                            target="{{ $button['target'] ?? '_self' }}"
+                            @if (($button['target'] ?? '_self') === '_blank') rel="noopener noreferrer" @endif
+                            class="inline-flex items-center px-6 py-3 bg-[#1b1b18] dark:bg-[#EDEDEC] text-[#EDEDEC] dark:text-[#1b1b18] rounded-lg font-medium hover:opacity-90 transition-opacity"
+                        >
+                            {{ $button['text'] }}
+                        </a>
+                    @endforeach
+                </div>
+            @endif
         </article>
     @endif
 

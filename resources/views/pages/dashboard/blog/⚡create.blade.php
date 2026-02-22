@@ -33,7 +33,27 @@ new #[Layout('layouts.app')] #[Title('New Post')] class extends Component {
     #[Validate('nullable|image|max:51200')]
     public $featuredImage = null;
 
+    #[Validate([
+        'ctaButtons.*.text' => 'nullable|string|max:255',
+        'ctaButtons.*.url' => 'nullable|url|max:2048',
+        'ctaButtons.*.newTab' => 'nullable|boolean',
+    ])]
+    public array $ctaButtons = [];
+
     public string $newCategoryName = '';
+
+    public function addCtaButton(): void
+    {
+        if (count($this->ctaButtons) < 2) {
+            $this->ctaButtons[] = ['text' => '', 'url' => '', 'newTab' => false];
+        }
+    }
+
+    public function removeCtaButton(int $index): void
+    {
+        array_splice($this->ctaButtons, $index, 1);
+        $this->ctaButtons = array_values($this->ctaButtons);
+    }
 
     public function createCategory(): void
     {
@@ -57,10 +77,20 @@ new #[Layout('layouts.app')] #[Title('New Post')] class extends Component {
             ImageResizer::resizeToMaxWidth($imagePath);
         }
 
+        $ctaButtons = array_values(array_filter(
+            array_map(fn ($btn) => [
+                'text' => trim($btn['text'] ?? ''),
+                'url' => trim($btn['url'] ?? ''),
+                'target' => ($btn['newTab'] ?? false) ? '_blank' : '_self',
+            ], $this->ctaButtons),
+            fn ($btn) => $btn['text'] !== '' && $btn['url'] !== ''
+        ));
+
         return Post::create([
             'title' => $this->title,
             'excerpt' => $this->excerpt ?: null,
             'content' => $this->content,
+            'cta_buttons' => $ctaButtons ?: null,
             'status' => $this->status,
             'layout' => $this->layout,
             'category_id' => $this->categoryId,
@@ -132,10 +162,82 @@ new #[Layout('layouts.app')] #[Title('New Post')] class extends Component {
                         <flux:textarea wire:model="content" rows="20" placeholder="Write your post content here…" />
                         <flux:error name="content" />
                     </flux:field>
+
+                    {{-- Call to Action Buttons --}}
+                    <div class="rounded-lg border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-900 p-4 space-y-4">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <flux:label class="mb-0">
+                                    Call to Action Buttons
+                                    <flux:badge size="sm" variant="outline" class="ml-1">Optional</flux:badge>
+                                </flux:label>
+                                <flux:description class="mt-0.5">Displayed below the post content.</flux:description>
+                            </div>
+                            @if (count($ctaButtons) < 2)
+                                <flux:button type="button" wire:click="addCtaButton" size="sm" variant="ghost" icon="plus">Add Button</flux:button>
+                            @endif
+                        </div>
+
+                        @if (count($ctaButtons) > 0)
+                            <div class="grid grid-cols-2 gap-3">
+                                @foreach ($ctaButtons as $index => $button)
+                                    <div class="space-y-3 p-3 rounded-md bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700" wire:key="cta-{{ $index }}">
+                                        <div class="flex items-center justify-between">
+                                            <span class="text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wide">Button {{ $index + 1 }}</span>
+                                            <button
+                                                type="button"
+                                                wire:click="removeCtaButton({{ $index }})"
+                                                class="text-xs text-zinc-400 hover:text-red-500 dark:hover:text-red-400 transition-colors"
+                                            >Remove</button>
+                                        </div>
+
+                                        <flux:field>
+                                            <flux:label>Button Text</flux:label>
+                                            <flux:input wire:model="ctaButtons.{{ $index }}.text" type="text" placeholder="Get Started" />
+                                            <flux:error name="ctaButtons.{{ $index }}.text" />
+                                        </flux:field>
+
+                                        <flux:field>
+                                            <flux:label>Button URL</flux:label>
+                                            <flux:input wire:model="ctaButtons.{{ $index }}.url" type="url" placeholder="https://…" />
+                                            <flux:error name="ctaButtons.{{ $index }}.url" />
+                                        </flux:field>
+
+                                        <flux:switch wire:model="ctaButtons.{{ $index }}.newTab" label="Open in new tab" />
+                                    </div>
+                                @endforeach
+                            </div>
+                        @else
+                            <p class="text-sm text-center text-zinc-400 dark:text-zinc-500 py-1">No buttons added yet.</p>
+                        @endif
+                    </div>
                 </div>
 
                 {{-- Right: sidebar --}}
                 <div class="space-y-5 lg:sticky lg:top-4">
+
+                    {{-- Actions --}}
+                    <flux:button.group class="w-full">
+                        <flux:button
+                            type="submit"
+                            variant="primary"
+                            class="flex-1 justify-center"
+                            wire:loading.attr="disabled"
+                            wire:target="save"
+                        >
+                            Save Post
+                        </flux:button>
+                        <flux:dropdown position="bottom" align="end">
+                            <flux:button variant="primary" icon="chevron-down" wire:loading.attr="disabled" />
+                            <flux:menu>
+                                <flux:menu.item wire:click="saveAndExit" icon="arrow-left">Save + Exit</flux:menu.item>
+                                <flux:menu.item wire:click="saveAndView" icon="arrow-top-right-on-square">Save + View</flux:menu.item>
+                                <flux:menu.item wire:click="saveAndAddNew" icon="document-plus">Save + Add New</flux:menu.item>
+                                <flux:menu.separator />
+                                <flux:menu.item :href="route('dashboard.blog.index')" wire:navigate icon="x-mark">Cancel</flux:menu.item>
+                            </flux:menu>
+                        </flux:dropdown>
+                    </flux:button.group>
 
                     {{-- Featured image --}}
                     <div class="rounded-lg border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-900 p-4 space-y-3"
@@ -318,28 +420,6 @@ new #[Layout('layouts.app')] #[Title('New Post')] class extends Component {
                         </div>
                     </div>
 
-                    {{-- Actions --}}
-                    <flux:button.group class="w-full">
-                        <flux:button
-                            type="submit"
-                            variant="primary"
-                            class="flex-1 justify-center"
-                            wire:loading.attr="disabled"
-                            wire:target="save"
-                        >
-                            Save Post
-                        </flux:button>
-                        <flux:dropdown position="bottom" align="end">
-                            <flux:button variant="primary" icon="chevron-down" wire:loading.attr="disabled" />
-                            <flux:menu>
-                                <flux:menu.item wire:click="saveAndExit" icon="arrow-left">Save + Exit</flux:menu.item>
-                                <flux:menu.item wire:click="saveAndView" icon="arrow-top-right-on-square">Save + View</flux:menu.item>
-                                <flux:menu.item wire:click="saveAndAddNew" icon="document-plus">Save + Add New</flux:menu.item>
-                                <flux:menu.separator />
-                                <flux:menu.item :href="route('dashboard.blog.index')" wire:navigate icon="x-mark">Cancel</flux:menu.item>
-                            </flux:menu>
-                        </flux:dropdown>
-                    </flux:button.group>
 
                 </div>
             </div>

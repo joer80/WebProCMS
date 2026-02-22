@@ -169,3 +169,27 @@ it('shows no next post link on the show page when there is no newer post', funct
         ->assertOk()
         ->assertDontSee(route('blog.show', $post->slug).'">');
 });
+
+it('renders cta buttons on the post show page', function (): void {
+    $post = Post::factory()->published()->create([
+        'cta_buttons' => [
+            ['text' => 'Get Started', 'url' => 'https://example.com', 'target' => '_blank'],
+            ['text' => 'Learn More', 'url' => 'https://example.com/learn', 'target' => '_self'],
+        ],
+    ]);
+
+    $this->get(route('blog.show', $post->slug))
+        ->assertOk()
+        ->assertSee('https://example.com')
+        ->assertSeeText('Get Started')
+        ->assertSee('target="_blank"', false)
+        ->assertSeeText('Learn More');
+});
+
+it('does not render cta buttons when none are set', function (): void {
+    $post = Post::factory()->published()->create(['cta_buttons' => null]);
+
+    $this->get(route('blog.show', $post->slug))
+        ->assertOk()
+        ->assertDontSee('rel="noopener noreferrer"');
+});

@@ -297,3 +297,100 @@ it('saves the layout when editing a post', function (): void {
 
     expect($post->fresh()->layout)->toBe('image-right');
 });
+
+it('can add a cta button when creating a post', function (): void {
+    $user = User::factory()->create();
+
+    Livewire::actingAs($user)
+        ->test('pages::dashboard.blog.create')
+        ->call('addCtaButton')
+        ->assertSet('ctaButtons', [['text' => '', 'url' => '', 'newTab' => false]]);
+});
+
+it('cannot add more than two cta buttons', function (): void {
+    $user = User::factory()->create();
+
+    Livewire::actingAs($user)
+        ->test('pages::dashboard.blog.create')
+        ->call('addCtaButton')
+        ->call('addCtaButton')
+        ->call('addCtaButton')
+        ->assertCount('ctaButtons', 2);
+});
+
+it('can remove a cta button', function (): void {
+    $user = User::factory()->create();
+
+    Livewire::actingAs($user)
+        ->test('pages::dashboard.blog.create')
+        ->call('addCtaButton')
+        ->call('addCtaButton')
+        ->call('removeCtaButton', 0)
+        ->assertCount('ctaButtons', 1);
+});
+
+it('saves cta buttons when creating a post', function (): void {
+    $user = User::factory()->create();
+
+    Livewire::actingAs($user)
+        ->test('pages::dashboard.blog.create')
+        ->set('title', 'Post With CTA')
+        ->set('content', 'Content.')
+        ->call('addCtaButton')
+        ->set('ctaButtons.0.text', 'Get Started')
+        ->set('ctaButtons.0.url', 'https://example.com')
+        ->set('ctaButtons.0.newTab', true)
+        ->call('save');
+
+    $post = Post::where('title', 'Post With CTA')->first();
+    expect($post->cta_buttons)->toBe([
+        ['text' => 'Get Started', 'url' => 'https://example.com', 'target' => '_blank'],
+    ]);
+});
+
+it('filters out incomplete cta buttons when saving', function (): void {
+    $user = User::factory()->create();
+
+    Livewire::actingAs($user)
+        ->test('pages::dashboard.blog.create')
+        ->set('title', 'Incomplete CTA Post')
+        ->set('content', 'Content.')
+        ->call('addCtaButton')
+        ->set('ctaButtons.0.text', 'No URL Button')
+        ->call('save');
+
+    $post = Post::where('title', 'Incomplete CTA Post')->first();
+    expect($post->cta_buttons)->toBeNull();
+});
+
+it('loads existing cta buttons when editing a post', function (): void {
+    $user = User::factory()->create();
+    $post = Post::factory()->create([
+        'cta_buttons' => [
+            ['text' => 'Learn More', 'url' => 'https://example.com', 'target' => '_self'],
+        ],
+    ]);
+
+    Livewire::actingAs($user)
+        ->test('pages::dashboard.blog.edit', ['post' => $post])
+        ->assertSet('ctaButtons', [
+            ['text' => 'Learn More', 'url' => 'https://example.com', 'newTab' => false],
+        ]);
+});
+
+it('updates cta buttons when editing a post', function (): void {
+    $user = User::factory()->create();
+    $post = Post::factory()->create(['cta_buttons' => null]);
+
+    Livewire::actingAs($user)
+        ->test('pages::dashboard.blog.edit', ['post' => $post])
+        ->call('addCtaButton')
+        ->set('ctaButtons.0.text', 'Sign Up')
+        ->set('ctaButtons.0.url', 'https://example.com/signup')
+        ->set('ctaButtons.0.newTab', false)
+        ->call('save');
+
+    expect($post->fresh()->cta_buttons)->toBe([
+        ['text' => 'Sign Up', 'url' => 'https://example.com/signup', 'target' => '_self'],
+    ]);
+});

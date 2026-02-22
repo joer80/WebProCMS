@@ -20,6 +20,7 @@ class Post extends Model
         'slug',
         'excerpt',
         'content',
+        'cta_buttons',
         'status',
         'published_at',
         'featured_image',
@@ -70,6 +71,7 @@ class Post extends Model
     {
         return [
             'published_at' => 'datetime',
+            'cta_buttons' => 'array',
         ];
     }
 
