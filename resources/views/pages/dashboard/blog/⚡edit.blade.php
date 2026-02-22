@@ -130,20 +130,7 @@ new #[Layout('layouts.app')] #[Title('Edit Post')] class extends Component {
 
                     <flux:field>
                         <flux:label>Content</flux:label>
-                        <div
-                            wire:ignore
-                            x-data="{
-                                init() {
-                                    const editor = this.$refs.trix;
-                                    editor.addEventListener('trix-change', () => {
-                                        $wire.set('content', editor.value);
-                                    });
-                                }
-                            }"
-                        >
-                            <input id="trix-content-edit" type="hidden" value="{{ $content }}" />
-                            <trix-editor x-ref="trix" input="trix-content-edit"></trix-editor>
-                        </div>
+                        <flux:textarea wire:model="content" rows="20" placeholder="Write your post content here…" />
                         <flux:error name="content" />
                     </flux:field>
                 </div>

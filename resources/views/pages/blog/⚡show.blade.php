@@ -61,8 +61,8 @@ new #[Layout('layouts.public')] class extends Component {
             </p>
         @endif
 
-        <div class="trix-content leading-relaxed text-[#1b1b18] dark:text-[#EDEDEC]">
-            {!! $post->content !!}
+        <div class="leading-relaxed text-[#1b1b18] dark:text-[#EDEDEC] whitespace-pre-wrap">
+            {{ $post->content }}
         </div>
     </article>
 
