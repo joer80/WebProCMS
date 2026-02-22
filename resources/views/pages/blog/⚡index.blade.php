@@ -107,6 +107,7 @@ new #[Layout('layouts.public', ['description' => 'Insights, updates, and news fr
             @foreach ($this->posts as $post)
                 <a
                     wire:key="post-{{ $post->id }}"
+                    wire:transition
                     href="{{ route('blog.show', $post->slug) }}"
                     class="group block bg-white dark:bg-[#161615] rounded-lg shadow-[inset_0px_0px_0px_1px_rgba(26,26,0,0.16)] dark:shadow-[inset_0px_0px_0px_1px_#fffaed2d] overflow-hidden hover:shadow-[inset_0px_0px_0px_1px_rgba(26,26,0,0.3)] dark:hover:shadow-[inset_0px_0px_0px_1px_#fffaed50] transition-shadow"
                 >

@@ -7,7 +7,8 @@
       "Bash(node:*)",
       "Bash(vendor/bin/pint:*)",
       "WebFetch(domain:fluxui.dev)",
-      "WebFetch(domain:unpkg.com)"
+      "WebFetch(domain:unpkg.com)",
+      "WebFetch(domain:livewire.laravel.com)"
     ]
   }
 }
