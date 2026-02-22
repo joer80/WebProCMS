@@ -40,6 +40,129 @@ This installs the `CLAUDE.md` guidelines file and domain-specific skills that Cl
 
 ---
 
+## Common Commands
+
+### Development
+
+| Command | Description |
+|---|---|
+| `composer run dev` | Start the dev server (Vite + queue + logs) |
+| `npm run dev` | Start Vite asset watcher only |
+| `npm run build` | Build assets for production |
+| `php artisan tinker` | Interactive PHP REPL with app context |
+| `php artisan pail` | Tail application logs in the terminal |
+
+### Database
+
+| Command | Description |
+|---|---|
+| `php artisan migrate` | Run pending migrations |
+| `php artisan migrate:fresh --seed` | Drop all tables, re-migrate, and seed |
+| `php artisan db:seed` | Run database seeders |
+| `php artisan migrate:rollback` | Roll back the last batch of migrations |
+
+### Code Generation
+
+| Command | Description |
+|---|---|
+| `php artisan make:model Foo -mfs` | Model + migration + factory + seeder |
+| `php artisan make:migration create_foo_table` | Standalone migration |
+| `php artisan make:request StoreFooRequest` | Form request class |
+| `php artisan make:class App/Services/FooService` | Generic PHP class |
+| `php artisan make:test FooTest --pest` | Pest feature test |
+| `php artisan make:test FooTest --pest --unit` | Pest unit test |
+| `php artisan make:command FooCommand` | Console command |
+| `php artisan route:list` | List all registered routes |
+
+### Livewire
+
+| Command | Description |
+|---|---|
+| `php artisan make:livewire FooComponent` | New Livewire component (class + view) |
+| `php artisan make:livewire foo.bar` | Nested component in `foo/` subdirectory |
+| `php artisan livewire:publish --config` | Publish Livewire config file |
+
+### Testing & Code Quality
+
+| Command | Description |
+|---|---|
+| `php artisan test --compact` | Run all tests (compact output) |
+| `php artisan test --compact --filter=FooTest` | Run a specific test or group |
+| `vendor/bin/pint --dirty` | Fix code style on changed files only |
+| `vendor/bin/pint` | Fix code style across all PHP files |
+
+### Cache & Config
+
+| Command | Description |
+|---|---|
+| `php artisan config:clear` | Clear the config cache |
+| `php artisan cache:clear` | Clear the application cache |
+| `php artisan route:clear` | Clear the route cache |
+| `php artisan view:clear` | Clear the compiled view cache |
+| `php artisan optimize:clear` | Clear all caches at once |
+
+---
+
+## Working with the SQLite Database
+
+By default, Laravel uses SQLite and stores the database at:
+
+```
+database/database.sqlite
+```
+
+### Viewing the Database
+
+**Option 1 — TablePlus (recommended)**
+[TablePlus](https://tableplus.com) is a native Mac GUI for databases. To connect:
+1. Open TablePlus → New Connection → SQLite
+2. Set the database path to the absolute path of `database/database.sqlite` in your project
+3. Click Connect
+
+**Option 2 — DB Browser for SQLite**
+[DB Browser for SQLite](https://sqlitebrowser.org) is a free, open-source GUI. Open the app and use **File → Open Database** to select `database/database.sqlite`.
+
+**Option 3 — VS Code Extension**
+Install the [SQLite Viewer](https://marketplace.visualstudio.com/items?itemName=qwtel.sqlite-viewer) extension, then click any `.sqlite` file in the VS Code explorer to browse it inline.
+
+**Option 4 — Command Line**
+```bash
+sqlite3 database/database.sqlite
+```
+Common SQLite shell commands:
+```sql
+.tables              -- list all tables
+.schema users        -- show table structure
+SELECT * FROM users LIMIT 10;
+.quit
+```
+
+**Option 5 — Laravel Tinker**
+```bash
+php artisan tinker
+```
+```php
+User::all();
+User::where('email', 'test@example.com')->first();
+DB::table('users')->count();
+```
+
+### Switching to MySQL or PostgreSQL
+
+1. Install and start the database service via [DBngin](https://dbngin.com) or Herd Pro
+2. Update `.env`:
+   ```
+   DB_CONNECTION=mysql
+   DB_HOST=127.0.0.1
+   DB_PORT=3306
+   DB_DATABASE=getrows
+   DB_USERNAME=root
+   DB_PASSWORD=
+   ```
+3. Run `php artisan migrate:fresh --seed` to build the schema in the new database
+
+---
+
 ## Brand & Styling
 
 | What | Where |
