@@ -1,5 +1,45 @@
 # GetRows
 
+## Setting Up a New Project
+
+### Step 1 — Install Laravel Herd
+
+[Laravel Herd](https://herd.laravel.com) is the recommended local development environment.
+
+New Laravel applications use **SQLite** by default. If you need MySQL, PostgreSQL, or Redis, use [DBngin](https://dbngin.com) to manage those services locally, or upgrade to Herd Pro.
+
+Make sure the **latest version of Node.js** is installed before continuing.
+
+### Step 2 — Create a New Site in Herd
+
+When creating the site, select the **Volt** and **Boost** options.
+
+The Livewire starter kit comes with Livewire, Tailwind CSS, and the Flux UI component library pre-configured.
+
+Name the project in kebab-case to match the desired local domain — e.g. a project named `GetRows` will be accessible at `https://getrows.test`.
+
+### Step 3 — Open the Project in VS Code
+
+Install the **[Claude Code extension](https://marketplace.visualstudio.com/items?itemName=anthropic.claude-code)** for VS Code if you haven't already. It provides inline AI assistance powered by Claude.
+
+### Step 4 — Install Laravel Boost
+
+Run the following Artisan command to install the Boost guidelines and skills:
+
+```bash
+php artisan boost:install --guidelines --skills
+```
+
+When prompted, select:
+
+- **Laravel Fortify** — headless authentication backend
+- **Claude** — AI provider integration
+- **Gemini** — additional AI provider
+
+This installs the `CLAUDE.md` guidelines file and domain-specific skills that Claude Code uses to follow project conventions automatically.
+
+---
+
 ## Brand & Styling
 
 | What | Where |
