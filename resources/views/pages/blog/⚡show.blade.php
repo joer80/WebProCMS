@@ -107,7 +107,7 @@ new #[Layout('layouts.public')] class extends Component {
         </div>
     @else
         {{-- Image Top layout (default) --}}
-        <article class="max-w-2xl">
+        <div>
             <h1 class="text-4xl font-semibold leading-tight mb-4">{{ $post->title }}</h1>
 
             <p class="text-sm text-[#706f6c] dark:text-[#A1A09A] mb-8">
@@ -122,31 +122,33 @@ new #[Layout('layouts.public')] class extends Component {
                 />
             @endif
 
-            @if ($post->excerpt)
-                <p class="text-lg text-[#706f6c] dark:text-[#A1A09A] leading-relaxed mb-8 border-l-2 border-[#e3e3e0] dark:border-[#3E3E3A] pl-4">
-                    {!! $this->processedExcerpt !!}
-                </p>
-            @endif
+            <div class="max-w-2xl">
+                @if ($post->excerpt)
+                    <p class="text-lg text-[#706f6c] dark:text-[#A1A09A] leading-relaxed mb-8 border-l-2 border-[#e3e3e0] dark:border-[#3E3E3A] pl-4">
+                        {!! $this->processedExcerpt !!}
+                    </p>
+                @endif
 
-            <div class="leading-relaxed text-[#1b1b18] dark:text-[#EDEDEC] whitespace-pre-wrap">
-                {!! $this->processedContent !!}
-            </div>
-
-            @if ($post->cta_buttons)
-                <div class="mt-8 flex flex-wrap gap-3">
-                    @foreach ($post->cta_buttons as $button)
-                        <a
-                            href="{{ $button['url'] }}"
-                            target="{{ $button['target'] ?? '_self' }}"
-                            @if (($button['target'] ?? '_self') === '_blank') rel="noopener noreferrer" @endif
-                            class="inline-flex items-center px-6 py-3 bg-[#1b1b18] dark:bg-[#EDEDEC] text-[#EDEDEC] dark:text-[#1b1b18] rounded-lg font-medium hover:opacity-90 transition-opacity"
-                        >
-                            {{ $button['text'] }}
-                        </a>
-                    @endforeach
+                <div class="leading-relaxed text-[#1b1b18] dark:text-[#EDEDEC] whitespace-pre-wrap">
+                    {!! $this->processedContent !!}
                 </div>
-            @endif
-        </article>
+
+                @if ($post->cta_buttons)
+                    <div class="mt-8 flex flex-wrap gap-3">
+                        @foreach ($post->cta_buttons as $button)
+                            <a
+                                href="{{ $button['url'] }}"
+                                target="{{ $button['target'] ?? '_self' }}"
+                                @if (($button['target'] ?? '_self') === '_blank') rel="noopener noreferrer" @endif
+                                class="inline-flex items-center px-6 py-3 bg-[#1b1b18] dark:bg-[#EDEDEC] text-[#EDEDEC] dark:text-[#1b1b18] rounded-lg font-medium hover:opacity-90 transition-opacity"
+                            >
+                                {{ $button['text'] }}
+                            </a>
+                        @endforeach
+                    </div>
+                @endif
+            </div>
+        </div>
     @endif
 
     @if ($post->gallery_images)
@@ -177,7 +179,7 @@ new #[Layout('layouts.public')] class extends Component {
             @keydown.arrow-right.window="if (isOpen) next()"
         >
             <div
-                class="grid gap-2"
+                class="grid gap-3"
                 style="grid-template-columns: repeat({{ $post->gallery_columns ?? 4 }}, minmax(0, 1fr))"
             >
                 @foreach ($post->galleryImageUrls() as $index => $url)
