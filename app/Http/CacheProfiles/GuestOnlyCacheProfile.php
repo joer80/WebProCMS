@@ -18,6 +18,6 @@ class GuestOnlyCacheProfile extends CacheAllSuccessfulGetRequests
 
     public function useCacheNameSuffix(Request $request): string
     {
-        return '';
+        return $request->user() ? 'auth' : '';
     }
 }
