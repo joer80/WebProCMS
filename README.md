@@ -113,10 +113,11 @@ location ~* ^/build/ {
 
 | Command | Description |
 |---|---|
-| `php artisan make:livewire --sfc --emoji=true FooComponent` | **Preferred** — Volt single-file component (`.blade.php` with PHP at top, template below) |
-| `php artisan make:livewire --mfc --emoji=true FooComponent` | Two-file component — separate PHP class + blade view (worth considering for complex components with lots of logic) |
+| `php artisan make:livewire FooComponent` | **Preferred** — creates a Volt single-file component by default in this project (configured in `vendor/livewire/livewire/config/livewire.php`) |
+| `php artisan make:livewire --sfc --emoji=true FooComponent` | Explicit Volt single-file component — use this if working in a project where SFC is not the default |
+| `php artisan make:livewire --mfc --emoji=true FooComponent` | Two-file component — separate PHP class (`app/Livewire/FooComponent.php`) + blade view (`resources/views/livewire/foo-component.blade.php`) |
 | `php artisan make:livewire --class FooComponent` | Class-only component — template lives inside `render()` as a heredoc string (avoid: no blade syntax highlighting) |
-| `php artisan make:livewire foo.bar` | Nested component in `foo/` subdirectory (works with any flag above) |
+| `php artisan make:livewire pages.foo FooComponent` | Nested component in a subdirectory (works with any flag above) |
 | `php artisan livewire:publish --config` | Publish Livewire config file |
 
 **Which format to use:**
