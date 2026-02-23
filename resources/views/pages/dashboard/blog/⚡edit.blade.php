@@ -283,164 +283,194 @@ new #[Layout('layouts.app')] #[Title('Edit Post')] class extends Component {
                     </flux:field>
 
                     {{-- Call to Action Buttons --}}
-                    <div class="rounded-lg border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-900 p-4 space-y-4">
-                        <div class="flex items-center justify-between">
-                            <div>
-                                <flux:label class="mb-0">
-                                    Call to Action Buttons
-                                    <flux:badge size="sm" variant="outline" class="ml-1">Optional</flux:badge>
-                                </flux:label>
-                                <flux:description class="mt-0.5">Displayed below the post content.</flux:description>
+                    <div
+                        x-data="{ open: false }"
+                        class="rounded-lg border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-900"
+                    >
+                        <button
+                            type="button"
+                            @click="open = !open"
+                            class="w-full flex items-center justify-between p-4 text-left"
+                        >
+                            <div class="flex items-center gap-2">
+                                <span class="text-sm font-medium text-zinc-700 dark:text-zinc-300">Call to Action Buttons</span>
+                                <flux:badge size="sm" variant="outline">Optional</flux:badge>
                             </div>
-                            @if (count($ctaButtons) < 2)
-                                <flux:button type="button" wire:click="addCtaButton" size="sm" variant="ghost" icon="plus">Add Button</flux:button>
-                            @endif
-                        </div>
+                            <svg xmlns="http://www.w3.org/2000/svg" class="size-4 text-zinc-400 transition-transform duration-200" :class="open ? 'rotate-180' : ''" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="m19 9-7 7-7-7" />
+                            </svg>
+                        </button>
 
-                        @if (count($ctaButtons) > 0)
-                            <div class="grid grid-cols-2 gap-3">
-                                @foreach ($ctaButtons as $index => $button)
-                                    <div class="space-y-3 p-3 rounded-md bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700" wire:key="cta-{{ $index }}">
-                                        <div class="flex items-center justify-between">
-                                            <span class="text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wide">Button {{ $index + 1 }}</span>
-                                            <button
-                                                type="button"
-                                                wire:click="removeCtaButton({{ $index }})"
-                                                class="text-xs text-zinc-400 hover:text-red-500 dark:hover:text-red-400 transition-colors"
-                                            >Remove</button>
-                                        </div>
+                        <div x-show="open" x-transition class="px-4 pb-4">
+                            <div class="border-t border-zinc-200 dark:border-zinc-700 pt-4 space-y-4">
+                                <div class="flex items-center justify-between">
+                                    <flux:description>Displayed below the post content.</flux:description>
+                                    @if (count($ctaButtons) < 2)
+                                        <flux:button type="button" wire:click="addCtaButton" size="sm" variant="ghost" icon="plus">Add Button</flux:button>
+                                    @endif
+                                </div>
 
-                                        <flux:field>
-                                            <flux:label>Button Text</flux:label>
-                                            <flux:input wire:model="ctaButtons.{{ $index }}.text" type="text" placeholder="Get Started" />
-                                            <flux:error name="ctaButtons.{{ $index }}.text" />
-                                        </flux:field>
+                                @if (count($ctaButtons) > 0)
+                                    <div class="grid grid-cols-2 gap-3">
+                                        @foreach ($ctaButtons as $index => $button)
+                                            <div class="space-y-3 p-3 rounded-md bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700" wire:key="cta-{{ $index }}">
+                                                <div class="flex items-center justify-between">
+                                                    <span class="text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wide">Button {{ $index + 1 }}</span>
+                                                    <button
+                                                        type="button"
+                                                        wire:click="removeCtaButton({{ $index }})"
+                                                        class="text-xs text-zinc-400 hover:text-red-500 dark:hover:text-red-400 transition-colors"
+                                                    >Remove</button>
+                                                </div>
 
-                                        <flux:field>
-                                            <flux:label>Button URL</flux:label>
-                                            <flux:input wire:model="ctaButtons.{{ $index }}.url" type="url" placeholder="https://…" />
-                                            <flux:error name="ctaButtons.{{ $index }}.url" />
-                                        </flux:field>
+                                                <flux:field>
+                                                    <flux:label>Button Text</flux:label>
+                                                    <flux:input wire:model="ctaButtons.{{ $index }}.text" type="text" placeholder="Get Started" />
+                                                    <flux:error name="ctaButtons.{{ $index }}.text" />
+                                                </flux:field>
 
-                                        <flux:switch wire:model="ctaButtons.{{ $index }}.newTab" label="Open in new tab" />
+                                                <flux:field>
+                                                    <flux:label>Button URL</flux:label>
+                                                    <flux:input wire:model="ctaButtons.{{ $index }}.url" type="url" placeholder="https://…" />
+                                                    <flux:error name="ctaButtons.{{ $index }}.url" />
+                                                </flux:field>
+
+                                                <flux:switch wire:model="ctaButtons.{{ $index }}.newTab" label="Open in new tab" />
+                                            </div>
+                                        @endforeach
                                     </div>
-                                @endforeach
+                                @else
+                                    <p class="text-sm text-center text-zinc-400 dark:text-zinc-500 py-1">No buttons added yet.</p>
+                                @endif
                             </div>
-                        @else
-                            <p class="text-sm text-center text-zinc-400 dark:text-zinc-500 py-1">No buttons added yet.</p>
-                        @endif
+                        </div>
                     </div>
 
                     {{-- Photo Gallery --}}
-                    <div class="rounded-lg border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-900 p-4 space-y-4">
-                        <div>
-                            <flux:label class="mb-0">
-                                Photo Gallery
-                                <flux:badge size="sm" variant="outline" class="ml-1">Optional</flux:badge>
-                            </flux:label>
-                            <flux:description class="mt-0.5">Displayed below the post content and buttons.</flux:description>
-                        </div>
-
-                        @if (count($galleryImages) > 0)
-                            <div class="grid grid-cols-4 gap-2">
-                                @foreach ($galleryImages as $index => $path)
-                                    <div class="relative group aspect-square" wire:key="gallery-{{ $index }}">
-                                        <img
-                                            src="{{ Storage::disk('public')->url($path) }}"
-                                            alt="Gallery image {{ $index + 1 }}"
-                                            class="w-full h-full object-cover rounded-md"
-                                        />
-                                        <div class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/30 rounded-md">
-                                            <button
-                                                type="button"
-                                                wire:click="removeGalleryImage({{ $index }})"
-                                                wire:confirm="Remove this image from the gallery?"
-                                                class="bg-red-600 text-white text-xs px-2 py-1 rounded hover:bg-red-700 transition-colors"
-                                            >Remove</button>
-                                        </div>
-                                    </div>
-                                @endforeach
-                            </div>
-                        @else
-                            <p class="text-sm text-center text-zinc-400 dark:text-zinc-500 py-1">No photos added yet.</p>
-                        @endif
-
-                        <div
-                            x-data="{
-                                uploading: false,
-                                handleFile(event) {
-                                    const file = event.target.files[0];
-                                    if (!file) return;
-
-                                    const maxWidth = 1920;
-                                    const reader = new FileReader();
-
-                                    reader.onload = (e) => {
-                                        const img = new Image();
-                                        img.onload = () => {
-                                            if (img.width <= maxWidth) {
-                                                this.uploading = true;
-                                                $wire.upload('newGalleryImage', file, () => {
-                                                    $wire.call('addGalleryImage').then(() => {
-                                                        this.uploading = false;
-                                                        this.$refs.galleryFileInput.value = '';
-                                                    });
-                                                });
-                                                return;
-                                            }
-
-                                            const scale = maxWidth / img.width;
-                                            const canvas = document.createElement('canvas');
-                                            canvas.width = maxWidth;
-                                            canvas.height = Math.round(img.height * scale);
-                                            canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
-
-                                            this.uploading = true;
-
-                                            canvas.toBlob((blob) => {
-                                                $wire.upload(
-                                                    'newGalleryImage',
-                                                    new File([blob], file.name, { type: blob.type }),
-                                                    () => {
-                                                        $wire.call('addGalleryImage').then(() => {
-                                                            this.uploading = false;
-                                                            this.$refs.galleryFileInput.value = '';
-                                                        });
-                                                    }
-                                                );
-                                            }, file.type, 0.90);
-                                        };
-                                        img.src = e.target.result;
-                                    };
-
-                                    reader.readAsDataURL(file);
-                                }
-                            }"
+                    <div
+                        x-data="{ open: false }"
+                        class="rounded-lg border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-900"
+                    >
+                        <button
+                            type="button"
+                            @click="open = !open"
+                            class="w-full flex items-center justify-between p-4 text-left"
                         >
-                            <div class="flex items-center gap-3">
-                                <input
-                                    type="file"
-                                    x-ref="galleryFileInput"
-                                    @change="handleFile($event)"
-                                    accept="image/*"
-                                    :disabled="uploading"
-                                    class="block w-full text-sm text-zinc-600 dark:text-zinc-400 file:mr-3 file:py-1.5 file:px-3 file:rounded-sm file:border file:border-zinc-300 dark:file:border-zinc-600 file:text-sm file:font-medium file:bg-zinc-50 dark:file:bg-zinc-800 file:text-zinc-700 dark:file:text-zinc-300 hover:file:bg-zinc-100 dark:hover:file:bg-zinc-700 transition-colors disabled:opacity-50"
-                                />
-                                <span x-show="uploading" class="text-xs text-zinc-500 dark:text-zinc-400 shrink-0">Uploading…</span>
+                            <div class="flex items-center gap-2">
+                                <span class="text-sm font-medium text-zinc-700 dark:text-zinc-300">Photo Gallery</span>
+                                <flux:badge size="sm" variant="outline">Optional</flux:badge>
                             </div>
-                            <flux:error name="newGalleryImage" />
-                        </div>
+                            <svg xmlns="http://www.w3.org/2000/svg" class="size-4 text-zinc-400 transition-transform duration-200" :class="open ? 'rotate-180' : ''" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="m19 9-7 7-7-7" />
+                            </svg>
+                        </button>
 
-                        <flux:field>
-                            <flux:label>Photos per row</flux:label>
-                            <flux:select wire:model="galleryColumns">
-                                <flux:select.option value="2">2 per row</flux:select.option>
-                                <flux:select.option value="3">3 per row</flux:select.option>
-                                <flux:select.option value="4">4 per row (default)</flux:select.option>
-                                <flux:select.option value="5">5 per row</flux:select.option>
-                            </flux:select>
-                            <flux:error name="galleryColumns" />
-                        </flux:field>
+                        <div x-show="open" x-transition class="px-4 pb-4">
+                            <div class="border-t border-zinc-200 dark:border-zinc-700 pt-4 space-y-4">
+                                <flux:description>Displayed below the post content and buttons.</flux:description>
+
+                                @if (count($galleryImages) > 0)
+                                    <div class="grid grid-cols-4 gap-2">
+                                        @foreach ($galleryImages as $index => $path)
+                                            <div class="relative group aspect-square" wire:key="gallery-{{ $index }}">
+                                                <img
+                                                    src="{{ Storage::disk('public')->url($path) }}"
+                                                    alt="Gallery image {{ $index + 1 }}"
+                                                    class="w-full h-full object-cover rounded-md"
+                                                />
+                                                <div class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/30 rounded-md">
+                                                    <button
+                                                        type="button"
+                                                        wire:click="removeGalleryImage({{ $index }})"
+                                                        wire:confirm="Remove this image from the gallery?"
+                                                        class="bg-red-600 text-white text-xs px-2 py-1 rounded hover:bg-red-700 transition-colors"
+                                                    >Remove</button>
+                                                </div>
+                                            </div>
+                                        @endforeach
+                                    </div>
+                                @else
+                                    <p class="text-sm text-center text-zinc-400 dark:text-zinc-500 py-1">No photos added yet.</p>
+                                @endif
+
+                                <div
+                                    x-data="{
+                                        uploading: false,
+                                        handleFile(event) {
+                                            const file = event.target.files[0];
+                                            if (!file) return;
+
+                                            const maxWidth = 1920;
+                                            const reader = new FileReader();
+
+                                            reader.onload = (e) => {
+                                                const img = new Image();
+                                                img.onload = () => {
+                                                    if (img.width <= maxWidth) {
+                                                        this.uploading = true;
+                                                        $wire.upload('newGalleryImage', file, () => {
+                                                            $wire.call('addGalleryImage').then(() => {
+                                                                this.uploading = false;
+                                                                this.$refs.galleryFileInput.value = '';
+                                                            });
+                                                        });
+                                                        return;
+                                                    }
+
+                                                    const scale = maxWidth / img.width;
+                                                    const canvas = document.createElement('canvas');
+                                                    canvas.width = maxWidth;
+                                                    canvas.height = Math.round(img.height * scale);
+                                                    canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+
+                                                    this.uploading = true;
+
+                                                    canvas.toBlob((blob) => {
+                                                        $wire.upload(
+                                                            'newGalleryImage',
+                                                            new File([blob], file.name, { type: blob.type }),
+                                                            () => {
+                                                                $wire.call('addGalleryImage').then(() => {
+                                                                    this.uploading = false;
+                                                                    this.$refs.galleryFileInput.value = '';
+                                                                });
+                                                            }
+                                                        );
+                                                    }, file.type, 0.90);
+                                                };
+                                                img.src = e.target.result;
+                                            };
+
+                                            reader.readAsDataURL(file);
+                                        }
+                                    }"
+                                >
+                                    <div class="flex items-center gap-3">
+                                        <input
+                                            type="file"
+                                            x-ref="galleryFileInput"
+                                            @change="handleFile($event)"
+                                            accept="image/*"
+                                            :disabled="uploading"
+                                            class="block w-full text-sm text-zinc-600 dark:text-zinc-400 file:mr-3 file:py-1.5 file:px-3 file:rounded-sm file:border file:border-zinc-300 dark:file:border-zinc-600 file:text-sm file:font-medium file:bg-zinc-50 dark:file:bg-zinc-800 file:text-zinc-700 dark:file:text-zinc-300 hover:file:bg-zinc-100 dark:hover:file:bg-zinc-700 transition-colors disabled:opacity-50"
+                                        />
+                                        <span x-show="uploading" class="text-xs text-zinc-500 dark:text-zinc-400 shrink-0">Uploading…</span>
+                                    </div>
+                                    <flux:error name="newGalleryImage" />
+                                </div>
+
+                                <flux:field>
+                                    <flux:label>Photos per row</flux:label>
+                                    <flux:select wire:model="galleryColumns">
+                                        <flux:select.option value="2">2 per row</flux:select.option>
+                                        <flux:select.option value="3">3 per row</flux:select.option>
+                                        <flux:select.option value="4">4 per row (default)</flux:select.option>
+                                        <flux:select.option value="5">5 per row</flux:select.option>
+                                    </flux:select>
+                                    <flux:error name="galleryColumns" />
+                                </flux:field>
+                            </div>
+                        </div>
                     </div>
                     {{-- SEO Settings --}}
                     <div
@@ -504,30 +534,41 @@ new #[Layout('layouts.app')] #[Title('Edit Post')] class extends Component {
                                 <flux:switch wire:model="isNoindex" label="Hide from search engines (noindex)" description="Prevents this post from appearing in search results." />
 
                                 {{-- Open Graph --}}
-                                <div class="pt-4 border-t border-zinc-200 dark:border-zinc-700 space-y-4">
-                                    <div>
-                                        <p class="text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">Open Graph</p>
-                                        <p class="text-xs text-zinc-400 dark:text-zinc-500 mt-0.5">Customize how this post appears when shared on social media.</p>
+                                <div x-data="{ ogOpen: false }" class="pt-4 border-t border-zinc-200 dark:border-zinc-700">
+                                    <button
+                                        type="button"
+                                        @click="ogOpen = !ogOpen"
+                                        class="w-full flex items-center justify-between text-left"
+                                    >
+                                        <div>
+                                            <p class="text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">Open Graph</p>
+                                            <p class="text-xs text-zinc-400 dark:text-zinc-500 mt-0.5">Customize how this post appears when shared on social media.</p>
+                                        </div>
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="size-4 text-zinc-400 transition-transform duration-200 shrink-0 ml-3" :class="ogOpen ? 'rotate-180' : ''" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="m19 9-7 7-7-7" />
+                                        </svg>
+                                    </button>
+
+                                    <div x-show="ogOpen" x-transition class="mt-4 space-y-4">
+                                        <flux:field>
+                                            <flux:label>OG Title</flux:label>
+                                            <flux:input wire:model="ogTitle" type="text" placeholder="Defaults to meta title or post title…" />
+                                            <flux:error name="ogTitle" />
+                                        </flux:field>
+
+                                        <flux:field>
+                                            <flux:label>OG Description</flux:label>
+                                            <flux:textarea wire:model="ogDescription" rows="2" placeholder="Defaults to meta description or excerpt…" />
+                                            <flux:error name="ogDescription" />
+                                        </flux:field>
+
+                                        <flux:field>
+                                            <flux:label>OG Image URL</flux:label>
+                                            <flux:input wire:model="ogImage" type="url" placeholder="Defaults to featured image…" />
+                                            <flux:description>Paste a full URL to a 1200×630px image for social sharing previews.</flux:description>
+                                            <flux:error name="ogImage" />
+                                        </flux:field>
                                     </div>
-
-                                    <flux:field>
-                                        <flux:label>OG Title</flux:label>
-                                        <flux:input wire:model="ogTitle" type="text" placeholder="Defaults to meta title or post title…" />
-                                        <flux:error name="ogTitle" />
-                                    </flux:field>
-
-                                    <flux:field>
-                                        <flux:label>OG Description</flux:label>
-                                        <flux:textarea wire:model="ogDescription" rows="2" placeholder="Defaults to meta description or excerpt…" />
-                                        <flux:error name="ogDescription" />
-                                    </flux:field>
-
-                                    <flux:field>
-                                        <flux:label>OG Image URL</flux:label>
-                                        <flux:input wire:model="ogImage" type="url" placeholder="Defaults to featured image…" />
-                                        <flux:description>Paste a full URL to a 1200×630px image for social sharing previews.</flux:description>
-                                        <flux:error name="ogImage" />
-                                    </flux:field>
                                 </div>
 
                             </div>
