@@ -27,6 +27,9 @@
                     <flux:sidebar.item icon="map-pin" :href="route('dashboard.locations.index')" :current="request()->routeIs('dashboard.locations.*')" wire:navigate>
                         {{ __('Locations') }}
                     </flux:sidebar.item>
+                    <flux:sidebar.item icon="wrench-screwdriver" :href="route('dashboard.tools')" :current="request()->routeIs('dashboard.tools')" wire:navigate>
+                        {{ __('Tools') }}
+                    </flux:sidebar.item>
                 </flux:sidebar.group>
             </flux:sidebar.nav>
 

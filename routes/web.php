@@ -17,6 +17,8 @@ Route::middleware([
 Route::livewire('contact', 'pages::contact')->name('contact');
 
 Route::middleware(['auth', 'verified'])->group(function (): void {
+    Route::livewire('dashboard', 'pages::dashboard')->name('dashboard');
+
     Route::livewire('dashboard/blog', 'pages::dashboard.blog.index')->name('dashboard.blog.index');
     Route::livewire('dashboard/blog/create', 'pages::dashboard.blog.create')->name('dashboard.blog.create');
     Route::livewire('dashboard/blog/{post}/edit', 'pages::dashboard.blog.edit')->name('dashboard.blog.edit');
@@ -32,10 +34,8 @@ Route::middleware(['auth', 'verified'])->group(function (): void {
     Route::livewire('dashboard/locations', 'pages::dashboard.locations.index')->name('dashboard.locations.index');
     Route::livewire('dashboard/locations/create', 'pages::dashboard.locations.create')->name('dashboard.locations.create');
     Route::livewire('dashboard/locations/{location}/edit', 'pages::dashboard.locations.edit')->name('dashboard.locations.edit');
-});
 
-Route::view('dashboard', 'dashboard')
-    ->middleware(['auth', 'verified'])
-    ->name('dashboard');
+    Route::livewire('dashboard/tools', 'pages::dashboard.tools')->name('dashboard.tools');
+});
 
 require __DIR__.'/settings.php';
