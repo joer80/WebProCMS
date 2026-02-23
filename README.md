@@ -101,6 +101,8 @@ location ~* ^/build/ {
 | `php artisan make:model Foo -mfs` | Model + migration + factory + seeder |
 | `php artisan make:migration create_foo_table` | Standalone migration |
 | `php artisan make:request StoreFooRequest` | Form request class |
+| `php artisan make:view foo` | Static Blade view (e.g. `about.blade.php`) — use with `Route::view()` |
+| `php artisan make:view foo.bar` | Nested static Blade view (e.g. `services/instant-query-editor.blade.php`) |
 | `php artisan make:class App/Services/FooService` | Generic PHP class |
 | `php artisan make:test FooTest --pest` | Pest feature test |
 | `php artisan make:test FooTest --pest --unit` | Pest unit test |
