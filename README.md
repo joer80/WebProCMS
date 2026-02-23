@@ -244,9 +244,9 @@ When a section index page (e.g. `services.blade.php`) links to a detail page, th
 
 ### When to use Livewire vs Blade
 
-**Use a static Blade view** when the page is read-only and the data doesn't change based on user input — marketing pages, about, terms, etc.
+**Use a static Blade view** (`php artisan make:view`) when the page is read-only and the data doesn't change based on user input — marketing pages, about, terms, etc.
 
-**Use a full-page Livewire component** the moment you need the server to react to something the user does without a full page reload:
+**Use a Volt single-file component** (`php artisan make:livewire --sfc --emoji=true`) the moment you need the server to react to something the user does without a full page reload:
 
 | Use case | Examples |
 |---|---|
