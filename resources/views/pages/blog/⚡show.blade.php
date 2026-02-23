@@ -228,7 +228,7 @@ new #[Layout('layouts.public')] class extends Component {
         <div
             class="mt-10"
             x-data="{
-                images: @js($post->galleryImageUrls()),
+                images: @js($post->galleryImagesData()),
                 isOpen: false,
                 currentIndex: 0,
                 open(index) {
@@ -255,15 +255,15 @@ new #[Layout('layouts.public')] class extends Component {
                 class="grid gap-3"
                 style="grid-template-columns: repeat({{ $post->gallery_columns ?? 4 }}, minmax(0, 1fr))"
             >
-                @foreach ($post->galleryImageUrls() as $index => $url)
+                @foreach ($post->galleryImagesData() as $index => $image)
                     <button
                         type="button"
                         @click="open({{ $index }})"
                         class="aspect-square overflow-hidden rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1b1b18] dark:focus:ring-[#EDEDEC] focus:ring-offset-2"
                     >
                         <img
-                            src="{{ $url }}"
-                            alt="Gallery photo {{ $index + 1 }}"
+                            src="{{ $image['url'] }}"
+                            alt="{{ $image['alt'] ?: 'Gallery photo ' . ($index + 1) }}"
                             class="w-full h-full object-cover hover:scale-105 transition-transform duration-200"
                         />
                     </button>
@@ -304,11 +304,11 @@ new #[Layout('layouts.public')] class extends Component {
 
                 {{-- Image --}}
                 <div class="max-w-5xl max-h-screen w-full px-16 py-8 flex items-center justify-center">
-                    <template x-for="(url, i) in images" :key="i">
+                    <template x-for="(image, i) in images" :key="i">
                         <img
                             x-show="currentIndex === i"
-                            :src="url"
-                            :alt="`Gallery photo ${i + 1}`"
+                            :src="image.url"
+                            :alt="image.alt || `Gallery photo ${i + 1}`"
                             class="max-w-full max-h-[85vh] object-contain rounded-lg shadow-2xl"
                         />
                     </template>

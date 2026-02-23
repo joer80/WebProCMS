@@ -529,7 +529,7 @@ it('loads existing gallery images and columns when editing a post', function ():
 
     Livewire::actingAs($user)
         ->test('pages::dashboard.blog.edit', ['post' => $post])
-        ->assertSet('galleryImages', [$path])
+        ->assertSet('galleryImages', [['path' => $path, 'alt' => '']])
         ->assertSet('galleryColumns', 3);
 });
 

@@ -55,7 +55,11 @@ class Post extends Model
             }
 
             if ($post->gallery_images) {
-                Storage::disk('public')->delete($post->gallery_images);
+                $paths = array_filter(array_map(
+                    fn ($item) => is_string($item) ? $item : ($item['path'] ?? null),
+                    $post->gallery_images,
+                ));
+                Storage::disk('public')->delete($paths);
             }
 
             ResponseCache::clear();
@@ -119,8 +123,26 @@ class Post extends Model
     public function galleryImageUrls(): array
     {
         return array_map(
-            fn (string $path) => Storage::disk('public')->url($path),
+            function ($item) {
+                $path = is_string($item) ? $item : ($item['path'] ?? '');
+
+                return Storage::disk('public')->url($path);
+            },
             $this->gallery_images ?? []
         );
+    }
+
+    /** @return list<array{url: string, alt: string}> */
+    public function galleryImagesData(): array
+    {
+        return array_values(array_map(
+            function ($item) {
+                $path = is_string($item) ? $item : ($item['path'] ?? '');
+                $alt = is_string($item) ? '' : ($item['alt'] ?? '');
+
+                return ['url' => Storage::disk('public')->url($path), 'alt' => $alt];
+            },
+            $this->gallery_images ?? []
+        ));
     }
 }

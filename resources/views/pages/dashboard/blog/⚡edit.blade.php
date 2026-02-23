@@ -49,6 +49,10 @@ new #[Layout('layouts.app')] #[Title('Edit Post')] class extends Component {
     #[Validate('nullable|image|max:51200')]
     public $newGalleryImage = null;
 
+    #[Validate([
+        'galleryImages.*.path' => 'nullable|string',
+        'galleryImages.*.alt' => 'nullable|string|max:255',
+    ])]
     public array $galleryImages = [];
 
     #[Validate('required|integer|in:2,3,4,5')]
@@ -90,7 +94,10 @@ new #[Layout('layouts.app')] #[Title('Edit Post')] class extends Component {
             'newTab' => ($btn['target'] ?? '_self') === '_blank',
         ], $post->cta_buttons ?? []);
 
-        $this->galleryImages = $post->gallery_images ?? [];
+        $this->galleryImages = array_values(array_map(
+            fn ($item) => is_string($item) ? ['path' => $item, 'alt' => ''] : ['path' => $item['path'] ?? '', 'alt' => $item['alt'] ?? ''],
+            $post->gallery_images ?? []
+        ));
         $this->galleryColumns = $post->gallery_columns ?? 4;
         $this->metaTitle = $post->meta_title ?? '';
         $this->metaDescription = $post->meta_description ?? '';
@@ -131,13 +138,13 @@ new #[Layout('layouts.app')] #[Title('Edit Post')] class extends Component {
         $path = $this->newGalleryImage->store('posts', 'public');
         ImageResizer::resizeToMaxWidth($path);
 
-        $this->galleryImages[] = $path;
+        $this->galleryImages[] = ['path' => $path, 'alt' => ''];
         $this->reset('newGalleryImage');
     }
 
     public function removeGalleryImage(int $index): void
     {
-        $path = $this->galleryImages[$index] ?? null;
+        $path = $this->galleryImages[$index]['path'] ?? null;
 
         if ($path) {
             Storage::disk('public')->delete($path);
@@ -371,21 +378,25 @@ new #[Layout('layouts.app')] #[Title('Edit Post')] class extends Component {
 
                                 @if (count($galleryImages) > 0)
                                     <div class="grid grid-cols-4 gap-2">
-                                        @foreach ($galleryImages as $index => $path)
-                                            <div class="relative group aspect-square" wire:key="gallery-{{ $index }}">
-                                                <img
-                                                    src="{{ Storage::disk('public')->url($path) }}"
-                                                    alt="Gallery image {{ $index + 1 }}"
-                                                    class="w-full h-full object-cover rounded-md"
-                                                />
-                                                <div class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/30 rounded-md">
-                                                    <button
-                                                        type="button"
-                                                        wire:click="removeGalleryImage({{ $index }})"
-                                                        wire:confirm="Remove this image from the gallery?"
-                                                        class="bg-red-600 text-white text-xs px-2 py-1 rounded hover:bg-red-700 transition-colors"
-                                                    >Remove</button>
+                                        @foreach ($galleryImages as $index => $item)
+                                            <div wire:key="gallery-{{ $index }}" class="space-y-1">
+                                                <div class="relative group aspect-square">
+                                                    <img
+                                                        src="{{ Storage::disk('public')->url($item['path']) }}"
+                                                        alt="{{ $item['alt'] ?: 'Gallery image ' . ($index + 1) }}"
+                                                        class="w-full h-full object-cover rounded-md"
+                                                    />
+                                                    <div class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/30 rounded-md">
+                                                        <button
+                                                            type="button"
+                                                            wire:click="removeGalleryImage({{ $index }})"
+                                                            wire:confirm="Remove this image from the gallery?"
+                                                            class="bg-red-600 text-white text-xs px-2 py-1 rounded hover:bg-red-700 transition-colors"
+                                                        >Remove</button>
+                                                    </div>
                                                 </div>
+                                                <flux:input wire:model="galleryImages.{{ $index }}.alt" type="text" placeholder="Alt text…" />
+                                                <flux:error name="galleryImages.{{ $index }}.alt" />
                                             </div>
                                         @endforeach
                                     </div>
