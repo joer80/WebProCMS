@@ -1,26 +1,28 @@
 {
+  "defaultMode": "acceptEdits",
   "permissions": {
     "allow": [
       "Bash(ls:*)",
       "Bash(php:*)",
-      "Bash(npm run build:*)",
+      "Bash(npm:*)",
       "Bash(node:*)",
-      "Bash(vendor/bin/pint:*)",
+      "Bash(npx:*)",
+      "Bash(vendor/bin/:*)",
+      "Bash(git:*)",
+      "Bash(composer:*)",
+      "Bash(find:*)",
+      "Bash(cat:*)",
+      "Bash(grep:*)",
+      "Bash(wc:*)",
+      "Bash(python3:*)",
       "WebFetch(domain:fluxui.dev)",
       "WebFetch(domain:unpkg.com)",
       "WebFetch(domain:livewire.laravel.com)",
-      "Bash(git stash:*)",
-      "Bash(git stash pop:*)",
-      "Bash(find:*)",
-      "Bash(cat:*)",
-      "Bash(wc -l:*)",
       "WebFetch(domain:spatie.be)",
       "WebFetch(domain:github.com)",
       "WebFetch(domain:www.highperformancelaravel.com)",
-      "Bash(composer require:*)",
-      "Bash(npx @laravel/boost search-docs:*)",
-      "Bash(grep:*)",
-      "Bash(python3:*)"
+      "WebFetch(domain:laravel.com)",
+      "WebFetch(domain:tailwindcss.com)"
     ]
   }
 }
