@@ -40,6 +40,39 @@ This installs the `CLAUDE.md` guidelines file and domain-specific skills that Cl
 
 ---
 
+## Production Setup
+
+```bash
+composer install --no-dev --optimize-autoloader
+cp .env.example .env
+php artisan key:generate
+php artisan migrate --force
+php artisan storage:link
+npm run build
+php artisan optimize
+```
+
+> **After updating `.env`, routes, or config files in production**, clear and rebuild the cache:
+> ```bash
+> php artisan optimize:clear
+> php artisan optimize
+> ```
+
+### Production Nginx Configuration
+
+Add the following block inside your site's `server {}` block, **above** the PHP catch-all. This caches Vite-built assets in the browser for 6 months — safe because Vite generates content-hashed filenames that change whenever the file changes.
+
+```nginx
+# Long-lived cache for Vite-built assets (content-hashed filenames)
+location ~* ^/build/ {
+    expires 6M;
+    add_header Cache-Control "public, max-age=15552000, immutable";
+    access_log off;
+}
+```
+
+---
+
 ## Common Commands
 
 ### Development

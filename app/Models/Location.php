@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Storage;
+use Spatie\ResponseCache\Facades\ResponseCache;
 
 class Location extends Model
 {
@@ -24,10 +25,16 @@ class Location extends Model
 
     protected static function booted(): void
     {
+        static::saved(function (): void {
+            ResponseCache::clear();
+        });
+
         static::deleted(function (Location $location): void {
             if ($location->photo) {
                 Storage::disk('public')->delete($location->photo);
             }
+
+            ResponseCache::clear();
         });
     }
 

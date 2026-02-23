@@ -13,7 +13,11 @@
       "Bash(git stash pop:*)",
       "Bash(find:*)",
       "Bash(cat:*)",
-      "Bash(wc -l:*)"
+      "Bash(wc -l:*)",
+      "WebFetch(domain:spatie.be)",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:www.highperformancelaravel.com)",
+      "Bash(composer require:*)"
     ]
   }
 }

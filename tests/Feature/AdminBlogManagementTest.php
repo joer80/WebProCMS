@@ -6,6 +6,7 @@ use App\Models\User;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use Livewire\Livewire;
+use Spatie\ResponseCache\Facades\ResponseCache;
 
 it('redirects unauthenticated users from the blog dashboard', function (): void {
     $this->get(route('dashboard.blog.index'))->assertRedirect(route('login'));
@@ -555,4 +556,30 @@ it('stores null for gallery_images when no gallery images on create', function (
         ->call('save');
 
     expect(Post::where('title', 'No Gallery Post')->value('gallery_images'))->toBeNull();
+});
+
+it('clears the response cache when a post is saved', function (): void {
+    ResponseCache::spy();
+    $user = User::factory()->create();
+
+    Livewire::actingAs($user)
+        ->test('pages::dashboard.blog.create')
+        ->set('title', 'Cache Clear Post')
+        ->set('content', 'Content.')
+        ->call('save');
+
+    ResponseCache::shouldHaveReceived('clear')->once();
+});
+
+it('clears the response cache when a post is deleted', function (): void {
+    $user = User::factory()->create();
+    $post = Post::factory()->create();
+
+    ResponseCache::spy();
+
+    Livewire::actingAs($user)
+        ->test('pages::dashboard.blog.index')
+        ->call('deletePost', $post->id);
+
+    ResponseCache::shouldHaveReceived('clear')->once();
 });

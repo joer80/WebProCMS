@@ -2,20 +2,20 @@
 
 use Illuminate\Support\Facades\Route;
 
-Route::get('/', App\Http\Controllers\HomeController::class)->name('home');
-
-Route::view('about', 'about')->name('about');
-
-Route::view('services', 'services')->name('services');
-
-Route::view('services/instant-query-editor', 'services.instant-query-editor')->name('services.instant-query-editor');
+Route::middleware([
+    'cache.headers:public;max_age=3600;etag',
+    \Spatie\ResponseCache\Middlewares\CacheResponse::class,
+])->group(function (): void {
+    Route::get('/', App\Http\Controllers\HomeController::class)->name('home');
+    Route::view('about', 'about')->name('about');
+    Route::view('services', 'services')->name('services');
+    Route::view('services/instant-query-editor', 'services.instant-query-editor')->name('services.instant-query-editor');
+    Route::livewire('blog', 'pages::blog.index')->name('blog.index');
+    Route::livewire('blog/{slug}', 'pages::blog.show')->name('blog.show');
+    Route::livewire('locations', 'pages::locations')->name('locations');
+});
 
 Route::livewire('contact', 'pages::contact')->name('contact');
-
-Route::livewire('locations', 'pages::locations')->name('locations');
-
-Route::livewire('blog', 'pages::blog.index')->name('blog.index');
-Route::livewire('blog/{slug}', 'pages::blog.show')->name('blog.show');
 
 Route::middleware(['auth', 'verified'])->group(function (): void {
     Route::livewire('dashboard/blog', 'pages::dashboard.blog.index')->name('dashboard.blog.index');

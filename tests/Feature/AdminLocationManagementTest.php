@@ -5,6 +5,7 @@ use App\Models\User;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use Livewire\Livewire;
+use Spatie\ResponseCache\Facades\ResponseCache;
 
 it('redirects unauthenticated users from the location dashboard', function (): void {
     $this->get(route('dashboard.locations.index'))->assertRedirect(route('login'));
@@ -176,4 +177,34 @@ it('deletes a location and its photo from storage', function (): void {
 
     expect(Location::find($location->id))->toBeNull();
     Storage::disk('public')->assertMissing($photo);
+});
+
+it('clears the response cache when a location is saved', function (): void {
+    ResponseCache::spy();
+    $user = User::factory()->create();
+
+    Livewire::actingAs($user)
+        ->test('pages::dashboard.locations.create')
+        ->set('name', 'Dallas Office')
+        ->set('address', '123 Main St')
+        ->set('city', 'Dallas')
+        ->set('state', 'TX')
+        ->set('zip', '75201')
+        ->set('phone', '555-1234')
+        ->call('save');
+
+    ResponseCache::shouldHaveReceived('clear')->once();
+});
+
+it('clears the response cache when a location is deleted', function (): void {
+    $user = User::factory()->create();
+    $location = Location::factory()->create();
+
+    ResponseCache::spy();
+
+    Livewire::actingAs($user)
+        ->test('pages::dashboard.locations.index')
+        ->call('deleteLocation', $location->id);
+
+    ResponseCache::shouldHaveReceived('clear')->once();
 });

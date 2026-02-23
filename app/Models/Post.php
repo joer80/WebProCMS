@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Spatie\ResponseCache\Facades\ResponseCache;
 
 class Post extends Model
 {
@@ -38,6 +39,10 @@ class Post extends Model
             }
         });
 
+        static::saved(function (): void {
+            ResponseCache::clear();
+        });
+
         static::deleted(function (Post $post): void {
             if ($post->featured_image) {
                 Storage::disk('public')->delete($post->featured_image);
@@ -46,6 +51,8 @@ class Post extends Model
             if ($post->gallery_images) {
                 Storage::disk('public')->delete($post->gallery_images);
             }
+
+            ResponseCache::clear();
         });
     }
 
