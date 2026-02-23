@@ -1,5 +1,11 @@
 <?php
 
+// This file is kept as a reference example of a Livewire 4 single-file component.
+// It is the class-based equivalent of the Volt component at resources/views/pages/blog/⚡index.blade.php.
+// The key difference: the template lives inside render() as a heredoc string rather than in a separate blade file.
+// Route: /blog2 (see routes/web.php)
+// I chose not to use this format becuase the string does not have blade syntax highlighting or linting, and is more difficult to edit. But it is a valid way to build a Livewire component!
+
 namespace App\Livewire;
 
 use App\Models\Category;

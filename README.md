@@ -111,9 +111,17 @@ location ~* ^/build/ {
 
 | Command | Description |
 |---|---|
-| `php artisan make:livewire FooComponent` | New Livewire component (class + view) |
-| `php artisan make:livewire foo.bar` | Nested component in `foo/` subdirectory |
+| `php artisan make:livewire --sfc --emoji=true FooComponent` | **Preferred** — Volt single-file component (`.blade.php` with PHP at top, template below) |
+| `php artisan make:livewire --mfc --emoji=true FooComponent` | Two-file component — separate PHP class + blade view (worth considering for complex components with lots of logic) |
+| `php artisan make:livewire --class FooComponent` | Class-only component — template lives inside `render()` as a heredoc string (avoid: no blade syntax highlighting) |
+| `php artisan make:livewire foo.bar` | Nested component in `foo/` subdirectory (works with any flag above) |
 | `php artisan livewire:publish --config` | Publish Livewire config file |
+
+**Which format to use:**
+
+- **Volt (`--sfc`)** — the default choice for this project. Everything in one `.blade.php` file with full blade syntax highlighting. All existing page components use this format.
+- **Two-file (`--mfc`)** — worth considering when a component has complex PHP logic that benefits from a dedicated class file (better IDE support for refactoring, interfaces, traits). The blade view stays a proper `.blade.php` file with full highlighting.
+- **Class-only (`--class`)** — avoid. The template is a PHP string inside `render()`, so there is no blade syntax highlighting or tag completion in VS Code. See `app/Livewire/Blog2.php` for a reference example of what this looks like.
 
 ### Testing & Code Quality
 

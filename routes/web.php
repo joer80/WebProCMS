@@ -11,13 +11,13 @@ Route::middleware([
     Route::view('services/instant-query-editor', 'services.instant-query-editor')->name('services.instant-query-editor');
     Route::livewire('locations', 'pages::locations')->name('locations');
 
-    //LW4 version of blog - /app/Livewire/Blog2.php
-    Route::get('blog2', \App\Livewire\Blog2::class)->name('blog2.index');
 
     //Volt version of blog - /resources/views/pages/blog/⚡index.blade.php
     Route::livewire('blog', 'pages::blog.index')->name('blog.index');
-
     Route::livewire('blog/{slug}', 'pages::blog.show')->name('blog.show');
+
+    //LW4 version of blog (For comparison)- /app/Livewire/Blog2.php
+    //Route::get('blog2', \App\Livewire\Blog2::class)->name('blog2.index');
 });
 
 Route::livewire('contact', 'pages::contact')->name('contact');
