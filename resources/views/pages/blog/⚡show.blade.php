@@ -19,7 +19,7 @@ new #[Layout('layouts.public')] class extends Component {
 
     public function title(): string
     {
-        return $this->post->title.' — GetRows';
+        return $this->post->meta_title ?: ($this->post->title.' — '.config('app.name'));
     }
 
     public function getProcessedContentProperty(): string
@@ -46,6 +46,79 @@ new #[Layout('layouts.public')] class extends Component {
             ->first();
     }
 }; ?>
+
+@push('head')
+    <link rel="canonical" href="{{ route('blog.show', $post->slug) }}" />
+
+    @if ($post->meta_description || $post->excerpt)
+        <meta name="description" content="{{ $post->meta_description ?? strip_tags($post->excerpt) }}" />
+    @endif
+
+    @if ($post->is_noindex)
+        <meta name="robots" content="noindex, nofollow" />
+    @endif
+
+    {{-- Open Graph --}}
+    <meta property="og:type" content="article" />
+    <meta property="og:title" content="{{ $post->og_title ?? $post->meta_title ?? $post->title }}" />
+    <meta property="og:url" content="{{ route('blog.show', $post->slug) }}" />
+    <meta property="og:site_name" content="{{ config('app.name') }}" />
+
+    @if ($post->og_description || $post->meta_description || $post->excerpt)
+        <meta property="og:description" content="{{ $post->og_description ?? $post->meta_description ?? strip_tags($post->excerpt) }}" />
+    @endif
+
+    @php
+        $ogImageUrl = $post->og_image ?: $post->featuredImageUrl() ?: config('seo.og.default_image');
+    @endphp
+    @if ($ogImageUrl)
+        <meta property="og:image" content="{{ $ogImageUrl }}" />
+    @endif
+
+    {{-- Twitter Card --}}
+    <meta name="twitter:card" content="summary_large_image" />
+    @if (config('seo.twitter.handle'))
+        <meta name="twitter:site" content="{{ config('seo.twitter.handle') }}" />
+    @endif
+    <meta name="twitter:title" content="{{ $post->og_title ?? $post->meta_title ?? $post->title }}" />
+    @if ($post->og_description || $post->meta_description || $post->excerpt)
+        <meta name="twitter:description" content="{{ $post->og_description ?? $post->meta_description ?? strip_tags($post->excerpt) }}" />
+    @endif
+    @if ($ogImageUrl)
+        <meta name="twitter:image" content="{{ $ogImageUrl }}" />
+    @endif
+
+    {{-- Article Schema --}}
+    @php
+        $articleSchema = [
+            '@context' => 'https://schema.org',
+            '@type' => 'BlogPosting',
+            'headline' => $post->title,
+            'url' => route('blog.show', $post->slug),
+            'datePublished' => $post->published_at?->toIso8601String(),
+            'dateModified' => $post->updated_at?->toIso8601String(),
+        ];
+
+        if ($post->meta_description || $post->excerpt) {
+            $articleSchema['description'] = $post->meta_description ?? strip_tags($post->excerpt);
+        }
+
+        if ($post->featuredImageUrl()) {
+            $articleSchema['image'] = $post->featuredImageUrl();
+        }
+
+        $publisherName = config('seo.schema.name') ?: config('app.name');
+        $articleSchema['publisher'] = array_filter([
+            '@type' => config('seo.schema.type', 'Organization'),
+            'name' => $publisherName,
+            'url' => config('seo.schema.url') ?: config('app.url'),
+            'logo' => config('seo.schema.logo')
+                ? ['@type' => 'ImageObject', 'url' => config('seo.schema.logo')]
+                : null,
+        ]);
+    @endphp
+    <script type="application/ld+json">{!! json_encode($articleSchema, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) !!}</script>
+@endpush
 
 <div>
     {{-- Breadcrumb --}}

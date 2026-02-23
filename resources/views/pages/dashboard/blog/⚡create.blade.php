@@ -52,6 +52,24 @@ new #[Layout('layouts.app')] #[Title('New Post')] class extends Component {
     #[Validate('required|integer|in:2,3,4,5')]
     public int $galleryColumns = 4;
 
+    #[Validate('nullable|string|max:255')]
+    public string $metaTitle = '';
+
+    #[Validate('nullable|string|max:320')]
+    public string $metaDescription = '';
+
+    #[Validate('nullable|boolean')]
+    public bool $isNoindex = false;
+
+    #[Validate('nullable|string|max:255')]
+    public string $ogTitle = '';
+
+    #[Validate('nullable|string|max:320')]
+    public string $ogDescription = '';
+
+    #[Validate('nullable|url|max:2048')]
+    public string $ogImage = '';
+
     public string $newCategoryName = '';
 
     public function addCtaButton(): void
@@ -133,6 +151,12 @@ new #[Layout('layouts.app')] #[Title('New Post')] class extends Component {
             'featured_image' => $imagePath,
             'featured_image_alt' => $this->featuredImageAlt ?: null,
             'published_at' => in_array($this->status, ['published', 'unlisted']) ? now() : null,
+            'meta_title' => $this->metaTitle ?: null,
+            'meta_description' => $this->metaDescription ?: null,
+            'is_noindex' => $this->isNoindex,
+            'og_title' => $this->ogTitle ?: null,
+            'og_description' => $this->ogDescription ?: null,
+            'og_image' => $this->ogImage ?: null,
         ]);
     }
 
@@ -359,6 +383,98 @@ new #[Layout('layouts.app')] #[Title('New Post')] class extends Component {
                             </flux:select>
                             <flux:error name="galleryColumns" />
                         </flux:field>
+                    </div>
+
+                    {{-- SEO Settings --}}
+                    <div
+                        x-data="{ open: false }"
+                        class="rounded-lg border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-900"
+                    >
+                        <button
+                            type="button"
+                            @click="open = !open"
+                            class="w-full flex items-center justify-between p-4 text-left"
+                        >
+                            <div class="flex items-center gap-2">
+                                <span class="text-sm font-medium text-zinc-700 dark:text-zinc-300">SEO Settings</span>
+                                <flux:badge size="sm" variant="outline">Optional</flux:badge>
+                            </div>
+                            <svg xmlns="http://www.w3.org/2000/svg" class="size-4 text-zinc-400 transition-transform duration-200" :class="open ? 'rotate-180' : ''" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="m19 9-7 7-7-7" />
+                            </svg>
+                        </button>
+
+                        <div x-show="open" x-transition class="px-4 pb-4 space-y-4">
+                            <div class="border-t border-zinc-200 dark:border-zinc-700 pt-4 space-y-4">
+
+                                {{-- Meta Title --}}
+                                <div x-data="{ length: $wire.metaTitle.length }">
+                                    <flux:field>
+                                        <div class="flex items-center justify-between mb-1">
+                                            <flux:label class="mb-0">Meta Title</flux:label>
+                                            <span class="text-xs tabular-nums" :class="length > 60 ? 'text-amber-500 dark:text-amber-400' : 'text-zinc-400'" x-text="length + ' / 60'"></span>
+                                        </div>
+                                        <flux:input
+                                            wire:model="metaTitle"
+                                            x-on:input="length = $event.target.value.length"
+                                            type="text"
+                                            placeholder="Defaults to post title…"
+                                        />
+                                        <flux:description>50–60 characters recommended. Shown in browser tabs and search results.</flux:description>
+                                        <flux:error name="metaTitle" />
+                                    </flux:field>
+                                </div>
+
+                                {{-- Meta Description --}}
+                                <div x-data="{ length: $wire.metaDescription.length }">
+                                    <flux:field>
+                                        <div class="flex items-center justify-between mb-1">
+                                            <flux:label class="mb-0">Meta Description</flux:label>
+                                            <span class="text-xs tabular-nums" :class="length > 160 ? 'text-amber-500 dark:text-amber-400' : 'text-zinc-400'" x-text="length + ' / 160'"></span>
+                                        </div>
+                                        <flux:textarea
+                                            wire:model="metaDescription"
+                                            x-on:input="length = $event.target.value.length"
+                                            rows="3"
+                                            placeholder="Defaults to post excerpt…"
+                                        />
+                                        <flux:description>150–160 characters recommended. Shown in search result snippets.</flux:description>
+                                        <flux:error name="metaDescription" />
+                                    </flux:field>
+                                </div>
+
+                                {{-- Noindex --}}
+                                <flux:switch wire:model="isNoindex" label="Hide from search engines (noindex)" description="Prevents this post from appearing in search results." />
+
+                                {{-- Open Graph --}}
+                                <div class="pt-4 border-t border-zinc-200 dark:border-zinc-700 space-y-4">
+                                    <div>
+                                        <p class="text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">Open Graph</p>
+                                        <p class="text-xs text-zinc-400 dark:text-zinc-500 mt-0.5">Customize how this post appears when shared on social media.</p>
+                                    </div>
+
+                                    <flux:field>
+                                        <flux:label>OG Title</flux:label>
+                                        <flux:input wire:model="ogTitle" type="text" placeholder="Defaults to meta title or post title…" />
+                                        <flux:error name="ogTitle" />
+                                    </flux:field>
+
+                                    <flux:field>
+                                        <flux:label>OG Description</flux:label>
+                                        <flux:textarea wire:model="ogDescription" rows="2" placeholder="Defaults to meta description or excerpt…" />
+                                        <flux:error name="ogDescription" />
+                                    </flux:field>
+
+                                    <flux:field>
+                                        <flux:label>OG Image URL</flux:label>
+                                        <flux:input wire:model="ogImage" type="url" placeholder="Defaults to featured image…" />
+                                        <flux:description>Paste a full URL to a 1200×630px image for social sharing previews.</flux:description>
+                                        <flux:error name="ogImage" />
+                                    </flux:field>
+                                </div>
+
+                            </div>
+                        </div>
                     </div>
                 </div>
 

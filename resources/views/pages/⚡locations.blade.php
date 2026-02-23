@@ -10,6 +10,12 @@ new #[Layout('layouts.public', ['description' => 'Find a GetRows office near you
     public string $selectedState = '';
 
     /** @return \Illuminate\Database\Eloquent\Collection<int, Location> */
+    public function getAllLocationsProperty(): \Illuminate\Database\Eloquent\Collection
+    {
+        return Location::query()->orderBy('name')->get();
+    }
+
+    /** @return \Illuminate\Database\Eloquent\Collection<int, Location> */
     public function getFilteredLocationsProperty(): \Illuminate\Database\Eloquent\Collection
     {
         return Location::query()
@@ -43,6 +49,27 @@ new #[Layout('layouts.public', ['description' => 'Find a GetRows office near you
         $this->selectedState = '';
     }
 }; ?>
+
+@push('head')
+    @php
+        $appName = config('app.name');
+        $locationSchemas = $this->allLocations->map(fn (App\Models\Location $loc) => [
+            '@context' => 'https://schema.org',
+            '@type' => 'LocalBusiness',
+            'name' => $appName.' — '.$loc->name,
+            'telephone' => $loc->phone,
+            'address' => [
+                '@type' => 'PostalAddress',
+                'streetAddress' => $loc->address,
+                'addressLocality' => $loc->city,
+                'addressRegion' => $loc->state,
+                'postalCode' => $loc->zip,
+                'addressCountry' => config('seo.schema.address.country', 'US'),
+            ],
+        ])->values()->all();
+    @endphp
+    <script type="application/ld+json">{!! json_encode($locationSchemas, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) !!}</script>
+@endpush
 
 <div>
     <div class="mb-10">

@@ -29,6 +29,12 @@ class Post extends Model
         'featured_image',
         'featured_image_alt',
         'layout',
+        'meta_title',
+        'meta_description',
+        'is_noindex',
+        'og_title',
+        'og_description',
+        'og_image',
     ];
 
     protected static function booted(): void
@@ -88,6 +94,7 @@ class Post extends Model
             'cta_buttons' => 'array',
             'gallery_images' => 'array',
             'gallery_columns' => 'integer',
+            'is_noindex' => 'boolean',
         ];
     }
 
