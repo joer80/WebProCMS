@@ -16,4 +16,5 @@
 
 @vite(['resources/css/app.css', 'resources/js/app.js'])
 @fluxAppearance
+<script>localStorage.setItem('flux.appearance','light');document.documentElement.classList.remove('dark')</script>
 @stack('head')
