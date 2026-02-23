@@ -3,7 +3,6 @@
 use Illuminate\Support\Facades\Route;
 
 Route::middleware([
-    'cache.headers:public;max_age=3600;etag',
     \Spatie\ResponseCache\Middlewares\CacheResponse::class,
 ])->group(function (): void {
     Route::get('/', App\Http\Controllers\HomeController::class)->name('home');
