@@ -39,7 +39,7 @@ php artisan migrate
 # Optionally seed the database with sample data
 php artisan db:seed
 
-# Install Node dependencies and build assets
+# Install Node dependencies and build assets for the first time
 npm install
 npm run build
 
@@ -47,7 +47,22 @@ npm run build
 php artisan storage:link
 ```
 
-> **Note:** Use `npm run dev` instead of `npm run build` if you want to run the Vite dev server with hot-reload during development.
+### Step 5 — Start the Development Environment
+
+```bash
+composer run dev
+```
+
+This single command starts everything you need for development:
+
+| Process | What it does |
+|---|---|
+| `php artisan serve` | PHP dev server (Herd already handles this — it runs but is redundant) |
+| `php artisan queue:listen` | **Required** — processes background jobs (demo data seeding, etc.) |
+| `php artisan pail` | Streams application logs to the terminal |
+| `npm run dev` | Vite asset watcher with hot-reload |
+
+> **Do not run `npm run dev` on its own.** Without the queue worker, background jobs like seeding will be dispatched but never processed — they'll silently pile up in the database. Always use `composer run dev` so all four processes run together.
 
 > **Laravel Boost (`php artisan boost:install --guidelines --skills`):** This command is only needed when setting up a brand-new project. Since this repository already includes the `CLAUDE.md` guidelines and skills files, you do **not** need to run it when cloning.
 

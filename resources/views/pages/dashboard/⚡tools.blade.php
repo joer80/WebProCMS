@@ -5,12 +5,19 @@ use App\Models\Category;
 use App\Models\Location;
 use App\Models\Post;
 use App\Models\Setting;
+use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
 use Livewire\Component;
 use Spatie\ResponseCache\Facades\ResponseCache;
 
 new #[Layout('layouts.app')] #[Title('Tools')] class extends Component {
+    #[Computed]
+    public function seedingStatus(): string
+    {
+        return Setting::get('seeding_status', 'idle');
+    }
+
     public function locationCount(): int
     {
         return Setting::get('locations_mode', 'single') === 'multiple' ? 5 : 1;
@@ -34,6 +41,7 @@ new #[Layout('layouts.app')] #[Title('Tools')] class extends Component {
 
     public function seedDemoData(): void
     {
+        Setting::set('seeding_status', 'running');
         SeedDemoDataJob::dispatch();
 
         $this->dispatch('notify', message: 'Seeding started — this may take a minute.');
@@ -63,14 +71,21 @@ new #[Layout('layouts.app')] #[Title('Tools')] class extends Component {
                 </div>
             </div>
 
-            <div class="rounded-lg border border-zinc-200 dark:border-zinc-700 p-6">
+            <div class="rounded-lg border border-zinc-200 dark:border-zinc-700 p-6" {{ $this->seedingStatus === 'running' ? 'wire:poll.3s' : '' }}>
                 <div class="flex items-start justify-between gap-6">
                     <div>
                         <flux:heading>Seed Demo Data</flux:heading>
                         <flux:text class="mt-1">Populate the site with demo blog posts, categories, and {{ $this->locationCount() === 1 ? '1 location' : $this->locationCount() . ' locations' }}. Safe to run multiple times — nothing will be duplicated.</flux:text>
+                        @if ($this->seedingStatus === 'running')
+                            <flux:text class="mt-2 text-sm text-amber-600 dark:text-amber-400">Seeding in progress — this may take a minute...</flux:text>
+                        @elseif ($this->seedingStatus === 'complete')
+                            <flux:text class="mt-2 text-sm text-green-600 dark:text-green-500">Last seed completed successfully.</flux:text>
+                        @elseif ($this->seedingStatus === 'failed')
+                            <flux:text class="mt-2 text-sm text-red-600 dark:text-red-400">Last seed failed. Check your logs for details.</flux:text>
+                        @endif
                     </div>
-                    <flux:button wire:click="seedDemoData" variant="outline" class="shrink-0">
-                        Seed Data
+                    <flux:button wire:click="seedDemoData" variant="outline" class="shrink-0" :disabled="$this->seedingStatus === 'running'">
+                        {{ $this->seedingStatus === 'running' ? 'Seeding...' : 'Seed Data' }}
                     </flux:button>
                 </div>
             </div>

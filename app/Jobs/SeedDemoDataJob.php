@@ -24,6 +24,13 @@ class SeedDemoDataJob implements ShouldQueue
         } else {
             Artisan::call('db:seed', ['--class' => 'LocationSeeder', '--no-interaction' => true]);
         }
+
+        Setting::set('seeding_status', 'complete');
+    }
+
+    public function failed(\Throwable $exception): void
+    {
+        Setting::set('seeding_status', 'failed');
     }
 
     private function seedMultipleLocations(): void

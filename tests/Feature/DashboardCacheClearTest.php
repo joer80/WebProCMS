@@ -4,6 +4,7 @@ use App\Jobs\SeedDemoDataJob;
 use App\Models\Category;
 use App\Models\Location;
 use App\Models\Post;
+use App\Models\Setting;
 use App\Models\User;
 use Illuminate\Support\Facades\Queue;
 use Livewire\Livewire;
@@ -67,4 +68,5 @@ it('dispatches the seed demo data job and notifies', function (): void {
         ->assertDispatched('notify', message: 'Seeding started — this may take a minute.');
 
     Queue::assertPushed(SeedDemoDataJob::class);
+    expect(Setting::get('seeding_status'))->toBe('running');
 });
