@@ -1,4 +1,13 @@
-<x-layouts::public title="About Us — WebProCMS" description="Learn about WebProCMS — our story, mission, and the team behind the CMS built for web professionals. Founded to make content management simple, powerful, and enjoyable.">
+<?php
+
+use Livewire\Attributes\Layout;
+use Livewire\Attributes\Title;
+use Livewire\Component;
+
+new #[Layout('layouts.public', ['description' => 'Learn about WebProCMS — our story, mission, and the team behind the CMS built for web professionals. Founded to make content management simple, powerful, and enjoyable.'])] #[Title('About Us — WebProCMS')] class extends Component {
+}; ?>
+
+<div>
     {{-- Hero --}}
     <section class="mb-16 text-center">
         <h1 class="text-4xl font-semibold leading-tight mb-4">About WebProCMS</h1>
@@ -65,4 +74,4 @@
             @endforeach
         </div>
     </section>
-</x-layouts::public>
+</div>

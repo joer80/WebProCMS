@@ -5,30 +5,30 @@ use Illuminate\Support\Facades\Route;
 Route::middleware([
     \Spatie\ResponseCache\Middlewares\CacheResponse::class,
 ])->group(function (): void {
-    Route::get('/', App\Http\Controllers\HomeController::class)->name('home');
-    Route::view('about', 'about')->name('about');
-    Route::view('services', 'services')->name('services');
-    Route::view('services/content-editor', 'services.content-editor')->name('services.content-editor');
+    Route::livewire('/', 'pages::home')->name('home');
+    Route::livewire('about', 'pages::about')->name('about');
+    Route::livewire('services', 'pages::services')->name('services');
+    Route::livewire('services/content-editor', 'pages::services.content-editor')->name('services.content-editor');
     Route::livewire('locations', 'pages::locations')->name('locations');
 
     // SaaS pages
-    Route::view('features', 'features')->name('features');
-    Route::view('pricing', 'pricing')->name('pricing');
+    Route::livewire('features', 'pages::features')->name('features');
+    Route::livewire('pricing', 'pages::pricing')->name('pricing');
 
     // eCommerce pages
-    Route::view('products', 'products')->name('products');
+    Route::livewire('products', 'pages::products')->name('products');
 
     // Law pages
-    Route::view('practice-areas', 'practice-areas')->name('practice-areas');
+    Route::livewire('practice-areas', 'pages::practice-areas')->name('practice-areas');
 
     // Nonprofit pages
-    Route::view('donate', 'donate')->name('donate');
-    Route::view('volunteer', 'volunteer')->name('volunteer');
+    Route::livewire('donate', 'pages::donate')->name('donate');
+    Route::livewire('volunteer', 'pages::volunteer')->name('volunteer');
 
     // Healthcare pages
-    Route::view('patients', 'patients')->name('patients');
-    Route::view('employers', 'employers')->name('employers');
-    Route::view('careers', 'careers')->name('careers');
+    Route::livewire('patients', 'pages::patients')->name('patients');
+    Route::livewire('employers', 'pages::employers')->name('employers');
+    Route::livewire('careers', 'pages::careers')->name('careers');
 
     // Volt version of blog - /resources/views/pages/blog/⚡index.blade.php
     Route::livewire('blog', 'pages::blog.index')->name('blog.index');

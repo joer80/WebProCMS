@@ -1,4 +1,13 @@
-<x-layouts::public title="Volunteer" description="Give your time and skills to make a real difference. Explore volunteer opportunities and sign up today.">
+<?php
+
+use Livewire\Attributes\Layout;
+use Livewire\Attributes\Title;
+use Livewire\Component;
+
+new #[Layout('layouts.public', ['description' => 'Give your time and skills to make a real difference. Explore volunteer opportunities and sign up today.'])] #[Title('Volunteer')] class extends Component {
+}; ?>
+
+<div>
     {{-- Hero --}}
     <section class="text-center py-16 lg:py-24">
         <span class="inline-block text-xs font-semibold tracking-widest uppercase text-[#706f6c] dark:text-[#A1A09A] mb-4">Get involved</span>
@@ -85,4 +94,4 @@
             </div>
         </div>
     </section>
-</x-layouts::public>
+</div>

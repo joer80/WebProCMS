@@ -1,4 +1,13 @@
-<x-layouts::public title="Employer Services" description="Occupational health, workers' comp, and drug testing programs designed to keep your workforce healthy and your business protected.">
+<?php
+
+use Livewire\Attributes\Layout;
+use Livewire\Attributes\Title;
+use Livewire\Component;
+
+new #[Layout('layouts.public', ['description' => 'Occupational health, workers\' comp, and drug testing programs designed to keep your workforce healthy and your business protected.'])] #[Title('Employer Services')] class extends Component {
+}; ?>
+
+<div>
     {{-- Hero --}}
     <section class="text-center py-16 lg:py-24">
         <span class="inline-block text-xs font-semibold tracking-widest uppercase text-[#706f6c] dark:text-[#A1A09A] mb-4">Workplace health</span>
@@ -70,4 +79,4 @@
             Contact our employer team
         </a>
     </section>
-</x-layouts::public>
+</div>

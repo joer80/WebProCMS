@@ -1,4 +1,13 @@
-<x-layouts::public title="Patient Resources" description="Everything you need as a patient — appointment booking, portal access, forms, FAQs, and more.">
+<?php
+
+use Livewire\Attributes\Layout;
+use Livewire\Attributes\Title;
+use Livewire\Component;
+
+new #[Layout('layouts.public', ['description' => 'Everything you need as a patient — appointment booking, portal access, forms, FAQs, and more.'])] #[Title('Patient Resources')] class extends Component {
+}; ?>
+
+<div>
     {{-- Hero --}}
     <section class="text-center py-16 lg:py-24">
         <span class="inline-block text-xs font-semibold tracking-widest uppercase text-[#706f6c] dark:text-[#A1A09A] mb-4">Patient information</span>
@@ -95,4 +104,4 @@
             </a>
         </div>
     </section>
-</x-layouts::public>
+</div>

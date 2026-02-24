@@ -1,4 +1,13 @@
-<x-layouts::public title="Practice Areas" description="Our experienced attorneys handle a wide range of legal matters. Explore our practice areas to find the right representation for your case.">
+<?php
+
+use Livewire\Attributes\Layout;
+use Livewire\Attributes\Title;
+use Livewire\Component;
+
+new #[Layout('layouts.public', ['description' => 'Our experienced attorneys handle a wide range of legal matters. Explore our practice areas to find the right representation for your case.'])] #[Title('Practice Areas')] class extends Component {
+}; ?>
+
+<div>
     {{-- Hero --}}
     <section class="text-center py-16 lg:py-24">
         <span class="inline-block text-xs font-semibold tracking-widest uppercase text-[#706f6c] dark:text-[#A1A09A] mb-4">Legal expertise</span>
@@ -77,4 +86,4 @@
             Book a free consultation
         </a>
     </section>
-</x-layouts::public>
+</div>

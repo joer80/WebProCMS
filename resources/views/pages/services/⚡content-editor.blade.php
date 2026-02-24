@@ -1,4 +1,13 @@
-<x-layouts::public title="Visual Content Editor — WebProCMS" description="Write and edit with a powerful block-based editor. Rich text, images, embeds, and custom blocks — all in one clean interface. No developer needed.">
+<?php
+
+use Livewire\Attributes\Layout;
+use Livewire\Attributes\Title;
+use Livewire\Component;
+
+new #[Layout('layouts.public', ['description' => 'Write and edit with a powerful block-based editor. Rich text, images, embeds, and custom blocks — all in one clean interface. No developer needed.'])] #[Title('Visual Content Editor — WebProCMS')] class extends Component {
+}; ?>
+
+<div>
     {{-- Breadcrumb --}}
     <nav class="mb-8 text-sm text-[#706f6c] dark:text-[#A1A09A]">
         <a href="{{ route('services') }}" class="hover:text-primary dark:hover:text-primary-surface transition-colors">Services</a>
@@ -149,4 +158,4 @@
             </a>
         </div>
     </section>
-</x-layouts::public>
+</div>

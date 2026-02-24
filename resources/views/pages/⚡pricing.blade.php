@@ -1,4 +1,13 @@
-<x-layouts::public title="Pricing — WebProCMS" description="Simple, transparent pricing for individuals, agencies, and enterprises. Start free, scale as you grow.">
+<?php
+
+use Livewire\Attributes\Layout;
+use Livewire\Attributes\Title;
+use Livewire\Component;
+
+new #[Layout('layouts.public', ['description' => 'Simple, transparent pricing for individuals, agencies, and enterprises. Start free, scale as you grow.'])] #[Title('Pricing — WebProCMS')] class extends Component {
+}; ?>
+
+<div>
     {{-- Hero --}}
     <section class="text-center py-16 lg:py-24">
         <span class="inline-block text-xs font-semibold tracking-widest uppercase text-[#706f6c] dark:text-[#A1A09A] mb-4">Simple pricing</span>
@@ -117,4 +126,4 @@
             @endforeach
         </div>
     </section>
-</x-layouts::public>
+</div>

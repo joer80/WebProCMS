@@ -1,4 +1,13 @@
-<x-layouts::public title="Products" description="Browse our full product catalog. Quality items for every need, with fast shipping and easy returns.">
+<?php
+
+use Livewire\Attributes\Layout;
+use Livewire\Attributes\Title;
+use Livewire\Component;
+
+new #[Layout('layouts.public', ['description' => 'Browse our full product catalog. Quality items for every need, with fast shipping and easy returns.'])] #[Title('Products')] class extends Component {
+}; ?>
+
+<div>
     {{-- Hero --}}
     <section class="py-16 lg:py-20">
         <span class="inline-block text-xs font-semibold tracking-widest uppercase text-[#706f6c] dark:text-[#A1A09A] mb-4">Our catalog</span>
@@ -68,4 +77,4 @@
             </div>
         @endforeach
     </section>
-</x-layouts::public>
+</div>
