@@ -14,6 +14,7 @@ Route::middleware([
     // SaaS pages
     Route::livewire('features', 'pages::features')->name('features');
     Route::livewire('pricing', 'pages::pricing')->name('pricing');
+    Route::livewire('test', 'pages::test')->name('test');
 
     // eCommerce pages
     Route::livewire('products', 'pages::products')->name('products');
@@ -40,6 +41,9 @@ Route::middleware([
 
 Route::livewire('contact', 'pages::contact')->name('contact');
 
+// Design Library live preview (temp file, gitignored)
+Route::livewire('design-editor-preview', 'pages::design-editor-preview')->name('design-library.preview');
+
 Route::middleware(['auth', 'verified'])->group(function (): void {
     Route::livewire('dashboard', 'pages::dashboard')->name('dashboard');
 
@@ -64,6 +68,11 @@ Route::middleware(['auth', 'verified'])->group(function (): void {
         Route::livewire('dashboard/settings', 'pages::dashboard.settings')->name('dashboard.settings');
 
         Route::livewire('dashboard/users', 'pages::dashboard.users')->name('dashboard.users');
+
+        Route::livewire('dashboard/pages', 'pages::dashboard.pages')->name('dashboard.pages');
+
+        Route::livewire('dashboard/design-library', 'pages::dashboard.design-library.index')->name('dashboard.design-library.index');
+        Route::livewire('dashboard/design-library/editor', 'pages::dashboard.design-library.editor')->name('dashboard.design-library.editor');
     });
 });
 

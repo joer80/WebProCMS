@@ -1,0 +1,25 @@
+{{--
+@name Gallery - Grid
+@description Masonry-style photo gallery grid with hover overlay.
+@sort 10
+--}}
+<section class="py-20 px-6 bg-white dark:bg-zinc-900">
+    <div class="max-w-6xl mx-auto">
+        <div class="text-center mb-12">
+            <h2 class="text-4xl font-bold text-zinc-900 dark:text-white">Our Gallery</h2>
+            <p class="mt-4 text-zinc-500 dark:text-zinc-400">A glimpse into our work and culture.</p>
+        </div>
+        <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+            @for ($i = 1; $i <= 6; $i++)
+                <div class="group relative rounded-xl overflow-hidden bg-zinc-100 dark:bg-zinc-800 aspect-square">
+                    <div class="w-full h-full flex items-center justify-center text-zinc-400 dark:text-zinc-500 text-sm">
+                        Image {{ $i }}
+                    </div>
+                    <div class="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                        <span class="text-white text-sm font-medium">View Photo</span>
+                    </div>
+                </div>
+            @endfor
+        </div>
+    </div>
+</section>

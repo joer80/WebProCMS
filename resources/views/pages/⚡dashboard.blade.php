@@ -3,13 +3,20 @@
 use App\Models\Category;
 use App\Models\User;
 use App\Models\Post;
-use App\Models\Shortcode;
+use App\Support\VoltFileService;
+use Illuminate\Support\Str;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Lazy;
 use Livewire\Attributes\Title;
 use Livewire\Component;
 
 new #[Layout('layouts.app')] #[Title('Dashboard')] #[Lazy] class extends Component {
+    public bool $showNewPageModal = false;
+
+    public string $newPageName = '';
+
+    public string $newPageSlug = '';
+
     public function placeholder(): string
     {
         return <<<'HTML'
@@ -44,9 +51,43 @@ new #[Layout('layouts.app')] #[Title('Dashboard')] #[Lazy] class extends Compone
         return User::query()->count();
     }
 
-    public function getActiveShortcodeCountProperty(): int
+    public function getPageCountProperty(): int
     {
-        return Shortcode::query()->where('is_active', true)->count();
+        $files = (new VoltFileService)->listVoltFiles();
+
+        return count($files['Public Pages'] ?? []);
+    }
+
+    public function updatedNewPageName(string $value): void
+    {
+        $this->newPageSlug = Str::slug($value);
+    }
+
+    public function createPage(): void
+    {
+        $this->validate([
+            'newPageName' => ['required', 'string', 'max:100'],
+            'newPageSlug' => ['required', 'regex:/^[a-z0-9]+(?:-[a-z0-9]+)*$/'],
+        ]);
+
+        $relativePath = 'pages/⚡'.$this->newPageSlug.'.blade.php';
+
+        if (file_exists(resource_path('views/'.$relativePath))) {
+            $this->addError('newPageSlug', 'A page with this slug already exists.');
+
+            return;
+        }
+
+        (new VoltFileService)->createPage($this->newPageSlug, $this->newPageName);
+
+        $this->showNewPageModal = false;
+        $this->newPageName = '';
+        $this->newPageSlug = '';
+
+        $this->redirect(
+            route('dashboard.design-library.editor').'?file='.urlencode($relativePath),
+            navigate: true,
+        );
     }
 
     public function getCategoryCountProperty(): int
@@ -127,13 +168,41 @@ new #[Layout('layouts.app')] #[Title('Dashboard')] #[Lazy] class extends Compone
 
             <div class="rounded-lg border border-zinc-200 dark:border-zinc-700 p-5">
                 <div class="flex items-center gap-2 mb-3">
-                    <flux:icon name="code-bracket" class="size-4 text-zinc-400 dark:text-zinc-500" />
-                    <flux:text size="sm" class="font-medium text-zinc-600 dark:text-zinc-400">Active Shortcodes</flux:text>
+                    <flux:icon name="document" class="size-4 text-zinc-400 dark:text-zinc-500" />
+                    <flux:text size="sm" class="font-medium text-zinc-600 dark:text-zinc-400">Pages</flux:text>
                 </div>
-                <div class="text-3xl font-bold text-zinc-900 dark:text-zinc-100">{{ $this->activeShortcodeCount }}</div>
+                <div class="text-3xl font-bold text-zinc-900 dark:text-zinc-100">{{ $this->pageCount }}</div>
             </div>
             
         </div>
+
+        {{-- New Page Modal --}}
+        @if (auth()->user()->isAtLeast(\App\Enums\Role::Manager))
+            <flux:modal wire:model="showNewPageModal" class="w-full max-w-md">
+                <flux:heading size="lg" class="mb-1">New Page</flux:heading>
+                <flux:text class="mb-5 text-zinc-500">Create a new blank page and open it in the editor.</flux:text>
+
+                <div class="space-y-4">
+                    <flux:field>
+                        <flux:label>Page Name</flux:label>
+                        <flux:input wire:model.live="newPageName" placeholder="e.g. Our Team" />
+                        <flux:error name="newPageName" />
+                    </flux:field>
+
+                    <flux:field>
+                        <flux:label>URL Slug</flux:label>
+                        <flux:input wire:model="newPageSlug" placeholder="e.g. our-team" />
+                        <flux:description>The URL path for this page: /{{ $newPageSlug ?: 'slug' }}</flux:description>
+                        <flux:error name="newPageSlug" />
+                    </flux:field>
+                </div>
+
+                <div class="flex justify-end gap-3 mt-6">
+                    <flux:button wire:click="$set('showNewPageModal', false)" variant="ghost">Cancel</flux:button>
+                    <flux:button wire:click="createPage" variant="primary" icon="plus">Create Page</flux:button>
+                </div>
+            </flux:modal>
+        @endif
 
         {{-- Quick Actions --}}
         <div class="rounded-lg border border-zinc-200 dark:border-zinc-700 p-5 mb-8">
@@ -148,6 +217,11 @@ new #[Layout('layouts.app')] #[Title('Dashboard')] #[Lazy] class extends Compone
                 <flux:button href="{{ route('dashboard.shortcodes.create') }}" variant="outline" icon="plus" wire:navigate>
                     New Shortcode
                 </flux:button>
+                @if (auth()->user()->isAtLeast(\App\Enums\Role::Manager))
+                    <flux:button wire:click="$set('showNewPageModal', true)" variant="outline" icon="plus">
+                        New Page
+                    </flux:button>
+                @endif
             </div>
         </div>
 

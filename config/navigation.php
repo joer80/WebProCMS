@@ -23,6 +23,7 @@ return [
             ['label' => 'Pricing', 'route' => 'pricing'],
             ['label' => 'Blog', 'route' => 'blog.index'],
             ['label' => 'About', 'route' => 'about'],
+            ['label' => 'Test', 'route' => 'test'],
         ],
         'show_auth_links' => true,
         'footer_company' => [

@@ -1,5 +1,6 @@
 <?php
 
+use App\Jobs\IndexDesignLibraryJob;
 use App\Jobs\SeedDemoDataJob;
 use App\Models\Category;
 use App\Models\Location;
@@ -46,6 +47,13 @@ new #[Layout('layouts.app')] #[Title('Tools')] class extends Component {
 
         $this->dispatch('notify', message: 'Seeding started — this may take a minute.');
     }
+
+    public function syncDesignLibrary(): void
+    {
+        IndexDesignLibraryJob::dispatch();
+
+        $this->dispatch('notify', message: 'Design Library sync started.');
+    }
 }; ?>
 
 <div>
@@ -86,6 +94,23 @@ new #[Layout('layouts.app')] #[Title('Tools')] class extends Component {
                     </div>
                     <flux:button wire:click="seedDemoData" variant="outline" class="shrink-0" :disabled="$this->seedingStatus === 'running'">
                         {{ $this->seedingStatus === 'running' ? 'Seeding...' : 'Seed Data' }}
+                    </flux:button>
+                </div>
+            </div>
+
+            <div class="rounded-lg border border-zinc-200 dark:border-zinc-700 p-6">
+                <div class="flex items-start justify-between gap-6">
+                    <div>
+                        <flux:heading>Sync Design Library</flux:heading>
+                        <flux:text class="mt-1">Re-index all template files from <code class="text-xs bg-zinc-100 dark:bg-zinc-800 px-1 py-0.5 rounded">resources/design-library/</code> into the database. Run this after adding or modifying library files locally.</flux:text>
+                        @if (! app()->isLocal())
+                            <flux:text class="mt-2 text-xs text-amber-600 dark:text-amber-400">
+                                ⚠ You are not in a local environment. Library file changes should be made locally and committed to git before running on production.
+                            </flux:text>
+                        @endif
+                    </div>
+                    <flux:button wire:click="syncDesignLibrary" variant="outline" class="shrink-0">
+                        Sync Library
                     </flux:button>
                 </div>
             </div>
