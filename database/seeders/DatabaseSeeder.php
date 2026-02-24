@@ -19,9 +19,11 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
+        $domain = parse_url(env('BUSINESS_URL', 'https://example.com'), PHP_URL_HOST) ?? 'example.com';
+
         User::firstOrCreate(
-            ['email' => 'test@example.com'],
-            ['name' => 'Test User', 'password' => bcrypt('password'), 'role' => Role::Super],
+            ['email' => "test@{$domain}"],
+            ['name' => 'Test User', 'password' => bcrypt('password'), 'role' => Role::Standard],
         );
 
         $categories = collect(['General', 'News', 'Events'])->map(
