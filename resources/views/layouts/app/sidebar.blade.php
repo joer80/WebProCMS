@@ -19,25 +19,25 @@
                         <flux:sidebar.item icon="users" :href="route('dashboard.users')" :current="request()->routeIs('dashboard.users')" wire:navigate>
                             {{ __('Users') }}
                         </flux:sidebar.item>
+                        <flux:sidebar.item icon="document-text" :href="route('dashboard.blog.index')" :current="request()->routeIs('dashboard.blog.*')" wire:navigate>
+                            {{ __('Blog') }}
+                        </flux:sidebar.item>
+                        <flux:sidebar.item icon="tag" :href="route('dashboard.categories.index')" :current="request()->routeIs('dashboard.categories.*')" wire:navigate>
+                            {{ __('Categories') }}
+                        </flux:sidebar.item>
+                        <flux:sidebar.item icon="code-bracket" :href="route('dashboard.shortcodes.index')" :current="request()->routeIs('dashboard.shortcodes.*')" wire:navigate>
+                            {{ __('Shortcodes') }}
+                        </flux:sidebar.item>
+                        <flux:sidebar.item icon="map-pin" :href="route('dashboard.locations.index')" :current="request()->routeIs('dashboard.locations.*')" wire:navigate>
+                            {{ __('Locations') }}
+                        </flux:sidebar.item>
+                        <flux:sidebar.item icon="wrench-screwdriver" :href="route('dashboard.tools')" :current="request()->routeIs('dashboard.tools')" wire:navigate>
+                            {{ __('Tools') }}
+                        </flux:sidebar.item>
+                        <flux:sidebar.item icon="cog-6-tooth" :href="route('dashboard.settings')" :current="request()->routeIs('dashboard.settings')" wire:navigate>
+                            {{ __('Settings') }}
+                        </flux:sidebar.item>
                     @endif
-                    <flux:sidebar.item icon="document-text" :href="route('dashboard.blog.index')" :current="request()->routeIs('dashboard.blog.*')" wire:navigate>
-                        {{ __('Blog') }}
-                    </flux:sidebar.item>
-                    <flux:sidebar.item icon="tag" :href="route('dashboard.categories.index')" :current="request()->routeIs('dashboard.categories.*')" wire:navigate>
-                        {{ __('Categories') }}
-                    </flux:sidebar.item>
-                    <flux:sidebar.item icon="code-bracket" :href="route('dashboard.shortcodes.index')" :current="request()->routeIs('dashboard.shortcodes.*')" wire:navigate>
-                        {{ __('Shortcodes') }}
-                    </flux:sidebar.item>
-                    <flux:sidebar.item icon="map-pin" :href="route('dashboard.locations.index')" :current="request()->routeIs('dashboard.locations.*')" wire:navigate>
-                        {{ __('Locations') }}
-                    </flux:sidebar.item>
-                    <flux:sidebar.item icon="wrench-screwdriver" :href="route('dashboard.tools')" :current="request()->routeIs('dashboard.tools')" wire:navigate>
-                        {{ __('Tools') }}
-                    </flux:sidebar.item>
-                    <flux:sidebar.item icon="cog-6-tooth" :href="route('dashboard.settings')" :current="request()->routeIs('dashboard.settings')" wire:navigate>
-                        {{ __('Settings') }}
-                    </flux:sidebar.item>
                 </flux:sidebar.group>
             </flux:sidebar.nav>
 

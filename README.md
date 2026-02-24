@@ -47,6 +47,19 @@ npm run build
 php artisan storage:link
 ```
 
+### Default Login Credentials
+
+After running `php artisan db:seed`, two accounts are available:
+
+| Account | Email | Password | Role |
+|---|---|---|---|
+| Admin | Set via `BUSINESS_ADMIN_EMAIL` in `.env` (defaults to `root@localhost`) | `Admin` | Super |
+| Test User | `test@{your-domain}` (e.g. `test@webprocms.test`) | `password` | Standard |
+
+Both accounts require a password change on first login.
+
+---
+
 ### Step 5 — Start the Development Environment
 
 ```bash

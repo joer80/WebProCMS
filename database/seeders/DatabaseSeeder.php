@@ -23,7 +23,7 @@ class DatabaseSeeder extends Seeder
 
         User::firstOrCreate(
             ['email' => "test@{$domain}"],
-            ['name' => 'Test User', 'password' => bcrypt('password'), 'role' => Role::Standard],
+            ['name' => 'Test User', 'password' => bcrypt('password'), 'role' => Role::Standard, 'must_change_password' => true],
         );
 
         $categories = collect(['General', 'News', 'Events'])->map(

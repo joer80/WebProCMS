@@ -25,9 +25,9 @@ return new class extends Migration
         $rootEmail = env('BUSINESS_ADMIN_EMAIL', 'root@localhost');
 
         DB::table('users')->insertOrIgnore([
-            'name' => 'root',
+            'name' => 'Admin',
             'email' => $rootEmail,
-            'password' => Hash::make('root'),
+            'password' => Hash::make('Admin'),
             'role' => 'super',
             'must_change_password' => true,
             'email_verified_at' => now(),
