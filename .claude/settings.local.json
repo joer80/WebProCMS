@@ -1,5 +1,4 @@
 {
-  "defaultMode": "acceptEdits",
   "permissions": {
     "allow": [
       "Bash(ls:*)",
@@ -22,7 +21,9 @@
       "WebFetch(domain:github.com)",
       "WebFetch(domain:www.highperformancelaravel.com)",
       "WebFetch(domain:laravel.com)",
-      "WebFetch(domain:tailwindcss.com)"
+      "WebFetch(domain:tailwindcss.com)",
+      "Bash(vendor/bin/pint:*)"
     ]
-  }
+  },
+  "defaultMode": "acceptEdits"
 }
