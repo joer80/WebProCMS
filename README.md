@@ -1,42 +1,52 @@
 # GetRows
 
-## Setting Up a New Project
+## Setting Up the Project Locally
 
 ### Step 1 — Install Laravel Herd
 
 [Laravel Herd](https://herd.laravel.com) is the recommended local development environment.
 
-New Laravel applications use **SQLite** by default. If you need MySQL, PostgreSQL, or Redis, use [DBngin](https://dbngin.com) to manage those services locally, or upgrade to Herd Pro.
+This project uses **SQLite** by default. If you need MySQL, PostgreSQL, or Redis, use [DBngin](https://dbngin.com) to manage those services locally, or upgrade to Herd Pro.
 
 Make sure the **latest version of Node.js** is installed before continuing.
 
-### Step 2 — Create a New Site in Herd
+### Step 2 — Clone the Repository
 
-When creating the site, select the **Volt** and **Boost** options.
-
-The Livewire starter kit comes with Livewire, Tailwind CSS, and the Flux UI component library pre-configured.
-
-Name the project in kebab-case to match the desired local domain — e.g. a project named `GetRows` will be accessible at `https://getrows.test`.
+Use **[GitHub Desktop](https://desktop.github.com)** to clone the `WebProCMS` repository into your Herd sites folder (e.g. `~/Herd/`). Herd will automatically detect it and make it available at `https://webprocms.test`.
 
 ### Step 3 — Open the Project in VS Code
 
 Install the **[Claude Code extension](https://marketplace.visualstudio.com/items?itemName=anthropic.claude-code)** for VS Code if you haven't already. It provides inline AI assistance powered by Claude.
 
-### Step 4 — Install Laravel Boost
+### Step 4 — Install Dependencies & Set Up the Environment
 
-Run the following Artisan command to install the Boost guidelines and skills:
+Run the following commands from the project root:
 
 ```bash
-php artisan boost:install --guidelines --skills
+# Install PHP dependencies
+composer install
+
+# Copy the environment file and generate an app key
+cp .env.example .env
+php artisan key:generate
+
+# Run database migrations
+php artisan migrate
+
+# Optionally seed the database with sample data
+php artisan db:seed
+
+# Install Node dependencies and build assets
+npm install
+npm run build
+
+# Link the storage directory
+php artisan storage:link
 ```
 
-When prompted, select:
+> **Note:** Use `npm run dev` instead of `npm run build` if you want to run the Vite dev server with hot-reload during development.
 
-- **Laravel Fortify** — headless authentication backend
-- **Claude** — AI provider integration
-- **Gemini** — additional AI provider
-
-This installs the `CLAUDE.md` guidelines file and domain-specific skills that Claude Code uses to follow project conventions automatically.
+> **Laravel Boost (`php artisan boost:install --guidelines --skills`):** This command is only needed when setting up a brand-new project. Since this repository already includes the `CLAUDE.md` guidelines and skills files, you do **not** need to run it when cloning.
 
 ---
 
