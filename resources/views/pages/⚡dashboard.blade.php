@@ -1,7 +1,7 @@
 <?php
 
 use App\Models\Category;
-use App\Models\Location;
+use App\Models\User;
 use App\Models\Post;
 use App\Models\Shortcode;
 use Livewire\Attributes\Layout;
@@ -39,9 +39,9 @@ new #[Layout('layouts.app')] #[Title('Dashboard')] #[Lazy] class extends Compone
         ];
     }
 
-    public function getLocationCountProperty(): int
+    public function getUserCountProperty(): int
     {
-        return Location::query()->count();
+        return User::query()->count();
     }
 
     public function getActiveShortcodeCountProperty(): int
@@ -111,10 +111,18 @@ new #[Layout('layouts.app')] #[Title('Dashboard')] #[Lazy] class extends Compone
 
             <div class="rounded-lg border border-zinc-200 dark:border-zinc-700 p-5">
                 <div class="flex items-center gap-2 mb-3">
-                    <flux:icon name="map-pin" class="size-4 text-zinc-400 dark:text-zinc-500" />
-                    <flux:text size="sm" class="font-medium text-zinc-600 dark:text-zinc-400">Locations</flux:text>
+                    <flux:icon name="tag" class="size-4 text-zinc-400 dark:text-zinc-500" />
+                    <flux:text size="sm" class="font-medium text-zinc-600 dark:text-zinc-400">Blog Categories</flux:text>
                 </div>
-                <div class="text-3xl font-bold text-zinc-900 dark:text-zinc-100">{{ $this->locationCount }}</div>
+                <div class="text-3xl font-bold text-zinc-900 dark:text-zinc-100">{{ $this->categoryCount }}</div>
+            </div>
+
+            <div class="rounded-lg border border-zinc-200 dark:border-zinc-700 p-5">
+                <div class="flex items-center gap-2 mb-3">
+                    <flux:icon name="users" class="size-4 text-zinc-400 dark:text-zinc-500" />
+                    <flux:text size="sm" class="font-medium text-zinc-600 dark:text-zinc-400">Users</flux:text>
+                </div>
+                <div class="text-3xl font-bold text-zinc-900 dark:text-zinc-100">{{ $this->userCount }}</div>
             </div>
 
             <div class="rounded-lg border border-zinc-200 dark:border-zinc-700 p-5">
@@ -124,14 +132,7 @@ new #[Layout('layouts.app')] #[Title('Dashboard')] #[Lazy] class extends Compone
                 </div>
                 <div class="text-3xl font-bold text-zinc-900 dark:text-zinc-100">{{ $this->activeShortcodeCount }}</div>
             </div>
-
-            <div class="rounded-lg border border-zinc-200 dark:border-zinc-700 p-5">
-                <div class="flex items-center gap-2 mb-3">
-                    <flux:icon name="tag" class="size-4 text-zinc-400 dark:text-zinc-500" />
-                    <flux:text size="sm" class="font-medium text-zinc-600 dark:text-zinc-400">Categories</flux:text>
-                </div>
-                <div class="text-3xl font-bold text-zinc-900 dark:text-zinc-100">{{ $this->categoryCount }}</div>
-            </div>
+            
         </div>
 
         {{-- Quick Actions --}}

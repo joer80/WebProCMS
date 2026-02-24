@@ -100,6 +100,7 @@ return [
             ['label' => 'Patients', 'route' => 'patients'],
             ['label' => 'Employers', 'route' => 'employers'],
             ['label' => 'Locations', 'route' => 'locations'],
+            ['label' => 'Blog', 'route' => 'blog.index'],
             ['label' => 'Careers', 'route' => 'careers'],
         ],
         'show_auth_links' => false,

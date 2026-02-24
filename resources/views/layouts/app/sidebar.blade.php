@@ -20,9 +20,6 @@
                         <flux:sidebar.item icon="document-text" :href="route('dashboard.blog.index')" :current="request()->routeIs('dashboard.blog.*')" wire:navigate>
                             {{ __('Blog') }}
                         </flux:sidebar.item>
-                        <flux:sidebar.item icon="tag" :href="route('dashboard.categories.index')" :current="request()->routeIs('dashboard.categories.*')" wire:navigate>
-                            {{ __('Blog Categories') }}
-                        </flux:sidebar.item>
                         <flux:sidebar.item icon="map-pin" :href="route('dashboard.locations.index')" :current="request()->routeIs('dashboard.locations.*')" wire:navigate>
                             {{ __('Locations') }}
                         </flux:sidebar.item>

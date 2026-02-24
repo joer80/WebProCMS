@@ -48,9 +48,14 @@ new #[Layout('layouts.app')] #[Title('Blog Posts')] #[Lazy] class extends Compon
                 <flux:heading size="xl">Blog Posts</flux:heading>
                 <flux:text class="mt-1">Manage your blog content.</flux:text>
             </div>
-            <flux:button href="{{ route('dashboard.blog.create') }}" variant="primary" wire:navigate>
-                New Post
-            </flux:button>
+            <div class="flex items-center gap-2">
+                <flux:button href="{{ route('dashboard.categories.index') }}" variant="ghost" wire:navigate>
+                    Categories
+                </flux:button>
+                <flux:button href="{{ route('dashboard.blog.create') }}" variant="primary" wire:navigate>
+                    New Post
+                </flux:button>
+            </div>
         </div>
 
         @if ($this->posts->isEmpty())
