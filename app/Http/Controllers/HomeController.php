@@ -16,6 +16,9 @@ class HomeController extends Controller
             ->limit(3)
             ->get();
 
-        return view('home', ['recentPosts' => $recentPosts]);
+        return view('home', [
+            'recentPosts' => $recentPosts,
+            'websiteType' => config('features.website_type', 'saas'),
+        ]);
     }
 }

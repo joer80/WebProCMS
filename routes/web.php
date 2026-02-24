@@ -11,6 +11,25 @@ Route::middleware([
     Route::view('services/content-editor', 'services.content-editor')->name('services.content-editor');
     Route::livewire('locations', 'pages::locations')->name('locations');
 
+    // SaaS pages
+    Route::view('features', 'features')->name('features');
+    Route::view('pricing', 'pricing')->name('pricing');
+
+    // eCommerce pages
+    Route::view('products', 'products')->name('products');
+
+    // Law pages
+    Route::view('practice-areas', 'practice-areas')->name('practice-areas');
+
+    // Nonprofit pages
+    Route::view('donate', 'donate')->name('donate');
+    Route::view('volunteer', 'volunteer')->name('volunteer');
+
+    // Healthcare pages
+    Route::view('patients', 'patients')->name('patients');
+    Route::view('employers', 'employers')->name('employers');
+    Route::view('careers', 'careers')->name('careers');
+
     // Volt version of blog - /resources/views/pages/blog/⚡index.blade.php
     Route::livewire('blog', 'pages::blog.index')->name('blog.index');
     Route::livewire('blog/{slug}', 'pages::blog.show')->name('blog.show');

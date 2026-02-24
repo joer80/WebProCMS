@@ -1,4 +1,11 @@
 @props(['title' => null, 'description' => null])
+@php
+    $siteType = config('features.website_type', 'saas');
+    $navConfig = config("navigation.{$siteType}", config('navigation.saas'));
+    $navItems = $navConfig['nav'] ?? [];
+    $showAuthLinks = $navConfig['show_auth_links'] ?? false;
+    $footerItems = $navConfig['footer_company'] ?? [];
+@endphp
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
     <head>
@@ -13,22 +20,13 @@
 
                 {{-- Desktop nav --}}
                 <div class="hidden sm:flex items-center gap-4">
-                    <a href="{{ route('about') }}" class="inline-block px-5 py-1.5 dark:text-[#EDEDEC] text-[#1b1b18] border border-transparent hover:border-[#19140035] dark:hover:border-[#3E3E3A] rounded-sm text-sm leading-normal">
-                        About
-                    </a>
-                    <a href="{{ route('services') }}" class="inline-block px-5 py-1.5 dark:text-[#EDEDEC] text-[#1b1b18] border border-transparent hover:border-[#19140035] dark:hover:border-[#3E3E3A] rounded-sm text-sm leading-normal">
-                        Services
-                    </a>
-                    <a href="{{ route('blog.index') }}" class="inline-block px-5 py-1.5 dark:text-[#EDEDEC] text-[#1b1b18] border border-transparent hover:border-[#19140035] dark:hover:border-[#3E3E3A] rounded-sm text-sm leading-normal">
-                        Blog
-                    </a>
-                    <a href="{{ route('locations') }}" class="inline-block px-5 py-1.5 dark:text-[#EDEDEC] text-[#1b1b18] border border-transparent hover:border-[#19140035] dark:hover:border-[#3E3E3A] rounded-sm text-sm leading-normal">
-                        Locations
-                    </a>
-                    <a href="{{ route('contact') }}" class="inline-block px-5 py-1.5 dark:text-[#EDEDEC] text-[#1b1b18] border border-transparent hover:border-[#19140035] dark:hover:border-[#3E3E3A] rounded-sm text-sm leading-normal">
-                        Contact
-                    </a>
-                    @if (Route::has('login'))
+                    @foreach ($navItems as $item)
+                        <a href="{{ route($item['route']) }}" class="inline-block px-5 py-1.5 dark:text-[#EDEDEC] text-[#1b1b18] border border-transparent hover:border-[#19140035] dark:hover:border-[#3E3E3A] rounded-sm text-sm leading-normal">
+                            {{ $item['label'] }}
+                        </a>
+                    @endforeach
+
+                    @if ($showAuthLinks && Route::has('login'))
                         @auth
                             @if (config('features.dashboard'))
                                 <a href="{{ url('/dashboard') }}" class="inline-block px-5 py-1.5 dark:text-[#EDEDEC] border-[#19140035] hover:border-[#1915014a] border text-[#1b1b18] dark:border-[#3E3E3A] dark:hover:border-[#62605b] rounded-sm text-sm leading-normal">
@@ -61,12 +59,11 @@
 
             {{-- Mobile menu --}}
             <div x-show="open" x-transition class="sm:hidden mt-3 flex flex-col border-t border-[#e3e3e0] dark:border-[#3E3E3A] pt-3">
-                <a href="{{ route('about') }}" class="px-2 py-2.5 text-[#1b1b18] dark:text-[#EDEDEC] hover:text-[#706f6c] dark:hover:text-[#A1A09A] transition-colors">About</a>
-                <a href="{{ route('services') }}" class="px-2 py-2.5 text-[#1b1b18] dark:text-[#EDEDEC] hover:text-[#706f6c] dark:hover:text-[#A1A09A] transition-colors">Services</a>
-                <a href="{{ route('blog.index') }}" class="px-2 py-2.5 text-[#1b1b18] dark:text-[#EDEDEC] hover:text-[#706f6c] dark:hover:text-[#A1A09A] transition-colors">Blog</a>
-                <a href="{{ route('locations') }}" class="px-2 py-2.5 text-[#1b1b18] dark:text-[#EDEDEC] hover:text-[#706f6c] dark:hover:text-[#A1A09A] transition-colors">Locations</a>
-                <a href="{{ route('contact') }}" class="px-2 py-2.5 text-[#1b1b18] dark:text-[#EDEDEC] hover:text-[#706f6c] dark:hover:text-[#A1A09A] transition-colors">Contact</a>
-                @if (Route::has('login'))
+                @foreach ($navItems as $item)
+                    <a href="{{ route($item['route']) }}" class="px-2 py-2.5 text-[#1b1b18] dark:text-[#EDEDEC] hover:text-[#706f6c] dark:hover:text-[#A1A09A] transition-colors">{{ $item['label'] }}</a>
+                @endforeach
+
+                @if ($showAuthLinks && Route::has('login'))
                     @auth
                         @if (config('features.dashboard'))
                             <a href="{{ url('/dashboard') }}" class="px-2 py-2.5 text-[#1b1b18] dark:text-[#EDEDEC] hover:text-[#706f6c] dark:hover:text-[#A1A09A] transition-colors">Dashboard</a>
@@ -99,11 +96,9 @@
                     <div class="flex flex-col gap-3">
                         <p class="text-xs font-semibold uppercase tracking-wider text-[#706f6c] dark:text-[#A1A09A]">Company</p>
                         <nav class="flex flex-col gap-2">
-                            <a href="{{ route('about') }}" class="text-sm text-[#1b1b18] dark:text-[#EDEDEC] hover:text-[#706f6c] dark:hover:text-[#A1A09A] transition-colors">About</a>
-                            <a href="{{ route('services') }}" class="text-sm text-[#1b1b18] dark:text-[#EDEDEC] hover:text-[#706f6c] dark:hover:text-[#A1A09A] transition-colors">Services</a>
-                            <a href="{{ route('blog.index') }}" class="text-sm text-[#1b1b18] dark:text-[#EDEDEC] hover:text-[#706f6c] dark:hover:text-[#A1A09A] transition-colors">Blog</a>
-                            <a href="{{ route('locations') }}" class="text-sm text-[#1b1b18] dark:text-[#EDEDEC] hover:text-[#706f6c] dark:hover:text-[#A1A09A] transition-colors">Locations</a>
-                            <a href="{{ route('contact') }}" class="text-sm text-[#1b1b18] dark:text-[#EDEDEC] hover:text-[#706f6c] dark:hover:text-[#A1A09A] transition-colors">Contact</a>
+                            @foreach ($footerItems as $item)
+                                <a href="{{ route($item['route']) }}" class="text-sm text-[#1b1b18] dark:text-[#EDEDEC] hover:text-[#706f6c] dark:hover:text-[#A1A09A] transition-colors">{{ $item['label'] }}</a>
+                            @endforeach
                         </nav>
                     </div>
                     <div class="flex flex-col gap-3">

@@ -1,16 +1,16 @@
 <?php
 
-it('renders the instant query editor service detail page', function (): void {
-    $response = $this->get(route('services.instant-query-editor'));
+it('renders the content editor service detail page', function (): void {
+    $response = $this->get(route('services.content-editor'));
 
     $response->assertOk();
-    $response->assertSeeText('Instant Query Editor');
+    $response->assertSeeText('Visual Content Editor');
 });
 
-it('links to the instant query editor page from the services page', function (): void {
+it('links to the content editor page from the services page', function (): void {
     $response = $this->get(route('services'));
 
     $response->assertOk();
-    $response->assertSee(route('services.instant-query-editor'));
+    $response->assertSee(route('services.content-editor'));
     $response->assertSeeText('Learn more');
 });

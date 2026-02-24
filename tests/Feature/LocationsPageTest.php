@@ -102,8 +102,11 @@ it('shows location details on each card', function (): void {
         ->assertSeeText('Get Directions');
 });
 
-it('is linked from the navigation', function (): void {
-    $this->get(route('home'))
+it('is linked from the navigation when website type is service', function (): void {
+    config(['features.website_type' => 'service']);
+
+    $this->withoutMiddleware(\Spatie\ResponseCache\Middlewares\CacheResponse::class)
+        ->get(route('home'))
         ->assertOk()
         ->assertSee(route('locations'))
         ->assertSeeText('Locations');
