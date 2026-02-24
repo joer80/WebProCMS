@@ -24,7 +24,7 @@ class DatabaseSeeder extends Seeder
         );
 
         $categories = collect(['General', 'News', 'Events'])->map(
-            fn (string $name) => Category::firstOrCreate(['name' => $name])
+            fn (string $name) => Category::firstOrCreate(['name' => $name], ['is_seeded' => true])
         );
 
         $imagePaths = $this->downloadImages(20);
@@ -32,12 +32,14 @@ class DatabaseSeeder extends Seeder
         Post::factory(85)
             ->published()
             ->recycle($categories)
+            ->state(['is_seeded' => true])
             ->sequence(fn (Sequence $sequence) => ['featured_image' => $imagePaths[$sequence->index % count($imagePaths)]])
             ->create();
 
         Post::factory(15)
             ->draft()
             ->recycle($categories)
+            ->state(['is_seeded' => true])
             ->sequence(fn (Sequence $sequence) => ['featured_image' => $imagePaths[$sequence->index % count($imagePaths)]])
             ->create();
     }

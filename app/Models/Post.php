@@ -35,6 +35,7 @@ class Post extends Model
         'og_title',
         'og_description',
         'og_image',
+        'is_seeded',
     ];
 
     protected static function booted(): void
@@ -99,6 +100,7 @@ class Post extends Model
             'gallery_images' => 'array',
             'gallery_columns' => 'integer',
             'is_noindex' => 'boolean',
+            'is_seeded' => 'boolean',
         ];
     }
 

@@ -30,6 +30,9 @@
                     <flux:sidebar.item icon="wrench-screwdriver" :href="route('dashboard.tools')" :current="request()->routeIs('dashboard.tools')" wire:navigate>
                         {{ __('Tools') }}
                     </flux:sidebar.item>
+                    <flux:sidebar.item icon="cog-6-tooth" :href="route('dashboard.settings')" :current="request()->routeIs('dashboard.settings')" wire:navigate>
+                        {{ __('Settings') }}
+                    </flux:sidebar.item>
                 </flux:sidebar.group>
             </flux:sidebar.nav>
 

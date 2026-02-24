@@ -15,7 +15,15 @@ class Category extends Model
     protected $fillable = [
         'name',
         'slug',
+        'is_seeded',
     ];
+
+    protected function casts(): array
+    {
+        return [
+            'is_seeded' => 'boolean',
+        ];
+    }
 
     protected static function booted(): void
     {

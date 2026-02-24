@@ -11,13 +11,12 @@ Route::middleware([
     Route::view('services/content-editor', 'services.content-editor')->name('services.content-editor');
     Route::livewire('locations', 'pages::locations')->name('locations');
 
-
-    //Volt version of blog - /resources/views/pages/blog/⚡index.blade.php
+    // Volt version of blog - /resources/views/pages/blog/⚡index.blade.php
     Route::livewire('blog', 'pages::blog.index')->name('blog.index');
     Route::livewire('blog/{slug}', 'pages::blog.show')->name('blog.show');
 
-    //LW4 version of blog (For comparison)- /app/Livewire/Blog2.php
-    //Route::get('blog2', \App\Livewire\Blog2::class)->name('blog2.index');
+    // LW4 version of blog (For comparison)- /app/Livewire/Blog2.php
+    // Route::get('blog2', \App\Livewire\Blog2::class)->name('blog2.index');
 });
 
 Route::livewire('contact', 'pages::contact')->name('contact');
@@ -42,6 +41,7 @@ Route::middleware(['auth', 'verified'])->group(function (): void {
     Route::livewire('dashboard/locations/{location}/edit', 'pages::dashboard.locations.edit')->name('dashboard.locations.edit');
 
     Route::livewire('dashboard/tools', 'pages::dashboard.tools')->name('dashboard.tools');
+    Route::livewire('dashboard/settings', 'pages::dashboard.settings')->name('dashboard.settings');
 });
 
 require __DIR__.'/settings.php';

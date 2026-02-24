@@ -21,7 +21,15 @@ class Location extends Model
         'zip',
         'phone',
         'photo',
+        'is_seeded',
     ];
+
+    protected function casts(): array
+    {
+        return [
+            'is_seeded' => 'boolean',
+        ];
+    }
 
     protected static function booted(): void
     {
