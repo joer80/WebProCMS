@@ -92,7 +92,7 @@
                         <img src="{{ asset('images/logo.svg') }}" alt="{{ config('app.name') }}" class="h-7 w-auto" />
                     </a>
                     <p class="text-sm text-[#706f6c] dark:text-[#A1A09A] max-w-xs">
-                        Query your data in seconds.
+                        Build, manage, and publish — without limits.
                     </p>
                 </div>
                 <div class="flex gap-12">

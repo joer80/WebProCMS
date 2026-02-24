@@ -23,14 +23,14 @@ class LocationFactory extends Factory
         $state = fake()->stateAbbr();
 
         return [
-            'name' => 'GetRows '.$city,
+            'name' => 'WebProCMS '.$city,
             'address' => fake()->streetAddress(),
             'city' => $city,
             'state' => $state,
             'state_full' => States::fullName($state),
             'zip' => fake()->postcode(),
             'phone' => fake()->phoneNumber(),
-            'photo' => 'https://picsum.photos/seed/getrows-'.$seed.'/600/400',
+            'photo' => 'https://picsum.photos/seed/webprocms-'.$seed.'/600/400',
         ];
     }
 }

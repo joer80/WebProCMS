@@ -1,4 +1,4 @@
-# GetRows
+# WebProCMS
 
 ## Setting Up the Project Locally
 
@@ -29,6 +29,9 @@ composer install
 # Copy the environment file and generate an app key
 cp .env.example .env
 php artisan key:generate
+
+# Create the SQLite database file (required before first migrate)
+touch database/database.sqlite
 
 # Run database migrations
 php artisan migrate
@@ -209,7 +212,7 @@ DB::table('users')->count();
    DB_CONNECTION=mysql
    DB_HOST=127.0.0.1
    DB_PORT=3306
-   DB_DATABASE=getrows
+   DB_DATABASE=webprocms
    DB_USERNAME=root
    DB_PASSWORD=
    ```
@@ -240,16 +243,16 @@ Livewire page components live in `resources/views/pages/` and are registered usi
 Detail pages (e.g. a deep-dive page for a single service) live in a subdirectory named after their parent section and use a `Route::view()` with a dotted view path:
 
 ```
-resources/views/services/instant-query-editor.blade.php
+resources/views/services/content-editor.blade.php
 ```
 
 ```php
 // routes/web.php
-Route::view('services/instant-query-editor', 'services.instant-query-editor')
-    ->name('services.instant-query-editor');
+Route::view('services/content-editor', 'services.content-editor')
+    ->name('services.content-editor');
 ```
 
-The route name mirrors the view path using dot notation (`services.instant-query-editor`), which makes it easy to identify the file from the route name and vice versa. Each detail page uses the `<x-layouts::public>` layout component directly, the same as any other static page.
+The route name mirrors the view path using dot notation (`services.content-editor`), which makes it easy to identify the file from the route name and vice versa. Each detail page uses the `<x-layouts::public>` layout component directly, the same as any other static page.
 
 When a section index page (e.g. `services.blade.php`) links to a detail page, the link is conditional — the service data carries a `'route'` key that is either a named route string or `null`. This keeps the index page template clean and makes it trivial to add or remove detail pages later without touching the loop structure.
 

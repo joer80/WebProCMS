@@ -1,10 +1,10 @@
-<x-layouts::public title="Services — GetRows" description="Explore GetRows services: instant SQL query editor, visual query builder, live shared results, flexible exports, query history, and role-based access control.">
+<x-layouts::public title="Services — WebProCMS" description="Explore WebProCMS services: visual content editor, page builder, media library, SEO tools, content scheduling, and team & role management.">
     {{-- Hero --}}
     <section class="mb-16 text-center">
         <span class="inline-block text-xs font-semibold tracking-widest uppercase text-[#706f6c] dark:text-[#A1A09A] mb-4">What we offer</span>
-        <h1 class="text-4xl font-semibold leading-tight mb-4">Everything you need to work with your data.</h1>
+        <h1 class="text-4xl font-semibold leading-tight mb-4">Everything you need to manage your web.</h1>
         <p class="text-[#706f6c] dark:text-[#A1A09A] text-lg leading-normal max-w-2xl mx-auto">
-            From instant SQL queries to team-wide collaboration tools, GetRows gives you the building blocks to make sense of your data — fast.
+            From content creation to multi-site publishing, WebProCMS gives you the building blocks to build, manage, and grow any web project.
         </p>
     </section>
 
@@ -13,45 +13,45 @@
         <div class="grid md:grid-cols-2 gap-6">
             @foreach ([
                 [
-                    'icon' => 'code-bracket',
-                    'title' => 'Instant Query Editor',
-                    'description' => 'Write SQL with intelligent autocomplete, syntax highlighting, and real-time error hints. Results appear as you type — no page reload, no waiting.',
-                    'features' => ['Syntax highlighting', 'Autocomplete with schema awareness', 'Real-time error detection', 'Multi-tab support'],
-                    'route' => 'services.instant-query-editor',
+                    'icon' => 'document-text',
+                    'title' => 'Visual Content Editor',
+                    'description' => 'Write and edit with a powerful block-based editor. Rich text, images, embeds, and custom blocks — all in one clean interface. No developer needed.',
+                    'features' => ['Block-based editing', 'Rich text formatting', 'Media embeds & custom blocks', 'Version history'],
+                    'route' => 'services.content-editor',
                 ],
                 [
-                    'icon' => 'cursor-arrow-rays',
-                    'title' => 'Visual Query Builder',
-                    'description' => 'Not a SQL expert? Build queries by clicking — filter, sort, group, and join tables without writing a single line of code.',
-                    'features' => ['Drag-and-drop interface', 'Join tables visually', 'Filter & sort builder', 'Auto-generates SQL'],
+                    'icon' => 'squares-2x2',
+                    'title' => 'Page Builder',
+                    'description' => 'Build beautiful pages without writing code. Drag-and-drop blocks, adjust layouts, and preview changes in real time before publishing.',
+                    'features' => ['Drag-and-drop blocks', 'Responsive layouts', 'Live preview', 'Reusable component library'],
                     'route' => null,
                 ],
                 [
-                    'icon' => 'share',
-                    'title' => 'Live Shared Results',
-                    'description' => 'Share a query result as a live link. Recipients always see up-to-date data without needing database access or a GetRows account.',
-                    'features' => ['Public & private links', 'Auto-refreshing data', 'Password protection', 'Expiry controls'],
+                    'icon' => 'photo',
+                    'title' => 'Media Library',
+                    'description' => 'Upload, organise, and optimise your images, documents, and files. Find anything in seconds with full-text search and folder organisation.',
+                    'features' => ['Smart upload & tagging', 'Folder organisation', 'Image optimisation', 'CDN-ready delivery'],
                     'route' => null,
                 ],
                 [
-                    'icon' => 'arrow-down-tray',
-                    'title' => 'Export Anywhere',
-                    'description' => 'Download results as CSV, JSON, or Excel. Push directly to Google Sheets, Notion, or your favourite BI tool in one click.',
-                    'features' => ['CSV, JSON & Excel', 'Google Sheets integration', 'Notion export', 'Scheduled exports'],
+                    'icon' => 'magnifying-glass',
+                    'title' => 'SEO & Meta Management',
+                    'description' => 'Control every SEO detail — meta titles, descriptions, canonical URLs, Open Graph tags, and structured data — all from one place, per page.',
+                    'features' => ['Per-page meta control', 'Open Graph & Twitter Cards', 'Canonical URL management', 'Sitemap generation'],
                     'route' => null,
                 ],
                 [
-                    'icon' => 'clock',
-                    'title' => 'Query History',
-                    'description' => 'Every query is saved automatically. Search, replay, and fork previous queries in one click. Never lose work again.',
-                    'features' => ['Full query log', 'Full-text search', 'Fork & remix', 'Team-shared history'],
+                    'icon' => 'calendar',
+                    'title' => 'Content Scheduling',
+                    'description' => 'Write now, publish later. Schedule posts and pages to go live at exactly the right moment. Manage your entire content calendar from one dashboard.',
+                    'features' => ['Scheduled publishing', 'Content calendar view', 'Draft management', 'Auto-expiry controls'],
                     'route' => null,
                 ],
                 [
-                    'icon' => 'shield-check',
-                    'title' => 'Role-based Access',
-                    'description' => 'Keep sensitive tables safe. Grant read-only access to specific users or teams without touching database permissions.',
-                    'features' => ['Custom roles & permissions', 'Table-level restrictions', 'Audit logs', 'SSO support'],
+                    'icon' => 'users',
+                    'title' => 'Team & Role Management',
+                    'description' => 'Invite collaborators, assign roles, and keep your team working efficiently. Fine-grained permissions let you control who can do what, site by site.',
+                    'features' => ['Custom roles & permissions', 'Invitation system', 'Activity & audit logs', 'SSO support'],
                     'route' => null,
                 ],
             ] as $service)
@@ -97,8 +97,8 @@
                     'name' => 'Starter',
                     'price' => 'Free',
                     'period' => 'forever',
-                    'description' => 'For individuals exploring their data.',
-                    'features' => ['1 database connection', '100 queries / month', 'CSV & JSON export', 'Community support'],
+                    'description' => 'For individuals and small projects.',
+                    'features' => ['1 website', '50 pages', '500 MB media storage', 'Visual content editor', 'Community support'],
                     'cta' => 'Get started',
                     'variant' => 'default',
                 ],
@@ -106,8 +106,8 @@
                     'name' => 'Pro',
                     'price' => '$29',
                     'period' => '/ month',
-                    'description' => 'For teams that need more power.',
-                    'features' => ['Up to 5 database connections', 'Unlimited queries', 'All export formats', 'Live shared results', 'Query history', 'Priority support'],
+                    'description' => 'For growing teams and agencies.',
+                    'features' => ['Up to 5 websites', 'Unlimited pages', '10 GB media storage', 'API & headless access', 'Content scheduling', 'Priority support'],
                     'cta' => 'Start free trial',
                     'variant' => 'primary',
                 ],
@@ -116,7 +116,7 @@
                     'price' => 'Custom',
                     'period' => '',
                     'description' => 'For large teams with advanced needs.',
-                    'features' => ['Unlimited connections', 'Role-based access control', 'SSO & audit logs', 'Scheduled exports', 'Dedicated support', 'SLA guarantee'],
+                    'features' => ['Unlimited websites', 'SSO & audit logs', 'Custom integrations', 'Dedicated support', 'SLA guarantee', 'Custom roles & permissions'],
                     'cta' => 'Talk to us',
                     'variant' => 'default',
                 ],
@@ -186,9 +186,9 @@
 
     {{-- CTA --}}
     <section class="mb-8 bg-primary dark:bg-primary-foreground rounded-lg p-12 lg:p-16 text-center">
-        <h2 class="text-3xl font-semibold text-primary-foreground dark:text-primary leading-tight mb-4">Ready to explore your data?</h2>
+        <h2 class="text-3xl font-semibold text-primary-foreground dark:text-primary leading-tight mb-4">Ready to manage your web better?</h2>
         <p class="text-[#A1A09A] dark:text-[#706f6c] leading-normal mb-8 max-w-md mx-auto">
-            Sign up for free and connect your first database in under a minute.
+            Sign up for free and launch your first site in under a minute. No credit card required.
         </p>
         <div class="flex items-center justify-center gap-4 flex-wrap">
             @if (Route::has('register'))

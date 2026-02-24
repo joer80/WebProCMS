@@ -8,7 +8,7 @@ Route::middleware([
     Route::get('/', App\Http\Controllers\HomeController::class)->name('home');
     Route::view('about', 'about')->name('about');
     Route::view('services', 'services')->name('services');
-    Route::view('services/instant-query-editor', 'services.instant-query-editor')->name('services.instant-query-editor');
+    Route::view('services/content-editor', 'services.content-editor')->name('services.content-editor');
     Route::livewire('locations', 'pages::locations')->name('locations');
 
 
