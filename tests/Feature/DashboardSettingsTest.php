@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\Role;
 use App\Models\Location;
 use App\Models\Post;
 use App\Models\Setting;
@@ -10,8 +11,8 @@ it('redirects unauthenticated users from the settings page', function (): void {
     $this->get(route('dashboard.settings'))->assertRedirect(route('login'));
 });
 
-it('shows the settings page to authenticated users', function (): void {
-    $user = User::factory()->create();
+it('shows the settings page to manager users', function (): void {
+    $user = User::factory()->withRole(Role::Manager)->create();
 
     $this->actingAs($user)
         ->get(route('dashboard.settings'))

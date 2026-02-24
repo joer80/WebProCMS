@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\Role;
 use App\Jobs\SeedDemoDataJob;
 use App\Models\Category;
 use App\Models\Location;
@@ -14,8 +15,8 @@ it('redirects unauthenticated users from the tools page', function (): void {
     $this->get(route('dashboard.tools'))->assertRedirect(route('login'));
 });
 
-it('shows the tools page to authenticated users', function (): void {
-    $user = User::factory()->create();
+it('shows the tools page to manager users', function (): void {
+    $user = User::factory()->withRole(Role::Manager)->create();
 
     $this->actingAs($user)
         ->get(route('dashboard.tools'))

@@ -31,6 +31,7 @@ new class extends Component {
 
         Auth::user()->update([
             'password' => $validated['password'],
+            'must_change_password' => false,
         ]);
 
         $this->reset('current_password', 'password', 'password_confirmation');
