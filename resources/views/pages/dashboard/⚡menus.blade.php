@@ -28,6 +28,8 @@ new #[Layout('layouts.app')] #[Title('Menus')] class extends Component {
     public string $newMenuLabel = '';
     public string $newMenuSlug = '';
 
+    public bool $showEditMenuModal = false;
+
     /** @var array<int, string> */
     public array $footerSlugs = [];
 
@@ -425,6 +427,44 @@ new #[Layout('layouts.app')] #[Title('Menus')] class extends Component {
         </form>
     </flux:modal>
 
+    {{-- Edit menu modal --}}
+    <flux:modal wire:model="showEditMenuModal" class="max-w-sm w-full">
+        <flux:heading size="lg" class="mb-6">{{ __('Edit Menu') }}</flux:heading>
+
+        @if (isset($menus[$activeMenuIndex]))
+            @php $currentMenu = $menus[$activeMenuIndex]; @endphp
+            <div class="space-y-4">
+                <flux:input
+                    wire:model.live="menus.{{ $activeMenuIndex }}.label"
+                    :label="__('Name')"
+                />
+                <div class="flex flex-col gap-1">
+                    <flux:label>{{ __('Slug') }}</flux:label>
+                    <code class="flex h-10 items-center rounded-md border border-zinc-200 bg-zinc-50 px-3 text-xs text-zinc-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-400">
+                        {{ $currentMenu['slug'] }}
+                    </code>
+                </div>
+                <flux:switch wire:model.live="currentMenuInFooter" :label="__('Show in footer')" />
+            </div>
+
+            <div class="mt-6 flex items-center justify-between">
+                <flux:button
+                    wire:click="deleteMenu"
+                    wire:confirm="{{ __('Delete this menu and all its items?') }}"
+                    variant="ghost"
+                    size="sm"
+                    icon="trash"
+                    class="text-red-500 dark:text-red-400"
+                >
+                    {{ __('Delete') }}
+                </flux:button>
+                <flux:modal.close>
+                    <flux:button variant="primary" size="sm">{{ __('Done') }}</flux:button>
+                </flux:modal.close>
+            </div>
+        @endif
+    </flux:modal>
+
     {{-- Edit item modal --}}
     <flux:modal wire:model="showEditItemModal" class="max-w-md w-full">
         <flux:heading size="lg" class="mb-6">{{ __('Edit Menu Item') }}</flux:heading>
@@ -564,8 +604,7 @@ new #[Layout('layouts.app')] #[Title('Menus')] class extends Component {
                             title="{{ __('Create menu') }}"
                         />
                         <flux:button
-                            x-data
-                            @click="$dispatch('toggle-menu-edit')"
+                            wire:click="$set('showEditMenuModal', true)"
                             variant="ghost"
                             size="sm"
                             icon="pencil-square"
@@ -588,40 +627,6 @@ new #[Layout('layouts.app')] #[Title('Menus')] class extends Component {
                         $currentMenu = $menus[$activeMenuIndex];
                         $currentItems = $currentMenu['items'] ?? [];
                     @endphp
-
-                    <div class="mb-4" x-data="{ editing: false }" @toggle-menu-edit.window="editing = !editing">
-                        <div x-show="!editing">
-                            <span class="text-sm font-medium text-zinc-700 dark:text-zinc-200">{{ $currentMenu['label'] }}</span>
-                        </div>
-                        <div x-show="editing" x-cloak class="flex items-end gap-3">
-                            <flux:input
-                                wire:model.live="menus.{{ $activeMenuIndex }}.label"
-                                :label="__('Name')"
-                                class="max-w-xs"
-                            />
-                            <div class="flex flex-col gap-1">
-                                <flux:label>{{ __('Slug') }}</flux:label>
-                                <code class="flex h-10 items-center rounded-md border border-zinc-200 bg-zinc-50 px-3 text-xs text-zinc-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-400">
-                                    {{ $currentMenu['slug'] }}
-                                </code>
-                            </div>
-                            <div class="flex flex-col gap-1">
-                                <flux:label>{{ __('Footer') }}</flux:label>
-                                <div class="flex h-10 items-center">
-                                    <flux:switch wire:model.live="currentMenuInFooter" />
-                                </div>
-                            </div>
-                            <flux:button
-                                wire:click="deleteMenu"
-                                wire:confirm="{{ __('Delete this menu and all its items?') }}"
-                                variant="ghost"
-                                size="sm"
-                                icon="trash"
-                                class="mb-0.5 text-red-500 dark:text-red-400"
-                            />
-                            <flux:button @click="editing = false" variant="ghost" size="sm" icon="x-mark" class="mb-0.5" title="{{ __('Done') }}" />
-                        </div>
-                    </div>
 
                     @if (empty($currentItems))
                         <div class="rounded-lg border border-dashed border-zinc-300 dark:border-zinc-600 py-16 text-center text-zinc-500 dark:text-zinc-400">
