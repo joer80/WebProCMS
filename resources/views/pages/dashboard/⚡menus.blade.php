@@ -13,6 +13,8 @@ new #[Layout('layouts.app')] #[Title('Menus')] class extends Component {
     /** @var array<int, array<string, mixed>> */
     public array $footerItems = [];
 
+    public string $activeMenu = 'nav';
+
     public bool $showAddModal = false;
     public string $addTarget = 'nav';
     public string $addType = 'page';
@@ -368,16 +370,18 @@ new #[Layout('layouts.app')] #[Title('Menus')] class extends Component {
 
     <flux:main>
         <div class="max-w-2xl">
-        <div class="mb-8">
-            <flux:heading size="xl">{{ __('Menus') }}</flux:heading>
-            <flux:text class="mt-1">{{ __('Manage the main navigation for your website.') }}</flux:text>
-        </div>
+            <div class="mb-8">
+                <flux:heading size="xl">{{ __('Menus') }}</flux:heading>
+                <flux:text class="mt-1">{{ __('Manage the navigation menus for your website.') }}</flux:text>
+            </div>
 
-        <div>
-            <div class="mb-4 flex items-center justify-between">
-                <flux:heading>{{ __('Main Navigation') }}</flux:heading>
+            <div class="mb-4 flex items-center justify-between gap-4">
+                <flux:select wire:model.live="activeMenu" class="w-48">
+                    <flux:select.option value="nav">{{ __('Main Navigation') }}</flux:select.option>
+                    <flux:select.option value="footer">{{ __('Footer Links') }}</flux:select.option>
+                </flux:select>
                 <div class="flex items-center gap-2">
-                    <flux:button wire:click="openAddModal" variant="outline" size="sm" icon="plus">
+                    <flux:button wire:click="openAddModal('{{ $activeMenu }}')" variant="outline" size="sm" icon="plus">
                         {{ __('Add Item') }}
                     </flux:button>
                     <flux:button wire:click="save" variant="primary" size="sm" wire:loading.attr="disabled">
@@ -387,183 +391,169 @@ new #[Layout('layouts.app')] #[Title('Menus')] class extends Component {
                 </div>
             </div>
 
-            @if (empty($navItems))
-                <div class="rounded-lg border border-dashed border-zinc-300 dark:border-zinc-600 py-16 text-center text-zinc-500 dark:text-zinc-400">
-                    <flux:icon name="bars-3" class="mx-auto mb-3 size-12 opacity-40" />
-                    <p class="text-sm">{{ __('No navigation items yet.') }}</p>
-                    <flux:button wire:click="openAddModal" variant="outline" size="sm" class="mt-4">
-                        {{ __('Add your first item') }}
-                    </flux:button>
-                </div>
-            @else
-                <div class="overflow-hidden rounded-lg border border-zinc-200 dark:border-zinc-700">
-                    <table class="w-full text-sm">
-                        <tbody
-                            class="divide-y divide-zinc-200 dark:divide-zinc-700"
-                            x-data="{ dragging: null, over: null }"
-                        >
-                            @foreach ($navItems as $index => $item)
-                                <tr
-                                    wire:key="nav-item-{{ $index }}"
-                                    class="bg-white dark:bg-zinc-900"
-                                    draggable="true"
-                                    @dragstart="dragging = {{ $index }}"
-                                    @dragover.prevent="over = {{ $index }}"
-                                    @drop="if (dragging !== null) { $wire.reorderNavItems(dragging, over); } dragging = null; over = null"
-                                    @dragend="dragging = null; over = null"
-                                    :style="{
-                                        opacity: dragging === {{ $index }} ? '0.4' : '',
-                                        'border-top': over === {{ $index }} && dragging !== null && dragging > {{ $index }} ? '2px solid var(--color-primary)' : '',
-                                        'border-bottom': over === {{ $index }} && dragging !== null && dragging < {{ $index }} ? '2px solid var(--color-primary)' : ''
-                                    }"
-                                >
-                                    <td class="w-8 cursor-grab px-4 py-3 text-zinc-400 active:cursor-grabbing dark:text-zinc-500">
-                                        <flux:icon name="bars-2" class="size-4" />
-                                    </td>
-                                    <td class="px-4 py-3">
-                                        <div class="font-medium {{ ($item['active'] ?? true) ? 'text-zinc-900 dark:text-zinc-100' : 'text-zinc-400 dark:text-zinc-500' }}">
-                                            {{ $item['label'] }}
-                                        </div>
-                                        <div class="mt-0.5 font-mono text-xs text-zinc-400 dark:text-zinc-500">
-                                            @if (isset($item['route']))
-                                                route: {{ $item['route'] }}
-                                            @else
-                                                {{ $item['url'] }}
-                                                @if (!empty($item['new_window']))
-                                                    · {{ __('new window') }}
+            @if ($activeMenu === 'nav')
+                @if (empty($navItems))
+                    <div class="rounded-lg border border-dashed border-zinc-300 dark:border-zinc-600 py-16 text-center text-zinc-500 dark:text-zinc-400">
+                        <flux:icon name="bars-3" class="mx-auto mb-3 size-12 opacity-40" />
+                        <p class="text-sm">{{ __('No navigation items yet.') }}</p>
+                        <flux:button wire:click="openAddModal('nav')" variant="outline" size="sm" class="mt-4">
+                            {{ __('Add your first item') }}
+                        </flux:button>
+                    </div>
+                @else
+                    <div class="overflow-hidden rounded-lg border border-zinc-200 dark:border-zinc-700">
+                        <table class="w-full text-sm">
+                            <tbody
+                                class="divide-y divide-zinc-200 dark:divide-zinc-700"
+                                x-data="{ dragging: null, over: null }"
+                            >
+                                @foreach ($navItems as $index => $item)
+                                    <tr
+                                        wire:key="nav-item-{{ $index }}"
+                                        class="bg-white dark:bg-zinc-900"
+                                        draggable="true"
+                                        @dragstart="dragging = {{ $index }}"
+                                        @dragover.prevent="over = {{ $index }}"
+                                        @drop="if (dragging !== null) { $wire.reorderNavItems(dragging, over); } dragging = null; over = null"
+                                        @dragend="dragging = null; over = null"
+                                        :style="{
+                                            opacity: dragging === {{ $index }} ? '0.4' : '',
+                                            'border-top': over === {{ $index }} && dragging !== null && dragging > {{ $index }} ? '2px solid var(--color-primary)' : '',
+                                            'border-bottom': over === {{ $index }} && dragging !== null && dragging < {{ $index }} ? '2px solid var(--color-primary)' : ''
+                                        }"
+                                    >
+                                        <td class="w-8 cursor-grab px-4 py-3 text-zinc-400 active:cursor-grabbing dark:text-zinc-500">
+                                            <flux:icon name="bars-2" class="size-4" />
+                                        </td>
+                                        <td class="px-4 py-3">
+                                            <div class="font-medium {{ ($item['active'] ?? true) ? 'text-zinc-900 dark:text-zinc-100' : 'text-zinc-400 dark:text-zinc-500' }}">
+                                                {{ $item['label'] }}
+                                            </div>
+                                            <div class="mt-0.5 font-mono text-xs text-zinc-400 dark:text-zinc-500">
+                                                @if (isset($item['route']))
+                                                    route: {{ $item['route'] }}
+                                                @else
+                                                    {{ $item['url'] }}
+                                                    @if (!empty($item['new_window']))
+                                                        · {{ __('new window') }}
+                                                    @endif
                                                 @endif
-                                            @endif
-                                        </div>
-                                    </td>
-                                    <td class="px-4 py-3">
-                                        <div class="flex items-center justify-end gap-2">
-                                            <flux:button
-                                                wire:click="moveUp({{ $index }})"
-                                                variant="ghost"
-                                                size="sm"
-                                                icon="chevron-up"
-                                                :disabled="$index === 0"
-                                            />
-                                            <flux:button
-                                                wire:click="moveDown({{ $index }})"
-                                                variant="ghost"
-                                                size="sm"
-                                                icon="chevron-down"
-                                                :disabled="$index === count($navItems) - 1"
-                                            />
-                                            <flux:switch wire:model.live="navItems.{{ $index }}.active" />
-                                            <flux:button
-                                                wire:click="removeItem({{ $index }})"
-                                                variant="ghost"
-                                                size="sm"
-                                                icon="trash"
-                                                class="text-red-500 dark:text-red-400"
-                                            />
-                                        </div>
-                                    </td>
-                                </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
-                </div>
-            @endif
-        </div>
-
-        <div class="mt-10">
-            <div class="mb-4 flex items-center justify-between">
-                <flux:heading>{{ __('Footer Links') }}</flux:heading>
-                <div class="flex items-center gap-2">
-                    <flux:button wire:click="openAddModal('footer')" variant="outline" size="sm" icon="plus">
-                        {{ __('Add Item') }}
-                    </flux:button>
-                    <flux:button wire:click="save" variant="primary" size="sm" wire:loading.attr="disabled">
-                        <span wire:loading.remove wire:target="save">{{ __('Save') }}</span>
-                        <span wire:loading wire:target="save">{{ __('Saving…') }}</span>
-                    </flux:button>
-                </div>
-            </div>
-
-            @if (empty($footerItems))
-                <div class="rounded-lg border border-dashed border-zinc-300 dark:border-zinc-600 py-16 text-center text-zinc-500 dark:text-zinc-400">
-                    <flux:icon name="bars-3" class="mx-auto mb-3 size-12 opacity-40" />
-                    <p class="text-sm">{{ __('No footer links yet.') }}</p>
-                    <flux:button wire:click="openAddModal('footer')" variant="outline" size="sm" class="mt-4">
-                        {{ __('Add your first item') }}
-                    </flux:button>
-                </div>
+                                            </div>
+                                        </td>
+                                        <td class="px-4 py-3">
+                                            <div class="flex items-center justify-end gap-2">
+                                                <flux:button
+                                                    wire:click="moveUp({{ $index }})"
+                                                    variant="ghost"
+                                                    size="sm"
+                                                    icon="chevron-up"
+                                                    :disabled="$index === 0"
+                                                />
+                                                <flux:button
+                                                    wire:click="moveDown({{ $index }})"
+                                                    variant="ghost"
+                                                    size="sm"
+                                                    icon="chevron-down"
+                                                    :disabled="$index === count($navItems) - 1"
+                                                />
+                                                <flux:switch wire:model.live="navItems.{{ $index }}.active" />
+                                                <flux:button
+                                                    wire:click="removeItem({{ $index }})"
+                                                    variant="ghost"
+                                                    size="sm"
+                                                    icon="trash"
+                                                    class="text-red-500 dark:text-red-400"
+                                                />
+                                            </div>
+                                        </td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                @endif
             @else
-                <div class="overflow-hidden rounded-lg border border-zinc-200 dark:border-zinc-700">
-                    <table class="w-full text-sm">
-                        <tbody
-                            class="divide-y divide-zinc-200 dark:divide-zinc-700"
-                            x-data="{ dragging: null, over: null }"
-                        >
-                            @foreach ($footerItems as $index => $item)
-                                <tr
-                                    wire:key="footer-item-{{ $index }}"
-                                    class="bg-white dark:bg-zinc-900"
-                                    draggable="true"
-                                    @dragstart="dragging = {{ $index }}"
-                                    @dragover.prevent="over = {{ $index }}"
-                                    @drop="if (dragging !== null) { $wire.reorderFooterItems(dragging, over); } dragging = null; over = null"
-                                    @dragend="dragging = null; over = null"
-                                    :style="{
-                                        opacity: dragging === {{ $index }} ? '0.4' : '',
-                                        'border-top': over === {{ $index }} && dragging !== null && dragging > {{ $index }} ? '2px solid var(--color-primary)' : '',
-                                        'border-bottom': over === {{ $index }} && dragging !== null && dragging < {{ $index }} ? '2px solid var(--color-primary)' : ''
-                                    }"
-                                >
-                                    <td class="w-8 cursor-grab px-4 py-3 text-zinc-400 active:cursor-grabbing dark:text-zinc-500">
-                                        <flux:icon name="bars-2" class="size-4" />
-                                    </td>
-                                    <td class="px-4 py-3">
-                                        <div class="font-medium {{ ($item['active'] ?? true) ? 'text-zinc-900 dark:text-zinc-100' : 'text-zinc-400 dark:text-zinc-500' }}">
-                                            {{ $item['label'] }}
-                                        </div>
-                                        <div class="mt-0.5 font-mono text-xs text-zinc-400 dark:text-zinc-500">
-                                            @if (isset($item['route']))
-                                                route: {{ $item['route'] }}
-                                            @else
-                                                {{ $item['url'] }}
-                                                @if (!empty($item['new_window']))
-                                                    · {{ __('new window') }}
+                @if (empty($footerItems))
+                    <div class="rounded-lg border border-dashed border-zinc-300 dark:border-zinc-600 py-16 text-center text-zinc-500 dark:text-zinc-400">
+                        <flux:icon name="bars-3" class="mx-auto mb-3 size-12 opacity-40" />
+                        <p class="text-sm">{{ __('No footer links yet.') }}</p>
+                        <flux:button wire:click="openAddModal('footer')" variant="outline" size="sm" class="mt-4">
+                            {{ __('Add your first item') }}
+                        </flux:button>
+                    </div>
+                @else
+                    <div class="overflow-hidden rounded-lg border border-zinc-200 dark:border-zinc-700">
+                        <table class="w-full text-sm">
+                            <tbody
+                                class="divide-y divide-zinc-200 dark:divide-zinc-700"
+                                x-data="{ dragging: null, over: null }"
+                            >
+                                @foreach ($footerItems as $index => $item)
+                                    <tr
+                                        wire:key="footer-item-{{ $index }}"
+                                        class="bg-white dark:bg-zinc-900"
+                                        draggable="true"
+                                        @dragstart="dragging = {{ $index }}"
+                                        @dragover.prevent="over = {{ $index }}"
+                                        @drop="if (dragging !== null) { $wire.reorderFooterItems(dragging, over); } dragging = null; over = null"
+                                        @dragend="dragging = null; over = null"
+                                        :style="{
+                                            opacity: dragging === {{ $index }} ? '0.4' : '',
+                                            'border-top': over === {{ $index }} && dragging !== null && dragging > {{ $index }} ? '2px solid var(--color-primary)' : '',
+                                            'border-bottom': over === {{ $index }} && dragging !== null && dragging < {{ $index }} ? '2px solid var(--color-primary)' : ''
+                                        }"
+                                    >
+                                        <td class="w-8 cursor-grab px-4 py-3 text-zinc-400 active:cursor-grabbing dark:text-zinc-500">
+                                            <flux:icon name="bars-2" class="size-4" />
+                                        </td>
+                                        <td class="px-4 py-3">
+                                            <div class="font-medium {{ ($item['active'] ?? true) ? 'text-zinc-900 dark:text-zinc-100' : 'text-zinc-400 dark:text-zinc-500' }}">
+                                                {{ $item['label'] }}
+                                            </div>
+                                            <div class="mt-0.5 font-mono text-xs text-zinc-400 dark:text-zinc-500">
+                                                @if (isset($item['route']))
+                                                    route: {{ $item['route'] }}
+                                                @else
+                                                    {{ $item['url'] }}
+                                                    @if (!empty($item['new_window']))
+                                                        · {{ __('new window') }}
+                                                    @endif
                                                 @endif
-                                            @endif
-                                        </div>
-                                    </td>
-                                    <td class="px-4 py-3">
-                                        <div class="flex items-center justify-end gap-2">
-                                            <flux:button
-                                                wire:click="moveFooterUp({{ $index }})"
-                                                variant="ghost"
-                                                size="sm"
-                                                icon="chevron-up"
-                                                :disabled="$index === 0"
-                                            />
-                                            <flux:button
-                                                wire:click="moveFooterDown({{ $index }})"
-                                                variant="ghost"
-                                                size="sm"
-                                                icon="chevron-down"
-                                                :disabled="$index === count($footerItems) - 1"
-                                            />
-                                            <flux:switch wire:model.live="footerItems.{{ $index }}.active" />
-                                            <flux:button
-                                                wire:click="removeFooterItem({{ $index }})"
-                                                variant="ghost"
-                                                size="sm"
-                                                icon="trash"
-                                                class="text-red-500 dark:text-red-400"
-                                            />
-                                        </div>
-                                    </td>
-                                </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
-                </div>
+                                            </div>
+                                        </td>
+                                        <td class="px-4 py-3">
+                                            <div class="flex items-center justify-end gap-2">
+                                                <flux:button
+                                                    wire:click="moveFooterUp({{ $index }})"
+                                                    variant="ghost"
+                                                    size="sm"
+                                                    icon="chevron-up"
+                                                    :disabled="$index === 0"
+                                                />
+                                                <flux:button
+                                                    wire:click="moveFooterDown({{ $index }})"
+                                                    variant="ghost"
+                                                    size="sm"
+                                                    icon="chevron-down"
+                                                    :disabled="$index === count($footerItems) - 1"
+                                                />
+                                                <flux:switch wire:model.live="footerItems.{{ $index }}.active" />
+                                                <flux:button
+                                                    wire:click="removeFooterItem({{ $index }})"
+                                                    variant="ghost"
+                                                    size="sm"
+                                                    icon="trash"
+                                                    class="text-red-500 dark:text-red-400"
+                                                />
+                                            </div>
+                                        </td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                @endif
             @endif
-        </div>
         </div>
     </flux:main>
 </div>
