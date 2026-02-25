@@ -23,6 +23,12 @@ new #[Layout('layouts.app')] #[Title('Design Library')] class extends Component 
     public ?int $editingId = null;
     public bool $indexing = false;
 
+    public function mount(): void
+    {
+        IndexDesignLibraryJob::dispatchSync();
+        unset($this->rows, $this->pages);
+    }
+
     // Row form fields
     public string $formName = '';
     public string $formCategory = '';
@@ -208,11 +214,31 @@ new #[Layout('layouts.app')] #[Title('Design Library')] class extends Component 
 
     public function deleteItem(int $id): void
     {
+        $service = new DesignLibraryService;
+
         if ($this->tab === 'rows') {
-            DesignRow::query()->findOrFail($id)->delete();
+            $row = DesignRow::query()->findOrFail($id);
+
+            if ($row->source_file) {
+                $fullPath = $service->fullPath($row->source_file);
+                if (file_exists($fullPath)) {
+                    unlink($fullPath);
+                }
+            }
+
+            $row->delete();
             unset($this->rows);
         } else {
-            DesignPage::query()->findOrFail($id)->delete();
+            $page = DesignPage::query()->findOrFail($id);
+
+            if ($page->source_file) {
+                $fullPath = $service->fullPath($page->source_file);
+                if (file_exists($fullPath)) {
+                    unlink($fullPath);
+                }
+            }
+
+            $page->delete();
             unset($this->pages);
         }
 

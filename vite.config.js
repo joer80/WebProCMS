@@ -16,8 +16,9 @@ export default defineConfig({
         cors: true,
         watch: {
             ignored: [
-                '**/storage/framework/views/**',
-                '**/resources/views/pages/**',
+                '**/resources/views/pages/design-editor-preview.blade.php',
+
+                //Check these also
                 '**/config/navigation.php',
                 '**/routes/web.php',
             ],

@@ -29,6 +29,10 @@ afterEach(function (): void {
     if (isset($this->tempFullPath) && file_exists($this->tempFullPath)) {
         unlink($this->tempFullPath);
     }
+
+    if (isset($this->libraryTempPath) && file_exists($this->libraryTempPath)) {
+        unlink($this->libraryTempPath);
+    }
 });
 
 it('redirects unauthenticated users from the editor', function (): void {
@@ -184,6 +188,22 @@ it('marks file as clean after saving', function (): void {
         ->call('saveFile');
 
     expect($component->get('isDirty'))->toBeFalse();
+});
+
+it('syncs the library when the insert drawer is opened', function (): void {
+    $user = User::factory()->create();
+
+    $sourceFile = 'rows/hero/test-drawer-'.uniqid().'.blade.php';
+    $this->libraryTempPath = resource_path('design-library/'.$sourceFile);
+    file_put_contents($this->libraryTempPath, "{{--\n@name Drawer Sync Row\n--}}\n<section>Drawer Test</section>");
+
+    expect(DesignRow::where('source_file', $sourceFile)->exists())->toBeFalse();
+
+    Livewire::actingAs($user)
+        ->test('pages::dashboard.design-library.editor')
+        ->call('openLibraryDrawer', 0);
+
+    expect(DesignRow::where('source_file', $sourceFile)->exists())->toBeTrue();
 });
 
 it('discards changes by reloading from disk', function (): void {

@@ -1,6 +1,7 @@
 <?php
 
 use App\Enums\RowCategory;
+use App\Jobs\IndexDesignLibraryJob;
 use App\Models\DesignRow;
 use App\Support\VoltFileService;
 use Illuminate\Support\Str;
@@ -143,6 +144,8 @@ new #[Layout('layouts.app')] #[Title('Page Editor')] class extends Component {
 
     public function openLibraryDrawer(int $atIndex): void
     {
+        IndexDesignLibraryJob::dispatchSync();
+
         $this->insertAtIndex = $atIndex;
         $this->librarySearch = '';
         $this->libraryCategory = '';

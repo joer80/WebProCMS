@@ -30,7 +30,7 @@ it('allows manager users to view the design library', function (): void {
 
 it('shows existing design rows', function (): void {
     $user = User::factory()->create();
-    DesignRow::factory()->create(['name' => 'Hero Section']);
+    DesignRow::factory()->create(['name' => 'Hero Section', 'source_file' => '']);
 
     Livewire::actingAs($user)
         ->test('pages::dashboard.design-library.index')
@@ -64,7 +64,7 @@ it('validates required fields when creating a row', function (): void {
 
 it('can edit an existing design row', function (): void {
     $user = User::factory()->create();
-    $row = DesignRow::factory()->create(['name' => 'Original Name']);
+    $row = DesignRow::factory()->create(['name' => 'Original Name', 'source_file' => '']);
 
     Livewire::actingAs($user)
         ->test('pages::dashboard.design-library.index')
@@ -78,7 +78,7 @@ it('can edit an existing design row', function (): void {
 
 it('can delete a design row', function (): void {
     $user = User::factory()->create();
-    $row = DesignRow::factory()->create();
+    $row = DesignRow::factory()->create(['source_file' => '']);
 
     Livewire::actingAs($user)
         ->test('pages::dashboard.design-library.index')
@@ -89,7 +89,7 @@ it('can delete a design row', function (): void {
 
 it('can switch to the pages tab', function (): void {
     $user = User::factory()->create();
-    DesignPage::factory()->create(['name' => 'SaaS Landing Page']);
+    DesignPage::factory()->create(['name' => 'SaaS Landing Page', 'source_file' => '']);
 
     Livewire::actingAs($user)
         ->test('pages::dashboard.design-library.index')
@@ -116,7 +116,7 @@ it('can create a new page template', function (): void {
 
 it('can delete a design page template', function (): void {
     $user = User::factory()->create();
-    $page = DesignPage::factory()->create();
+    $page = DesignPage::factory()->create(['source_file' => '']);
 
     Livewire::actingAs($user)
         ->test('pages::dashboard.design-library.index')
@@ -128,8 +128,8 @@ it('can delete a design page template', function (): void {
 
 it('filters rows by category', function (): void {
     $user = User::factory()->create();
-    DesignRow::factory()->create(['name' => 'Hero Row', 'category' => RowCategory::Hero]);
-    DesignRow::factory()->create(['name' => 'Footer Row', 'category' => RowCategory::Footer]);
+    DesignRow::factory()->create(['name' => 'Hero Row', 'category' => RowCategory::Hero, 'source_file' => '']);
+    DesignRow::factory()->create(['name' => 'Footer Row', 'category' => RowCategory::Footer, 'source_file' => '']);
 
     Livewire::actingAs($user)
         ->test('pages::dashboard.design-library.index')
@@ -158,4 +158,69 @@ it('syncs the library and indexes template files', function (): void {
         ->call('syncLibrary');
 
     expect(DesignRow::count())->toBeGreaterThan(0);
+});
+
+it('indexes files into the database on mount', function (): void {
+    $user = User::factory()->create();
+
+    expect(DesignRow::count())->toBe(0);
+
+    Livewire::actingAs($user)
+        ->test('pages::dashboard.design-library.index');
+
+    expect(DesignRow::count())->toBeGreaterThan(0);
+});
+
+describe('file deletion', function (): void {
+    afterEach(function (): void {
+        if (isset($this->tempFilePath) && file_exists($this->tempFilePath)) {
+            unlink($this->tempFilePath);
+        }
+    });
+
+    it('deletes the source file when deleting a row', function (): void {
+        $user = User::factory()->create();
+
+        $sourceFile = 'rows/hero/test-delete-'.uniqid().'.blade.php';
+        $this->tempFilePath = resource_path('design-library/'.$sourceFile);
+        file_put_contents($this->tempFilePath, "{{--\n@name Test Delete Row\n--}}\n<section>Test</section>");
+
+        $component = Livewire::actingAs($user)
+            ->test('pages::dashboard.design-library.index');
+
+        $rowId = DesignRow::where('source_file', $sourceFile)->value('id');
+        $component->call('deleteItem', $rowId);
+
+        expect(file_exists($this->tempFilePath))->toBeFalse();
+        expect(DesignRow::find($rowId))->toBeNull();
+    });
+
+    it('deletes the source file when deleting a page template', function (): void {
+        $user = User::factory()->create();
+
+        $sourceFile = 'pages/saas/test-delete-'.uniqid().'.blade.php';
+        $this->tempFilePath = resource_path('design-library/'.$sourceFile);
+        file_put_contents($this->tempFilePath, "{{--\n@name Test Delete Page\n--}}\n<div>Test Page</div>");
+
+        $component = Livewire::actingAs($user)
+            ->test('pages::dashboard.design-library.index')
+            ->call('setTab', 'pages');
+
+        $pageId = DesignPage::where('source_file', $sourceFile)->value('id');
+        $component->call('deleteItem', $pageId);
+
+        expect(file_exists($this->tempFilePath))->toBeFalse();
+        expect(DesignPage::find($pageId))->toBeNull();
+    });
+
+    it('deletes a row with no source file without errors', function (): void {
+        $user = User::factory()->create();
+        $row = DesignRow::factory()->create(['source_file' => '']);
+
+        Livewire::actingAs($user)
+            ->test('pages::dashboard.design-library.index')
+            ->call('deleteItem', $row->id);
+
+        expect(DesignRow::find($row->id))->toBeNull();
+    });
 });
