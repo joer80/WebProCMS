@@ -19,7 +19,7 @@ return [
 
     'saas' => [
         'show_auth_links' => true,
-        'footer_slugs' => ['legal'],
+        'footer_slugs' => ['footer-company', 'legal'],
         'menus' => [
         [
             'slug' => 'main-navigation',

@@ -269,6 +269,17 @@ new #[Layout('layouts.app')] #[Title('Menus')] class extends Component {
         $this->menus[$this->activeMenuIndex]['items'] = array_values($this->menus[$this->activeMenuIndex]['items']);
     }
 
+    public function reorderFooterSlugs(int $from, int $to): void
+    {
+        if ($from === $to) {
+            return;
+        }
+
+        $slug = array_splice($this->footerSlugs, $from, 1)[0];
+        array_splice($this->footerSlugs, $to, 0, [$slug]);
+        $this->footerSlugs = array_values($this->footerSlugs);
+    }
+
     public function save(): void
     {
         $websiteType = config('features.website_type', 'saas');
@@ -714,6 +725,43 @@ new #[Layout('layouts.app')] #[Title('Menus')] class extends Component {
                             </table>
                         </div>
                     @endif
+                @endif
+
+                {{-- Footer column order --}}
+                @if (count($footerSlugs) > 1)
+                    <div class="mt-8">
+                        <div class="mb-3">
+                            <flux:heading size="sm">{{ __('Footer column order') }}</flux:heading>
+                            <flux:text size="sm" class="mt-0.5">{{ __('Drag to reorder how footer menus appear as columns.') }}</flux:text>
+                        </div>
+                        <div
+                            x-data="{ draggingIdx: null, overIdx: null }"
+                            class="flex flex-wrap gap-2"
+                        >
+                            @foreach ($footerSlugs as $fIdx => $fSlug)
+                                @php
+                                    $fMenu = collect($menus)->firstWhere('slug', $fSlug);
+                                    $fLabel = $fMenu['label'] ?? $fSlug;
+                                @endphp
+                                <div
+                                    wire:key="footer-order-{{ $fIdx }}"
+                                    draggable="true"
+                                    @dragstart="draggingIdx = {{ $fIdx }}"
+                                    @dragover.prevent="overIdx = {{ $fIdx }}"
+                                    @drop="if (draggingIdx !== null) { $wire.reorderFooterSlugs(draggingIdx, overIdx); } draggingIdx = null; overIdx = null"
+                                    @dragend="draggingIdx = null; overIdx = null"
+                                    :class="{
+                                        'opacity-40': draggingIdx === {{ $fIdx }},
+                                        'ring-2 ring-zinc-900 dark:ring-zinc-200': overIdx === {{ $fIdx }} && draggingIdx !== null && draggingIdx !== {{ $fIdx }}
+                                    }"
+                                    class="flex cursor-grab items-center gap-1.5 rounded-full border border-zinc-200 bg-white px-3 py-1.5 text-sm font-medium text-zinc-700 active:cursor-grabbing dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300"
+                                >
+                                    <flux:icon name="bars-2" class="size-3.5 text-zinc-400" />
+                                    {{ $fLabel }}
+                                </div>
+                            @endforeach
+                        </div>
+                    </div>
                 @endif
             @endif
         </div>
