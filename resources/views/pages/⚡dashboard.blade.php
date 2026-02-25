@@ -105,6 +105,37 @@ new #[Layout('layouts.app')] #[Title('Dashboard')] #[Lazy] class extends Compone
             ->get();
     }
 
+    /**
+     * @return list<array{label: string, path: string, modified_at: \Illuminate\Support\Carbon}>
+     */
+    public function getRecentlyUpdatedPagesProperty(): array
+    {
+        $publicPages = (new VoltFileService)->listVoltFiles()['Public Pages'] ?? [];
+        $results = [];
+
+        foreach ($publicPages as $label => $relativePath) {
+            if (str_ends_with($relativePath, 'pages/⚡dashboard.blade.php')) {
+                continue;
+            }
+
+            $fullPath = resource_path('views/'.$relativePath);
+
+            if (! file_exists($fullPath)) {
+                continue;
+            }
+
+            $results[] = [
+                'label' => $label,
+                'path' => $relativePath,
+                'modified_at' => \Illuminate\Support\Carbon::createFromTimestamp(filemtime($fullPath)),
+            ];
+        }
+
+        usort($results, fn (array $a, array $b): int => $b['modified_at']->timestamp <=> $a['modified_at']->timestamp);
+
+        return array_slice($results, 0, 5);
+    }
+
     /** @return \Illuminate\Database\Eloquent\Collection<int, Post> */
     public function getDraftPostsProperty(): \Illuminate\Database\Eloquent\Collection
     {
@@ -225,70 +256,119 @@ new #[Layout('layouts.app')] #[Title('Dashboard')] #[Lazy] class extends Compone
             </div>
         </div>
 
-        {{-- Recent Posts --}}
-        <div class="mb-8">
-            <div class="flex items-center justify-between mb-4">
-                <flux:heading>Recent Posts</flux:heading>
-                <flux:button href="{{ route('dashboard.blog.index') }}" variant="ghost" size="sm" wire:navigate>
-                    View all
-                </flux:button>
+        {{-- Recent Posts & Recently Updated Pages --}}
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+
+            {{-- Recent Posts --}}
+            <div>
+                <div class="flex items-center justify-between mb-4">
+                    <flux:heading>Recent Posts</flux:heading>
+                    <flux:button href="{{ route('dashboard.blog.index') }}" variant="ghost" size="sm" wire:navigate>
+                        View all
+                    </flux:button>
+                </div>
+
+                @if ($this->recentPosts->isEmpty())
+                    <div class="text-center py-12 rounded-lg border border-zinc-200 dark:border-zinc-700 text-zinc-500 dark:text-zinc-400">
+                        <flux:icon name="document-text" class="size-10 mx-auto mb-3 opacity-40" />
+                        <p class="text-sm">No posts yet. <a href="{{ route('dashboard.blog.create') }}" class="underline" wire:navigate>Create your first one.</a></p>
+                    </div>
+                @else
+                    <div class="overflow-hidden rounded-lg border border-zinc-200 dark:border-zinc-700">
+                        <table class="w-full text-sm">
+                            <thead class="bg-zinc-50 dark:bg-zinc-800/50">
+                                <tr>
+                                    <th class="text-left px-4 py-3 font-medium text-zinc-600 dark:text-zinc-400">Title</th>
+                                    <th class="text-left px-4 py-3 font-medium text-zinc-600 dark:text-zinc-400 hidden sm:table-cell">Status</th>
+                                    <th class="text-left px-4 py-3 font-medium text-zinc-600 dark:text-zinc-400 hidden md:table-cell">Date</th>
+                                    <th class="px-4 py-3"></th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-zinc-200 dark:divide-zinc-700">
+                                @foreach ($this->recentPosts as $post)
+                                    <tr wire:key="recent-post-{{ $post->id }}" class="bg-white dark:bg-zinc-900 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors">
+                                        <td class="px-4 py-3 font-medium text-zinc-900 dark:text-zinc-100">{{ $post->title }}</td>
+                                        <td class="px-4 py-3 hidden sm:table-cell">
+                                            @php
+                                                $badgeVariant = match($post->status) {
+                                                    'published' => 'green',
+                                                    'unlisted' => 'blue',
+                                                    'unpublished' => 'zinc',
+                                                    default => 'zinc',
+                                                };
+                                            @endphp
+                                            <flux:badge variant="{{ $badgeVariant }}" size="sm">
+                                                {{ ucfirst($post->status) }}
+                                            </flux:badge>
+                                        </td>
+                                        <td class="px-4 py-3 text-zinc-500 dark:text-zinc-400 text-xs hidden md:table-cell">
+                                            {{ $post->published_at?->format('M j, Y') ?? $post->created_at->format('M j, Y') }}
+                                        </td>
+                                        <td class="px-4 py-3 text-right">
+                                            <flux:button
+                                                href="{{ route('dashboard.blog.edit', $post) }}"
+                                                variant="ghost"
+                                                size="sm"
+                                                icon="pencil"
+                                                wire:navigate
+                                            />
+                                        </td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                @endif
             </div>
 
-            @if ($this->recentPosts->isEmpty())
-                <div class="text-center py-12 rounded-lg border border-zinc-200 dark:border-zinc-700 text-zinc-500 dark:text-zinc-400">
-                    <flux:icon name="document-text" class="size-10 mx-auto mb-3 opacity-40" />
-                    <p class="text-sm">No posts yet. <a href="{{ route('dashboard.blog.create') }}" class="underline" wire:navigate>Create your first one.</a></p>
+            {{-- Recently Updated Pages --}}
+            <div>
+                <div class="flex items-center justify-between mb-4">
+                    <flux:heading>Recently Updated Pages</flux:heading>
+                    <flux:button href="{{ route('dashboard.pages') }}" variant="ghost" size="sm" wire:navigate>
+                        View all
+                    </flux:button>
                 </div>
-            @else
-                <div class="overflow-hidden rounded-lg border border-zinc-200 dark:border-zinc-700">
-                    <table class="w-full text-sm">
-                        <thead class="bg-zinc-50 dark:bg-zinc-800/50">
-                            <tr>
-                                <th class="text-left px-4 py-3 font-medium text-zinc-600 dark:text-zinc-400">Title</th>
-                                <th class="text-left px-4 py-3 font-medium text-zinc-600 dark:text-zinc-400 hidden sm:table-cell">Category</th>
-                                <th class="text-left px-4 py-3 font-medium text-zinc-600 dark:text-zinc-400 hidden md:table-cell">Status</th>
-                                <th class="text-left px-4 py-3 font-medium text-zinc-600 dark:text-zinc-400 hidden lg:table-cell">Date</th>
-                                <th class="px-4 py-3"></th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-zinc-200 dark:divide-zinc-700">
-                            @foreach ($this->recentPosts as $post)
-                                <tr wire:key="recent-post-{{ $post->id }}" class="bg-white dark:bg-zinc-900 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors">
-                                    <td class="px-4 py-3 font-medium text-zinc-900 dark:text-zinc-100">{{ $post->title }}</td>
-                                    <td class="px-4 py-3 text-zinc-600 dark:text-zinc-400 hidden sm:table-cell">
-                                        {{ $post->category?->name ?? '—' }}
-                                    </td>
-                                    <td class="px-4 py-3 hidden md:table-cell">
-                                        @php
-                                            $badgeVariant = match($post->status) {
-                                                'published' => 'green',
-                                                'unlisted' => 'blue',
-                                                'unpublished' => 'zinc',
-                                                default => 'zinc',
-                                            };
-                                        @endphp
-                                        <flux:badge variant="{{ $badgeVariant }}" size="sm">
-                                            {{ ucfirst($post->status) }}
-                                        </flux:badge>
-                                    </td>
-                                    <td class="px-4 py-3 text-zinc-500 dark:text-zinc-400 text-xs hidden lg:table-cell">
-                                        {{ $post->published_at?->format('M j, Y') ?? $post->created_at->format('M j, Y') }}
-                                    </td>
-                                    <td class="px-4 py-3 text-right">
-                                        <flux:button
-                                            href="{{ route('dashboard.blog.edit', $post) }}"
-                                            variant="ghost"
-                                            size="sm"
-                                            icon="pencil"
-                                            wire:navigate
-                                        />
-                                    </td>
+
+                @if (empty($this->recentlyUpdatedPages))
+                    <div class="text-center py-12 rounded-lg border border-zinc-200 dark:border-zinc-700 text-zinc-500 dark:text-zinc-400">
+                        <flux:icon name="document" class="size-10 mx-auto mb-3 opacity-40" />
+                        <p class="text-sm">No pages found.</p>
+                    </div>
+                @else
+                    <div class="overflow-hidden rounded-lg border border-zinc-200 dark:border-zinc-700">
+                        <table class="w-full text-sm">
+                            <thead class="bg-zinc-50 dark:bg-zinc-800/50">
+                                <tr>
+                                    <th class="text-left px-4 py-3 font-medium text-zinc-600 dark:text-zinc-400">Page</th>
+                                    <th class="text-left px-4 py-3 font-medium text-zinc-600 dark:text-zinc-400 hidden sm:table-cell">Modified</th>
+                                    <th class="px-4 py-3"></th>
                                 </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
-                </div>
-            @endif
+                            </thead>
+                            <tbody class="divide-y divide-zinc-200 dark:divide-zinc-700">
+                                @foreach ($this->recentlyUpdatedPages as $page)
+                                    <tr wire:key="recent-page-{{ $loop->index }}" class="bg-white dark:bg-zinc-900 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors">
+                                        <td class="px-4 py-3 font-medium text-zinc-900 dark:text-zinc-100">{{ $page['label'] }}</td>
+                                        <td class="px-4 py-3 text-zinc-500 dark:text-zinc-400 text-xs hidden sm:table-cell">
+                                            {{ $page['modified_at']->diffForHumans() }}
+                                        </td>
+                                        <td class="px-4 py-3 text-right">
+                                            <flux:button
+                                                href="{{ route('dashboard.design-library.editor') }}?file={{ urlencode($page['path']) }}"
+                                                variant="ghost"
+                                                size="sm"
+                                                icon="pencil"
+                                                wire:navigate
+                                            />
+                                        </td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                @endif
+            </div>
+
         </div>
 
         {{-- Drafts needing attention --}}

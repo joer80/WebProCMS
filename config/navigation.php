@@ -22,7 +22,7 @@ return [
             ['label' => 'Features', 'route' => 'features', 'active' => true],
             ['label' => 'Pricing', 'route' => 'pricing', 'active' => true],
             ['label' => 'Blog', 'route' => 'blog.index', 'active' => true],
-            ['label' => 'Test', 'route' => 'test', 'active' => true],
+            ['label' => 'Test', 'route' => 'test', 'active' => false],
             ['label' => 'About', 'route' => 'about', 'active' => true],
         ],
         'show_auth_links' => true,
