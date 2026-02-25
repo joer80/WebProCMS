@@ -2,9 +2,12 @@
 @php
     $siteType = config('features.website_type', 'saas');
     $navConfig = config("navigation.{$siteType}", config('navigation.saas'));
-    $navItems = array_filter($navConfig['nav'] ?? [], fn ($item) => $item['active'] ?? true);
     $showAuthLinks = $navConfig['show_auth_links'] ?? false;
-    $footerItems = array_filter($navConfig['footer_company'] ?? [], fn ($item) => $item['active'] ?? true);
+    $allMenus = collect($navConfig['menus'] ?? []);
+    $navMenu = $allMenus->firstWhere('slug', 'main-navigation');
+    $navItems = array_filter($navMenu['items'] ?? [], fn ($item) => $item['active'] ?? true);
+    $footerSlugs = $navConfig['footer_slugs'] ?? [];
+    $footerMenus = collect($footerSlugs)->map(fn ($slug) => $allMenus->firstWhere('slug', $slug))->filter()->values()->all();
 @endphp
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
@@ -21,7 +24,7 @@
                 {{-- Desktop nav --}}
                 <div class="hidden sm:flex items-center gap-4">
                     @foreach ($navItems as $item)
-                        <a href="{{ route($item['route']) }}" class="inline-block px-5 py-1.5 dark:text-[#EDEDEC] text-[#1b1b18] border border-transparent hover:border-[#19140035] dark:hover:border-[#3E3E3A] rounded-sm text-sm leading-normal">
+                        <a href="{{ isset($item['route']) ? route($item['route']) : $item['url'] }}" @if (!empty($item['new_window'])) target="_blank" rel="noopener noreferrer" @endif class="inline-block px-5 py-1.5 dark:text-[#EDEDEC] text-[#1b1b18] border border-transparent hover:border-[#19140035] dark:hover:border-[#3E3E3A] rounded-sm text-sm leading-normal">
                             {{ $item['label'] }}
                         </a>
                     @endforeach
@@ -58,7 +61,7 @@
             {{-- Mobile menu --}}
             <div x-show="open" x-transition class="sm:hidden mt-3 flex flex-col border-t border-[#e3e3e0] dark:border-[#3E3E3A] pt-3">
                 @foreach ($navItems as $item)
-                    <a href="{{ route($item['route']) }}" class="px-2 py-2.5 text-[#1b1b18] dark:text-[#EDEDEC] hover:text-[#706f6c] dark:hover:text-[#A1A09A] transition-colors">{{ $item['label'] }}</a>
+                    <a href="{{ isset($item['route']) ? route($item['route']) : $item['url'] }}" @if (!empty($item['new_window'])) target="_blank" rel="noopener noreferrer" @endif class="px-2 py-2.5 text-[#1b1b18] dark:text-[#EDEDEC] hover:text-[#706f6c] dark:hover:text-[#A1A09A] transition-colors">{{ $item['label'] }}</a>
                 @endforeach
 
                 @if ($showAuthLinks && Route::has('login'))
@@ -89,14 +92,19 @@
                     </p>
                 </div>
                 <div class="flex gap-12">
-                    <div class="flex flex-col gap-3">
-                        <p class="text-xs font-semibold uppercase tracking-wider text-[#706f6c] dark:text-[#A1A09A]">Company</p>
-                        <nav class="flex flex-col gap-2">
-                            @foreach ($footerItems as $item)
-                                <a href="{{ route($item['route']) }}" class="text-sm text-[#1b1b18] dark:text-[#EDEDEC] hover:text-[#706f6c] dark:hover:text-[#A1A09A] transition-colors">{{ $item['label'] }}</a>
-                            @endforeach
-                        </nav>
-                    </div>
+                    @foreach ($footerMenus as $footerMenu)
+                        @php $activeFooterItems = array_filter($footerMenu['items'] ?? [], fn ($item) => $item['active'] ?? true); @endphp
+                        @if (!empty($activeFooterItems))
+                            <div class="flex flex-col gap-3">
+                                <p class="text-xs font-semibold uppercase tracking-wider text-[#706f6c] dark:text-[#A1A09A]">{{ $footerMenu['label'] }}</p>
+                                <nav class="flex flex-col gap-2">
+                                    @foreach ($activeFooterItems as $item)
+                                        <a href="{{ isset($item['route']) ? route($item['route']) : $item['url'] }}" @if (!empty($item['new_window'])) target="_blank" rel="noopener noreferrer" @endif class="text-sm text-[#1b1b18] dark:text-[#EDEDEC] hover:text-[#706f6c] dark:hover:text-[#A1A09A] transition-colors">{{ $item['label'] }}</a>
+                                    @endforeach
+                                </nav>
+                            </div>
+                        @endif
+                    @endforeach
                     <div class="flex flex-col gap-3">
                         <p class="text-xs font-semibold uppercase tracking-wider text-[#706f6c] dark:text-[#A1A09A]">Account</p>
                         <nav class="flex flex-col gap-2">

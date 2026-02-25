@@ -1,22 +1,22 @@
 <?php
 
 use Illuminate\Support\Facades\Route as RoutesFacade;
+use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
 use Livewire\Component;
 
 new #[Layout('layouts.app')] #[Title('Menus')] class extends Component {
-    /** @var array<int, array<string, mixed>> */
-    public array $navItems = [];
+    /**
+     * @var array<int, array{slug: string, label: string, items: array<int, array<string, mixed>>}>
+     */
+    public array $menus = [];
 
-    /** @var array<int, array<string, mixed>> */
-    public array $footerItems = [];
-
-    public string $activeMenu = 'nav';
+    public int $activeMenuIndex = 0;
 
     public bool $showAddModal = false;
-    public string $addTarget = 'nav';
     public string $addType = 'page';
     public string $newPageRoute = '';
     public string $newPageLabel = '';
@@ -24,11 +24,51 @@ new #[Layout('layouts.app')] #[Title('Menus')] class extends Component {
     public string $newCustomLabel = '';
     public bool $newCustomNewWindow = false;
 
+    public bool $showCreateMenuModal = false;
+    public string $newMenuLabel = '';
+    public string $newMenuSlug = '';
+
+    /** @var array<int, string> */
+    public array $footerSlugs = [];
+
+    public bool $currentMenuInFooter = false;
+
+    public bool $showEditItemModal = false;
+    public int $editItemIndex = -1;
+    public string $editItemType = 'page';
+    public string $editItemLabel = '';
+    public string $editItemRoute = '';
+    public string $editItemUrl = '';
+    public bool $editItemNewWindow = false;
+
     public function mount(): void
     {
         $websiteType = config('features.website_type', 'saas');
-        $this->navItems = config("navigation.{$websiteType}.nav", []);
-        $this->footerItems = config("navigation.{$websiteType}.footer_company", []);
+        $this->menus = config("navigation.{$websiteType}.menus", []);
+        $this->footerSlugs = config("navigation.{$websiteType}.footer_slugs", []);
+        $this->syncCurrentMenuInFooter();
+    }
+
+    public function updatedActiveMenuIndex(): void
+    {
+        $this->syncCurrentMenuInFooter();
+    }
+
+    public function updatedCurrentMenuInFooter(bool $value): void
+    {
+        $slug = $this->menus[$this->activeMenuIndex]['slug'] ?? '';
+
+        if ($value && ! in_array($slug, $this->footerSlugs, true)) {
+            $this->footerSlugs[] = $slug;
+        } elseif (! $value) {
+            $this->footerSlugs = array_values(array_filter($this->footerSlugs, fn (string $s): bool => $s !== $slug));
+        }
+    }
+
+    private function syncCurrentMenuInFooter(): void
+    {
+        $slug = $this->menus[$this->activeMenuIndex]['slug'] ?? '';
+        $this->currentMenuInFooter = in_array($slug, $this->footerSlugs, true);
     }
 
     /** @return array<string, string> */
@@ -60,9 +100,8 @@ new #[Layout('layouts.app')] #[Title('Menus')] class extends Component {
             ->all();
     }
 
-    public function openAddModal(string $target = 'nav'): void
+    public function openAddModal(): void
     {
-        $this->addTarget = $target;
         $this->resetAddForm();
         $this->showAddModal = true;
     }
@@ -72,6 +111,11 @@ new #[Layout('layouts.app')] #[Title('Menus')] class extends Component {
         if ($value !== '' && $this->newPageLabel === '') {
             $this->newPageLabel = ucwords(str_replace(['.', '-', '_'], ' ', $value));
         }
+    }
+
+    public function updatedNewMenuLabel(string $value): void
+    {
+        $this->newMenuSlug = Str::slug($value);
     }
 
     public function addItem(): void
@@ -87,16 +131,10 @@ new #[Layout('layouts.app')] #[Title('Menus')] class extends Component {
                 'route' => $this->newPageRoute,
                 'active' => true,
             ];
-
-            if ($this->addTarget === 'footer') {
-                $this->footerItems[] = $item;
-            } else {
-                $this->navItems[] = $item;
-            }
         } else {
             $this->validate([
                 'newCustomLabel' => ['required', 'string', 'max:255'],
-                'newCustomUrl' => ['required', 'url'],
+                'newCustomUrl' => ['required', 'string', 'max:2048'],
             ]);
 
             $item = [
@@ -108,100 +146,133 @@ new #[Layout('layouts.app')] #[Title('Menus')] class extends Component {
             if ($this->newCustomNewWindow) {
                 $item['new_window'] = true;
             }
-
-            if ($this->addTarget === 'footer') {
-                $this->footerItems[] = $item;
-            } else {
-                $this->navItems[] = $item;
-            }
         }
 
+        $this->menus[$this->activeMenuIndex]['items'][] = $item;
         $this->showAddModal = false;
         $this->resetAddForm();
     }
 
+    public function createMenu(): void
+    {
+        $existingSlugs = array_column($this->menus, 'slug');
+
+        $this->validate([
+            'newMenuLabel' => ['required', 'string', 'max:255'],
+            'newMenuSlug' => ['required', 'string', 'max:255', 'regex:/^[a-z0-9-]+$/', Rule::notIn($existingSlugs)],
+        ]);
+
+        $this->menus[] = [
+            'slug' => $this->newMenuSlug,
+            'label' => $this->newMenuLabel,
+            'items' => [],
+        ];
+
+        $this->activeMenuIndex = count($this->menus) - 1;
+        $this->newMenuLabel = '';
+        $this->newMenuSlug = '';
+        $this->showCreateMenuModal = false;
+    }
+
+    public function deleteMenu(): void
+    {
+        array_splice($this->menus, $this->activeMenuIndex, 1);
+        $this->menus = array_values($this->menus);
+        $this->activeMenuIndex = max(0, $this->activeMenuIndex - 1);
+    }
+
     public function removeItem(int $index): void
     {
-        array_splice($this->navItems, $index, 1);
+        array_splice($this->menus[$this->activeMenuIndex]['items'], $index, 1);
     }
 
-    public function moveUp(int $index): void
+    public function openEditItemModal(int $index): void
+    {
+        $item = $this->menus[$this->activeMenuIndex]['items'][$index];
+        $this->editItemIndex = $index;
+        $this->editItemType = isset($item['route']) ? 'page' : 'custom';
+        $this->editItemLabel = $item['label'] ?? '';
+        $this->editItemRoute = $item['route'] ?? '';
+        $this->editItemUrl = $item['url'] ?? '';
+        $this->editItemNewWindow = $item['new_window'] ?? false;
+        $this->showEditItemModal = true;
+    }
+
+    public function saveEditItem(): void
+    {
+        if ($this->editItemType === 'page') {
+            $this->validate([
+                'editItemRoute' => ['required', 'string'],
+                'editItemLabel' => ['required', 'string', 'max:255'],
+            ]);
+
+            $item = [
+                'label' => $this->editItemLabel,
+                'route' => $this->editItemRoute,
+                'active' => $this->menus[$this->activeMenuIndex]['items'][$this->editItemIndex]['active'] ?? true,
+            ];
+        } else {
+            $this->validate([
+                'editItemLabel' => ['required', 'string', 'max:255'],
+                'editItemUrl' => ['required', 'string', 'max:2048'],
+            ]);
+
+            $item = [
+                'label' => $this->editItemLabel,
+                'url' => $this->editItemUrl,
+                'active' => $this->menus[$this->activeMenuIndex]['items'][$this->editItemIndex]['active'] ?? true,
+            ];
+
+            if ($this->editItemNewWindow) {
+                $item['new_window'] = true;
+            }
+        }
+
+        $this->menus[$this->activeMenuIndex]['items'][$this->editItemIndex] = $item;
+        $this->showEditItemModal = false;
+    }
+
+    public function moveItemUp(int $index): void
     {
         if ($index <= 0) {
             return;
         }
 
-        $items = $this->navItems;
+        $items = $this->menus[$this->activeMenuIndex]['items'];
         [$items[$index - 1], $items[$index]] = [$items[$index], $items[$index - 1]];
-        $this->navItems = array_values($items);
+        $this->menus[$this->activeMenuIndex]['items'] = array_values($items);
     }
 
-    public function moveDown(int $index): void
+    public function moveItemDown(int $index): void
     {
-        if ($index >= count($this->navItems) - 1) {
+        $count = count($this->menus[$this->activeMenuIndex]['items']);
+
+        if ($index >= $count - 1) {
             return;
         }
 
-        $items = $this->navItems;
+        $items = $this->menus[$this->activeMenuIndex]['items'];
         [$items[$index], $items[$index + 1]] = [$items[$index + 1], $items[$index]];
-        $this->navItems = array_values($items);
+        $this->menus[$this->activeMenuIndex]['items'] = array_values($items);
     }
 
-    public function reorderNavItems(int $from, int $to): void
+    public function reorderItems(int $from, int $to): void
     {
         if ($from === $to) {
             return;
         }
 
-        $item = array_splice($this->navItems, $from, 1)[0];
-        array_splice($this->navItems, $to, 0, [$item]);
-        $this->navItems = array_values($this->navItems);
-    }
-
-    public function reorderFooterItems(int $from, int $to): void
-    {
-        if ($from === $to) {
-            return;
-        }
-
-        $item = array_splice($this->footerItems, $from, 1)[0];
-        array_splice($this->footerItems, $to, 0, [$item]);
-        $this->footerItems = array_values($this->footerItems);
-    }
-
-    public function removeFooterItem(int $index): void
-    {
-        array_splice($this->footerItems, $index, 1);
-    }
-
-    public function moveFooterUp(int $index): void
-    {
-        if ($index <= 0) {
-            return;
-        }
-
-        $items = $this->footerItems;
-        [$items[$index - 1], $items[$index]] = [$items[$index], $items[$index - 1]];
-        $this->footerItems = array_values($items);
-    }
-
-    public function moveFooterDown(int $index): void
-    {
-        if ($index >= count($this->footerItems) - 1) {
-            return;
-        }
-
-        $items = $this->footerItems;
-        [$items[$index], $items[$index + 1]] = [$items[$index + 1], $items[$index]];
-        $this->footerItems = array_values($items);
+        $item = array_splice($this->menus[$this->activeMenuIndex]['items'], $from, 1)[0];
+        array_splice($this->menus[$this->activeMenuIndex]['items'], $to, 0, [$item]);
+        $this->menus[$this->activeMenuIndex]['items'] = array_values($this->menus[$this->activeMenuIndex]['items']);
     }
 
     public function save(): void
     {
         $websiteType = config('features.website_type', 'saas');
         $config = config('navigation');
-        $config[$websiteType]['nav'] = array_values($this->navItems);
-        $config[$websiteType]['footer_company'] = array_values($this->footerItems);
+        $config[$websiteType]['footer_slugs'] = array_values($this->footerSlugs);
+        $config[$websiteType]['menus'] = array_values($this->menus);
 
         $configPath = config_path('navigation.php');
         file_put_contents($configPath, $this->buildConfigFileContents($config));
@@ -238,9 +309,9 @@ new #[Layout('layouts.app')] #[Title('Menus')] class extends Component {
         $contents .= "| Set WEBSITE_TYPE in your .env to activate the appropriate config.\n";
         $contents .= "|\n";
         $contents .= "| Each type has:\n";
-        $contents .= "|   nav              - primary navigation items (always shown)\n";
         $contents .= "|   show_auth_links  - whether login/register/dashboard appear in the nav\n";
-        $contents .= "|   footer_company   - links shown in the footer \"Company\" column\n";
+        $contents .= "|   footer_slugs     - slugs of menus rendered as footer columns (in order)\n";
+        $contents .= "|   menus            - all menus; templates request them by slug\n";
         $contents .= "|\n";
         $contents .= "*/\n\n";
         $contents .= "return [\n\n";
@@ -258,33 +329,50 @@ new #[Layout('layouts.app')] #[Title('Menus')] class extends Component {
 
     /**
      * @param array{
-     *     nav: array<int, array<string, mixed>>,
      *     show_auth_links: bool,
-     *     footer_company: array<int, array<string, mixed>>
+     *     footer_slugs: array<int, string>,
+     *     menus: array<int, array{slug: string, label: string, items: array<int, array<string, mixed>>}>
      * } $data
      */
     private function formatTypeBlock(string $type, array $data): string
     {
         $showAuth = $data['show_auth_links'] ? 'true' : 'false';
 
-        $navLines = array_map(
-            fn (array $item): string => '            ' . $this->formatNavItem($item) . ',',
-            $data['nav'],
+        $footerSlugItems = array_map(
+            fn (string $s): string => "'" . str_replace("'", "\\'", $s) . "'",
+            $data['footer_slugs'] ?? [],
         );
+        $footerSlugsLine = '        \'footer_slugs\' => [' . implode(', ', $footerSlugItems) . '],';
 
-        $footerLines = array_map(
-            fn (array $item): string => '            ' . $this->formatNavItem($item) . ',',
-            $data['footer_company'],
-        );
+        $menuBlocks = [];
+        foreach ($data['menus'] ?? [] as $menu) {
+            $slug = str_replace("'", "\\'", $menu['slug']);
+            $menuLabel = str_replace("'", "\\'", $menu['label']);
+
+            $itemLines = array_map(
+                fn (array $item): string => '                ' . $this->formatNavItem($item) . ',',
+                $menu['items'] ?? [],
+            );
+
+            $block = [
+                "        [",
+                "            'slug' => '{$slug}',",
+                "            'label' => '{$menuLabel}',",
+                "            'items' => [",
+                ...$itemLines,
+                "            ],",
+                "        ],",
+            ];
+
+            $menuBlocks = [...$menuBlocks, ...$block];
+        }
 
         $lines = [
             "    '{$type}' => [",
-            "        'nav' => [",
-            ...$navLines,
-            "        ],",
             "        'show_auth_links' => {$showAuth},",
-            "        'footer_company' => [",
-            ...$footerLines,
+            $footerSlugsLine,
+            "        'menus' => [",
+            ...$menuBlocks,
             "        ],",
             "    ],",
         ];
@@ -311,6 +399,83 @@ new #[Layout('layouts.app')] #[Title('Menus')] class extends Component {
 }; ?>
 
 <div>
+    {{-- Create menu modal --}}
+    <flux:modal wire:model="showCreateMenuModal" class="max-w-sm w-full">
+        <flux:heading size="lg" class="mb-4">{{ __('Create Menu') }}</flux:heading>
+        <form wire:submit="createMenu" class="space-y-4">
+            <flux:input
+                wire:model.live="newMenuLabel"
+                :label="__('Name')"
+                placeholder="e.g. Footer Resources"
+                required
+            />
+            <flux:input
+                wire:model="newMenuSlug"
+                :label="__('Slug')"
+                placeholder="e.g. footer-resources"
+                description="{{ __('Used by templates to request this menu.') }}"
+                required
+            />
+            <div class="flex justify-end gap-3 pt-1">
+                <flux:modal.close>
+                    <flux:button variant="ghost">{{ __('Cancel') }}</flux:button>
+                </flux:modal.close>
+                <flux:button type="submit" variant="primary">{{ __('Create') }}</flux:button>
+            </div>
+        </form>
+    </flux:modal>
+
+    {{-- Edit item modal --}}
+    <flux:modal wire:model="showEditItemModal" class="max-w-md w-full">
+        <flux:heading size="lg" class="mb-6">{{ __('Edit Menu Item') }}</flux:heading>
+
+        <form wire:submit="saveEditItem" class="space-y-4">
+            <flux:radio.group wire:model.live="editItemType" :label="__('Item type')">
+                <flux:radio value="page" :label="__('Existing page')" />
+                <flux:radio value="custom" :label="__('Custom URL')" />
+            </flux:radio.group>
+
+            @if ($editItemType === 'page')
+                <flux:select wire:model.live="editItemRoute" :label="__('Page')">
+                    <flux:select.option value="">{{ __('Select a page…') }}</flux:select.option>
+                    @foreach ($this->availableRoutes as $routeName => $routeLabel)
+                        <flux:select.option value="{{ $routeName }}">{{ $routeLabel }}</flux:select.option>
+                    @endforeach
+                </flux:select>
+            @else
+                <flux:input
+                    wire:model="editItemUrl"
+                    :label="__('URL')"
+                    placeholder="https://… or #"
+                    required
+                />
+
+                <flux:checkbox
+                    wire:model="editItemNewWindow"
+                    :label="__('Open in new window')"
+                />
+            @endif
+
+            <flux:input
+                wire:model="editItemLabel"
+                :label="__('Navigation label')"
+                placeholder="e.g. Features"
+                required
+            />
+
+            <div class="flex items-center justify-end gap-3 pt-2">
+                <flux:modal.close>
+                    <flux:button variant="ghost">{{ __('Cancel') }}</flux:button>
+                </flux:modal.close>
+                <flux:button type="submit" variant="primary" wire:loading.attr="disabled">
+                    <span wire:loading.remove>{{ __('Save') }}</span>
+                    <span wire:loading>{{ __('Saving…') }}</span>
+                </flux:button>
+            </div>
+        </form>
+    </flux:modal>
+
+    {{-- Add item modal --}}
     <flux:modal wire:model="showAddModal" class="max-w-md w-full">
         <flux:heading size="lg" class="mb-6">{{ __('Add Menu Item') }}</flux:heading>
 
@@ -345,8 +510,7 @@ new #[Layout('layouts.app')] #[Title('Menus')] class extends Component {
                 <flux:input
                     wire:model="newCustomUrl"
                     :label="__('URL')"
-                    type="url"
-                    placeholder="https://…"
+                    placeholder="https://… or #"
                     required
                 />
 
@@ -375,183 +539,176 @@ new #[Layout('layouts.app')] #[Title('Menus')] class extends Component {
                 <flux:text class="mt-1">{{ __('Manage the navigation menus for your website.') }}</flux:text>
             </div>
 
-            <div class="mb-4 flex items-center justify-between gap-4">
-                <flux:select wire:model.live="activeMenu" class="w-48">
-                    <flux:select.option value="nav">{{ __('Main Navigation') }}</flux:select.option>
-                    <flux:select.option value="footer">{{ __('Footer Links') }}</flux:select.option>
-                </flux:select>
-                <div class="flex items-center gap-2">
-                    <flux:button wire:click="openAddModal('{{ $activeMenu }}')" variant="outline" size="sm" icon="plus">
-                        {{ __('Add Item') }}
-                    </flux:button>
-                    <flux:button wire:click="save" variant="primary" size="sm" wire:loading.attr="disabled">
-                        <span wire:loading.remove wire:target="save">{{ __('Save') }}</span>
-                        <span wire:loading wire:target="save">{{ __('Saving…') }}</span>
+            @if (empty($menus))
+                <div class="rounded-lg border border-dashed border-zinc-300 dark:border-zinc-600 py-20 text-center text-zinc-500 dark:text-zinc-400">
+                    <flux:icon name="bars-3" class="mx-auto mb-3 size-12 opacity-40" />
+                    <p class="text-sm font-medium">{{ __('No menus yet.') }}</p>
+                    <p class="mt-1 text-xs">{{ __('Create your first menu to get started.') }}</p>
+                    <flux:button wire:click="$set('showCreateMenuModal', true)" variant="outline" size="sm" class="mt-4" icon="plus">
+                        {{ __('Create Menu') }}
                     </flux:button>
                 </div>
-            </div>
-
-            @if ($activeMenu === 'nav')
-                @if (empty($navItems))
-                    <div class="rounded-lg border border-dashed border-zinc-300 dark:border-zinc-600 py-16 text-center text-zinc-500 dark:text-zinc-400">
-                        <flux:icon name="bars-3" class="mx-auto mb-3 size-12 opacity-40" />
-                        <p class="text-sm">{{ __('No navigation items yet.') }}</p>
-                        <flux:button wire:click="openAddModal('nav')" variant="outline" size="sm" class="mt-4">
-                            {{ __('Add your first item') }}
-                        </flux:button>
-                    </div>
-                @else
-                    <div class="overflow-hidden rounded-lg border border-zinc-200 dark:border-zinc-700">
-                        <table class="w-full text-sm">
-                            <tbody
-                                class="divide-y divide-zinc-200 dark:divide-zinc-700"
-                                x-data="{ dragging: null, over: null }"
-                            >
-                                @foreach ($navItems as $index => $item)
-                                    <tr
-                                        wire:key="nav-item-{{ $index }}"
-                                        class="bg-white dark:bg-zinc-900"
-                                        draggable="true"
-                                        @dragstart="dragging = {{ $index }}"
-                                        @dragover.prevent="over = {{ $index }}"
-                                        @drop="if (dragging !== null) { $wire.reorderNavItems(dragging, over); } dragging = null; over = null"
-                                        @dragend="dragging = null; over = null"
-                                        :style="{
-                                            opacity: dragging === {{ $index }} ? '0.4' : '',
-                                            'border-top': over === {{ $index }} && dragging !== null && dragging > {{ $index }} ? '2px solid var(--color-primary)' : '',
-                                            'border-bottom': over === {{ $index }} && dragging !== null && dragging < {{ $index }} ? '2px solid var(--color-primary)' : ''
-                                        }"
-                                    >
-                                        <td class="w-8 cursor-grab px-4 py-3 text-zinc-400 active:cursor-grabbing dark:text-zinc-500">
-                                            <flux:icon name="bars-2" class="size-4" />
-                                        </td>
-                                        <td class="px-4 py-3">
-                                            <div class="font-medium {{ ($item['active'] ?? true) ? 'text-zinc-900 dark:text-zinc-100' : 'text-zinc-400 dark:text-zinc-500' }}">
-                                                {{ $item['label'] }}
-                                            </div>
-                                            <div class="mt-0.5 font-mono text-xs text-zinc-400 dark:text-zinc-500">
-                                                @if (isset($item['route']))
-                                                    route: {{ $item['route'] }}
-                                                @else
-                                                    {{ $item['url'] }}
-                                                    @if (!empty($item['new_window']))
-                                                        · {{ __('new window') }}
-                                                    @endif
-                                                @endif
-                                            </div>
-                                        </td>
-                                        <td class="px-4 py-3">
-                                            <div class="flex items-center justify-end gap-2">
-                                                <flux:button
-                                                    wire:click="moveUp({{ $index }})"
-                                                    variant="ghost"
-                                                    size="sm"
-                                                    icon="chevron-up"
-                                                    :disabled="$index === 0"
-                                                />
-                                                <flux:button
-                                                    wire:click="moveDown({{ $index }})"
-                                                    variant="ghost"
-                                                    size="sm"
-                                                    icon="chevron-down"
-                                                    :disabled="$index === count($navItems) - 1"
-                                                />
-                                                <flux:switch wire:model.live="navItems.{{ $index }}.active" />
-                                                <flux:button
-                                                    wire:click="removeItem({{ $index }})"
-                                                    variant="ghost"
-                                                    size="sm"
-                                                    icon="trash"
-                                                    class="text-red-500 dark:text-red-400"
-                                                />
-                                            </div>
-                                        </td>
-                                    </tr>
-                                @endforeach
-                            </tbody>
-                        </table>
-                    </div>
-                @endif
             @else
-                @if (empty($footerItems))
-                    <div class="rounded-lg border border-dashed border-zinc-300 dark:border-zinc-600 py-16 text-center text-zinc-500 dark:text-zinc-400">
-                        <flux:icon name="bars-3" class="mx-auto mb-3 size-12 opacity-40" />
-                        <p class="text-sm">{{ __('No footer links yet.') }}</p>
-                        <flux:button wire:click="openAddModal('footer')" variant="outline" size="sm" class="mt-4">
-                            {{ __('Add your first item') }}
+                <div class="mb-4 flex items-center justify-between gap-4">
+                    <div class="flex items-center gap-2">
+                        <flux:select wire:model.live="activeMenuIndex" class="w-52">
+                            @foreach ($menus as $i => $menu)
+                                <flux:select.option value="{{ $i }}">{{ $menu['label'] }}</flux:select.option>
+                            @endforeach
+                        </flux:select>
+                        <flux:button
+                            wire:click="$set('showCreateMenuModal', true)"
+                            variant="ghost"
+                            size="sm"
+                            icon="plus"
+                            title="{{ __('Create menu') }}"
+                        />
+                        <flux:button
+                            x-data
+                            @click="$dispatch('toggle-menu-edit')"
+                            variant="ghost"
+                            size="sm"
+                            icon="pencil-square"
+                            title="{{ __('Edit menu') }}"
+                        />
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <flux:button wire:click="openAddModal" variant="outline" size="sm" icon="plus">
+                            {{ __('Add Item') }}
+                        </flux:button>
+                        <flux:button wire:click="save" variant="primary" size="sm" wire:loading.attr="disabled">
+                            <span wire:loading.remove wire:target="save">{{ __('Save') }}</span>
+                            <span wire:loading wire:target="save">{{ __('Saving…') }}</span>
                         </flux:button>
                     </div>
-                @else
-                    <div class="overflow-hidden rounded-lg border border-zinc-200 dark:border-zinc-700">
-                        <table class="w-full text-sm">
-                            <tbody
-                                class="divide-y divide-zinc-200 dark:divide-zinc-700"
-                                x-data="{ dragging: null, over: null }"
-                            >
-                                @foreach ($footerItems as $index => $item)
-                                    <tr
-                                        wire:key="footer-item-{{ $index }}"
-                                        class="bg-white dark:bg-zinc-900"
-                                        draggable="true"
-                                        @dragstart="dragging = {{ $index }}"
-                                        @dragover.prevent="over = {{ $index }}"
-                                        @drop="if (dragging !== null) { $wire.reorderFooterItems(dragging, over); } dragging = null; over = null"
-                                        @dragend="dragging = null; over = null"
-                                        :style="{
-                                            opacity: dragging === {{ $index }} ? '0.4' : '',
-                                            'border-top': over === {{ $index }} && dragging !== null && dragging > {{ $index }} ? '2px solid var(--color-primary)' : '',
-                                            'border-bottom': over === {{ $index }} && dragging !== null && dragging < {{ $index }} ? '2px solid var(--color-primary)' : ''
-                                        }"
-                                    >
-                                        <td class="w-8 cursor-grab px-4 py-3 text-zinc-400 active:cursor-grabbing dark:text-zinc-500">
-                                            <flux:icon name="bars-2" class="size-4" />
-                                        </td>
-                                        <td class="px-4 py-3">
-                                            <div class="font-medium {{ ($item['active'] ?? true) ? 'text-zinc-900 dark:text-zinc-100' : 'text-zinc-400 dark:text-zinc-500' }}">
-                                                {{ $item['label'] }}
-                                            </div>
-                                            <div class="mt-0.5 font-mono text-xs text-zinc-400 dark:text-zinc-500">
-                                                @if (isset($item['route']))
-                                                    route: {{ $item['route'] }}
-                                                @else
-                                                    {{ $item['url'] }}
-                                                    @if (!empty($item['new_window']))
-                                                        · {{ __('new window') }}
-                                                    @endif
-                                                @endif
-                                            </div>
-                                        </td>
-                                        <td class="px-4 py-3">
-                                            <div class="flex items-center justify-end gap-2">
-                                                <flux:button
-                                                    wire:click="moveFooterUp({{ $index }})"
-                                                    variant="ghost"
-                                                    size="sm"
-                                                    icon="chevron-up"
-                                                    :disabled="$index === 0"
-                                                />
-                                                <flux:button
-                                                    wire:click="moveFooterDown({{ $index }})"
-                                                    variant="ghost"
-                                                    size="sm"
-                                                    icon="chevron-down"
-                                                    :disabled="$index === count($footerItems) - 1"
-                                                />
-                                                <flux:switch wire:model.live="footerItems.{{ $index }}.active" />
-                                                <flux:button
-                                                    wire:click="removeFooterItem({{ $index }})"
-                                                    variant="ghost"
-                                                    size="sm"
-                                                    icon="trash"
-                                                    class="text-red-500 dark:text-red-400"
-                                                />
-                                            </div>
-                                        </td>
-                                    </tr>
-                                @endforeach
-                            </tbody>
-                        </table>
+                </div>
+
+                @if (isset($menus[$activeMenuIndex]))
+                    @php
+                        $currentMenu = $menus[$activeMenuIndex];
+                        $currentItems = $currentMenu['items'] ?? [];
+                    @endphp
+
+                    <div class="mb-4" x-data="{ editing: false }" @toggle-menu-edit.window="editing = !editing">
+                        <div x-show="!editing">
+                            <span class="text-sm font-medium text-zinc-700 dark:text-zinc-200">{{ $currentMenu['label'] }}</span>
+                        </div>
+                        <div x-show="editing" x-cloak class="flex items-end gap-3">
+                            <flux:input
+                                wire:model.live="menus.{{ $activeMenuIndex }}.label"
+                                :label="__('Name')"
+                                class="max-w-xs"
+                            />
+                            <div class="flex flex-col gap-1">
+                                <flux:label>{{ __('Slug') }}</flux:label>
+                                <code class="flex h-10 items-center rounded-md border border-zinc-200 bg-zinc-50 px-3 text-xs text-zinc-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-400">
+                                    {{ $currentMenu['slug'] }}
+                                </code>
+                            </div>
+                            <div class="flex flex-col gap-1">
+                                <flux:label>{{ __('Footer') }}</flux:label>
+                                <div class="flex h-10 items-center">
+                                    <flux:switch wire:model.live="currentMenuInFooter" />
+                                </div>
+                            </div>
+                            <flux:button
+                                wire:click="deleteMenu"
+                                wire:confirm="{{ __('Delete this menu and all its items?') }}"
+                                variant="ghost"
+                                size="sm"
+                                icon="trash"
+                                class="mb-0.5 text-red-500 dark:text-red-400"
+                            />
+                            <flux:button @click="editing = false" variant="ghost" size="sm" icon="x-mark" class="mb-0.5" title="{{ __('Done') }}" />
+                        </div>
                     </div>
+
+                    @if (empty($currentItems))
+                        <div class="rounded-lg border border-dashed border-zinc-300 dark:border-zinc-600 py-16 text-center text-zinc-500 dark:text-zinc-400">
+                            <flux:icon name="bars-3" class="mx-auto mb-3 size-12 opacity-40" />
+                            <p class="text-sm">{{ __('No items yet.') }}</p>
+                            <flux:button wire:click="openAddModal" variant="outline" size="sm" class="mt-4">
+                                {{ __('Add your first item') }}
+                            </flux:button>
+                        </div>
+                    @else
+                        <div class="overflow-hidden rounded-lg border border-zinc-200 dark:border-zinc-700">
+                            <table class="w-full text-sm">
+                                <tbody
+                                    class="divide-y divide-zinc-200 dark:divide-zinc-700"
+                                    x-data="{ dragging: null, over: null }"
+                                >
+                                    @foreach ($currentItems as $index => $item)
+                                        <tr
+                                            wire:key="menu-{{ $activeMenuIndex }}-item-{{ $index }}"
+                                            class="bg-white dark:bg-zinc-900"
+                                            draggable="true"
+                                            @dragstart="dragging = {{ $index }}"
+                                            @dragover.prevent="over = {{ $index }}"
+                                            @drop="if (dragging !== null) { $wire.reorderItems(dragging, over); } dragging = null; over = null"
+                                            @dragend="dragging = null; over = null"
+                                            :style="{
+                                                opacity: dragging === {{ $index }} ? '0.4' : '',
+                                                'border-top': over === {{ $index }} && dragging !== null && dragging > {{ $index }} ? '2px solid var(--color-primary)' : '',
+                                                'border-bottom': over === {{ $index }} && dragging !== null && dragging < {{ $index }} ? '2px solid var(--color-primary)' : ''
+                                            }"
+                                        >
+                                            <td class="w-8 cursor-grab px-4 py-3 text-zinc-400 active:cursor-grabbing dark:text-zinc-500">
+                                                <flux:icon name="bars-2" class="size-4" />
+                                            </td>
+                                            <td class="px-4 py-3">
+                                                <div class="font-medium {{ ($item['active'] ?? true) ? 'text-zinc-900 dark:text-zinc-100' : 'text-zinc-400 dark:text-zinc-500' }}">
+                                                    {{ $item['label'] }}
+                                                </div>
+                                                <div class="mt-0.5 font-mono text-xs text-zinc-400 dark:text-zinc-500">
+                                                    @if (isset($item['route']))
+                                                        route: {{ $item['route'] }}
+                                                    @else
+                                                        {{ $item['url'] }}
+                                                        @if (!empty($item['new_window']))
+                                                            · {{ __('new window') }}
+                                                        @endif
+                                                    @endif
+                                                </div>
+                                            </td>
+                                            <td class="px-4 py-3">
+                                                <div class="flex items-center justify-end gap-2">
+                                                    <flux:button
+                                                        wire:click="moveItemUp({{ $index }})"
+                                                        variant="ghost"
+                                                        size="sm"
+                                                        icon="chevron-up"
+                                                        :disabled="$index === 0"
+                                                    />
+                                                    <flux:button
+                                                        wire:click="moveItemDown({{ $index }})"
+                                                        variant="ghost"
+                                                        size="sm"
+                                                        icon="chevron-down"
+                                                        :disabled="$index === count($currentItems) - 1"
+                                                    />
+                                                    <flux:switch wire:model.live="menus.{{ $activeMenuIndex }}.items.{{ $index }}.active" />
+                                                    <flux:button
+                                                        wire:click="openEditItemModal({{ $index }})"
+                                                        variant="ghost"
+                                                        size="sm"
+                                                        icon="pencil-square"
+                                                    />
+                                                    <flux:button
+                                                        wire:click="removeItem({{ $index }})"
+                                                        variant="ghost"
+                                                        size="sm"
+                                                        icon="trash"
+                                                        class="text-red-500 dark:text-red-400"
+                                                    />
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
+                    @endif
                 @endif
             @endif
         </div>
