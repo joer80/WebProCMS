@@ -595,13 +595,13 @@ new #[Layout('layouts.app')] #[Title('Menus')] class extends Component {
     </flux:modal>
 
     <flux:main>
-        <div class="max-w-2xl">
-            <div class="mb-8">
-                <flux:heading size="xl">{{ __('Menus') }}</flux:heading>
-                <flux:text class="mt-1">{{ __('Manage the navigation menus for your website.') }}</flux:text>
-            </div>
+        <div class="mb-8">
+            <flux:heading size="xl">{{ __('Menus') }}</flux:heading>
+            <flux:text class="mt-1">{{ __('Manage the navigation menus for your website.') }}</flux:text>
+        </div>
 
-            @if (empty($menus))
+        @if (empty($menus))
+            <div class="max-w-2xl">
                 <div class="rounded-lg border border-dashed border-zinc-300 dark:border-zinc-600 py-20 text-center text-zinc-500 dark:text-zinc-400">
                     <flux:icon name="bars-3" class="mx-auto mb-3 size-12 opacity-40" />
                     <p class="text-sm font-medium">{{ __('No menus yet.') }}</p>
@@ -610,178 +610,210 @@ new #[Layout('layouts.app')] #[Title('Menus')] class extends Component {
                         {{ __('Create Menu') }}
                     </flux:button>
                 </div>
-            @else
-                <div class="mb-4 flex items-center justify-between gap-4">
-                    <div class="flex items-center gap-2">
-                        <flux:select wire:model.live="activeMenuIndex" class="w-52">
-                            @foreach ($menus as $i => $menu)
-                                <flux:select.option value="{{ $i }}">{{ $menu['label'] }}</flux:select.option>
-                            @endforeach
-                        </flux:select>
-                        <flux:button
-                            wire:click="$set('showCreateMenuModal', true)"
-                            variant="ghost"
-                            size="sm"
-                            icon="plus"
-                            title="{{ __('Create menu') }}"
-                        />
-                        <flux:button
-                            wire:click="$set('showEditMenuModal', true)"
-                            variant="ghost"
-                            size="sm"
-                            icon="pencil-square"
-                            title="{{ __('Edit menu') }}"
-                        />
-                    </div>
-                    <div class="flex items-center gap-2">
-                        <flux:button wire:click="openAddModal" variant="outline" size="sm" icon="plus">
-                            {{ __('Add Item') }}
-                        </flux:button>
-                        <flux:button wire:click="save" variant="primary" size="sm" wire:loading.attr="disabled">
-                            <span wire:loading.remove wire:target="save">{{ __('Save') }}</span>
-                            <span wire:loading wire:target="save">{{ __('Saving…') }}</span>
-                        </flux:button>
-                    </div>
-                </div>
-
-                @if (isset($menus[$activeMenuIndex]))
-                    @php
-                        $currentMenu = $menus[$activeMenuIndex];
-                        $currentItems = $currentMenu['items'] ?? [];
-                    @endphp
-
-                    @if (empty($currentItems))
-                        <div class="rounded-lg border border-dashed border-zinc-300 dark:border-zinc-600 py-16 text-center text-zinc-500 dark:text-zinc-400">
-                            <flux:icon name="bars-3" class="mx-auto mb-3 size-12 opacity-40" />
-                            <p class="text-sm">{{ __('No items yet.') }}</p>
-                            <flux:button wire:click="openAddModal" variant="outline" size="sm" class="mt-4">
-                                {{ __('Add your first item') }}
+            </div>
+        @else
+            <div style="display: grid; grid-template-columns: 3fr 1fr; gap: 2rem;">
+                {{-- Left: menu editor (3/4 width) --}}
+                <div>
+                    <div class="mb-4 flex items-center justify-between gap-4">
+                        <div class="flex items-center gap-2">
+                            <flux:select wire:model.live="activeMenuIndex" class="w-52">
+                                @foreach ($menus as $i => $menu)
+                                    <flux:select.option value="{{ $i }}">{{ $menu['label'] }}</flux:select.option>
+                                @endforeach
+                            </flux:select>
+                            <flux:button
+                                wire:click="$set('showCreateMenuModal', true)"
+                                variant="ghost"
+                                size="sm"
+                                icon="plus"
+                                title="{{ __('Create menu') }}"
+                            />
+                            <flux:button
+                                wire:click="$set('showEditMenuModal', true)"
+                                variant="ghost"
+                                size="sm"
+                                icon="pencil-square"
+                                title="{{ __('Edit menu') }}"
+                            />
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <flux:button wire:click="openAddModal" variant="outline" size="sm" icon="plus">
+                                {{ __('Add Item') }}
+                            </flux:button>
+                            <flux:button wire:click="save" variant="primary" size="sm" wire:loading.attr="disabled">
+                                <span wire:loading.remove wire:target="save">{{ __('Save') }}</span>
+                                <span wire:loading wire:target="save">{{ __('Saving…') }}</span>
                             </flux:button>
                         </div>
-                    @else
-                        <div class="overflow-hidden rounded-lg border border-zinc-200 dark:border-zinc-700">
-                            <table class="w-full text-sm">
-                                <tbody
-                                    class="divide-y divide-zinc-200 dark:divide-zinc-700"
-                                    x-data="{ dragging: null, over: null }"
-                                >
-                                    @foreach ($currentItems as $index => $item)
-                                        <tr
-                                            wire:key="menu-{{ $activeMenuIndex }}-item-{{ $index }}"
-                                            class="bg-white dark:bg-zinc-900"
-                                            draggable="true"
-                                            @dragstart="dragging = {{ $index }}"
-                                            @dragover.prevent="over = {{ $index }}"
-                                            @drop="if (dragging !== null) { $wire.reorderItems(dragging, over); } dragging = null; over = null"
-                                            @dragend="dragging = null; over = null"
-                                            :style="{
-                                                opacity: dragging === {{ $index }} ? '0.4' : '',
-                                                'border-top': over === {{ $index }} && dragging !== null && dragging > {{ $index }} ? '2px solid var(--color-primary)' : '',
-                                                'border-bottom': over === {{ $index }} && dragging !== null && dragging < {{ $index }} ? '2px solid var(--color-primary)' : ''
-                                            }"
-                                        >
-                                            <td class="w-8 cursor-grab px-4 py-3 text-zinc-400 active:cursor-grabbing dark:text-zinc-500">
-                                                <flux:icon name="bars-2" class="size-4" />
-                                            </td>
-                                            <td class="px-4 py-3">
-                                                <div class="font-medium {{ ($item['active'] ?? true) ? 'text-zinc-900 dark:text-zinc-100' : 'text-zinc-400 dark:text-zinc-500' }}">
-                                                    {{ $item['label'] }}
-                                                </div>
-                                                <div class="mt-0.5 font-mono text-xs text-zinc-400 dark:text-zinc-500">
-                                                    @if (isset($item['route']))
-                                                        route: {{ $item['route'] }}
-                                                    @else
-                                                        {{ $item['url'] }}
-                                                        @if (!empty($item['new_window']))
-                                                            · {{ __('new window') }}
-                                                        @endif
-                                                    @endif
-                                                </div>
-                                            </td>
-                                            <td class="px-4 py-3">
-                                                <div class="flex items-center justify-end gap-2">
-                                                    <flux:button
-                                                        wire:click="moveItemUp({{ $index }})"
-                                                        variant="ghost"
-                                                        size="sm"
-                                                        icon="chevron-up"
-                                                        :disabled="$index === 0"
-                                                    />
-                                                    <flux:button
-                                                        wire:click="moveItemDown({{ $index }})"
-                                                        variant="ghost"
-                                                        size="sm"
-                                                        icon="chevron-down"
-                                                        :disabled="$index === count($currentItems) - 1"
-                                                    />
-                                                    <flux:switch wire:model.live="menus.{{ $activeMenuIndex }}.items.{{ $index }}.active" />
-                                                    <flux:button
-                                                        wire:click="openEditItemModal({{ $index }})"
-                                                        variant="ghost"
-                                                        size="sm"
-                                                        icon="pencil-square"
-                                                    />
-                                                    <flux:button
-                                                        wire:click="removeItem({{ $index }})"
-                                                        variant="ghost"
-                                                        size="sm"
-                                                        icon="trash"
-                                                        class="text-red-500 dark:text-red-400"
-                                                    />
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    @endforeach
-                                </tbody>
-                            </table>
-                        </div>
-                    @endif
-                @endif
+                    </div>
 
-                {{-- Auth link settings --}}
-                <div class="mt-8 space-y-3">
-                    <flux:heading size="sm">{{ __('Auth links') }}</flux:heading>
-                    <flux:switch wire:model.live="showAuthLinks" :label="__('Show sign in / register links in header nav')" />
-                    <flux:switch wire:model.live="showAccountInFooter" :label="__('Show account column in footer')" />
+                    @if (isset($menus[$activeMenuIndex]))
+                        @php
+                            $currentMenu = $menus[$activeMenuIndex];
+                            $currentItems = $currentMenu['items'] ?? [];
+                        @endphp
+
+                        @if (empty($currentItems))
+                            <div class="rounded-lg border border-dashed border-zinc-300 dark:border-zinc-600 py-16 text-center text-zinc-500 dark:text-zinc-400">
+                                <flux:icon name="bars-3" class="mx-auto mb-3 size-12 opacity-40" />
+                                <p class="text-sm">{{ __('No items yet.') }}</p>
+                                <flux:button wire:click="openAddModal" variant="outline" size="sm" class="mt-4">
+                                    {{ __('Add your first item') }}
+                                </flux:button>
+                            </div>
+                        @else
+                            <div class="overflow-hidden rounded-lg border border-zinc-200 dark:border-zinc-700">
+                                <table class="w-full text-sm">
+                                    <tbody
+                                        class="divide-y divide-zinc-200 dark:divide-zinc-700"
+                                        x-data="{ dragging: null, over: null }"
+                                    >
+                                        @foreach ($currentItems as $index => $item)
+                                            <tr
+                                                wire:key="menu-{{ $activeMenuIndex }}-item-{{ $index }}"
+                                                class="bg-white dark:bg-zinc-900"
+                                                draggable="true"
+                                                @dragstart="dragging = {{ $index }}"
+                                                @dragover.prevent="over = {{ $index }}"
+                                                @drop="if (dragging !== null) { $wire.reorderItems(dragging, over); } dragging = null; over = null"
+                                                @dragend="dragging = null; over = null"
+                                                :style="{
+                                                    opacity: dragging === {{ $index }} ? '0.4' : '',
+                                                    'border-top': over === {{ $index }} && dragging !== null && dragging > {{ $index }} ? '2px solid var(--color-primary)' : '',
+                                                    'border-bottom': over === {{ $index }} && dragging !== null && dragging < {{ $index }} ? '2px solid var(--color-primary)' : ''
+                                                }"
+                                            >
+                                                <td class="w-8 cursor-grab px-4 py-3 text-zinc-400 active:cursor-grabbing dark:text-zinc-500">
+                                                    <flux:icon name="bars-2" class="size-4" />
+                                                </td>
+                                                <td class="px-4 py-3">
+                                                    <div class="font-medium {{ ($item['active'] ?? true) ? 'text-zinc-900 dark:text-zinc-100' : 'text-zinc-400 dark:text-zinc-500' }}">
+                                                        {{ $item['label'] }}
+                                                    </div>
+                                                    <div class="mt-0.5 font-mono text-xs text-zinc-400 dark:text-zinc-500">
+                                                        @if (isset($item['route']))
+                                                            route: {{ $item['route'] }}
+                                                        @else
+                                                            {{ $item['url'] }}
+                                                            @if (!empty($item['new_window']))
+                                                                · {{ __('new window') }}
+                                                            @endif
+                                                        @endif
+                                                    </div>
+                                                </td>
+                                                <td class="px-4 py-3">
+                                                    <div class="flex items-center justify-end gap-2">
+                                                        <flux:button
+                                                            wire:click="moveItemUp({{ $index }})"
+                                                            variant="ghost"
+                                                            size="sm"
+                                                            icon="chevron-up"
+                                                            :disabled="$index === 0"
+                                                        />
+                                                        <flux:button
+                                                            wire:click="moveItemDown({{ $index }})"
+                                                            variant="ghost"
+                                                            size="sm"
+                                                            icon="chevron-down"
+                                                            :disabled="$index === count($currentItems) - 1"
+                                                        />
+                                                        <flux:switch wire:model.live="menus.{{ $activeMenuIndex }}.items.{{ $index }}.active" />
+                                                        <flux:button
+                                                            wire:click="openEditItemModal({{ $index }})"
+                                                            variant="ghost"
+                                                            size="sm"
+                                                            icon="pencil-square"
+                                                        />
+                                                        <flux:button
+                                                            wire:click="removeItem({{ $index }})"
+                                                            variant="ghost"
+                                                            size="sm"
+                                                            icon="trash"
+                                                            class="text-red-500 dark:text-red-400"
+                                                        />
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        @endforeach
+                                    </tbody>
+                                </table>
+                            </div>
+                        @endif
+                    @endif
+
                 </div>
 
-                {{-- Footer column order --}}
-                @if (count($footerSlugs) > 1)
-                    <div class="mt-8">
-                        <div class="mb-3">
-                            <flux:heading size="sm">{{ __('Footer column order') }}</flux:heading>
-                            <flux:text size="sm" class="mt-0.5">{{ __('Drag to reorder how footer menus appear as columns.') }}</flux:text>
-                        </div>
-                        <div
-                            x-data="{ draggingIdx: null, overIdx: null }"
-                            class="flex flex-wrap gap-2"
+                {{-- Right: sidebar (1/4 width) --}}
+                <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                    {{-- Header settings --}}
+                    <div x-data="{ open: false }" class="overflow-hidden rounded-lg border border-zinc-200 dark:border-zinc-700">
+                        <button
+                            @click="open = !open"
+                            class="flex w-full items-center justify-between px-4 py-3 text-left"
+                            style="background-color: var(--color-zinc-100);"
                         >
-                            @foreach ($footerSlugs as $fIdx => $fSlug)
-                                @php
-                                    $fMenu = collect($menus)->firstWhere('slug', $fSlug);
-                                    $fLabel = $fMenu['label'] ?? $fSlug;
-                                @endphp
-                                <div
-                                    wire:key="footer-order-{{ $fIdx }}"
-                                    draggable="true"
-                                    @dragstart="draggingIdx = {{ $fIdx }}"
-                                    @dragover.prevent="overIdx = {{ $fIdx }}"
-                                    @drop="if (draggingIdx !== null) { $wire.reorderFooterSlugs(draggingIdx, overIdx); } draggingIdx = null; overIdx = null"
-                                    @dragend="draggingIdx = null; overIdx = null"
-                                    :class="{
-                                        'opacity-40': draggingIdx === {{ $fIdx }},
-                                        'ring-2 ring-zinc-900 dark:ring-zinc-200': overIdx === {{ $fIdx }} && draggingIdx !== null && draggingIdx !== {{ $fIdx }}
-                                    }"
-                                    class="flex cursor-grab items-center gap-1.5 rounded-full border border-zinc-200 bg-white px-3 py-1.5 text-sm font-medium text-zinc-700 active:cursor-grabbing dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300"
-                                >
-                                    <flux:icon name="bars-2" class="size-3.5 text-zinc-400" />
-                                    {{ $fLabel }}
-                                </div>
-                            @endforeach
+                            <flux:heading size="sm">{{ __('Header settings') }}</flux:heading>
+                            <span :style="'transform: rotate(' + (open ? \'180deg\' : \'0deg\') + ')'">
+                                <flux:icon name="chevron-down" class="size-4 text-zinc-400" />
+                            </span>
+                        </button>
+                        <div x-show="open" x-cloak class="space-y-3" style="padding: 1rem; border-top: 1px solid var(--color-zinc-200);">
+                            <flux:switch wire:model.live="showAuthLinks" :label="__('Show sign in / register links in header nav')" />
                         </div>
                     </div>
-                @endif
-            @endif
-        </div>
+
+                    {{-- Footer settings --}}
+                    <div x-data="{ open: false }" class="overflow-hidden rounded-lg border border-zinc-200 dark:border-zinc-700">
+                        <button
+                            @click="open = !open"
+                            class="flex w-full items-center justify-between px-4 py-3 text-left"
+                            style="background-color: var(--color-zinc-100);"
+                        >
+                            <flux:heading size="sm">{{ __('Footer settings') }}</flux:heading>
+                            <span :style="'transform: rotate(' + (open ? \'180deg\' : \'0deg\') + ')'">
+                                <flux:icon name="chevron-down" class="size-4 text-zinc-400" />
+                            </span>
+                        </button>
+                        <div x-show="open" x-cloak class="space-y-4" style="padding: 1rem; border-top: 1px solid var(--color-zinc-200);">
+                            <flux:switch wire:model.live="showAccountInFooter" :label="__('Show account column in footer')" />
+
+                            @if (count($footerSlugs) > 1)
+                                <div>
+                                    <flux:text size="sm" class="mb-2">{{ __('Drag to reorder how footer menus appear as columns.') }}</flux:text>
+                                    <div
+                                        x-data="{ draggingIdx: null, overIdx: null }"
+                                        class="flex flex-wrap gap-2"
+                                    >
+                                        @foreach ($footerSlugs as $fIdx => $fSlug)
+                                            @php
+                                                $fMenu = collect($menus)->firstWhere('slug', $fSlug);
+                                                $fLabel = $fMenu['label'] ?? $fSlug;
+                                            @endphp
+                                            <div
+                                                wire:key="footer-order-{{ $fIdx }}"
+                                                draggable="true"
+                                                @dragstart="draggingIdx = {{ $fIdx }}"
+                                                @dragover.prevent="overIdx = {{ $fIdx }}"
+                                                @drop="if (draggingIdx !== null) { $wire.reorderFooterSlugs(draggingIdx, overIdx); } draggingIdx = null; overIdx = null"
+                                                @dragend="draggingIdx = null; overIdx = null"
+                                                :class="{
+                                                    'opacity-40': draggingIdx === {{ $fIdx }},
+                                                    'ring-2 ring-zinc-900 dark:ring-zinc-200': overIdx === {{ $fIdx }} && draggingIdx !== null && draggingIdx !== {{ $fIdx }}
+                                                }"
+                                                class="flex cursor-grab items-center gap-1.5 rounded-full border border-zinc-200 bg-white px-3 py-1.5 text-sm font-medium text-zinc-700 active:cursor-grabbing dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300"
+                                            >
+                                                <flux:icon name="bars-2" class="size-3.5 text-zinc-400" />
+                                                {{ $fLabel }}
+                                            </div>
+                                        @endforeach
+                                    </div>
+                                </div>
+                            @endif
+                        </div>
+                    </div>
+                </div>
+            </div>
+        @endif
     </flux:main>
 </div>
