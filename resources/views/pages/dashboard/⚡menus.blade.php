@@ -405,15 +405,16 @@ new #[Layout('layouts.app')] #[Title('Menus')] class extends Component {
                             @foreach ($navItems as $index => $item)
                                 <tr
                                     wire:key="nav-item-{{ $index }}"
-                                    class="bg-white dark:bg-zinc-900 transition-colors"
+                                    class="bg-white dark:bg-zinc-900"
                                     draggable="true"
                                     @dragstart="dragging = {{ $index }}"
                                     @dragover.prevent="over = {{ $index }}"
                                     @drop="if (dragging !== null) { $wire.reorderNavItems(dragging, over); } dragging = null; over = null"
                                     @dragend="dragging = null; over = null"
-                                    :class="{
-                                        'opacity-40': dragging === {{ $index }},
-                                        'bg-blue-50 dark:bg-blue-900/20': over === {{ $index }} && dragging !== null && dragging !== {{ $index }}
+                                    :style="{
+                                        opacity: dragging === {{ $index }} ? '0.4' : '',
+                                        'border-top': over === {{ $index }} && dragging !== null && dragging > {{ $index }} ? '2px solid var(--color-primary)' : '',
+                                        'border-bottom': over === {{ $index }} && dragging !== null && dragging < {{ $index }} ? '2px solid var(--color-primary)' : ''
                                     }"
                                 >
                                     <td class="w-8 cursor-grab px-4 py-3 text-zinc-400 active:cursor-grabbing dark:text-zinc-500">
@@ -500,15 +501,16 @@ new #[Layout('layouts.app')] #[Title('Menus')] class extends Component {
                             @foreach ($footerItems as $index => $item)
                                 <tr
                                     wire:key="footer-item-{{ $index }}"
-                                    class="bg-white dark:bg-zinc-900 transition-colors"
+                                    class="bg-white dark:bg-zinc-900"
                                     draggable="true"
                                     @dragstart="dragging = {{ $index }}"
                                     @dragover.prevent="over = {{ $index }}"
                                     @drop="if (dragging !== null) { $wire.reorderFooterItems(dragging, over); } dragging = null; over = null"
                                     @dragend="dragging = null; over = null"
-                                    :class="{
-                                        'opacity-40': dragging === {{ $index }},
-                                        'bg-blue-50 dark:bg-blue-900/20': over === {{ $index }} && dragging !== null && dragging !== {{ $index }}
+                                    :style="{
+                                        opacity: dragging === {{ $index }} ? '0.4' : '',
+                                        'border-top': over === {{ $index }} && dragging !== null && dragging > {{ $index }} ? '2px solid var(--color-primary)' : '',
+                                        'border-bottom': over === {{ $index }} && dragging !== null && dragging < {{ $index }} ? '2px solid var(--color-primary)' : ''
                                     }"
                                 >
                                     <td class="w-8 cursor-grab px-4 py-3 text-zinc-400 active:cursor-grabbing dark:text-zinc-500">
