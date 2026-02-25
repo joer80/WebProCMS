@@ -20,7 +20,6 @@ export default defineConfig({
 
                 //Check these also
                 '**/config/navigation.php',
-                //'**/routes/web.php',
             ],
         },
     },
