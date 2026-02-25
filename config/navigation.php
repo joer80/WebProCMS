@@ -19,6 +19,7 @@ return [
 
     'saas' => [
         'show_auth_links' => true,
+        'show_account_in_footer' => true,
         'footer_slugs' => ['footer-company', 'legal'],
         'menus' => [
         [
@@ -56,6 +57,7 @@ return [
 
     'service' => [
         'show_auth_links' => false,
+        'show_account_in_footer' => true,
         'footer_slugs' => ['footer-company'],
         'menus' => [
         [
@@ -83,6 +85,7 @@ return [
 
     'ecommerce' => [
         'show_auth_links' => true,
+        'show_account_in_footer' => true,
         'footer_slugs' => ['footer-company'],
         'menus' => [
         [
@@ -108,6 +111,7 @@ return [
 
     'law' => [
         'show_auth_links' => false,
+        'show_account_in_footer' => true,
         'footer_slugs' => ['footer-company'],
         'menus' => [
         [
@@ -133,6 +137,7 @@ return [
 
     'nonprofit' => [
         'show_auth_links' => false,
+        'show_account_in_footer' => true,
         'footer_slugs' => ['footer-company'],
         'menus' => [
         [
@@ -161,6 +166,7 @@ return [
 
     'healthcare' => [
         'show_auth_links' => false,
+        'show_account_in_footer' => true,
         'footer_slugs' => ['footer-company'],
         'menus' => [
         [
@@ -190,6 +196,7 @@ return [
 
     'custom' => [
         'show_auth_links' => false,
+        'show_account_in_footer' => true,
         'footer_slugs' => ['footer-company'],
         'menus' => [
         [

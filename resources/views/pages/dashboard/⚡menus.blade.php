@@ -35,6 +35,10 @@ new #[Layout('layouts.app')] #[Title('Menus')] class extends Component {
 
     public bool $currentMenuInFooter = false;
 
+    public bool $showAuthLinks = false;
+
+    public bool $showAccountInFooter = true;
+
     public bool $showEditItemModal = false;
     public int $editItemIndex = -1;
     public string $editItemType = 'page';
@@ -48,6 +52,8 @@ new #[Layout('layouts.app')] #[Title('Menus')] class extends Component {
         $websiteType = config('features.website_type', 'saas');
         $this->menus = config("navigation.{$websiteType}.menus", []);
         $this->footerSlugs = config("navigation.{$websiteType}.footer_slugs", []);
+        $this->showAuthLinks = (bool) config("navigation.{$websiteType}.show_auth_links", false);
+        $this->showAccountInFooter = (bool) config("navigation.{$websiteType}.show_account_in_footer", true);
         $this->syncCurrentMenuInFooter();
     }
 
@@ -284,6 +290,8 @@ new #[Layout('layouts.app')] #[Title('Menus')] class extends Component {
     {
         $websiteType = config('features.website_type', 'saas');
         $config = config('navigation');
+        $config[$websiteType]['show_auth_links'] = $this->showAuthLinks;
+        $config[$websiteType]['show_account_in_footer'] = $this->showAccountInFooter;
         $config[$websiteType]['footer_slugs'] = array_values($this->footerSlugs);
         $config[$websiteType]['menus'] = array_values($this->menus);
 
@@ -343,6 +351,7 @@ new #[Layout('layouts.app')] #[Title('Menus')] class extends Component {
     /**
      * @param array{
      *     show_auth_links: bool,
+     *     show_account_in_footer: bool,
      *     footer_slugs: array<int, string>,
      *     menus: array<int, array{slug: string, label: string, items: array<int, array<string, mixed>>}>
      * } $data
@@ -350,6 +359,7 @@ new #[Layout('layouts.app')] #[Title('Menus')] class extends Component {
     private function formatTypeBlock(string $type, array $data): string
     {
         $showAuth = $data['show_auth_links'] ? 'true' : 'false';
+        $showAccountInFooter = ($data['show_account_in_footer'] ?? true) ? 'true' : 'false';
 
         $footerSlugItems = array_map(
             fn (string $s): string => "'" . str_replace("'", "\\'", $s) . "'",
@@ -383,6 +393,7 @@ new #[Layout('layouts.app')] #[Title('Menus')] class extends Component {
         $lines = [
             "    '{$type}' => [",
             "        'show_auth_links' => {$showAuth},",
+            "        'show_account_in_footer' => {$showAccountInFooter},",
             $footerSlugsLine,
             "        'menus' => [",
             ...$menuBlocks,
@@ -726,6 +737,13 @@ new #[Layout('layouts.app')] #[Title('Menus')] class extends Component {
                         </div>
                     @endif
                 @endif
+
+                {{-- Auth link settings --}}
+                <div class="mt-8 space-y-3">
+                    <flux:heading size="sm">{{ __('Auth links') }}</flux:heading>
+                    <flux:switch wire:model.live="showAuthLinks" :label="__('Show sign in / register links in header nav')" />
+                    <flux:switch wire:model.live="showAccountInFooter" :label="__('Show account column in footer')" />
+                </div>
 
                 {{-- Footer column order --}}
                 @if (count($footerSlugs) > 1)

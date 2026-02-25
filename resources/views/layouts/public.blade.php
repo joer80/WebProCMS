@@ -3,6 +3,7 @@
     $siteType = config('features.website_type', 'saas');
     $navConfig = config("navigation.{$siteType}", config('navigation.saas'));
     $showAuthLinks = $navConfig['show_auth_links'] ?? false;
+    $showAccountInFooter = $navConfig['show_account_in_footer'] ?? true;
     $allMenus = collect($navConfig['menus'] ?? []);
     $navMenu = $allMenus->firstWhere('slug', 'main-navigation');
     $navItems = array_filter($navMenu['items'] ?? [], fn ($item) => $item['active'] ?? true);
@@ -105,19 +106,21 @@
                             </div>
                         @endif
                     @endforeach
-                    <div class="flex flex-col gap-3">
-                        <p class="text-xs font-semibold uppercase tracking-wider text-[#706f6c] dark:text-[#A1A09A]">Account</p>
-                        <nav class="flex flex-col gap-2">
-                            @auth
-                                <a href="{{ url('/dashboard') }}" class="text-sm text-[#1b1b18] dark:text-[#EDEDEC] hover:text-[#706f6c] dark:hover:text-[#A1A09A] transition-colors">Dashboard</a>
-                            @else
-                                <a href="{{ route('login') }}" class="text-sm text-[#1b1b18] dark:text-[#EDEDEC] hover:text-[#706f6c] dark:hover:text-[#A1A09A] transition-colors">Log in</a>
-                                @if (Route::has('register'))
-                                    <a href="{{ route('register') }}" class="text-sm text-[#1b1b18] dark:text-[#EDEDEC] hover:text-[#706f6c] dark:hover:text-[#A1A09A] transition-colors">Register</a>
-                                @endif
-                            @endauth
-                        </nav>
-                    </div>
+                    @if ($showAccountInFooter)
+                        <div class="flex flex-col gap-3">
+                            <p class="text-xs font-semibold uppercase tracking-wider text-[#706f6c] dark:text-[#A1A09A]">Account</p>
+                            <nav class="flex flex-col gap-2">
+                                @auth
+                                    <a href="{{ url('/dashboard') }}" class="text-sm text-[#1b1b18] dark:text-[#EDEDEC] hover:text-[#706f6c] dark:hover:text-[#A1A09A] transition-colors">Dashboard</a>
+                                @else
+                                    <a href="{{ route('login') }}" class="text-sm text-[#1b1b18] dark:text-[#EDEDEC] hover:text-[#706f6c] dark:hover:text-[#A1A09A] transition-colors">Log in</a>
+                                    @if (Route::has('register'))
+                                        <a href="{{ route('register') }}" class="text-sm text-[#1b1b18] dark:text-[#EDEDEC] hover:text-[#706f6c] dark:hover:text-[#A1A09A] transition-colors">Register</a>
+                                    @endif
+                                @endauth
+                            </nav>
+                        </div>
+                    @endif
                 </div>
             </div>
             <div class="mt-10 border-t border-[#e3e3e0] dark:border-[#3E3E3A] pt-6">
