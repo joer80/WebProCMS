@@ -7,22 +7,35 @@
     <div class="max-w-6xl mx-auto grid md:grid-cols-2 gap-12 items-center">
         <div>
             <h1 class="text-5xl font-bold text-zinc-900 dark:text-white leading-tight">
-                Build Something Amazing
+                {{ content('__SLUG__', 'headline', 'Build Something Amazing') }}
             </h1>
             <p class="mt-6 text-lg text-zinc-500 dark:text-zinc-400">
-                Describe your product or service here. Keep it concise and focused on the value you deliver to customers.
+                {{ content('__SLUG__', 'subheadline', 'Describe your product or service here. Keep it concise and focused on the value you deliver to customers.') }}
             </p>
             <div class="mt-8 flex flex-wrap gap-4">
-                <a href="#" class="px-6 py-3 bg-primary text-white font-semibold rounded-lg hover:bg-primary/90 transition-colors">
-                    Start Free Trial
+                <a
+                    href="{{ content('__SLUG__', 'primary_cta_url', '#') }}"
+                    @if(content('__SLUG__', 'primary_cta_new_tab', '', 'toggle')) target="_blank" rel="noopener noreferrer" @endif
+                    class="px-6 py-3 bg-primary text-white font-semibold rounded-lg hover:bg-primary/90 transition-colors"
+                >
+                    {{ content('__SLUG__', 'primary_cta', 'Start Free Trial') }}
                 </a>
-                <a href="#" class="px-6 py-3 text-zinc-600 dark:text-zinc-300 font-semibold hover:text-zinc-900 dark:hover:text-white transition-colors">
-                    Watch Demo →
+                <a
+                    href="{{ content('__SLUG__', 'secondary_cta_url', '#') }}"
+                    @if(content('__SLUG__', 'secondary_cta_new_tab', '', 'toggle')) target="_blank" rel="noopener noreferrer" @endif
+                    class="px-6 py-3 text-zinc-600 dark:text-zinc-300 font-semibold hover:text-zinc-900 dark:hover:text-white transition-colors"
+                >
+                    {{ content('__SLUG__', 'secondary_cta', 'Watch Demo →') }}
                 </a>
             </div>
         </div>
-        <div class="rounded-2xl bg-zinc-100 dark:bg-zinc-800 aspect-video flex items-center justify-center">
-            <span class="text-zinc-400 dark:text-zinc-500 text-sm">Image / Video</span>
+        <div class="rounded-2xl overflow-hidden bg-zinc-100 dark:bg-zinc-800 aspect-video flex items-center justify-center">
+            @php $heroImage = content('__SLUG__', 'image', '', 'image'); @endphp
+            @if ($heroImage)
+                <img src="{{ $heroImage }}" alt="{{ content('__SLUG__', 'image_alt', '') }}" class="w-full h-full object-cover">
+            @else
+                <span class="text-zinc-400 dark:text-zinc-500 text-sm">Image / Video</span>
+            @endif
         </div>
     </div>
 </section>

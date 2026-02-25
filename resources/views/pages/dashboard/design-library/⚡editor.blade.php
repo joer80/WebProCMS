@@ -2,16 +2,21 @@
 
 use App\Enums\RowCategory;
 use App\Jobs\IndexDesignLibraryJob;
+use App\Models\ContentOverride;
 use App\Models\DesignRow;
 use App\Support\VoltFileService;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
 use Livewire\Attributes\Url;
 use Livewire\Component;
+use Livewire\WithFileUploads;
 
 new #[Layout('layouts.app')] #[Title('Page Editor')] class extends Component {
+    use WithFileUploads;
+
     #[Url]
     public string $file = '';
 
@@ -28,6 +33,19 @@ new #[Layout('layouts.app')] #[Title('Page Editor')] class extends Component {
     public string $libraryCategory = '';
     public ?int $insertAtIndex = null;
 
+    // Content editor state
+    public bool $showContentEditor = false;
+    public ?int $editingRowIndex = null;
+
+    /** @var array<int, array{slug: string, key: string, type: string, default: string, label: string}> */
+    public array $contentFields = [];
+
+    /** @var array<string, string|bool> */
+    public array $contentValues = [];
+
+    public mixed $pendingImageUpload = null;
+    public string $pendingImageKey = '';
+
     public function mount(): void
     {
         if ($this->file) {
@@ -40,6 +58,17 @@ new #[Layout('layouts.app')] #[Title('Page Editor')] class extends Component {
         if ($value) {
             $this->loadFile($value);
         }
+    }
+
+    public function updatedPendingImageUpload(): void
+    {
+        if (! $this->pendingImageUpload || ! $this->pendingImageKey) {
+            return;
+        }
+
+        $path = $this->pendingImageUpload->store('content-overrides', 'public');
+        $this->contentValues[$this->pendingImageKey] = $path;
+        $this->pendingImageUpload = null;
     }
 
     /** @return array<string, array<string, string>> */
@@ -93,6 +122,9 @@ new #[Layout('layouts.app')] #[Title('Page Editor')] class extends Component {
         $this->liveUrl = $service->getRouteForFile($relativePath);
         $this->previewUrl = route('design-library.preview', ['token' => $service->previewToken($relativePath)]);
 
+        $this->showContentEditor = false;
+        $this->editingRowIndex = null;
+
         $this->refreshPreview();
     }
 
@@ -128,13 +160,22 @@ new #[Layout('layouts.app')] #[Title('Page Editor')] class extends Component {
     {
         $slug = $this->rows[$index]['slug'] ?? null;
 
-        if ($slug && $this->phpSection) {
-            $this->phpSection = (new VoltFileService)->removePhpCode($this->phpSection, $slug);
+        if ($slug) {
+            if ($this->phpSection) {
+                $this->phpSection = (new VoltFileService)->removePhpCode($this->phpSection, $slug);
+            }
+
+            ContentOverride::query()->where('row_slug', $slug)->delete();
         }
 
         array_splice($this->rows, $index, 1);
         $this->rows = array_values($this->rows);
         $this->isDirty = true;
+
+        if ($this->editingRowIndex === $index) {
+            $this->showContentEditor = false;
+            $this->editingRowIndex = null;
+        }
 
         $this->refreshPreview();
     }
@@ -162,7 +203,7 @@ new #[Layout('layouts.app')] #[Title('Page Editor')] class extends Component {
         $newRow = [
             'slug' => $slug,
             'name' => $designRow->name,
-            'blade' => $designRow->blade_code,
+            'blade' => str_replace('__SLUG__', $slug, $designRow->blade_code),
         ];
 
         if ($designRow->php_code && $this->phpSection) {
@@ -179,6 +220,67 @@ new #[Layout('layouts.app')] #[Title('Page Editor')] class extends Component {
         $this->showLibraryDrawer = false;
 
         $this->refreshPreview();
+    }
+
+    public function openContentEditor(int $index): void
+    {
+        $this->editingRowIndex = $index;
+        $row = $this->rows[$index];
+        $this->contentFields = $this->parseContentFields($row['blade']);
+        $this->pendingImageKey = '';
+        $this->pendingImageUpload = null;
+
+        $slugs = array_unique(array_column($this->contentFields, 'slug'));
+        $overrides = ContentOverride::query()
+            ->whereIn('row_slug', $slugs)
+            ->get()
+            ->keyBy(fn (ContentOverride $o) => $o->row_slug.':'.$o->key);
+
+        $this->contentValues = [];
+
+        foreach ($this->contentFields as $field) {
+            $dbKey = $field['slug'].':'.$field['key'];
+            $rawValue = $overrides->get($dbKey)?->value ?? '';
+            $this->contentValues[$field['key']] = $field['type'] === 'toggle'
+                ? ($rawValue === '1')
+                : $rawValue;
+        }
+
+        $this->showContentEditor = true;
+    }
+
+    public function saveContentOverrides(): void
+    {
+        foreach ($this->contentFields as $field) {
+            $raw = $this->contentValues[$field['key']] ?? '';
+            $value = $field['type'] === 'toggle' ? ($raw ? '1' : '') : (string) $raw;
+
+            if ($value === '') {
+                ContentOverride::query()
+                    ->where('row_slug', $field['slug'])
+                    ->where('key', $field['key'])
+                    ->delete();
+            } else {
+                ContentOverride::updateOrCreate(
+                    ['row_slug' => $field['slug'], 'key' => $field['key']],
+                    ['type' => $field['type'], 'value' => $value]
+                );
+            }
+        }
+
+        $this->showContentEditor = false;
+        $this->dispatch('notify', message: 'Content saved.');
+        $this->refreshPreview();
+    }
+
+    public function setPendingImageKey(string $key): void
+    {
+        $this->pendingImageKey = $key;
+    }
+
+    public function removeImage(string $key): void
+    {
+        $this->contentValues[$key] = '';
     }
 
     public function saveFile(): void
@@ -200,6 +302,43 @@ new #[Layout('layouts.app')] #[Title('Page Editor')] class extends Component {
         if ($this->file) {
             $this->loadFile($this->file);
         }
+    }
+
+    /**
+     * Parse content() calls from a row's blade code into editable field definitions.
+     *
+     * @return array<int, array{slug: string, key: string, type: string, default: string, label: string}>
+     */
+    private function parseContentFields(string $blade): array
+    {
+        preg_match_all(
+            "/content\('([^']+)',\s*'([^']+)',\s*'([^']*)'(?:,\s*'([^']*)')?\)/",
+            $blade,
+            $matches,
+            PREG_SET_ORDER
+        );
+
+        $fields = [];
+        $seen = [];
+
+        foreach ($matches as $match) {
+            $dedupeKey = $match[1].':'.$match[2];
+
+            if (isset($seen[$dedupeKey])) {
+                continue;
+            }
+
+            $seen[$dedupeKey] = true;
+            $fields[] = [
+                'slug' => $match[1],
+                'key' => $match[2],
+                'default' => $match[3],
+                'type' => $match[4] ?? 'text',
+                'label' => ucwords(str_replace('_', ' ', $match[2])),
+            ];
+        }
+
+        return $fields;
     }
 
     private function refreshPreview(): void
@@ -260,6 +399,102 @@ new #[Layout('layouts.app')] #[Title('Page Editor')] class extends Component {
                     </div>
                 @endforeach
             </div>
+        @endif
+    </flux:modal>
+
+    {{-- Content Editor Drawer --}}
+    <flux:modal wire:model="showContentEditor" class="w-full max-w-lg">
+        @if ($editingRowIndex !== null && isset($rows[$editingRowIndex]))
+            <flux:heading size="lg" class="mb-1">{{ __('Edit Content') }}</flux:heading>
+            <flux:text class="text-sm text-zinc-500 dark:text-zinc-400 mb-6">{{ $rows[$editingRowIndex]['name'] }}</flux:text>
+
+            @if (empty($contentFields))
+                <div class="text-center py-8 text-zinc-400 dark:text-zinc-500">
+                    <flux:icon name="pencil-slash" class="size-10 mx-auto mb-2 opacity-40" />
+                    <p class="text-sm">This row has no editable content fields.</p>
+                </div>
+            @else
+                <div class="space-y-5">
+                    @foreach ($contentFields as $field)
+                        <div wire:key="field-{{ $field['key'] }}">
+                            <flux:label class="mb-1.5">{{ $field['label'] }}</flux:label>
+
+                            @if ($field['type'] === 'image')
+                                @php $currentPath = $contentValues[$field['key']] ?? ''; @endphp
+                                @if ($currentPath)
+                                    <div class="mb-2 relative inline-block">
+                                        <img
+                                            src="{{ Storage::url($currentPath) }}"
+                                            alt=""
+                                            class="h-24 rounded-lg object-cover border border-zinc-200 dark:border-zinc-700"
+                                        >
+                                        <button
+                                            wire:click="removeImage('{{ $field['key'] }}')"
+                                            class="absolute -top-2 -right-2 size-5 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600"
+                                            title="Remove image"
+                                        >
+                                            <flux:icon name="x-mark" class="size-3" />
+                                        </button>
+                                    </div>
+                                @endif
+                                <div
+                                    x-data
+                                    x-on:click="$refs.imgInput_{{ $field['key'] }}.click()"
+                                    class="flex items-center gap-3 px-4 py-3 border-2 border-dashed border-zinc-300 dark:border-zinc-600 rounded-lg cursor-pointer hover:border-primary transition-colors"
+                                >
+                                    <flux:icon name="photo" class="size-5 text-zinc-400 shrink-0" />
+                                    <span class="text-sm text-zinc-500 dark:text-zinc-400">
+                                        {{ $currentPath ? 'Replace image…' : 'Upload image…' }}
+                                    </span>
+                                    <input
+                                        x-ref="imgInput_{{ $field['key'] }}"
+                                        type="file"
+                                        accept="image/*"
+                                        class="hidden"
+                                        x-on:change="
+                                            $wire.setPendingImageKey('{{ $field['key'] }}').then(() => {
+                                                $wire.upload('pendingImageUpload', $event.target.files[0])
+                                            })
+                                        "
+                                    >
+                                </div>
+                            @elseif ($field['type'] === 'richtext')
+                                <flux:textarea
+                                    wire:model="contentValues.{{ $field['key'] }}"
+                                    rows="5"
+                                    placeholder="{{ $field['default'] }}"
+                                />
+                                <flux:text class="text-xs text-zinc-400 mt-1">HTML is supported.</flux:text>
+                            @elseif ($field['type'] === 'toggle')
+                                <flux:checkbox
+                                    wire:model="contentValues.{{ $field['key'] }}"
+                                    label="Yes"
+                                />
+                            @elseif (str_ends_with($field['key'], '_url'))
+                                <flux:input
+                                    wire:model="contentValues.{{ $field['key'] }}"
+                                    type="url"
+                                    placeholder="{{ $field['default'] ?: 'https://' }}"
+                                />
+                            @else
+                                <flux:input
+                                    wire:model="contentValues.{{ $field['key'] }}"
+                                    placeholder="{{ $field['default'] }}"
+                                />
+                            @endif
+                        </div>
+                    @endforeach
+                </div>
+
+                <div class="flex justify-end gap-3 mt-6">
+                    <flux:button wire:click="$set('showContentEditor', false)" variant="ghost">
+                        {{ __('Cancel') }}
+                    </flux:button>
+                    <flux:button wire:click="saveContentOverrides" variant="primary" icon="check">
+                        {{ __('Save Content') }}
+                    </flux:button>
+                </div>
+            @endif
         @endif
     </flux:modal>
 
@@ -336,7 +571,7 @@ new #[Layout('layouts.app')] #[Title('Page Editor')] class extends Component {
                         @forelse ($rows as $index => $row)
                             <div
                                 wire:key="row-item-{{ $row['slug'] }}"
-                                class="group rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 p-3"
+                                class="group rounded-lg border bg-white dark:bg-zinc-900 p-3 transition-colors {{ $editingRowIndex === $index ? 'border-primary' : 'border-zinc-200 dark:border-zinc-700' }}"
                             >
                                 <div class="flex items-start justify-between gap-2 mb-2">
                                     <div class="min-w-0">
@@ -362,12 +597,19 @@ new #[Layout('layouts.app')] #[Title('Page Editor')] class extends Component {
                                         title="Move down"
                                     />
                                     <flux:button
+                                        wire:click="openContentEditor({{ $index }})"
+                                        variant="ghost"
+                                        size="sm"
+                                        icon="pencil-square"
+                                        title="Edit content"
+                                        class="ml-auto"
+                                    />
+                                    <flux:button
                                         wire:click="openLibraryDrawer({{ $index }})"
                                         variant="ghost"
                                         size="sm"
                                         icon="plus"
                                         title="Insert row before this"
-                                        class="ml-auto"
                                     />
                                     <flux:button
                                         wire:click="removeRow({{ $index }})"

@@ -23,7 +23,9 @@
       "WebFetch(domain:laravel.com)",
       "WebFetch(domain:tailwindcss.com)",
       "Bash(vendor/bin/pint:*)",
-      "Bash(xargs -I {} basename {})"
+      "Bash(xargs -I {} basename {})",
+      "Bash(/Users/joepersonal/Sites/WebProCMS/resources/design-library/rows/cta/cta-banner.blade.php:*)",
+      "Bash(/Users/joepersonal/Sites/WebProCMS/resources/design-library/rows/hero/hero-centered.blade.php:*)"
     ]
   },
   "defaultMode": "acceptEdits"
