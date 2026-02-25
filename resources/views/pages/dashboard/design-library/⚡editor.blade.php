@@ -278,9 +278,14 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component 
             }
         }
 
-        $this->showContentEditor = false;
         $this->dispatch('notify', message: 'Content saved.');
         $this->refreshPreview();
+    }
+
+    public function saveContentOverridesAndBack(): void
+    {
+        $this->saveContentOverrides();
+        $this->showContentEditor = false;
     }
 
     public function setPendingImageKey(string $key): void
@@ -412,110 +417,12 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component 
         @endif
     </flux:modal>
 
-    {{-- Content Editor Drawer --}}
-    <flux:modal wire:model="showContentEditor" class="w-full max-w-lg">
-        @if ($editingRowIndex !== null && isset($rows[$editingRowIndex]))
-            <flux:heading size="lg" class="mb-1">{{ __('Edit Content') }}</flux:heading>
-            <flux:text class="text-sm text-zinc-500 dark:text-zinc-400 mb-6">{{ $rows[$editingRowIndex]['name'] }}</flux:text>
-
-            @if (empty($contentFields))
-                <div class="text-center py-8 text-zinc-400 dark:text-zinc-500">
-                    <flux:icon name="pencil-slash" class="size-10 mx-auto mb-2 opacity-40" />
-                    <p class="text-sm">This row has no editable content fields.</p>
-                </div>
-            @else
-                <div class="space-y-5">
-                    @foreach ($contentFields as $field)
-                        <div wire:key="field-{{ $field['key'] }}">
-                            <flux:label class="mb-1.5">{{ $field['label'] }}</flux:label>
-
-                            @if ($field['type'] === 'image')
-                                @php $currentPath = $contentValues[$field['key']] ?? ''; @endphp
-                                @if ($currentPath)
-                                    <div class="mb-2 relative inline-block">
-                                        <img
-                                            src="{{ Storage::url($currentPath) }}"
-                                            alt=""
-                                            class="h-24 rounded-lg object-cover border border-zinc-200 dark:border-zinc-700"
-                                        >
-                                        <button
-                                            wire:click="removeImage('{{ $field['key'] }}')"
-                                            class="absolute -top-2 -right-2 size-5 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600"
-                                            title="Remove image"
-                                        >
-                                            <flux:icon name="x-mark" class="size-3" />
-                                        </button>
-                                    </div>
-                                @endif
-                                <div
-                                    x-data
-                                    x-on:click="$refs.imgInput_{{ $field['key'] }}.click()"
-                                    class="flex items-center gap-3 px-4 py-3 border-2 border-dashed border-zinc-300 dark:border-zinc-600 rounded-lg cursor-pointer hover:border-primary transition-colors"
-                                >
-                                    <flux:icon name="photo" class="size-5 text-zinc-400 shrink-0" />
-                                    <span class="text-sm text-zinc-500 dark:text-zinc-400">
-                                        {{ $currentPath ? 'Replace image…' : 'Upload image…' }}
-                                    </span>
-                                    <input
-                                        x-ref="imgInput_{{ $field['key'] }}"
-                                        type="file"
-                                        accept="image/*"
-                                        class="hidden"
-                                        x-on:change="
-                                            $wire.setPendingImageKey('{{ $field['key'] }}').then(() => {
-                                                $wire.upload('pendingImageUpload', $event.target.files[0])
-                                            })
-                                        "
-                                    >
-                                </div>
-                            @elseif ($field['type'] === 'richtext')
-                                <flux:textarea
-                                    wire:model="contentValues.{{ $field['key'] }}"
-                                    rows="5"
-                                    placeholder="{{ $field['default'] }}"
-                                />
-                                <flux:text class="text-xs text-zinc-400 mt-1">HTML is supported.</flux:text>
-                            @elseif ($field['type'] === 'toggle')
-                                <flux:checkbox
-                                    wire:model="contentValues.{{ $field['key'] }}"
-                                    label="Yes"
-                                />
-                            @elseif (str_ends_with($field['key'], '_url'))
-                                <flux:input
-                                    wire:model="contentValues.{{ $field['key'] }}"
-                                    type="url"
-                                    placeholder="{{ $field['default'] ?: 'https://' }}"
-                                />
-                            @else
-                                <flux:input
-                                    wire:model="contentValues.{{ $field['key'] }}"
-                                    placeholder="{{ $field['default'] }}"
-                                />
-                            @endif
-                        </div>
-                    @endforeach
-                </div>
-
-                <div class="flex justify-end gap-3 mt-6">
-                    <flux:button wire:click="$set('showContentEditor', false)" variant="ghost">
-                        {{ __('Cancel') }}
-                    </flux:button>
-                    <flux:button wire:click="saveContentOverrides" variant="primary" icon="check">
-                        {{ __('Save Content') }}
-                    </flux:button>
-                </div>
-            @endif
-        @endif
-    </flux:modal>
-
     <div class="flex flex-col min-h-screen bg-white dark:bg-zinc-900">
         {{-- Editor toolbar --}}
         <div class="sticky top-0 z-30 bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-700 px-6 py-3 flex flex-wrap items-center gap-3">
-            <a href="{{ route('dashboard.pages') }}" class="text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200 mr-1" wire:navigate>
-                <flux:icon name="arrow-left" class="size-5" />
+            <a href="{{ route('dashboard.pages') }}" class="text-sm text-zinc-500 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-200 font-medium" wire:navigate>
+                {{ __('Back To Pages') }}
             </a>
-
-            <flux:heading>{{ __('Page Editor') }}</flux:heading>
 
             <div class="flex-1 min-w-0 max-w-xs">
                 <flux:select wire:model.live="file" placeholder="Select a page to edit…">
@@ -570,84 +477,192 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component 
             </div>
         @else
             <div class="flex" style="height: calc(100vh - 120px);">
-                {{-- Left panel: row list --}}
-                <div class="w-80 shrink-0 border-r border-zinc-200 dark:border-zinc-700 overflow-y-auto flex flex-col">
-                    <div class="p-4 border-b border-zinc-200 dark:border-zinc-700">
-                        <flux:heading size="sm" class="text-zinc-600 dark:text-zinc-400">{{ __('Page Rows') }}</flux:heading>
-                        <flux:text class="text-xs mt-1 text-zinc-400 dark:text-zinc-500">{{ count($rows) }} {{ Str::plural('row', count($rows)) }}</flux:text>
-                    </div>
+                {{-- Left panel: row list / inline content editor --}}
+                <div class="w-96 shrink-0 border-r border-zinc-200 dark:border-zinc-700 flex flex-col">
+                    @if ($showContentEditor && $editingRowIndex !== null && isset($rows[$editingRowIndex]))
+                        {{-- Content editor view --}}
+                        <div class="shrink-0 flex items-center gap-2 p-3 border-b border-zinc-200 dark:border-zinc-700">
+                            <flux:button
+                                wire:click="$set('showContentEditor', false)"
+                                variant="ghost"
+                                size="sm"
+                                icon="arrow-left"
+                                title="Back to rows"
+                            />
+                            <div class="min-w-0">
+                                <div class="text-sm font-medium text-zinc-800 dark:text-zinc-200 truncate">{{ $rows[$editingRowIndex]['name'] }}</div>
+                                <div class="text-[10px] font-mono text-zinc-400 dark:text-zinc-500 truncate">{{ $rows[$editingRowIndex]['slug'] }}</div>
+                            </div>
+                        </div>
 
-                    <div class="flex-1 p-3 space-y-2">
-                        @forelse ($rows as $index => $row)
-                            <div
-                                wire:key="row-item-{{ $row['slug'] }}"
-                                class="group rounded-lg border bg-white dark:bg-zinc-900 p-3 transition-colors {{ $editingRowIndex === $index ? 'border-primary' : 'border-zinc-200 dark:border-zinc-700' }}"
-                            >
-                                <div class="flex items-start justify-between gap-2 mb-2">
-                                    <div class="min-w-0">
+                        <div class="flex-1 overflow-y-auto p-4">
+                            @if (empty($contentFields))
+                                <div class="text-center py-8 text-zinc-400 dark:text-zinc-500">
+                                    <flux:icon name="pencil-slash" class="size-10 mx-auto mb-2 opacity-40" />
+                                    <p class="text-sm">This row has no editable content fields.</p>
+                                </div>
+                            @else
+                                <div class="space-y-5">
+                                    @foreach ($contentFields as $field)
+                                        <div wire:key="field-{{ $field['key'] }}">
+                                            <flux:label class="mb-1.5">{{ $field['label'] }}</flux:label>
+
+                                            @if ($field['type'] === 'image')
+                                                @php $currentPath = $contentValues[$field['key']] ?? ''; @endphp
+                                                @if ($currentPath)
+                                                    <div class="mb-2 relative inline-block">
+                                                        <img
+                                                            src="{{ Storage::url($currentPath) }}"
+                                                            alt=""
+                                                            class="h-24 rounded-lg object-cover border border-zinc-200 dark:border-zinc-700"
+                                                        >
+                                                        <button
+                                                            wire:click="removeImage('{{ $field['key'] }}')"
+                                                            class="absolute -top-2 -right-2 size-5 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600"
+                                                            title="Remove image"
+                                                        >
+                                                            <flux:icon name="x-mark" class="size-3" />
+                                                        </button>
+                                                    </div>
+                                                @endif
+                                                <div
+                                                    x-data
+                                                    x-on:click="$refs.imgInput_{{ $field['key'] }}.click()"
+                                                    class="flex items-center gap-3 px-4 py-3 border-2 border-dashed border-zinc-300 dark:border-zinc-600 rounded-lg cursor-pointer hover:border-primary transition-colors"
+                                                >
+                                                    <flux:icon name="photo" class="size-5 text-zinc-400 shrink-0" />
+                                                    <span class="text-sm text-zinc-500 dark:text-zinc-400">
+                                                        {{ $currentPath ? 'Replace image…' : 'Upload image…' }}
+                                                    </span>
+                                                    <input
+                                                        x-ref="imgInput_{{ $field['key'] }}"
+                                                        type="file"
+                                                        accept="image/*"
+                                                        class="hidden"
+                                                        x-on:change="
+                                                            $wire.setPendingImageKey('{{ $field['key'] }}').then(() => {
+                                                                $wire.upload('pendingImageUpload', $event.target.files[0])
+                                                            })
+                                                        "
+                                                    >
+                                                </div>
+                                            @elseif ($field['type'] === 'richtext')
+                                                <flux:textarea
+                                                    wire:model="contentValues.{{ $field['key'] }}"
+                                                    rows="4"
+                                                    placeholder="{{ $field['default'] }}"
+                                                />
+                                                <flux:text class="text-xs text-zinc-400 mt-1">HTML is supported.</flux:text>
+                                            @elseif ($field['type'] === 'toggle')
+                                                <flux:checkbox
+                                                    wire:model="contentValues.{{ $field['key'] }}"
+                                                    label="Yes"
+                                                />
+                                            @elseif (str_ends_with($field['key'], '_url'))
+                                                <flux:input
+                                                    wire:model="contentValues.{{ $field['key'] }}"
+                                                    type="url"
+                                                    placeholder="{{ $field['default'] ?: 'https://' }}"
+                                                />
+                                            @else
+                                                <flux:input
+                                                    wire:model="contentValues.{{ $field['key'] }}"
+                                                    placeholder="{{ $field['default'] }}"
+                                                />
+                                            @endif
+                                        </div>
+                                    @endforeach
+                                </div>
+                            @endif
+                        </div>
+
+                        <div class="shrink-0 flex gap-2 p-3 border-t border-zinc-200 dark:border-zinc-700">
+                            <flux:button wire:click="saveContentOverrides" variant="primary" icon="check" class="flex-1" title="Save and keep editing">
+                                {{ __('Save') }}
+                            </flux:button>
+                            <flux:button wire:click="saveContentOverridesAndBack" variant="outline" icon="arrow-left" title="Save and go back to rows">
+                                {{ __('Save & Back') }}
+                            </flux:button>
+                            <flux:button wire:click="$set('showContentEditor', false)" variant="outline" title="Discard changes">
+                                {{ __('Cancel') }}
+                            </flux:button>
+                        </div>
+                    @else
+                        {{-- Row list view --}}
+                        <div class="shrink-0 p-4 border-b border-zinc-200 dark:border-zinc-700">
+                            <flux:heading size="sm" class="text-zinc-600 dark:text-zinc-400">{{ __('Page Rows') }}</flux:heading>
+                            <flux:text class="text-xs mt-1 text-zinc-400 dark:text-zinc-500">{{ count($rows) }} {{ Str::plural('row', count($rows)) }}</flux:text>
+                        </div>
+
+                        <div class="flex-1 overflow-y-auto p-3 space-y-2">
+                            @forelse ($rows as $index => $row)
+                                <div
+                                    wire:key="row-item-{{ $row['slug'] }}"
+                                    class="rounded-lg border bg-white dark:bg-zinc-900 overflow-hidden transition-colors {{ $editingRowIndex === $index ? 'border-primary' : 'border-zinc-200 dark:border-zinc-700' }}"
+                                >
+                                    {{-- Clickable name area opens content editor --}}
+                                    <button
+                                        wire:click="openContentEditor({{ $index }})"
+                                        class="w-full text-left px-3 pt-3 pb-2 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors"
+                                    >
                                         <div class="text-sm font-medium text-zinc-800 dark:text-zinc-200 truncate">{{ $row['name'] }}</div>
                                         <div class="text-[10px] font-mono text-zinc-400 dark:text-zinc-500 truncate mt-0.5">{{ $row['slug'] }}</div>
+                                    </button>
+
+                                    {{-- Row actions --}}
+                                    <div class="flex items-center gap-0.5 px-2 pb-2">
+                                        <flux:button
+                                            wire:click="moveRowUp({{ $index }})"
+                                            variant="ghost"
+                                            size="sm"
+                                            icon="arrow-up"
+                                            :disabled="$index === 0"
+                                            title="Move up"
+                                        />
+                                        <flux:button
+                                            wire:click="moveRowDown({{ $index }})"
+                                            variant="ghost"
+                                            size="sm"
+                                            icon="arrow-down"
+                                            :disabled="$index === count($rows) - 1"
+                                            title="Move down"
+                                        />
+                                        <flux:button
+                                            wire:click="openLibraryDrawer({{ $index }})"
+                                            variant="ghost"
+                                            size="sm"
+                                            icon="plus"
+                                            title="Insert row before this"
+                                            class="ml-auto"
+                                        />
+                                        <flux:button
+                                            wire:click="removeRow({{ $index }})"
+                                            wire:confirm="Remove this row from the page?"
+                                            variant="ghost"
+                                            size="sm"
+                                            icon="trash"
+                                            class="text-red-500 dark:text-red-400"
+                                            title="Remove row"
+                                        />
                                     </div>
                                 </div>
-                                <div class="flex items-center gap-1">
-                                    <flux:button
-                                        wire:click="moveRowUp({{ $index }})"
-                                        variant="ghost"
-                                        size="sm"
-                                        icon="arrow-up"
-                                        :disabled="$index === 0"
-                                        title="Move up"
-                                    />
-                                    <flux:button
-                                        wire:click="moveRowDown({{ $index }})"
-                                        variant="ghost"
-                                        size="sm"
-                                        icon="arrow-down"
-                                        :disabled="$index === count($rows) - 1"
-                                        title="Move down"
-                                    />
-                                    <flux:button
-                                        wire:click="openContentEditor({{ $index }})"
-                                        variant="ghost"
-                                        size="sm"
-                                        icon="pencil-square"
-                                        title="Edit content"
-                                        class="ml-auto"
-                                    />
-                                    <flux:button
-                                        wire:click="openLibraryDrawer({{ $index }})"
-                                        variant="ghost"
-                                        size="sm"
-                                        icon="plus"
-                                        title="Insert row before this"
-                                    />
-                                    <flux:button
-                                        wire:click="removeRow({{ $index }})"
-                                        wire:confirm="Remove this row from the page?"
-                                        variant="ghost"
-                                        size="sm"
-                                        icon="trash"
-                                        class="text-red-500 dark:text-red-400"
-                                        title="Remove row"
-                                    />
+                            @empty
+                                <div class="text-center py-8 text-zinc-400 dark:text-zinc-500">
+                                    <flux:icon name="squares-2x2" class="size-10 mx-auto mb-2 opacity-40" />
+                                    <p class="text-xs">No rows yet.</p>
                                 </div>
-                            </div>
-                        @empty
-                            <div class="text-center py-8 text-zinc-400 dark:text-zinc-500">
-                                <flux:icon name="squares-2x2" class="size-10 mx-auto mb-2 opacity-40" />
-                                <p class="text-xs">No rows yet.</p>
-                            </div>
-                        @endforelse
+                            @endforelse
 
-                        {{-- Append row at end --}}
-                        <button
-                            wire:click="openLibraryDrawer({{ count($rows) }})"
-                            class="w-full py-3 border-2 border-dashed border-zinc-300 dark:border-zinc-700 rounded-lg text-sm text-zinc-500 dark:text-zinc-400 hover:border-primary hover:text-primary transition-colors flex items-center justify-center gap-2"
-                        >
-                            <flux:icon name="plus" class="size-4" />
-                            {{ __('Add Row') }}
-                        </button>
-                    </div>
+                            {{-- Append row at end --}}
+                            <button
+                                wire:click="openLibraryDrawer({{ count($rows) }})"
+                                class="w-full py-3 border-2 border-dashed border-zinc-300 dark:border-zinc-700 rounded-lg text-sm text-zinc-500 dark:text-zinc-400 hover:border-primary hover:text-primary transition-colors flex items-center justify-center gap-2"
+                            >
+                                <flux:icon name="plus" class="size-4" />
+                                {{ __('Add Row') }}
+                            </button>
+                        </div>
+                    @endif
                 </div>
 
                 {{-- Right panel: iframe preview --}}

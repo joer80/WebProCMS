@@ -45,4 +45,31 @@ new #[Layout('layouts.public')] #[Title('Test Page')] class extends Component {}
     </div>
 </section>
 {{-- ROW:end:hero-dd317W --}}
+
+{{-- ROW:start:cta-0khbdJ --}}
+<section class="bg-primary py-16 px-6 text-center">
+    <div class="max-w-3xl mx-auto">
+        <h2 class="text-4xl font-bold text-white">{{ content('cta-0khbdJ', 'headline', 'Ready to Get Started?') }}</h2>
+        <p class="mt-4 text-lg text-white/80">{{ content('cta-0khbdJ', 'subheadline', 'Join thousands of satisfied customers today.') }}</p>
+        <div class="mt-8 flex flex-wrap items-center justify-center gap-4">
+            <a
+                href="{{ content('cta-0khbdJ', 'primary_cta_url', '#') }}"
+                @if(content('cta-0khbdJ', 'primary_cta_new_tab', '', 'toggle')) target="_blank" rel="noopener noreferrer" @endif
+                class="px-8 py-3 bg-white text-primary font-semibold rounded-lg hover:bg-zinc-100 transition-colors"
+            >
+                {{ content('cta-0khbdJ', 'primary_cta', 'Start Free Trial') }}
+            </a>
+            @if(content('cta-0khbdJ', 'show_secondary_cta', '1', 'toggle'))
+            <a
+                href="{{ content('cta-0khbdJ', 'secondary_cta_url', '#') }}"
+                @if(content('cta-0khbdJ', 'secondary_cta_new_tab', '', 'toggle')) target="_blank" rel="noopener noreferrer" @endif
+                class="px-8 py-3 border border-white/30 text-white font-semibold rounded-lg hover:bg-white/10 transition-colors"
+            >
+                {{ content('cta-0khbdJ', 'secondary_cta', 'Talk to Sales') }}
+            </a>
+            @endif
+        </div>
+    </div>
+</section>
+{{-- ROW:end:cta-0khbdJ --}}
 </div>
