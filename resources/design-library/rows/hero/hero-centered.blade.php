@@ -20,6 +20,7 @@
             >
                 {{ content('__SLUG__', 'primary_cta', 'Get Started') }}
             </a>
+            @if(content('__SLUG__', 'show_secondary_cta', '1', 'toggle'))
             <a
                 href="{{ content('__SLUG__', 'secondary_cta_url', '#') }}"
                 @if(content('__SLUG__', 'secondary_cta_new_tab', '', 'toggle')) target="_blank" rel="noopener noreferrer" @endif
@@ -27,6 +28,7 @@
             >
                 {{ content('__SLUG__', 'secondary_cta', 'Learn More') }}
             </a>
+            @endif
         </div>
     </div>
 </section>

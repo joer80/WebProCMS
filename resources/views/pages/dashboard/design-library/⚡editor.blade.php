@@ -14,7 +14,7 @@ use Livewire\Attributes\Url;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 
-new #[Layout('layouts.app')] #[Title('Page Editor')] class extends Component {
+new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component {
     use WithFileUploads;
 
     #[Url]
@@ -240,10 +240,10 @@ new #[Layout('layouts.app')] #[Title('Page Editor')] class extends Component {
 
         foreach ($this->contentFields as $field) {
             $dbKey = $field['slug'].':'.$field['key'];
-            $rawValue = $overrides->get($dbKey)?->value ?? '';
+            $rawValue = $overrides->get($dbKey)?->value;
             $this->contentValues[$field['key']] = $field['type'] === 'toggle'
-                ? ($rawValue === '1')
-                : $rawValue;
+                ? ($rawValue !== null ? $rawValue === '1' : $field['default'] === '1')
+                : ($rawValue ?? '');
         }
 
         $this->showContentEditor = true;
@@ -253,7 +253,17 @@ new #[Layout('layouts.app')] #[Title('Page Editor')] class extends Component {
     {
         foreach ($this->contentFields as $field) {
             $raw = $this->contentValues[$field['key']] ?? '';
-            $value = $field['type'] === 'toggle' ? ($raw ? '1' : '') : (string) $raw;
+
+            if ($field['type'] === 'toggle') {
+                // Always persist toggles so explicit off ('0') isn't confused with the default.
+                ContentOverride::updateOrCreate(
+                    ['row_slug' => $field['slug'], 'key' => $field['key']],
+                    ['type' => $field['type'], 'value' => $raw ? '1' : '0']
+                );
+                continue;
+            }
+
+            $value = (string) $raw;
 
             if ($value === '') {
                 ContentOverride::query()
@@ -498,7 +508,7 @@ new #[Layout('layouts.app')] #[Title('Page Editor')] class extends Component {
         @endif
     </flux:modal>
 
-    <flux:main class="p-0">
+    <div class="flex flex-col min-h-screen bg-white dark:bg-zinc-900">
         {{-- Editor toolbar --}}
         <div class="sticky top-0 z-30 bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-700 px-6 py-3 flex flex-wrap items-center gap-3">
             <a href="{{ route('dashboard.pages') }}" class="text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200 mr-1" wire:navigate>
@@ -670,5 +680,5 @@ new #[Layout('layouts.app')] #[Title('Page Editor')] class extends Component {
                 </div>
             </div>
         @endif
-    </flux:main>
+    </div>
 </div>
