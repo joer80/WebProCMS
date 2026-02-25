@@ -21,4 +21,4 @@ yarn-error.log
 /.nova
 /.vscode
 /.zed
-/resources/views/pages/design-editor-preview.blade.php
+/resources/views/pages/_editor-previews/

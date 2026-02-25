@@ -28,7 +28,7 @@ class VoltFileService
                 continue;
             }
 
-            if (str_contains($relative, 'design-editor-preview')) {
+            if (str_contains($relative, 'design-editor-preview') || str_contains($relative, '_editor-previews/')) {
                 continue;
             }
 
@@ -182,19 +182,35 @@ class VoltFileService
     }
 
     /**
-     * The fixed path for the live-preview temp file (gitignored).
+     * Generate a unique token for a user+page preview, scoped to the authenticated user and file.
      */
-    public function previewFilePath(): string
+    public function previewToken(string $relativePath): string
     {
-        return resource_path('views/pages/design-editor-preview.blade.php');
+        return (string) auth()->id().'-'.md5($relativePath);
+    }
+
+    /**
+     * The path for the live-preview temp file, scoped to the current user and page (gitignored).
+     */
+    public function previewFilePath(string $relativePath): string
+    {
+        $dir = resource_path('views/pages/_editor-previews');
+
+        if (! is_dir($dir)) {
+            mkdir($dir, 0755, true);
+        }
+
+        return $dir.'/'.$this->previewToken($relativePath).'.blade.php';
     }
 
     /**
      * Write the current editor state to the preview temp file without touching the real file.
+     *
+     * @param  list<array{slug: string, name: string, blade: string}>  $rows
      */
-    public function writePreviewFile(string $phpSection, array $rows): void
+    public function writePreviewFile(string $phpSection, array $rows, string $relativePath): void
     {
-        $this->writeFile($this->previewFilePath(), $this->buildFileContent($phpSection, $rows));
+        $this->writeFile($this->previewFilePath($relativePath), $this->buildFileContent($phpSection, $rows));
     }
 
     /**

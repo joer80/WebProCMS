@@ -33,6 +33,12 @@ afterEach(function (): void {
     if (isset($this->libraryTempPath) && file_exists($this->libraryTempPath)) {
         unlink($this->libraryTempPath);
     }
+
+    $previewDir = resource_path('views/pages/_editor-previews');
+
+    foreach (glob($previewDir.'/*.blade.php') ?: [] as $file) {
+        unlink($file);
+    }
 });
 
 it('redirects unauthenticated users from the editor', function (): void {

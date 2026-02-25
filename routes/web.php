@@ -37,12 +37,23 @@ Route::middleware([
 
     // LW4 version of blog (For comparison)- /app/Livewire/Blog2.php
     // Route::get('blog2', \App\Livewire\Blog2::class)->name('blog2.index');
+    Route::livewire('test2', 'pages::test2')->name('test2');
 });
 
 Route::livewire('contact', 'pages::contact')->name('contact');
 
-// Design Library live preview (temp file, gitignored)
-Route::livewire('design-editor-preview', 'pages::design-editor-preview')->name('design-library.preview');
+// Design Library live preview (temp files scoped per user+page, gitignored)
+Route::get('design-editor-preview/{token}', function (string $token) {
+    abort_if(auth()->guest(), 403);
+    abort_if((int) explode('-', $token, 2)[0] !== auth()->id(), 403);
+
+    $view = 'pages._editor-previews.'.$token;
+    abort_if(! view()->exists($view), 404);
+
+    $instance = app('livewire')->new('pages::_editor-previews.'.$token);
+
+    return app()->call([$instance, '__invoke']);
+})->middleware('web')->name('design-library.preview');
 
 Route::middleware(['auth', 'verified'])->group(function (): void {
     Route::livewire('dashboard', 'pages::dashboard')->name('dashboard');

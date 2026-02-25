@@ -15,9 +15,6 @@ new #[Layout('layouts.app')] #[Title('Page Editor')] class extends Component {
     #[Url]
     public string $file = '';
 
-    #[Url]
-    public string $from = '';
-
     public string $phpSection = '';
 
     /** @var array<int, array{slug: string, name: string, blade: string}> */
@@ -94,7 +91,7 @@ new #[Layout('layouts.app')] #[Title('Page Editor')] class extends Component {
         $this->rows = $parsed['rows'];
         $this->isDirty = false;
         $this->liveUrl = $service->getRouteForFile($relativePath);
-        $this->previewUrl = route('design-library.preview');
+        $this->previewUrl = route('design-library.preview', ['token' => $service->previewToken($relativePath)]);
 
         $this->refreshPreview();
     }
@@ -208,7 +205,7 @@ new #[Layout('layouts.app')] #[Title('Page Editor')] class extends Component {
     private function refreshPreview(): void
     {
         try {
-            (new VoltFileService)->writePreviewFile($this->phpSection, $this->rows);
+            (new VoltFileService)->writePreviewFile($this->phpSection, $this->rows, $this->file);
         } catch (\Throwable) {
             // Preview write failed; continue without updating the iframe.
         }
@@ -269,7 +266,7 @@ new #[Layout('layouts.app')] #[Title('Page Editor')] class extends Component {
     <flux:main class="p-0">
         {{-- Editor toolbar --}}
         <div class="sticky top-0 z-30 bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-700 px-6 py-3 flex flex-wrap items-center gap-3">
-            <a href="{{ $from === 'pages' ? route('dashboard.pages') : route('dashboard.design-library.index') }}" class="text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200 mr-1" wire:navigate>
+            <a href="{{ route('dashboard.pages') }}" class="text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200 mr-1" wire:navigate>
                 <flux:icon name="arrow-left" class="size-5" />
             </a>
 

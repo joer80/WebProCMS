@@ -209,7 +209,7 @@ new #[Layout('layouts.app')] #[Title('Pages')] #[Lazy] class extends Component {
                                                 <flux:button wire:click="cancelDelete" variant="ghost" size="sm">Cancel</flux:button>
                                             @else
                                                 <flux:button
-                                                    href="{{ route('dashboard.design-library.editor') . '?file=' . urlencode($path) . '&from=pages' }}"
+                                                    href="{{ route('dashboard.design-library.editor') . '?file=' . urlencode($path) }}"
                                                     variant="outline"
                                                     size="sm"
                                                     icon="pencil-square"

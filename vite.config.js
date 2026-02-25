@@ -16,11 +16,11 @@ export default defineConfig({
         cors: true,
         watch: {
             ignored: [
-                '**/resources/views/pages/design-editor-preview.blade.php',
+                '**/resources/views/pages/_editor-previews/**',
 
                 //Check these also
                 '**/config/navigation.php',
-                '**/routes/web.php',
+                //'**/routes/web.php',
             ],
         },
     },
