@@ -35,12 +35,14 @@ Route::middleware([
     Route::livewire('blog', 'pages::blog.index')->name('blog.index');
     Route::livewire('blog/{slug}', 'pages::blog.show')->name('blog.show');
 
+    Route::livewire('contact', 'pages::contact')->name('contact');
+
     // LW4 version of blog (For comparison)- /app/Livewire/Blog2.php
     // Route::get('blog2', \App\Livewire\Blog2::class)->name('blog2.index');
-    Route::livewire('test2', 'pages::test2')->name('test2');
 });
 
-Route::livewire('contact', 'pages::contact')->name('contact');
+// Don't cache the contact page.
+// Route::livewire('contact', 'pages::contact')->name('contact');
 
 // Design Library live preview (temp files scoped per user+page, gitignored)
 Route::get('design-editor-preview/{token}', function (string $token) {
