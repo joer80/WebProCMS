@@ -18,6 +18,8 @@ export default defineConfig({
             ignored: [
                 '**/storage/framework/views/**',
                 '**/resources/views/pages/**',
+                '**/config/navigation.php',
+                '**/routes/web.php',
             ],
         },
     },

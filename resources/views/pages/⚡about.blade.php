@@ -6,9 +6,8 @@ use Livewire\Component;
 
 new #[Layout('layouts.public', ['description' => 'Learn about WebProCMS — our story, mission, and the team behind the CMS built for web professionals. Founded to make content management simple, powerful, and enjoyable.'])] #[Title('About Us — WebProCMS')] class extends Component {
 }; ?>
-
-<div>
-    {{-- Hero --}}
+<div>{{-- ROW:start:legacy-GyWWBL --}}
+{{-- Hero --}}
     <section class="mb-16 text-center">
         <h1 class="text-4xl font-semibold leading-tight mb-4">About WebProCMS</h1>
         <p class="text-[#706f6c] dark:text-[#A1A09A] text-lg leading-normal max-w-2xl mx-auto">
@@ -74,4 +73,5 @@ new #[Layout('layouts.public', ['description' => 'Learn about WebProCMS — our 
             @endforeach
         </div>
     </section>
+{{-- ROW:end:legacy-GyWWBL --}}
 </div>

@@ -2,9 +2,9 @@
 @php
     $siteType = config('features.website_type', 'saas');
     $navConfig = config("navigation.{$siteType}", config('navigation.saas'));
-    $navItems = $navConfig['nav'] ?? [];
+    $navItems = array_filter($navConfig['nav'] ?? [], fn ($item) => $item['active'] ?? true);
     $showAuthLinks = $navConfig['show_auth_links'] ?? false;
-    $footerItems = $navConfig['footer_company'] ?? [];
+    $footerItems = array_filter($navConfig['footer_company'] ?? [], fn ($item) => $item['active'] ?? true);
 @endphp
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">

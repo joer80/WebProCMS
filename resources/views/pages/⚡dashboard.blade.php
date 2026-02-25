@@ -128,6 +128,15 @@ new #[Layout('layouts.app')] #[Title('Dashboard')] #[Lazy] class extends Compone
         <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
             <div class="rounded-lg border border-zinc-200 dark:border-zinc-700 p-5">
                 <div class="flex items-center gap-2 mb-3">
+                    <flux:icon name="document" class="size-4 text-zinc-400 dark:text-zinc-500" />
+                    <flux:text size="sm" class="font-medium text-zinc-600 dark:text-zinc-400">Pages</flux:text>
+                </div>
+                <div class="text-3xl font-bold text-zinc-900 dark:text-zinc-100 mb-3">{{ $this->pageCount }}</div>
+                <a href="{{ route('dashboard.pages') }}" class="text-xs text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200" wire:navigate>See all →</a>
+            </div>
+
+            <div class="rounded-lg border border-zinc-200 dark:border-zinc-700 p-5">
+                <div class="flex items-center gap-2 mb-3">
                     <flux:icon name="document-text" class="size-4 text-zinc-400 dark:text-zinc-500" />
                     <flux:text size="sm" class="font-medium text-zinc-600 dark:text-zinc-400">Posts</flux:text>
                 </div>
@@ -165,15 +174,6 @@ new #[Layout('layouts.app')] #[Title('Dashboard')] #[Lazy] class extends Compone
                 </div>
                 <div class="text-3xl font-bold text-zinc-900 dark:text-zinc-100">{{ $this->userCount }}</div>
             </div>
-
-            <div class="rounded-lg border border-zinc-200 dark:border-zinc-700 p-5">
-                <div class="flex items-center gap-2 mb-3">
-                    <flux:icon name="document" class="size-4 text-zinc-400 dark:text-zinc-500" />
-                    <flux:text size="sm" class="font-medium text-zinc-600 dark:text-zinc-400">Pages</flux:text>
-                </div>
-                <div class="text-3xl font-bold text-zinc-900 dark:text-zinc-100">{{ $this->pageCount }}</div>
-            </div>
-            
         </div>
 
         {{-- New Page Modal --}}
@@ -211,17 +211,17 @@ new #[Layout('layouts.app')] #[Title('Dashboard')] #[Lazy] class extends Compone
                 <flux:button href="{{ route('dashboard.blog.create') }}" variant="primary" icon="plus" wire:navigate>
                     New Post
                 </flux:button>
+                @if (auth()->user()->isAtLeast(\App\Enums\Role::Manager))
+                    <flux:button wire:click="$set('showNewPageModal', true)" variant="outline" icon="plus">
+                        New Page
+                    </flux:button>
+                @endif
                 <flux:button href="{{ route('dashboard.locations.create') }}" variant="outline" icon="plus" wire:navigate>
                     New Location
                 </flux:button>
                 <flux:button href="{{ route('dashboard.shortcodes.create') }}" variant="outline" icon="plus" wire:navigate>
                     New Shortcode
                 </flux:button>
-                @if (auth()->user()->isAtLeast(\App\Enums\Role::Manager))
-                    <flux:button wire:click="$set('showNewPageModal', true)" variant="outline" icon="plus">
-                        New Page
-                    </flux:button>
-                @endif
             </div>
         </div>
 

@@ -28,6 +28,10 @@ class VoltFileService
                 continue;
             }
 
+            if (str_contains($relative, 'design-editor-preview')) {
+                continue;
+            }
+
             if (str_contains($relative, 'pages/dashboard/')) {
                 $groups['Dashboard'][$label] = $relative;
             } elseif (str_contains($relative, 'pages/settings/')) {
@@ -38,6 +42,51 @@ class VoltFileService
         }
 
         return array_filter($groups);
+    }
+
+    /**
+     * Build a map of relative page path → website types derived from the navigation config.
+     * Pages that appear in no navigation type return an empty array (treated as universal).
+     *
+     * @return array<string, list<string>>
+     */
+    public function buildPageTypeMap(): array
+    {
+        $navigation = config('navigation', []);
+        $routeTypes = [];
+
+        foreach ($navigation as $type => $config) {
+            $navRoutes = array_column($config['nav'] ?? [], 'route');
+            $footerRoutes = array_column($config['footer_company'] ?? [], 'route');
+
+            foreach (array_unique(array_merge($navRoutes, $footerRoutes)) as $route) {
+                $routeTypes[$route][] = $type;
+            }
+        }
+
+        $typeMap = [];
+
+        foreach ($this->listVoltFiles() as $group) {
+            foreach ($group as $relativePath) {
+                $routeName = $this->routeNameFromPath($relativePath);
+                $typeMap[$relativePath] = $routeName ? ($routeTypes[$routeName] ?? []) : [];
+            }
+        }
+
+        return $typeMap;
+    }
+
+    /**
+     * Derive a route name from a relative page path.
+     * e.g. "pages/⚡donate.blade.php" → "donate"
+     * e.g. "pages/blog/⚡index.blade.php" → "blog.index"
+     */
+    private function routeNameFromPath(string $relativePath): ?string
+    {
+        $path = str_replace(['pages/', '⚡', '.blade.php'], '', $relativePath);
+        $path = str_replace('/', '.', trim($path, '/'));
+
+        return $path ?: null;
     }
 
     /**
@@ -312,7 +361,7 @@ class VoltFileService
             'use Livewire\Attributes\Title;',
             'use Livewire\Component;',
             '',
-            "new #[Layout('layouts.app')] #[Title('{$name}')] class extends Component {",
+            "new #[Layout('layouts.public')] #[Title('{$name}')] class extends Component {",
             '}; ?>',
             '',
             '<div>',
@@ -322,6 +371,179 @@ class VoltFileService
 
         $this->writeFile($fullPath, $content);
         $this->addPublicRoute($slug);
+    }
+
+    /**
+     * Clone an existing page to a new slug, copying its content and registering a new route.
+     * Also adds the new page to the current website type's nav and footer as inactive.
+     */
+    public function clonePage(string $newSlug, string $newName, string $sourceRelativePath): void
+    {
+        $sourcePath = resource_path('views/'.$sourceRelativePath);
+        $destPath = resource_path('views/pages/⚡'.$newSlug.'.blade.php');
+
+        $contents = file_get_contents($sourcePath);
+
+        $contents = preg_replace(
+            "/#\[Title\('([^']*)'\)\]/",
+            "#[Title('{$newName}')]",
+            $contents
+        );
+
+        $this->writeFile($destPath, $contents);
+        $this->addPublicRoute($newSlug);
+
+        $websiteType = config('features.website_type', 'saas');
+        $this->addNavItemsToType($websiteType, $newSlug, $newName);
+    }
+
+    /**
+     * Add a page as an inactive nav and footer item to the given website type.
+     */
+    public function addNavItemsToType(string $type, string $slug, string $label): void
+    {
+        $config = config('navigation', []);
+
+        $newItem = ['label' => $label, 'route' => $slug, 'active' => false];
+
+        $config[$type]['nav'][] = $newItem;
+        $config[$type]['footer_company'][] = $newItem;
+
+        $this->writeNavigationConfig($config);
+    }
+
+    /**
+     * Write the navigation config array back to config/navigation.php.
+     *
+     * @param  array<string, mixed>  $config
+     */
+    public function writeNavigationConfig(array $config): void
+    {
+        $configPath = config_path('navigation.php');
+        file_put_contents($configPath, $this->buildNavConfigFileContents($config));
+
+        if (function_exists('opcache_invalidate')) {
+            opcache_invalidate($configPath, true);
+        }
+
+        config(['navigation' => $config]);
+    }
+
+    /**
+     * Serialize the navigation config array to a PHP file string.
+     *
+     * @param  array<string, mixed>  $config
+     */
+    private function buildNavConfigFileContents(array $config): string
+    {
+        $header = <<<'PHP'
+<?php
+
+/*
+|--------------------------------------------------------------------------
+| Website Type Navigation
+|--------------------------------------------------------------------------
+|
+| Defines the public navigation and footer links for each website type.
+| Set WEBSITE_TYPE in your .env to activate the appropriate config.
+|
+| Each type has:
+|   nav              - primary navigation items (always shown)
+|   show_auth_links  - whether login/register/dashboard appear in the nav
+|   footer_company   - links shown in the footer "Company" column
+|
+*/
+
+return [
+
+PHP;
+
+        $typeBlocks = [];
+
+        foreach ($config as $type => $data) {
+            $showAuth = ($data['show_auth_links'] ?? false) ? 'true' : 'false';
+
+            $navLines = array_map(
+                fn (array $item): string => '            '.$this->formatNavConfigItem($item).',',
+                $data['nav'] ?? [],
+            );
+
+            $footerLines = array_map(
+                fn (array $item): string => '            '.$this->formatNavConfigItem($item).',',
+                $data['footer_company'] ?? [],
+            );
+
+            $typeBlocks[] = implode("\n", [
+                "    '{$type}' => [",
+                "        'nav' => [",
+                ...$navLines,
+                '        ],',
+                "        'show_auth_links' => {$showAuth},",
+                "        'footer_company' => [",
+                ...$footerLines,
+                '        ],',
+                '    ],',
+            ]);
+        }
+
+        return $header.implode("\n\n", $typeBlocks)."\n\n];\n";
+    }
+
+    /**
+     * Serialize a single nav item array to a PHP array literal string.
+     *
+     * @param  array<string, mixed>  $item
+     */
+    private function formatNavConfigItem(array $item): string
+    {
+        $parts = [];
+
+        foreach ($item as $key => $value) {
+            if (is_bool($value)) {
+                $parts[] = "'{$key}' => ".($value ? 'true' : 'false');
+            } else {
+                $escaped = str_replace("'", "\\'", (string) $value);
+                $parts[] = "'{$key}' => '{$escaped}'";
+            }
+        }
+
+        return '['.implode(', ', $parts).']';
+    }
+
+    /**
+     * Delete a page file and remove its route from routes/web.php.
+     */
+    public function deletePage(string $relativePath): void
+    {
+        $fullPath = resource_path('views/'.$relativePath);
+
+        if (file_exists($fullPath)) {
+            unlink($fullPath);
+        }
+
+        $routeName = $this->routeNameFromPath($relativePath);
+
+        if ($routeName) {
+            $this->removePublicRoute($routeName);
+        }
+    }
+
+    /**
+     * Remove a route line from routes/web.php by its route name.
+     */
+    public function removePublicRoute(string $routeName): void
+    {
+        $routesPath = base_path('routes/web.php');
+        $contents = file_get_contents($routesPath);
+        $escapedName = preg_quote($routeName, '/');
+
+        $contents = preg_replace(
+            '/\n\s+Route::livewire\([^\n]+->name\(\''.$escapedName.'\'\);/',
+            '',
+            $contents
+        );
+
+        file_put_contents($routesPath, $contents);
     }
 
     /**
