@@ -44,6 +44,58 @@ it('loads nav items from the active website type config on mount', function (): 
         ]);
 });
 
+it('reorders nav items by drag from index 2 to index 0', function (): void {
+    $user = User::factory()->create();
+
+    Livewire::actingAs($user)
+        ->test('pages::dashboard.menus')
+        ->set('navItems', [
+            ['label' => 'Features', 'route' => 'features'],
+            ['label' => 'Pricing', 'route' => 'pricing'],
+            ['label' => 'About', 'route' => 'about'],
+        ])
+        ->call('reorderNavItems', 2, 0)
+        ->assertSet('navItems', [
+            ['label' => 'About', 'route' => 'about'],
+            ['label' => 'Features', 'route' => 'features'],
+            ['label' => 'Pricing', 'route' => 'pricing'],
+        ]);
+});
+
+it('does not change nav items when reordering from and to the same index', function (): void {
+    $user = User::factory()->create();
+
+    Livewire::actingAs($user)
+        ->test('pages::dashboard.menus')
+        ->set('navItems', [
+            ['label' => 'Features', 'route' => 'features'],
+            ['label' => 'Pricing', 'route' => 'pricing'],
+        ])
+        ->call('reorderNavItems', 1, 1)
+        ->assertSet('navItems', [
+            ['label' => 'Features', 'route' => 'features'],
+            ['label' => 'Pricing', 'route' => 'pricing'],
+        ]);
+});
+
+it('reorders footer items by drag', function (): void {
+    $user = User::factory()->create();
+
+    Livewire::actingAs($user)
+        ->test('pages::dashboard.menus')
+        ->set('footerItems', [
+            ['label' => 'Contact', 'route' => 'contact'],
+            ['label' => 'Blog', 'route' => 'blog.index'],
+            ['label' => 'Privacy', 'url' => 'https://example.com/privacy'],
+        ])
+        ->call('reorderFooterItems', 0, 2)
+        ->assertSet('footerItems', [
+            ['label' => 'Blog', 'route' => 'blog.index'],
+            ['label' => 'Privacy', 'url' => 'https://example.com/privacy'],
+            ['label' => 'Contact', 'route' => 'contact'],
+        ]);
+});
+
 it('moves an item up in the list', function (): void {
     $user = User::factory()->create();
 

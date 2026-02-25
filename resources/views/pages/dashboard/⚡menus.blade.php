@@ -145,6 +145,28 @@ new #[Layout('layouts.app')] #[Title('Menus')] class extends Component {
         $this->navItems = array_values($items);
     }
 
+    public function reorderNavItems(int $from, int $to): void
+    {
+        if ($from === $to) {
+            return;
+        }
+
+        $item = array_splice($this->navItems, $from, 1)[0];
+        array_splice($this->navItems, $to, 0, [$item]);
+        $this->navItems = array_values($this->navItems);
+    }
+
+    public function reorderFooterItems(int $from, int $to): void
+    {
+        if ($from === $to) {
+            return;
+        }
+
+        $item = array_splice($this->footerItems, $from, 1)[0];
+        array_splice($this->footerItems, $to, 0, [$item]);
+        $this->footerItems = array_values($this->footerItems);
+    }
+
     public function removeFooterItem(int $index): void
     {
         array_splice($this->footerItems, $index, 1);
@@ -376,10 +398,25 @@ new #[Layout('layouts.app')] #[Title('Menus')] class extends Component {
             @else
                 <div class="overflow-hidden rounded-lg border border-zinc-200 dark:border-zinc-700">
                     <table class="w-full text-sm">
-                        <tbody class="divide-y divide-zinc-200 dark:divide-zinc-700">
+                        <tbody
+                            class="divide-y divide-zinc-200 dark:divide-zinc-700"
+                            x-data="{ dragging: null, over: null }"
+                        >
                             @foreach ($navItems as $index => $item)
-                                <tr wire:key="nav-item-{{ $index }}" class="bg-white dark:bg-zinc-900">
-                                    <td class="w-8 px-4 py-3 text-zinc-400 dark:text-zinc-500">
+                                <tr
+                                    wire:key="nav-item-{{ $index }}"
+                                    class="bg-white dark:bg-zinc-900 transition-colors"
+                                    draggable="true"
+                                    @dragstart="dragging = {{ $index }}"
+                                    @dragover.prevent="over = {{ $index }}"
+                                    @drop="if (dragging !== null) { $wire.reorderNavItems(dragging, over); } dragging = null; over = null"
+                                    @dragend="dragging = null; over = null"
+                                    :class="{
+                                        'opacity-40': dragging === {{ $index }},
+                                        'bg-blue-50 dark:bg-blue-900/20': over === {{ $index }} && dragging !== null && dragging !== {{ $index }}
+                                    }"
+                                >
+                                    <td class="w-8 cursor-grab px-4 py-3 text-zinc-400 active:cursor-grabbing dark:text-zinc-500">
                                         <flux:icon name="bars-2" class="size-4" />
                                     </td>
                                     <td class="px-4 py-3">
@@ -456,10 +493,25 @@ new #[Layout('layouts.app')] #[Title('Menus')] class extends Component {
             @else
                 <div class="overflow-hidden rounded-lg border border-zinc-200 dark:border-zinc-700">
                     <table class="w-full text-sm">
-                        <tbody class="divide-y divide-zinc-200 dark:divide-zinc-700">
+                        <tbody
+                            class="divide-y divide-zinc-200 dark:divide-zinc-700"
+                            x-data="{ dragging: null, over: null }"
+                        >
                             @foreach ($footerItems as $index => $item)
-                                <tr wire:key="footer-item-{{ $index }}" class="bg-white dark:bg-zinc-900">
-                                    <td class="w-8 px-4 py-3 text-zinc-400 dark:text-zinc-500">
+                                <tr
+                                    wire:key="footer-item-{{ $index }}"
+                                    class="bg-white dark:bg-zinc-900 transition-colors"
+                                    draggable="true"
+                                    @dragstart="dragging = {{ $index }}"
+                                    @dragover.prevent="over = {{ $index }}"
+                                    @drop="if (dragging !== null) { $wire.reorderFooterItems(dragging, over); } dragging = null; over = null"
+                                    @dragend="dragging = null; over = null"
+                                    :class="{
+                                        'opacity-40': dragging === {{ $index }},
+                                        'bg-blue-50 dark:bg-blue-900/20': over === {{ $index }} && dragging !== null && dragging !== {{ $index }}
+                                    }"
+                                >
+                                    <td class="w-8 cursor-grab px-4 py-3 text-zinc-400 active:cursor-grabbing dark:text-zinc-500">
                                         <flux:icon name="bars-2" class="size-4" />
                                     </td>
                                     <td class="px-4 py-3">
