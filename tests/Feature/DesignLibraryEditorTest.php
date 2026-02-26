@@ -65,7 +65,7 @@ it('loads and parses a volt file into rows', function (): void {
     $user = User::factory()->create();
 
     $component = Livewire::actingAs($user)
-        ->test('pages::dashboard.design-library.editor')
+        ->test('pages::dashboard.pages.editor')
         ->call('loadFile', $this->tempRelativePath);
 
     expect($component->get('rows'))->toHaveCount(2);
@@ -82,7 +82,7 @@ it('wraps legacy content without row markers in a legacy row', function (): void
     $user = User::factory()->create();
 
     $component = Livewire::actingAs($user)
-        ->test('pages::dashboard.design-library.editor')
+        ->test('pages::dashboard.pages.editor')
         ->call('loadFile', $legacyRelativePath);
 
     expect($component->get('rows'))->toHaveCount(1);
@@ -95,7 +95,7 @@ it('can move a row up', function (): void {
     $user = User::factory()->create();
 
     $component = Livewire::actingAs($user)
-        ->test('pages::dashboard.design-library.editor')
+        ->test('pages::dashboard.pages.editor')
         ->call('loadFile', $this->tempRelativePath)
         ->call('moveRowUp', 1);
 
@@ -108,7 +108,7 @@ it('does not move a row up when already at the top', function (): void {
     $user = User::factory()->create();
 
     $component = Livewire::actingAs($user)
-        ->test('pages::dashboard.design-library.editor')
+        ->test('pages::dashboard.pages.editor')
         ->call('loadFile', $this->tempRelativePath)
         ->call('moveRowUp', 0);
 
@@ -119,7 +119,7 @@ it('can move a row down', function (): void {
     $user = User::factory()->create();
 
     $component = Livewire::actingAs($user)
-        ->test('pages::dashboard.design-library.editor')
+        ->test('pages::dashboard.pages.editor')
         ->call('loadFile', $this->tempRelativePath)
         ->call('moveRowDown', 0);
 
@@ -132,7 +132,7 @@ it('does not move a row down when already at the bottom', function (): void {
     $user = User::factory()->create();
 
     $component = Livewire::actingAs($user)
-        ->test('pages::dashboard.design-library.editor')
+        ->test('pages::dashboard.pages.editor')
         ->call('loadFile', $this->tempRelativePath)
         ->call('moveRowDown', 1);
 
@@ -143,7 +143,7 @@ it('can remove a row', function (): void {
     $user = User::factory()->create();
 
     $component = Livewire::actingAs($user)
-        ->test('pages::dashboard.design-library.editor')
+        ->test('pages::dashboard.pages.editor')
         ->call('loadFile', $this->tempRelativePath)
         ->call('removeRow', 0);
 
@@ -160,7 +160,7 @@ it('can insert a row from the library at a given index', function (): void {
     ]);
 
     $component = Livewire::actingAs($user)
-        ->test('pages::dashboard.design-library.editor')
+        ->test('pages::dashboard.pages.editor')
         ->call('loadFile', $this->tempRelativePath)
         ->call('insertRow', $designRow->id, 0);
 
@@ -173,7 +173,7 @@ it('saves file content to disk', function (): void {
     $user = User::factory()->create();
 
     Livewire::actingAs($user)
-        ->test('pages::dashboard.design-library.editor')
+        ->test('pages::dashboard.pages.editor')
         ->call('loadFile', $this->tempRelativePath)
         ->call('moveRowDown', 0)
         ->call('saveFile');
@@ -188,7 +188,7 @@ it('marks file as clean after saving', function (): void {
     $user = User::factory()->create();
 
     $component = Livewire::actingAs($user)
-        ->test('pages::dashboard.design-library.editor')
+        ->test('pages::dashboard.pages.editor')
         ->call('loadFile', $this->tempRelativePath)
         ->call('moveRowDown', 0)
         ->call('saveFile');
@@ -206,7 +206,7 @@ it('syncs the library when the insert drawer is opened', function (): void {
     expect(DesignRow::where('source_file', $sourceFile)->exists())->toBeFalse();
 
     Livewire::actingAs($user)
-        ->test('pages::dashboard.design-library.editor')
+        ->test('pages::dashboard.pages.editor')
         ->call('openLibraryDrawer', 0);
 
     expect(DesignRow::where('source_file', $sourceFile)->exists())->toBeTrue();
@@ -216,7 +216,7 @@ it('discards changes by reloading from disk', function (): void {
     $user = User::factory()->create();
 
     $component = Livewire::actingAs($user)
-        ->test('pages::dashboard.design-library.editor')
+        ->test('pages::dashboard.pages.editor')
         ->call('loadFile', $this->tempRelativePath)
         ->call('moveRowDown', 0);
 

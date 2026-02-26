@@ -480,6 +480,13 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component 
         @endif
     </flux:modal>
 
+    {{-- Global loading spinner --}}
+    <div wire:loading class="fixed inset-0 z-50 flex items-center justify-center pointer-events-none">
+        <div class="bg-white dark:bg-zinc-800 rounded-full p-3 shadow-xl">
+            <flux:icon name="arrow-path" class="size-6 animate-spin text-zinc-500 dark:text-zinc-400" />
+        </div>
+    </div>
+
     <div class="flex flex-col min-h-screen bg-white dark:bg-zinc-900">
         {{-- Editor toolbar --}}
         <div class="sticky top-0 z-30 bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-700 px-6 py-3 flex flex-wrap items-center gap-3">
@@ -676,7 +683,9 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component 
                                             size="sm"
                                             icon="arrow-up"
                                             :disabled="$index === 0"
+                                            :class="$index === 0 ? 'opacity-15!' : ''"
                                             title="Move up"
+                                            :loading="false"
                                         />
                                         <flux:button
                                             wire:click="moveRowDown({{ $index }})"
@@ -684,16 +693,36 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component 
                                             size="sm"
                                             icon="arrow-down"
                                             :disabled="$index === count($rows) - 1"
+                                            :class="$index === count($rows) - 1 ? 'opacity-15!' : ''"
                                             title="Move down"
+                                            :loading="false"
                                         />
                                         <flux:button
                                             wire:click="openLibraryDrawer({{ $index }})"
                                             variant="ghost"
                                             size="sm"
-                                            icon="plus"
-                                            title="Insert row before this"
-                                            class="ml-auto"
-                                        />
+                                            title="Insert row above"
+                                            class="ml-auto px-1!"
+                                            :loading="false"
+                                        >
+                                            <span class="inline-flex items-center">
+                                                <flux:icon name="plus" class="size-3" />
+                                                <flux:icon name="arrow-up" class="size-3" />
+                                            </span>
+                                        </flux:button>
+                                        <flux:button
+                                            wire:click="openLibraryDrawer({{ $index + 1 }})"
+                                            variant="ghost"
+                                            size="sm"
+                                            title="Insert row below"
+                                            class="px-1!"
+                                            :loading="false"
+                                        >
+                                            <span class="inline-flex items-center">
+                                                <flux:icon name="plus" class="size-3" />
+                                                <flux:icon name="arrow-down" class="size-3" />
+                                            </span>
+                                        </flux:button>
                                         <flux:button
                                             wire:click="removeRow({{ $index }})"
                                             wire:confirm="Remove this row from the page?"
@@ -702,6 +731,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component 
                                             icon="trash"
                                             class="text-red-500 dark:text-red-400"
                                             title="Remove row"
+                                            :loading="false"
                                         />
                                     </div>
                                 </div>
