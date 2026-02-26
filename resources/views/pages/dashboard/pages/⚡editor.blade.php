@@ -487,14 +487,21 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component 
         </div>
     </div>
 
-    <div class="flex flex-col min-h-screen bg-white dark:bg-zinc-900">
+    <div
+        x-data="{
+            previewWidth: null,
+            showAllBreakpoints: false,
+            setWidth(w) { this.previewWidth = this.previewWidth === w ? null : w; }
+        }"
+        class="flex flex-col min-h-screen bg-white dark:bg-zinc-900"
+    >
         {{-- Editor toolbar --}}
-        <div class="sticky top-0 z-30 bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-700 px-6 py-3 flex flex-wrap items-center gap-3">
+        <div class="sticky top-0 z-30 bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-700 px-6 py-3 flex items-center gap-3">
             <flux:button href="{{ route('dashboard.pages') }}" variant="outline" size="sm" icon="list-bullet" wire:navigate>
                 {{ __('Pages') }}
             </flux:button>
 
-            <div class="w-48">
+            <div class="w-48 shrink-0">
                 <flux:select wire:model.live="file" placeholder="Select a page to edit…" size="sm">
                     <flux:select.option value="">{{ __('Select a page…') }}</flux:select.option>
                     @foreach ($this->voltFiles as $label => $path)
@@ -503,7 +510,115 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component 
                 </flux:select>
             </div>
 
-            <div class="flex items-center gap-2 ml-auto">
+            {{-- Center: preview width controls --}}
+            <div class="flex-1 flex justify-center items-center gap-1">
+                @if ($file)
+                    <div x-show="! showAllBreakpoints" class="flex items-center gap-0.5">
+                        <flux:button
+                            size="sm"
+                            variant="ghost"
+                            icon="device-phone-mobile"
+                            x-on:click="setWidth('390px')"
+                            x-bind:class="previewWidth === '390px' ? 'bg-zinc-200! dark:bg-zinc-700!' : ''"
+                            title="Mobile (390px)"
+                            :loading="false"
+                        />
+                        <flux:button
+                            size="sm"
+                            variant="ghost"
+                            icon="device-tablet"
+                            x-on:click="setWidth('768px')"
+                            x-bind:class="previewWidth === '768px' && ! showAllBreakpoints ? 'bg-zinc-200! dark:bg-zinc-700!' : ''"
+                            title="Tablet (768px)"
+                            :loading="false"
+                        />
+                        <flux:button
+                            size="sm"
+                            variant="ghost"
+                            icon="computer-desktop"
+                            x-on:click="setWidth(null)"
+                            x-bind:class="previewWidth === null ? 'bg-zinc-200! dark:bg-zinc-700!' : ''"
+                            title="Desktop (full width)"
+                            :loading="false"
+                        />
+                    </div>
+
+                    <div x-show="showAllBreakpoints" class="flex items-center gap-0.5" style="display: none">
+                        <flux:button
+                            size="sm"
+                            variant="ghost"
+                            icon="device-phone-mobile"
+                            x-on:click="setWidth('375px')"
+                            x-bind:class="previewWidth === '375px' ? 'bg-zinc-200! dark:bg-zinc-700!' : ''"
+                            title="Mobile (375px)"
+                            :loading="false"
+                        />
+                        <flux:button
+                            size="sm"
+                            variant="ghost"
+                            x-on:click="setWidth('640px')"
+                            x-bind:class="previewWidth === '640px' ? 'bg-zinc-200! dark:bg-zinc-700!' : ''"
+                            title="SM — 640px"
+                            :loading="false"
+                        >sm</flux:button>
+                        <flux:button
+                            size="sm"
+                            variant="ghost"
+                            x-on:click="setWidth('768px')"
+                            x-bind:class="previewWidth === '768px' ? 'bg-zinc-200! dark:bg-zinc-700!' : ''"
+                            title="MD — 768px"
+                            :loading="false"
+                        >md</flux:button>
+                        <flux:button
+                            size="sm"
+                            variant="ghost"
+                            x-on:click="setWidth('1024px')"
+                            x-bind:class="previewWidth === '1024px' ? 'bg-zinc-200! dark:bg-zinc-700!' : ''"
+                            title="LG — 1024px"
+                            :loading="false"
+                        >lg</flux:button>
+                        <flux:button
+                            size="sm"
+                            variant="ghost"
+                            x-on:click="setWidth('1280px')"
+                            x-bind:class="previewWidth === '1280px' ? 'bg-zinc-200! dark:bg-zinc-700!' : ''"
+                            title="XL — 1280px"
+                            :loading="false"
+                        >xl</flux:button>
+                        <flux:button
+                            size="sm"
+                            variant="ghost"
+                            x-on:click="setWidth('1536px')"
+                            x-bind:class="previewWidth === '1536px' ? 'bg-zinc-200! dark:bg-zinc-700!' : ''"
+                            title="2XL — 1536px"
+                            :loading="false"
+                        >2xl</flux:button>
+                        <flux:button
+                            size="sm"
+                            variant="ghost"
+                            icon="computer-desktop"
+                            x-on:click="setWidth(null)"
+                            x-bind:class="previewWidth === null ? 'bg-zinc-200! dark:bg-zinc-700!' : ''"
+                            title="Desktop (full width)"
+                            :loading="false"
+                        />
+                    </div>
+
+                    <div class="w-px h-4 bg-zinc-200 dark:bg-zinc-700 mx-1"></div>
+
+                    <flux:button
+                        size="sm"
+                        variant="ghost"
+                        icon="adjustments-horizontal"
+                        x-on:click="showAllBreakpoints = ! showAllBreakpoints"
+                        x-bind:class="showAllBreakpoints ? 'bg-zinc-200! dark:bg-zinc-700!' : ''"
+                        title="Toggle breakpoint mode"
+                        :loading="false"
+                    />
+                @endif
+            </div>
+
+            <div class="flex items-center gap-2">
                 @if ($isDirty)
                     <span class="text-xs text-amber-600 dark:text-amber-400 font-medium">Unsaved changes</span>
                 @endif
@@ -755,15 +870,20 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component 
                 </div>
 
                 {{-- Right panel: iframe preview --}}
-                <div class="flex-1 flex flex-col bg-zinc-100 dark:bg-zinc-950">
+                <div class="flex-1 flex flex-col bg-zinc-100 dark:bg-zinc-950 overflow-auto">
 @if ($previewUrl)
-                        <iframe
-                            wire:ignore
-                            id="page-preview"
-                            class="flex-1 w-full border-0"
-                            x-init="$el.src = {{ Js::from($previewUrl) }}"
-                            x-on:refresh-preview.window="$el.src = $event.detail.url + '?_=' + Date.now()"
-                        ></iframe>
+                        <div
+                            class="flex-1 flex flex-col mx-auto w-full transition-all duration-300"
+                            :style="previewWidth ? 'max-width: ' + previewWidth : 'max-width: 100%'"
+                        >
+                            <iframe
+                                wire:ignore
+                                id="page-preview"
+                                class="flex-1 w-full border-0"
+                                x-init="$el.src = {{ Js::from($previewUrl) }}"
+                                x-on:refresh-preview.window="$el.src = $event.detail.url + '?_=' + Date.now()"
+                            ></iframe>
+                        </div>
                     @else
                         <div class="flex-1 flex items-center justify-center text-zinc-400 dark:text-zinc-600">
                             <div class="text-center">
