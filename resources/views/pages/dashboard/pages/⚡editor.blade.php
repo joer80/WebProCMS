@@ -33,6 +33,11 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component 
     public string $libraryCategory = '';
     public ?int $insertAtIndex = null;
 
+    public bool $showSeoModal = false;
+    public string $seoTitle = '';
+    public string $seoDescription = '';
+    public bool $seoNoindex = false;
+
     // Content editor state
     public bool $showContentEditor = false;
     public ?int $editingRowIndex = null;
@@ -145,6 +150,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component 
         $this->phpSection = $parsed['phpSection'];
         $this->rows = $parsed['rows'];
         $this->isDirty = false;
+        $this->parseSeoFromPhpSection();
         $this->liveUrl = $service->getRouteForFile($relativePath);
         $this->previewUrl = route('design-library.preview', ['token' => $service->previewToken($relativePath)]);
 
@@ -415,6 +421,60 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component 
         return $fields;
     }
 
+    public function saveSeoSettings(): void
+    {
+        if (! $this->file) {
+            return;
+        }
+
+        $this->updatePhpSectionWithSeo();
+        $this->showSeoModal = false;
+        $this->saveFile();
+    }
+
+    private function parseSeoFromPhpSection(): void
+    {
+        preg_match("/#\[Title\('([^']*)'\)\]/", $this->phpSection, $titleMatch);
+        $this->seoTitle = $titleMatch[1] ?? '';
+
+        preg_match("/'description'\s*=>\s*'([^']*)'/", $this->phpSection, $descMatch);
+        $this->seoDescription = $descMatch[1] ?? '';
+
+        $this->seoNoindex = (bool) preg_match("/'noindex'\s*=>\s*true/", $this->phpSection);
+    }
+
+    private function updatePhpSectionWithSeo(): void
+    {
+        $escapedTitle = str_replace("'", "\'", $this->seoTitle);
+        $escapedDesc = str_replace("'", "\'", $this->seoDescription);
+
+        $this->phpSection = preg_replace(
+            "/#\[Title\('([^']*)'\)\]/",
+            "#[Title('{$escapedTitle}')]",
+            $this->phpSection
+        );
+
+        $data = [];
+
+        if (! empty($escapedDesc)) {
+            $data[] = "'description' => '{$escapedDesc}'";
+        }
+
+        if ($this->seoNoindex) {
+            $data[] = "'noindex' => true";
+        }
+
+        $newLayout = empty($data)
+            ? "#[Layout('layouts.public')]"
+            : "#[Layout('layouts.public', [" . implode(', ', $data) . "])]";
+
+        $this->phpSection = preg_replace(
+            "/#\[Layout\('layouts\.public'(?:,\s*\[[^\]]*\])?\)\]/",
+            $newLayout,
+            $this->phpSection
+        );
+    }
+
     private function refreshPreview(): void
     {
         try {
@@ -605,7 +665,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component 
                     <flux:button
                         size="sm"
                         variant="ghost"
-                        icon="adjustments-horizontal"
+                        icon="arrows-right-left"
                         x-on:click="showAllBreakpoints = ! showAllBreakpoints"
                         x-bind:class="showAllBreakpoints ? 'bg-zinc-200! dark:bg-zinc-700!' : ''"
                         title="Toggle breakpoint mode"
@@ -620,6 +680,10 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component 
                 @endif
 
                 @if ($file)
+                    <flux:tooltip content="Page settings">
+                        <flux:button variant="ghost" size="sm" icon="adjustments-horizontal" wire:click="$set('showSeoModal', true)" :loading="false" />
+                    </flux:tooltip>
+
                     @if ($liveUrl)
                         <a href="{{ $liveUrl }}" target="_blank">
                             <flux:button variant="outline" size="sm" icon="arrow-top-right-on-square">{{ __('View Live') }}</flux:button>
@@ -905,4 +969,39 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component 
             </div>
         @endif
     </div>
+
+    {{-- SEO / Page Settings modal --}}
+    <flux:modal wire:model="showSeoModal" class="w-full max-w-lg">
+        <flux:heading size="lg">Page Settings</flux:heading>
+
+        <div class="mt-6 space-y-4">
+            <flux:heading size="base">SEO</flux:heading>
+
+            <flux:input
+                label="Page Title"
+                wire:model="seoTitle"
+                description="Shown in the browser tab and search engine results."
+            />
+
+            <flux:textarea
+                label="Meta Description"
+                wire:model="seoDescription"
+                rows="3"
+                description="A short summary of the page for search engines (150–160 characters recommended)."
+            />
+
+            <flux:switch
+                label="No Index"
+                description="Prevent search engines from indexing this page."
+                wire:model="seoNoindex"
+            />
+        </div>
+
+        <div class="mt-6 flex justify-end gap-2">
+            <flux:modal.close>
+                <flux:button variant="ghost">Cancel</flux:button>
+            </flux:modal.close>
+            <flux:button variant="primary" wire:click="saveSeoSettings">Save</flux:button>
+        </div>
+    </flux:modal>
 </div>
