@@ -118,11 +118,11 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component 
         $this->refreshPreview();
     }
 
-    /** @return array<string, array<string, string>> */
+    /** @return array<string, string> */
     #[Computed]
     public function voltFiles(): array
     {
-        return (new VoltFileService)->listVoltFiles();
+        return (new VoltFileService)->listVoltFiles()['Public Pages'] ?? [];
     }
 
     /** @return \Illuminate\Database\Eloquent\Collection<int, DesignRow> */
@@ -427,7 +427,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component 
             // Preview write failed; continue without updating the iframe.
         }
 
-        $this->dispatch('refresh-preview');
+        $this->dispatch('refresh-preview', url: $this->previewUrl);
     }
 }; ?>
 
@@ -483,19 +483,15 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component 
     <div class="flex flex-col min-h-screen bg-white dark:bg-zinc-900">
         {{-- Editor toolbar --}}
         <div class="sticky top-0 z-30 bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-700 px-6 py-3 flex flex-wrap items-center gap-3">
-            <a href="{{ route('dashboard.pages') }}" class="text-sm text-zinc-500 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-200 font-medium" wire:navigate>
-                {{ __('Back To Pages') }}
-            </a>
+            <flux:button href="{{ route('dashboard.pages') }}" variant="outline" size="sm" icon="list-bullet" wire:navigate>
+                {{ __('Pages') }}
+            </flux:button>
 
-            <div class="flex-1 min-w-0 max-w-xs">
-                <flux:select wire:model.live="file" placeholder="Select a page to edit…">
+            <div class="w-48">
+                <flux:select wire:model.live="file" placeholder="Select a page to edit…" size="sm">
                     <flux:select.option value="">{{ __('Select a page…') }}</flux:select.option>
-                    @foreach ($this->voltFiles as $group => $files)
-                        <optgroup label="{{ $group }}">
-                            @foreach ($files as $label => $path)
-                                <flux:select.option value="{{ $path }}">{{ $label }}</flux:select.option>
-                            @endforeach
-                        </optgroup>
+                    @foreach ($this->voltFiles as $label => $path)
+                        <flux:select.option value="{{ $path }}">{{ $label }}</flux:select.option>
                     @endforeach
                 </flux:select>
             </div>
@@ -730,22 +726,13 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component 
 
                 {{-- Right panel: iframe preview --}}
                 <div class="flex-1 flex flex-col bg-zinc-100 dark:bg-zinc-950">
-                    <div class="flex items-center justify-between px-4 py-2 border-b border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900">
-                        <flux:text class="text-xs text-zinc-500 dark:text-zinc-400 font-mono truncate">
-                            {{ $liveUrl ?: __('Preview will appear after loading a page') }}
-                            @if ($isDirty)
-                                <span class="text-amber-500">(unsaved)</span>
-                            @endif
-                        </flux:text>
-                    </div>
-
-                    @if ($previewUrl)
+@if ($previewUrl)
                         <iframe
                             wire:ignore
                             id="page-preview"
                             class="flex-1 w-full border-0"
                             x-init="$el.src = {{ Js::from($previewUrl) }}"
-                            x-on:refresh-preview.window="$el.src = $el.src.split('?')[0] + '?_=' + Date.now()"
+                            x-on:refresh-preview.window="$el.src = $event.detail.url + '?_=' + Date.now()"
                         ></iframe>
                     @else
                         <div class="flex-1 flex items-center justify-center text-zinc-400 dark:text-zinc-600">
