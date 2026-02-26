@@ -203,6 +203,20 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component 
         $this->refreshPreview();
     }
 
+    public function reorderRows(int $from, int $to): void
+    {
+        if ($from === $to) {
+            return;
+        }
+
+        $row = array_splice($this->rows, $from, 1)[0];
+        array_splice($this->rows, $to, 0, [$row]);
+        $this->rows = array_values($this->rows);
+        $this->isDirty = true;
+
+        $this->refreshPreview();
+    }
+
     public function removeRow(int $index): void
     {
         $slug = $this->rows[$index]['slug'] ?? null;
@@ -775,11 +789,21 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component 
                             <flux:text class="text-xs mt-1 text-zinc-400 dark:text-zinc-500">{{ count($rows) }} {{ Str::plural('row', count($rows)) }}</flux:text>
                         </div>
 
-                        <div class="flex-1 overflow-y-auto p-3 space-y-2">
+                        <div class="flex-1 overflow-y-auto p-3 space-y-2" x-data="{ dragging: null, over: null }">
                             @forelse ($rows as $index => $row)
                                 <div
                                     wire:key="row-item-{{ $row['slug'] }}"
                                     class="rounded-lg border bg-white dark:bg-zinc-900 overflow-hidden transition-colors {{ $editingRowIndex === $index ? 'border-primary' : 'border-zinc-200 dark:border-zinc-700' }}"
+                                    draggable="true"
+                                    @dragstart="dragging = {{ $index }}"
+                                    @dragover.prevent="over = {{ $index }}"
+                                    @drop="if (dragging !== null) { $wire.reorderRows(dragging, over); } dragging = null; over = null"
+                                    @dragend="dragging = null; over = null"
+                                    :style="{
+                                        opacity: dragging === {{ $index }} ? '0.4' : '',
+                                        'border-top': over === {{ $index }} && dragging !== null && dragging > {{ $index }} ? '2px solid var(--color-primary)' : '',
+                                        'border-bottom': over === {{ $index }} && dragging !== null && dragging < {{ $index }} ? '2px solid var(--color-primary)' : ''
+                                    }"
                                 >
                                     {{-- Clickable name area opens content editor --}}
                                     <button
@@ -792,6 +816,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component 
 
                                     {{-- Row actions --}}
                                     <div class="flex items-center gap-0.5 px-2 pb-2">
+                                        <flux:icon name="bars-2" class="size-4 text-zinc-400 dark:text-zinc-500 cursor-grab active:cursor-grabbing shrink-0 mr-1" title="Drag to reorder" />
                                         <flux:button
                                             wire:click="moveRowUp({{ $index }})"
                                             variant="ghost"
