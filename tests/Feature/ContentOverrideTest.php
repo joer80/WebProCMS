@@ -90,3 +90,83 @@ it('deletes all overrides for a row slug without affecting other rows', function
     expect(ContentOverride::where('row_slug', 'hero-abc123')->count())->toBe(0)
         ->and(ContentOverride::where('row_slug', 'cta-xyz789')->count())->toBe(1);
 });
+
+describe('session draft overrides', function (): void {
+    /** Simulate a preview request by setting the route resolver to return the named preview route. */
+    function simulatePreviewRequest(): void
+    {
+        $route = (new \Illuminate\Routing\Route(['GET'], '/preview', []))->name('design-library.preview');
+        request()->setRouteResolver(fn () => $route);
+    }
+
+    afterEach(function (): void {
+        request()->setRouteResolver(fn () => null);
+    });
+
+    it('ignores session drafts on non-preview requests', function (): void {
+        session(['editor_draft_overrides' => ['hero-abc123:headline' => 'Draft Value']]);
+
+        ContentOverride::create([
+            'row_slug' => 'hero-abc123',
+            'key' => 'headline',
+            'type' => 'text',
+            'value' => 'DB Value',
+        ]);
+
+        expect(content('hero-abc123', 'headline', 'Default'))->toBe('DB Value');
+    });
+
+    it('returns session draft over db value on preview requests', function (): void {
+        session(['editor_draft_overrides' => ['hero-abc123:headline' => 'Draft Value']]);
+
+        ContentOverride::create([
+            'row_slug' => 'hero-abc123',
+            'key' => 'headline',
+            'type' => 'text',
+            'value' => 'DB Value',
+        ]);
+
+        simulatePreviewRequest();
+
+        expect(content('hero-abc123', 'headline', 'Default'))->toBe('Draft Value');
+    });
+
+    it('returns default when session draft is empty string on preview request', function (): void {
+        session(['editor_draft_overrides' => ['hero-abc123:headline' => '']]);
+
+        ContentOverride::create([
+            'row_slug' => 'hero-abc123',
+            'key' => 'headline',
+            'type' => 'text',
+            'value' => 'DB Value',
+        ]);
+
+        simulatePreviewRequest();
+
+        expect(content('hero-abc123', 'headline', 'Default'))->toBe('Default');
+    });
+
+    it('returns storage url for session draft image on preview request', function (): void {
+        Storage::fake('public');
+
+        session(['editor_draft_overrides' => ['hero-abc123:image' => 'content-overrides/draft.jpg']]);
+
+        simulatePreviewRequest();
+
+        expect(content('hero-abc123', 'image', '/placeholder.jpg', 'image'))
+            ->toContain('content-overrides/draft.jpg');
+    });
+
+    it('falls back to db value when no session draft exists on preview request', function (): void {
+        ContentOverride::create([
+            'row_slug' => 'hero-abc123',
+            'key' => 'headline',
+            'type' => 'text',
+            'value' => 'DB Value',
+        ]);
+
+        simulatePreviewRequest();
+
+        expect(content('hero-abc123', 'headline', 'Default'))->toBe('DB Value');
+    });
+});

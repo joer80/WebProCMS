@@ -76,10 +76,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component 
         $field = collect($this->contentFields)->firstWhere('key', $this->pendingImageKey);
 
         if ($field) {
-            ContentOverride::updateOrCreate(
-                ['row_slug' => $field['slug'], 'key' => $field['key']],
-                ['type' => $field['type'], 'value' => $path]
-            );
+            session()->put('editor_draft_overrides.'.$field['slug'].':'.$field['key'], $path);
             $this->refreshPreview();
         }
     }
@@ -93,27 +90,9 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component 
         }
 
         $raw = $this->contentValues[$key] ?? '';
+        $draftValue = $field['type'] === 'toggle' ? ($raw ? '1' : '0') : (string) $raw;
 
-        if ($field['type'] === 'toggle') {
-            ContentOverride::updateOrCreate(
-                ['row_slug' => $field['slug'], 'key' => $field['key']],
-                ['type' => $field['type'], 'value' => $raw ? '1' : '0']
-            );
-        } else {
-            $strValue = (string) $raw;
-
-            if ($strValue === '') {
-                ContentOverride::query()
-                    ->where('row_slug', $field['slug'])
-                    ->where('key', $field['key'])
-                    ->delete();
-            } else {
-                ContentOverride::updateOrCreate(
-                    ['row_slug' => $field['slug'], 'key' => $field['key']],
-                    ['type' => $field['type'], 'value' => $strValue]
-                );
-            }
-        }
+        session()->put('editor_draft_overrides.'.$field['slug'].':'.$key, $draftValue);
 
         $this->refreshPreview();
     }
@@ -297,17 +276,27 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component 
             ->get()
             ->keyBy(fn (ContentOverride $o) => $o->row_slug.':'.$o->key);
 
+        $drafts = session('editor_draft_overrides', []);
+
         $this->contentValues = [];
+        $this->originalContentValues = [];
 
         foreach ($this->contentFields as $field) {
             $dbKey = $field['slug'].':'.$field['key'];
-            $rawValue = $overrides->get($dbKey)?->value;
+            $dbValue = $overrides->get($dbKey)?->value;
+
+            // originalContentValues always reflects the last-saved DB state
+            $this->originalContentValues[$field['key']] = $field['type'] === 'toggle'
+                ? ($dbValue !== null ? $dbValue === '1' : $field['default'] === '1')
+                : ($dbValue ?? '');
+
+            // contentValues prefers any unsaved session draft
+            $rawValue = array_key_exists($dbKey, $drafts) ? $drafts[$dbKey] : $dbValue;
             $this->contentValues[$field['key']] = $field['type'] === 'toggle'
                 ? ($rawValue !== null ? $rawValue === '1' : $field['default'] === '1')
                 : ($rawValue ?? '');
         }
 
-        $this->originalContentValues = $this->contentValues;
         $this->showContentEditor = true;
     }
 
@@ -330,8 +319,11 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component 
 
     public function cancelContentEditor(): void
     {
+        foreach ($this->contentFields as $field) {
+            session()->forget('editor_draft_overrides.'.$field['slug'].':'.$field['key']);
+        }
+
         $this->contentValues = $this->originalContentValues;
-        $this->persistContentOverrides();
         $this->refreshPreview();
         $this->showContentEditor = false;
     }
@@ -346,22 +338,23 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component 
                     ['row_slug' => $field['slug'], 'key' => $field['key']],
                     ['type' => $field['type'], 'value' => $raw ? '1' : '0']
                 );
-                continue;
-            }
-
-            $value = (string) $raw;
-
-            if ($value === '') {
-                ContentOverride::query()
-                    ->where('row_slug', $field['slug'])
-                    ->where('key', $field['key'])
-                    ->delete();
             } else {
-                ContentOverride::updateOrCreate(
-                    ['row_slug' => $field['slug'], 'key' => $field['key']],
-                    ['type' => $field['type'], 'value' => $value]
-                );
+                $value = (string) $raw;
+
+                if ($value === '') {
+                    ContentOverride::query()
+                        ->where('row_slug', $field['slug'])
+                        ->where('key', $field['key'])
+                        ->delete();
+                } else {
+                    ContentOverride::updateOrCreate(
+                        ['row_slug' => $field['slug'], 'key' => $field['key']],
+                        ['type' => $field['type'], 'value' => $value]
+                    );
+                }
             }
+
+            session()->forget('editor_draft_overrides.'.$field['slug'].':'.$field['key']);
         }
     }
 
@@ -672,8 +665,8 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component 
             </div>
         @else
             <div class="flex" style="height: calc(100vh - 120px);">
-                {{-- Left panel: row list / inline content editor --}}
-                <div class="w-96 shrink-0 border-r border-zinc-200 dark:border-zinc-700 flex flex-col">
+                {{-- Right panel: row list / inline content editor --}}
+                <div class="w-96 shrink-0 order-last border-l border-zinc-200 dark:border-zinc-700 flex flex-col">
                     @if ($showContentEditor && $editingRowIndex !== null && isset($rows[$editingRowIndex]))
                         {{-- Content editor view --}}
                         <div class="shrink-0 flex items-center gap-2 p-3 border-b border-zinc-200 dark:border-zinc-700">
@@ -786,7 +779,6 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component 
                         {{-- Row list view --}}
                         <div class="shrink-0 p-4 border-b border-zinc-200 dark:border-zinc-700">
                             <flux:heading size="sm" class="text-zinc-600 dark:text-zinc-400">{{ __('Page Rows') }}</flux:heading>
-                            <flux:text class="text-xs mt-1 text-zinc-400 dark:text-zinc-500">{{ count($rows) }} {{ Str::plural('row', count($rows)) }}</flux:text>
                         </div>
 
                         <div class="flex-1 overflow-y-auto p-3 space-y-2" x-data="{ dragging: null, over: null }">
@@ -900,8 +892,8 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component 
                     @endif
                 </div>
 
-                {{-- Right panel: iframe preview --}}
-                <div class="flex-1 flex flex-col bg-zinc-100 dark:bg-zinc-950 overflow-auto">
+                {{-- Left panel: iframe preview --}}
+                <div class="flex-1 flex flex-col bg-zinc-100 dark:bg-zinc-950 overflow-auto order-first">
 @if ($previewUrl)
                         <div
                             class="flex-1 flex flex-col mx-auto w-full transition-all duration-300"
