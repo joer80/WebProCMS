@@ -36,8 +36,9 @@
                 </ul>
             </div>
         </div>
-        <div class="border-t border-zinc-800 pt-8 text-sm text-zinc-500 text-center">
-            &copy; {{ date('Y') }} Brand, Inc. All rights reserved.
+        <div class="border-t border-zinc-800 pt-8 flex flex-col sm:flex-row items-center justify-between gap-2 text-sm text-zinc-500">
+            <span>&copy; {{ date('Y') }} Brand, Inc. All rights reserved.</span>
+            <span>Powered by <a href="https://www.webprocms.com" class="hover:text-white transition-colors">WebProCMS</a></span>
         </div>
     </div>
 </footer>

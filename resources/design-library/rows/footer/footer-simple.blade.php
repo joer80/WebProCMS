@@ -15,6 +15,9 @@
             <a href="#" class="hover:text-white transition-colors">Contact</a>
             <a href="#" class="hover:text-white transition-colors">Privacy</a>
         </nav>
-        <p class="text-sm">&copy; {{ date('Y') }} Brand. All rights reserved.</p>
+        <div class="text-sm text-right">
+            <p>&copy; {{ date('Y') }} Brand. All rights reserved.</p>
+            <p>Powered by <a href="https://www.webprocms.com" class="hover:text-white transition-colors">WebProCMS</a></p>
+        </div>
     </div>
 </footer>
