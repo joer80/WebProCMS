@@ -510,9 +510,9 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component 
                     <flux:button wire:click="saveFile" variant="primary" size="sm" icon="check">
                         {{ __('Save') }}
                     </flux:button>
-                    <flux:button wire:click="discardChanges" variant="ghost" size="sm">
-                        {{ __('Discard') }}
-                    </flux:button>
+                    <flux:tooltip content="Discard changes">
+                        <flux:button wire:click="discardChanges" variant="ghost" size="sm" icon="arrow-path" />
+                    </flux:tooltip>
                 @endif
             </div>
         </div>
