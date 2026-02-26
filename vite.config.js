@@ -21,6 +21,9 @@ export default defineConfig({
 
                 //Doesnt need hot reload. We can not see the front end menu while editing anyway, and it refreshes the page messing with the toast message.
                 '**/config/navigation.php',
+
+                //Top level Blade files are written at runtime by the editor. The editor handles its own preview refresh, so Vite watching these causes a full page reload that wipes toast notifications. Subdirectories like dashboard still hot reload in vite.
+                '**/resources/views/pages/⚡*.blade.php',
             ],
         },
     },
