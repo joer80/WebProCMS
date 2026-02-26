@@ -815,64 +815,70 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component 
                                     </button>
 
                                     {{-- Row actions --}}
-                                    <div class="flex items-center gap-0.5 px-2 pb-2">
-                                        <flux:icon name="bars-2" class="size-4 text-zinc-400 dark:text-zinc-500 cursor-grab active:cursor-grabbing shrink-0 mr-1" title="Drag to reorder" />
-                                        <flux:button
-                                            wire:click="moveRowUp({{ $index }})"
-                                            variant="ghost"
-                                            size="sm"
-                                            icon="arrow-up"
-                                            :disabled="$index === 0"
-                                            :class="$index === 0 ? 'opacity-15!' : ''"
-                                            title="Move up"
-                                            :loading="false"
-                                        />
-                                        <flux:button
-                                            wire:click="moveRowDown({{ $index }})"
-                                            variant="ghost"
-                                            size="sm"
-                                            icon="arrow-down"
-                                            :disabled="$index === count($rows) - 1"
-                                            :class="$index === count($rows) - 1 ? 'opacity-15!' : ''"
-                                            title="Move down"
-                                            :loading="false"
-                                        />
-                                        <flux:button
-                                            wire:click="openLibraryDrawer({{ $index }})"
-                                            variant="ghost"
-                                            size="sm"
-                                            title="Insert row above"
-                                            class="ml-auto px-1!"
-                                            :loading="false"
-                                        >
-                                            <span class="inline-flex items-center">
-                                                <flux:icon name="plus" class="size-3" />
-                                                <flux:icon name="arrow-up" class="size-3" />
-                                            </span>
-                                        </flux:button>
-                                        <flux:button
-                                            wire:click="openLibraryDrawer({{ $index + 1 }})"
-                                            variant="ghost"
-                                            size="sm"
-                                            title="Insert row below"
-                                            class="px-1!"
-                                            :loading="false"
-                                        >
-                                            <span class="inline-flex items-center">
-                                                <flux:icon name="plus" class="size-3" />
-                                                <flux:icon name="arrow-down" class="size-3" />
-                                            </span>
-                                        </flux:button>
-                                        <flux:button
-                                            wire:click="removeRow({{ $index }})"
-                                            wire:confirm="Remove this row from the page?"
-                                            variant="ghost"
-                                            size="sm"
-                                            icon="trash"
-                                            class="text-red-500 dark:text-red-400"
-                                            title="Remove row"
-                                            :loading="false"
-                                        />
+                                    <div class="flex items-center px-2 pb-2">
+                                        <div class="flex items-center gap-0.5">
+                                            <flux:button
+                                                wire:click="moveRowUp({{ $index }})"
+                                                variant="ghost"
+                                                size="sm"
+                                                icon="arrow-up"
+                                                :disabled="$index === 0"
+                                                :class="$index === 0 ? 'opacity-15!' : ''"
+                                                title="Move up"
+                                                :loading="false"
+                                            />
+                                            <flux:button
+                                                wire:click="moveRowDown({{ $index }})"
+                                                variant="ghost"
+                                                size="sm"
+                                                icon="arrow-down"
+                                                :disabled="$index === count($rows) - 1"
+                                                :class="$index === count($rows) - 1 ? 'opacity-15!' : ''"
+                                                title="Move down"
+                                                :loading="false"
+                                            />
+                                        </div>
+                                        <div class="flex-1 flex justify-center">
+                                            <flux:icon name="bars-2" class="size-4 text-zinc-400 dark:text-zinc-500 cursor-grab active:cursor-grabbing" title="Drag to reorder" />
+                                        </div>
+                                        <div class="flex items-center gap-0.5">
+                                            <flux:button
+                                                wire:click="openLibraryDrawer({{ $index }})"
+                                                variant="ghost"
+                                                size="sm"
+                                                title="Insert row above"
+                                                class="px-1!"
+                                                :loading="false"
+                                            >
+                                                <span class="inline-flex items-center">
+                                                    <flux:icon name="plus" class="size-3" />
+                                                    <flux:icon name="arrow-up" class="size-3" />
+                                                </span>
+                                            </flux:button>
+                                            <flux:button
+                                                wire:click="openLibraryDrawer({{ $index + 1 }})"
+                                                variant="ghost"
+                                                size="sm"
+                                                title="Insert row below"
+                                                class="px-1!"
+                                                :loading="false"
+                                            >
+                                                <span class="inline-flex items-center">
+                                                    <flux:icon name="plus" class="size-3" />
+                                                    <flux:icon name="arrow-down" class="size-3" />
+                                                </span>
+                                            </flux:button>
+                                            <flux:button
+                                                wire:click="removeRow({{ $index }})"
+                                                wire:confirm="Remove this row from the page?"
+                                                variant="ghost"
+                                                size="sm"
+                                                icon="trash"
+                                                class="text-red-500 dark:text-red-400"
+                                                title="Remove row"
+                                                :loading="false"
+                                            />
+                                        </div>
                                     </div>
                                 </div>
                             @empty
