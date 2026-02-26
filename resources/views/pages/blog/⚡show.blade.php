@@ -60,12 +60,12 @@ new #[Layout('layouts.public')] class extends Component {
 
     {{-- Open Graph --}}
     <meta property="og:type" content="article" />
-    <meta property="og:title" content="{{ $post->og_title ?? $post->meta_title ?? $post->title }}" />
     <meta property="og:url" content="{{ route('blog.show', $post->slug) }}" />
     <meta property="og:site_name" content="{{ config('app.name') }}" />
 
-    @if ($post->og_description || $post->meta_description || $post->excerpt)
-        <meta property="og:description" content="{{ $post->og_description ?? $post->meta_description ?? strip_tags($post->excerpt) }}" />
+    @if ($post->meta_description || $post->excerpt)
+        <meta property="og:description" content="{{ $post->meta_description ?? strip_tags($post->excerpt) }}" />
+        <meta name="twitter:description" content="{{ $post->meta_description ?? strip_tags($post->excerpt) }}" />
     @endif
 
     @php
@@ -79,10 +79,6 @@ new #[Layout('layouts.public')] class extends Component {
     <meta name="twitter:card" content="summary_large_image" />
     @if (config('seo.twitter.handle'))
         <meta name="twitter:site" content="{{ config('seo.twitter.handle') }}" />
-    @endif
-    <meta name="twitter:title" content="{{ $post->og_title ?? $post->meta_title ?? $post->title }}" />
-    @if ($post->og_description || $post->meta_description || $post->excerpt)
-        <meta name="twitter:description" content="{{ $post->og_description ?? $post->meta_description ?? strip_tags($post->excerpt) }}" />
     @endif
     @if ($ogImageUrl)
         <meta name="twitter:image" content="{{ $ogImageUrl }}" />

@@ -37,6 +37,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component 
     public string $seoTitle = '';
     public string $seoDescription = '';
     public bool $seoNoindex = false;
+    public string $seoOgImage = '';
 
     // Content editor state
     public bool $showContentEditor = false;
@@ -441,12 +442,16 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component 
         $this->seoDescription = $descMatch[1] ?? '';
 
         $this->seoNoindex = (bool) preg_match("/'noindex'\s*=>\s*true/", $this->phpSection);
+
+        preg_match("/'ogImage'\s*=>\s*'([^']*)'/", $this->phpSection, $ogMatch);
+        $this->seoOgImage = $ogMatch[1] ?? '';
     }
 
     private function updatePhpSectionWithSeo(): void
     {
         $escapedTitle = str_replace("'", "\'", $this->seoTitle);
         $escapedDesc = str_replace("'", "\'", $this->seoDescription);
+        $escapedOgImage = str_replace("'", "\'", $this->seoOgImage);
 
         $this->phpSection = preg_replace(
             "/#\[Title\('([^']*)'\)\]/",
@@ -462,6 +467,10 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component 
 
         if ($this->seoNoindex) {
             $data[] = "'noindex' => true";
+        }
+
+        if (! empty($escapedOgImage)) {
+            $data[] = "'ogImage' => '{$escapedOgImage}'";
         }
 
         $newLayout = empty($data)
@@ -995,6 +1004,32 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component 
                 description="Prevent search engines from indexing this page."
                 wire:model="seoNoindex"
             />
+
+            {{-- Open Graph --}}
+            <div x-data="{ ogOpen: false }" class="pt-4 border-t border-zinc-200 dark:border-zinc-700">
+                <button
+                    type="button"
+                    @click="ogOpen = !ogOpen"
+                    class="w-full flex items-center justify-between text-left"
+                >
+                    <div>
+                        <p class="text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">Open Graph</p>
+                        <p class="text-xs text-zinc-400 dark:text-zinc-500 mt-0.5">Customize how this page appears when shared on social media.</p>
+                    </div>
+                    <svg xmlns="http://www.w3.org/2000/svg" class="size-4 text-zinc-400 transition-transform duration-200 shrink-0 ml-3" :class="ogOpen ? 'rotate-180' : ''" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="m19 9-7 7-7-7" />
+                    </svg>
+                </button>
+
+                <div x-show="ogOpen" x-transition class="mt-4">
+                    <flux:field>
+                        <flux:label>OG Image URL</flux:label>
+                        <flux:input wire:model="seoOgImage" type="url" placeholder="https://example.com/image.jpg" />
+                        <flux:description>Paste a full URL to a 1200×630px image for social sharing previews.</flux:description>
+                        <flux:error name="seoOgImage" />
+                    </flux:field>
+                </div>
+            </div>
         </div>
 
         <div class="mt-6 flex justify-end gap-2">
