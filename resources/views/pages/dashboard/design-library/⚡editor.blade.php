@@ -43,6 +43,9 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component 
     /** @var array<string, string|bool> */
     public array $contentValues = [];
 
+    /** @var array<string, string|bool> */
+    public array $originalContentValues = [];
+
     public mixed $pendingImageUpload = null;
     public string $pendingImageKey = '';
 
@@ -69,6 +72,50 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component 
         $path = $this->pendingImageUpload->store('content-overrides', 'public');
         $this->contentValues[$this->pendingImageKey] = $path;
         $this->pendingImageUpload = null;
+
+        $field = collect($this->contentFields)->firstWhere('key', $this->pendingImageKey);
+
+        if ($field) {
+            ContentOverride::updateOrCreate(
+                ['row_slug' => $field['slug'], 'key' => $field['key']],
+                ['type' => $field['type'], 'value' => $path]
+            );
+            $this->refreshPreview();
+        }
+    }
+
+    public function updatedContentValues(mixed $value, string $key): void
+    {
+        $field = collect($this->contentFields)->firstWhere('key', $key);
+
+        if (! $field) {
+            return;
+        }
+
+        $raw = $this->contentValues[$key] ?? '';
+
+        if ($field['type'] === 'toggle') {
+            ContentOverride::updateOrCreate(
+                ['row_slug' => $field['slug'], 'key' => $field['key']],
+                ['type' => $field['type'], 'value' => $raw ? '1' : '0']
+            );
+        } else {
+            $strValue = (string) $raw;
+
+            if ($strValue === '') {
+                ContentOverride::query()
+                    ->where('row_slug', $field['slug'])
+                    ->where('key', $field['key'])
+                    ->delete();
+            } else {
+                ContentOverride::updateOrCreate(
+                    ['row_slug' => $field['slug'], 'key' => $field['key']],
+                    ['type' => $field['type'], 'value' => $strValue]
+                );
+            }
+        }
+
+        $this->refreshPreview();
     }
 
     /** @return array<string, array<string, string>> */
@@ -246,16 +293,41 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component 
                 : ($rawValue ?? '');
         }
 
+        $this->originalContentValues = $this->contentValues;
         $this->showContentEditor = true;
     }
 
     public function saveContentOverrides(): void
     {
+        $this->persistContentOverrides();
+        $this->originalContentValues = $this->contentValues;
+        $this->dispatch('notify', message: 'Content saved.');
+        $this->refreshPreview();
+    }
+
+    public function saveContentOverridesAndBack(): void
+    {
+        $this->persistContentOverrides();
+        $this->originalContentValues = $this->contentValues;
+        $this->dispatch('notify', message: 'Content saved.');
+        $this->refreshPreview();
+        $this->showContentEditor = false;
+    }
+
+    public function cancelContentEditor(): void
+    {
+        $this->contentValues = $this->originalContentValues;
+        $this->persistContentOverrides();
+        $this->refreshPreview();
+        $this->showContentEditor = false;
+    }
+
+    private function persistContentOverrides(): void
+    {
         foreach ($this->contentFields as $field) {
             $raw = $this->contentValues[$field['key']] ?? '';
 
             if ($field['type'] === 'toggle') {
-                // Always persist toggles so explicit off ('0') isn't confused with the default.
                 ContentOverride::updateOrCreate(
                     ['row_slug' => $field['slug'], 'key' => $field['key']],
                     ['type' => $field['type'], 'value' => $raw ? '1' : '0']
@@ -277,15 +349,6 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component 
                 );
             }
         }
-
-        $this->dispatch('notify', message: 'Content saved.');
-        $this->refreshPreview();
-    }
-
-    public function saveContentOverridesAndBack(): void
-    {
-        $this->saveContentOverrides();
-        $this->showContentEditor = false;
     }
 
     public function setPendingImageKey(string $key): void
@@ -483,7 +546,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component 
                         {{-- Content editor view --}}
                         <div class="shrink-0 flex items-center gap-2 p-3 border-b border-zinc-200 dark:border-zinc-700">
                             <flux:button
-                                wire:click="$set('showContentEditor', false)"
+                                wire:click="cancelContentEditor"
                                 variant="ghost"
                                 size="sm"
                                 icon="arrow-left"
@@ -548,25 +611,25 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component 
                                                 </div>
                                             @elseif ($field['type'] === 'richtext')
                                                 <flux:textarea
-                                                    wire:model="contentValues.{{ $field['key'] }}"
+                                                    wire:model.live.debounce.400ms="contentValues.{{ $field['key'] }}"
                                                     rows="4"
                                                     placeholder="{{ $field['default'] }}"
                                                 />
                                                 <flux:text class="text-xs text-zinc-400 mt-1">HTML is supported.</flux:text>
                                             @elseif ($field['type'] === 'toggle')
                                                 <flux:checkbox
-                                                    wire:model="contentValues.{{ $field['key'] }}"
+                                                    wire:model.live="contentValues.{{ $field['key'] }}"
                                                     label="Yes"
                                                 />
                                             @elseif (str_ends_with($field['key'], '_url'))
                                                 <flux:input
-                                                    wire:model="contentValues.{{ $field['key'] }}"
+                                                    wire:model.live.debounce.400ms="contentValues.{{ $field['key'] }}"
                                                     type="url"
                                                     placeholder="{{ $field['default'] ?: 'https://' }}"
                                                 />
                                             @else
                                                 <flux:input
-                                                    wire:model="contentValues.{{ $field['key'] }}"
+                                                    wire:model.live.debounce.400ms="contentValues.{{ $field['key'] }}"
                                                     placeholder="{{ $field['default'] }}"
                                                 />
                                             @endif
@@ -583,7 +646,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component 
                             <flux:button wire:click="saveContentOverridesAndBack" variant="outline" icon="arrow-left" title="Save and go back to rows">
                                 {{ __('Save & Back') }}
                             </flux:button>
-                            <flux:button wire:click="$set('showContentEditor', false)" variant="outline" title="Discard changes">
+                            <flux:button wire:click="cancelContentEditor" variant="outline" title="Discard changes">
                                 {{ __('Cancel') }}
                             </flux:button>
                         </div>
