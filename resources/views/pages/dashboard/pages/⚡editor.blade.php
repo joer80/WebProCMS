@@ -76,7 +76,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component 
         $field = collect($this->contentFields)->firstWhere('key', $this->pendingImageKey);
 
         if ($field) {
-            session()->put('editor_draft_overrides.'.$field['slug'].':'.$field['key'], $path);
+            session()->put('editor_draft_overrides.'.$field['slug'].':'.$field['key'], ['type' => 'image', 'value' => $path]);
             $this->refreshPreview();
         }
     }
@@ -92,7 +92,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component 
         $raw = $this->contentValues[$key] ?? '';
         $draftValue = $field['type'] === 'toggle' ? ($raw ? '1' : '0') : (string) $raw;
 
-        session()->put('editor_draft_overrides.'.$field['slug'].':'.$key, $draftValue);
+        session()->put('editor_draft_overrides.'.$field['slug'].':'.$key, ['type' => $field['type'], 'value' => $draftValue]);
 
         $this->refreshPreview();
     }
@@ -291,7 +291,8 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component 
                 : ($dbValue ?? '');
 
             // contentValues prefers any unsaved session draft
-            $rawValue = array_key_exists($dbKey, $drafts) ? $drafts[$dbKey] : $dbValue;
+            $draft = $drafts[$dbKey] ?? null;
+            $rawValue = $draft !== null ? ($draft['value'] ?? null) : $dbValue;
             $this->contentValues[$field['key']] = $field['type'] === 'toggle'
                 ? ($rawValue !== null ? $rawValue === '1' : $field['default'] === '1')
                 : ($rawValue ?? '');
@@ -300,21 +301,10 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component 
         $this->showContentEditor = true;
     }
 
-    public function saveContentOverrides(): void
+    public function closeContentEditor(): void
     {
-        $this->persistContentOverrides();
-        $this->originalContentValues = $this->contentValues;
-        $this->dispatch('notify', message: 'Content saved.');
-        $this->refreshPreview();
-    }
-
-    public function saveContentOverridesAndBack(): void
-    {
-        $this->persistContentOverrides();
-        $this->originalContentValues = $this->contentValues;
-        $this->dispatch('notify', message: 'Content saved.');
-        $this->refreshPreview();
         $this->showContentEditor = false;
+        $this->editingRowIndex = null;
     }
 
     public function cancelContentEditor(): void
@@ -326,36 +316,33 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component 
         $this->contentValues = $this->originalContentValues;
         $this->refreshPreview();
         $this->showContentEditor = false;
+        $this->editingRowIndex = null;
     }
 
-    private function persistContentOverrides(): void
+    private function persistAllDraftOverrides(): void
     {
-        foreach ($this->contentFields as $field) {
-            $raw = $this->contentValues[$field['key']] ?? '';
+        /** @var array<string, array{type: string, value: string}> $drafts */
+        $drafts = session('editor_draft_overrides', []);
 
-            if ($field['type'] === 'toggle') {
-                ContentOverride::updateOrCreate(
-                    ['row_slug' => $field['slug'], 'key' => $field['key']],
-                    ['type' => $field['type'], 'value' => $raw ? '1' : '0']
-                );
+        foreach ($drafts as $draftKey => $draft) {
+            [$slug, $key] = explode(':', $draftKey, 2);
+            $type = $draft['type'];
+            $value = $draft['value'];
+
+            if ($value === '') {
+                ContentOverride::query()
+                    ->where('row_slug', $slug)
+                    ->where('key', $key)
+                    ->delete();
             } else {
-                $value = (string) $raw;
-
-                if ($value === '') {
-                    ContentOverride::query()
-                        ->where('row_slug', $field['slug'])
-                        ->where('key', $field['key'])
-                        ->delete();
-                } else {
-                    ContentOverride::updateOrCreate(
-                        ['row_slug' => $field['slug'], 'key' => $field['key']],
-                        ['type' => $field['type'], 'value' => $value]
-                    );
-                }
+                ContentOverride::updateOrCreate(
+                    ['row_slug' => $slug, 'key' => $key],
+                    ['type' => $type, 'value' => $value]
+                );
             }
-
-            session()->forget('editor_draft_overrides.'.$field['slug'].':'.$field['key']);
         }
+
+        session()->forget('editor_draft_overrides');
     }
 
     public function setPendingImageKey(string $key): void
@@ -373,6 +360,8 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component 
         if (! $this->file) {
             return;
         }
+
+        $this->persistAllDraftOverrides();
 
         $service = new VoltFileService;
         $fullPath = resource_path('views/'.$this->file);
@@ -765,13 +754,10 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component 
                         </div>
 
                         <div class="shrink-0 flex gap-2 p-3 border-t border-zinc-200 dark:border-zinc-700">
-                            <flux:button wire:click="saveContentOverrides" variant="primary" icon="check" class="flex-1" title="Save and keep editing">
-                                {{ __('Save') }}
+                            <flux:button wire:click="closeContentEditor" variant="outline" icon="arrow-left" class="flex-1">
+                                {{ __('Back') }}
                             </flux:button>
-                            <flux:button wire:click="saveContentOverridesAndBack" variant="outline" icon="arrow-left" title="Save and go back to rows">
-                                {{ __('Save & Back') }}
-                            </flux:button>
-                            <flux:button wire:click="cancelContentEditor" variant="outline" title="Discard changes">
+                            <flux:button wire:click="cancelContentEditor" variant="outline" icon="x-mark" title="Discard changes made since opening this row">
                                 {{ __('Cancel') }}
                             </flux:button>
                         </div>

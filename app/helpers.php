@@ -16,7 +16,7 @@ if (! function_exists('content')) {
             $draftKey = $slug.':'.$key;
 
             if (array_key_exists($draftKey, $drafts)) {
-                $draft = (string) $drafts[$draftKey];
+                $draft = (string) ($drafts[$draftKey]['value'] ?? '');
 
                 if ($draft === '') {
                     return $default;

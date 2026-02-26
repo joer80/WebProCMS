@@ -104,7 +104,7 @@ describe('session draft overrides', function (): void {
     });
 
     it('ignores session drafts on non-preview requests', function (): void {
-        session(['editor_draft_overrides' => ['hero-abc123:headline' => 'Draft Value']]);
+        session(['editor_draft_overrides' => ['hero-abc123:headline' => ['type' => 'text', 'value' => 'Draft Value']]]);
 
         ContentOverride::create([
             'row_slug' => 'hero-abc123',
@@ -117,7 +117,7 @@ describe('session draft overrides', function (): void {
     });
 
     it('returns session draft over db value on preview requests', function (): void {
-        session(['editor_draft_overrides' => ['hero-abc123:headline' => 'Draft Value']]);
+        session(['editor_draft_overrides' => ['hero-abc123:headline' => ['type' => 'text', 'value' => 'Draft Value']]]);
 
         ContentOverride::create([
             'row_slug' => 'hero-abc123',
@@ -132,7 +132,7 @@ describe('session draft overrides', function (): void {
     });
 
     it('returns default when session draft is empty string on preview request', function (): void {
-        session(['editor_draft_overrides' => ['hero-abc123:headline' => '']]);
+        session(['editor_draft_overrides' => ['hero-abc123:headline' => ['type' => 'text', 'value' => '']]]);
 
         ContentOverride::create([
             'row_slug' => 'hero-abc123',
@@ -149,7 +149,7 @@ describe('session draft overrides', function (): void {
     it('returns storage url for session draft image on preview request', function (): void {
         Storage::fake('public');
 
-        session(['editor_draft_overrides' => ['hero-abc123:image' => 'content-overrides/draft.jpg']]);
+        session(['editor_draft_overrides' => ['hero-abc123:image' => ['type' => 'image', 'value' => 'content-overrides/draft.jpg']]]);
 
         simulatePreviewRequest();
 
