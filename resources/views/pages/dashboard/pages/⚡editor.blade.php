@@ -11,6 +11,7 @@ use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
 use Livewire\Attributes\Url;
+use Livewire\Attributes\Validate;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 
@@ -38,6 +39,9 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component 
     public string $seoDescription = '';
     public bool $seoNoindex = false;
     public string $seoOgImage = '';
+
+    #[Validate('required|in:draft,published,unlisted,unpublished')]
+    public string $pageStatus = 'published';
 
     // Content editor state
     public bool $showContentEditor = false;
@@ -424,6 +428,8 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component 
 
     public function saveSeoSettings(): void
     {
+        $this->validate(['pageStatus' => 'required|in:draft,published,unlisted,unpublished']);
+
         if (! $this->file) {
             return;
         }
@@ -445,6 +451,9 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component 
 
         preg_match("/'ogImage'\s*=>\s*'([^']*)'/", $this->phpSection, $ogMatch);
         $this->seoOgImage = $ogMatch[1] ?? '';
+
+        preg_match("/'status'\s*=>\s*'([^']*)'/", $this->phpSection, $statusMatch);
+        $this->pageStatus = $statusMatch[1] ?? 'published';
     }
 
     private function updatePhpSectionWithSeo(): void
@@ -473,6 +482,10 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component 
             $data[] = "'ogImage' => '{$escapedOgImage}'";
         }
 
+        if ($this->pageStatus !== 'published') {
+            $data[] = "'status' => '{$this->pageStatus}'";
+        }
+
         $newLayout = empty($data)
             ? "#[Layout('layouts.public')]"
             : "#[Layout('layouts.public', [" . implode(', ', $data) . "])]";
@@ -482,12 +495,28 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component 
             $newLayout,
             $this->phpSection
         );
+
+        $service = new VoltFileService;
+        $accessibleStatuses = ['published', 'unlisted'];
+
+        if (! in_array($this->pageStatus, $accessibleStatuses)) {
+            $this->phpSection = $service->injectPhpCode(
+                $this->phpSection,
+                "public function boot(): void\n{\n    abort(404);\n}",
+                'page-status-abort'
+            );
+        } else {
+            $this->phpSection = $service->removePhpCode($this->phpSection, 'page-status-abort');
+        }
     }
 
     private function refreshPreview(): void
     {
         try {
-            (new VoltFileService)->writePreviewFile($this->phpSection, $this->rows, $this->file);
+            $service = new VoltFileService;
+            // Strip the status abort block so the preview iframe always renders the page content.
+            $previewPhpSection = $service->removePhpCode($this->phpSection, 'page-status-abort');
+            $service->writePreviewFile($previewPhpSection, $this->rows, $this->file);
         } catch (\Throwable) {
             // Preview write failed; continue without updating the iframe.
         }
@@ -836,8 +865,42 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component 
                         </div>
                     @else
                         {{-- Row list view --}}
-                        <div class="shrink-0 p-4 border-b border-zinc-200 dark:border-zinc-700">
+                        <div class="shrink-0 px-4 py-3 border-b border-zinc-200 dark:border-zinc-700 flex items-center justify-between">
                             <flux:heading size="sm" class="text-zinc-600 dark:text-zinc-400">{{ __('Page Rows') }}</flux:heading>
+                            @php
+                                $statusTooltips = [
+                                    'draft'       => 'Saved but not yet visible to the public.',
+                                    'published'   => 'Live and visible to all visitors.',
+                                    'unlisted'    => 'Accessible via direct link, but excluded from auto-generated navigation.',
+                                    'unpublished' => 'Removed from public access — visitors will see a 404.',
+                                ];
+                            @endphp
+                            <div class="flex items-center gap-1.5">
+                                <flux:tooltip content="{{ $statusTooltips[$pageStatus] ?? '' }}" position="left">
+                                    <span
+                                        x-data
+                                        x-bind:class="{
+                                            'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400': $wire.pageStatus === 'published',
+                                            'bg-zinc-100 text-zinc-600 dark:bg-zinc-700 dark:text-zinc-300': $wire.pageStatus === 'unlisted',
+                                            'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400': $wire.pageStatus === 'draft',
+                                            'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400': $wire.pageStatus === 'unpublished',
+                                        }"
+                                        class="text-xs font-medium px-2 py-0.5 rounded-full capitalize cursor-default"
+                                        x-text="$wire.pageStatus"
+                                    ></span>
+                                </flux:tooltip>
+
+                                <flux:tooltip content="{{ $seoNoindex ? 'Search engines are prevented from indexing this page.' : 'Search engines can index this page.' }}" position="left">
+                                    <span
+                                        x-data
+                                        x-bind:class="$wire.seoNoindex
+                                            ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
+                                            : 'bg-zinc-100 text-zinc-500 dark:bg-zinc-700 dark:text-zinc-400'"
+                                        class="text-xs font-medium px-2 py-0.5 rounded-full cursor-default"
+                                        x-text="$wire.seoNoindex ? 'No Index' : 'Indexed'"
+                                    ></span>
+                                </flux:tooltip>
+                            </div>
                         </div>
 
                         <div class="flex-1 overflow-y-auto p-3 space-y-2" x-data="{ dragging: null, over: null }">
@@ -984,6 +1047,26 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component 
         <flux:heading size="lg">Page Settings</flux:heading>
 
         <div class="mt-6 space-y-4">
+            {{-- Visibility / Status --}}
+            <div class="pb-4 border-b border-zinc-200 dark:border-zinc-700">
+                <flux:field>
+                    <flux:label>Status</flux:label>
+                    <flux:select wire:model="pageStatus">
+                        <flux:select.option value="draft">Draft</flux:select.option>
+                        <flux:select.option value="published">Published</flux:select.option>
+                        <flux:select.option value="unlisted">Unlisted</flux:select.option>
+                        <flux:select.option value="unpublished">Unpublished</flux:select.option>
+                    </flux:select>
+                    <div x-data>
+                        <flux:description x-show="$wire.pageStatus === 'draft'">Saved but not yet visible to the public.</flux:description>
+                        <flux:description x-show="$wire.pageStatus === 'published'">Live and visible to all visitors.</flux:description>
+                        <flux:description x-show="$wire.pageStatus === 'unlisted'">Accessible via direct link, but excluded from auto-generated navigation.</flux:description>
+                        <flux:description x-show="$wire.pageStatus === 'unpublished'">Removed from public access — visitors will see a 404.</flux:description>
+                    </div>
+                    <flux:error name="pageStatus" />
+                </flux:field>
+            </div>
+
             <flux:heading size="base">SEO</flux:heading>
 
             <flux:input
