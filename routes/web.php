@@ -87,7 +87,7 @@ Route::middleware(['auth', 'verified'])->group(function (): void {
         Route::livewire('dashboard/menus', 'pages::dashboard.menus')->name('dashboard.menus');
 
         Route::livewire('dashboard/design-library', 'pages::dashboard.design-library.index')->name('dashboard.design-library.index');
-        Route::livewire('dashboard/design-library/editor', 'pages::dashboard.design-library.editor')->name('dashboard.design-library.editor');
+        Route::livewire('dashboard/pages/editor', 'pages::dashboard.design-library.editor')->name('dashboard.design-library.editor');
     });
 });
 
