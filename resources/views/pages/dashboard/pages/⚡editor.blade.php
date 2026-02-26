@@ -815,7 +815,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component 
                                     </button>
 
                                     {{-- Row actions --}}
-                                    <div class="flex items-center px-2 pb-2">
+                                    <div class="relative flex items-center px-2 pb-2">
                                         <div class="flex items-center gap-0.5">
                                             <flux:button
                                                 wire:click="moveRowUp({{ $index }})"
@@ -838,10 +838,10 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component 
                                                 :loading="false"
                                             />
                                         </div>
-                                        <div class="flex-1 flex justify-center">
+                                        <div class="absolute left-1/2 -translate-x-1/2">
                                             <flux:icon name="bars-2" class="size-4 text-zinc-400 dark:text-zinc-500 cursor-grab active:cursor-grabbing" title="Drag to reorder" />
                                         </div>
-                                        <div class="flex items-center gap-0.5">
+                                        <div class="flex items-center gap-0.5 ml-auto">
                                             <flux:button
                                                 wire:click="openLibraryDrawer({{ $index }})"
                                                 variant="ghost"
