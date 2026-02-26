@@ -603,7 +603,9 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component 
             showAllBreakpoints: false,
             setWidth(w) { this.previewWidth = this.previewWidth === w ? null : w; }
         }"
-class="flex flex-col min-h-screen bg-white dark:bg-zinc-900"
+        @keydown.ctrl.s.window.prevent="if ($wire.file) $wire.saveFile()"
+        @keydown.meta.s.window.prevent="if ($wire.file) $wire.saveFile()"
+        class="flex flex-col min-h-screen bg-white dark:bg-zinc-900"
     >
         {{-- Editor toolbar --}}
         <div class="sticky top-0 z-30 bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-700 px-6 py-3 flex items-center gap-3">
