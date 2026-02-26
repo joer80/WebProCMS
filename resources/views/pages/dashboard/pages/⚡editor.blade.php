@@ -39,6 +39,8 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component 
     public string $seoDescription = '';
     public bool $seoNoindex = false;
     public string $seoOgImage = '';
+    public string $redirectUrl = '';
+    public string $redirectType = '301';
 
     #[Validate('required|in:draft,published,unlisted,unpublished')]
     public string $pageStatus = 'published';
@@ -454,6 +456,10 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component 
 
         preg_match("/'status'\s*=>\s*'([^']*)'/", $this->phpSection, $statusMatch);
         $this->pageStatus = $statusMatch[1] ?? 'published';
+
+        preg_match('/\/\/ ROW:php:start:page-redirect.*?redirect\(\'([^\']*)\',\s*(\d+)\)/s', $this->phpSection, $redirectMatch);
+        $this->redirectUrl = $redirectMatch[1] ?? '';
+        $this->redirectType = $redirectMatch[2] ?? '301';
     }
 
     private function updatePhpSectionWithSeo(): void
@@ -499,14 +505,23 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component 
         $service = new VoltFileService;
         $accessibleStatuses = ['published', 'unlisted'];
 
-        if (! in_array($this->pageStatus, $accessibleStatuses)) {
+        // Remove both behavior blocks first, then re-inject the appropriate one.
+        $this->phpSection = $service->removePhpCode($this->phpSection, 'page-status-abort');
+        $this->phpSection = $service->removePhpCode($this->phpSection, 'page-redirect');
+
+        if (! empty($this->redirectUrl)) {
+            $escapedRedirectUrl = str_replace("'", "\'", $this->redirectUrl);
+            $this->phpSection = $service->injectPhpCode(
+                $this->phpSection,
+                "public function boot(): void\n{\n    redirect('{$escapedRedirectUrl}', {$this->redirectType});\n}",
+                'page-redirect'
+            );
+        } elseif (! in_array($this->pageStatus, $accessibleStatuses)) {
             $this->phpSection = $service->injectPhpCode(
                 $this->phpSection,
                 "public function boot(): void\n{\n    abort(404);\n}",
                 'page-status-abort'
             );
-        } else {
-            $this->phpSection = $service->removePhpCode($this->phpSection, 'page-status-abort');
         }
     }
 
@@ -514,8 +529,9 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component 
     {
         try {
             $service = new VoltFileService;
-            // Strip the status abort block so the preview iframe always renders the page content.
+            // Strip behavior blocks so the preview iframe always renders the page content.
             $previewPhpSection = $service->removePhpCode($this->phpSection, 'page-status-abort');
+            $previewPhpSection = $service->removePhpCode($previewPhpSection, 'page-redirect');
             $service->writePreviewFile($previewPhpSection, $this->rows, $this->file);
         } catch (\Throwable) {
             // Preview write failed; continue without updating the iframe.
@@ -587,7 +603,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component 
             showAllBreakpoints: false,
             setWidth(w) { this.previewWidth = this.previewWidth === w ? null : w; }
         }"
-        class="flex flex-col min-h-screen bg-white dark:bg-zinc-900"
+class="flex flex-col min-h-screen bg-white dark:bg-zinc-900"
     >
         {{-- Editor toolbar --}}
         <div class="sticky top-0 z-30 bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-700 px-6 py-3 flex items-center gap-3">
@@ -900,6 +916,17 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component 
                                         x-text="$wire.seoNoindex ? 'No Index' : 'Indexed'"
                                     ></span>
                                 </flux:tooltip>
+
+                                <flux:tooltip content="{{ $redirectUrl ? 'Redirects to: '.$redirectUrl : 'No redirect configured.' }}" position="left">
+                                    <span
+                                        x-data
+                                        x-bind:class="$wire.redirectUrl
+                                            ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
+                                            : 'bg-zinc-100 text-zinc-500 dark:bg-zinc-700 dark:text-zinc-400'"
+                                        class="text-xs font-medium px-2 py-0.5 rounded-full cursor-default"
+                                        x-text="$wire.redirectUrl ? 'Redirect' : 'No Redirect'"
+                                    ></span>
+                                </flux:tooltip>
                             </div>
                         </div>
 
@@ -1048,7 +1075,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component 
 
         <div class="mt-6 space-y-4">
             {{-- Visibility / Status --}}
-            <div class="pb-4 border-b border-zinc-200 dark:border-zinc-700">
+            <div>
                 <flux:field>
                     <flux:label>Status</flux:label>
                     <flux:select wire:model="pageStatus">
@@ -1067,49 +1094,82 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component 
                 </flux:field>
             </div>
 
-            <flux:heading size="base">SEO</flux:heading>
-
-            <flux:input
-                label="Page Title"
-                wire:model="seoTitle"
-                description="Shown in the browser tab and search engine results."
-            />
-
-            <flux:textarea
-                label="Meta Description"
-                wire:model="seoDescription"
-                rows="3"
-                description="A short summary of the page for search engines (150–160 characters recommended)."
-            />
-
-            <flux:switch
-                label="No Index"
-                description="Prevent search engines from indexing this page."
-                wire:model="seoNoindex"
-            />
-
-            {{-- Open Graph --}}
-            <div x-data="{ ogOpen: false }" class="pt-4 border-t border-zinc-200 dark:border-zinc-700">
+            {{-- SEO --}}
+            <div x-data="{ seoOpen: false }" class="pt-4 border-t border-zinc-200 dark:border-zinc-700">
                 <button
                     type="button"
-                    @click="ogOpen = !ogOpen"
+                    @click="seoOpen = !seoOpen"
                     class="w-full flex items-center justify-between text-left"
                 >
                     <div>
-                        <p class="text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">Open Graph</p>
-                        <p class="text-xs text-zinc-400 dark:text-zinc-500 mt-0.5">Customize how this page appears when shared on social media.</p>
+                        <p class="text-xs font-semibold uppercase tracking-wide text-zinc-700 dark:text-zinc-200">SEO</p>
+                        <p class="text-xs text-zinc-400 dark:text-zinc-500 mt-0.5">Page title, meta description, indexing, and social sharing.</p>
                     </div>
-                    <svg xmlns="http://www.w3.org/2000/svg" class="size-4 text-zinc-400 transition-transform duration-200 shrink-0 ml-3" :class="ogOpen ? 'rotate-180' : ''" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="size-4 text-zinc-600 dark:text-zinc-300 transition-transform duration-200 shrink-0 ml-3" :class="seoOpen ? 'rotate-180' : ''" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                         <path stroke-linecap="round" stroke-linejoin="round" d="m19 9-7 7-7-7" />
                     </svg>
                 </button>
 
-                <div x-show="ogOpen" x-transition class="mt-4">
+                <div x-show="seoOpen" x-transition class="mt-4 space-y-4">
+                    <flux:input
+                        label="Page Title"
+                        wire:model="seoTitle"
+                        description="Shown in the browser tab and search engine results."
+                    />
+
+                    <flux:textarea
+                        label="Meta Description"
+                        wire:model="seoDescription"
+                        rows="3"
+                        description="A short summary of the page for search engines (150–160 characters recommended)."
+                    />
+
+                    <flux:switch
+                        label="No Index"
+                        description="Prevent search engines from indexing this page."
+                        wire:model="seoNoindex"
+                    />
+
                     <flux:field>
                         <flux:label>OG Image URL</flux:label>
                         <flux:input wire:model="seoOgImage" type="url" placeholder="https://example.com/image.jpg" />
                         <flux:description>Paste a full URL to a 1200×630px image for social sharing previews.</flux:description>
                         <flux:error name="seoOgImage" />
+                    </flux:field>
+                </div>
+            </div>
+
+            {{-- Redirect --}}
+            <div x-data="{ redirectOpen: false }" class="pt-4 border-t border-zinc-200 dark:border-zinc-700">
+                <button
+                    type="button"
+                    @click="redirectOpen = !redirectOpen"
+                    class="w-full flex items-center justify-between text-left"
+                >
+                    <div>
+                        <p class="text-xs font-semibold uppercase tracking-wide text-zinc-700 dark:text-zinc-200">Redirect</p>
+                        <p class="text-xs text-zinc-400 dark:text-zinc-500 mt-0.5">Forward visitors to another URL when this page is loaded.</p>
+                    </div>
+                    <svg xmlns="http://www.w3.org/2000/svg" class="size-4 text-zinc-600 dark:text-zinc-300 transition-transform duration-200 shrink-0 ml-3" :class="redirectOpen ? 'rotate-180' : ''" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="m19 9-7 7-7-7" />
+                    </svg>
+                </button>
+
+                <div x-show="redirectOpen" x-transition class="mt-4 space-y-3">
+                    <flux:input
+                        label="Redirect URL"
+                        wire:model="redirectUrl"
+                        type="url"
+                        placeholder="https://example.com/new-page"
+                        description="Leave blank to disable. When set, visitors will be forwarded here instead of seeing this page."
+                    />
+                    <flux:field>
+                        <flux:label>Redirect Type</flux:label>
+                        <flux:select wire:model="redirectType">
+                            <flux:select.option value="301">301 — Permanent</flux:select.option>
+                            <flux:select.option value="302">302 — Temporary</flux:select.option>
+                        </flux:select>
+                        <flux:description>Use 301 for permanent moves (search engines will update their index). Use 302 for temporary redirects.</flux:description>
                     </flux:field>
                 </div>
             </div>

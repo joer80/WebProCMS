@@ -185,3 +185,110 @@ it('validates that only allowed status values are accepted', function (): void {
         ->call('saveSeoSettings')
         ->assertHasErrors(['pageStatus']);
 });
+
+it('defaults redirectUrl and redirectType when no redirect is configured', function (): void {
+    Livewire::actingAs($this->user)
+        ->test('pages::dashboard.pages.editor', ['file' => $this->tempRelativePath])
+        ->assertSet('redirectUrl', '')
+        ->assertSet('redirectType', '301');
+});
+
+it('injects a boot redirect method when redirectUrl is set', function (): void {
+    Livewire::actingAs($this->user)
+        ->test('pages::dashboard.pages.editor', ['file' => $this->tempRelativePath])
+        ->set('redirectUrl', 'https://example.com/new')
+        ->set('redirectType', '301')
+        ->call('saveSeoSettings');
+
+    $contents = file_get_contents($this->tempFullPath);
+
+    expect($contents)
+        ->toContain('// ROW:php:start:page-redirect')
+        ->toContain("redirect('https://example.com/new', 301)")
+        ->toContain('// ROW:php:end:page-redirect');
+});
+
+it('uses the correct redirect type in the injected code', function (): void {
+    Livewire::actingAs($this->user)
+        ->test('pages::dashboard.pages.editor', ['file' => $this->tempRelativePath])
+        ->set('redirectUrl', 'https://example.com/temp')
+        ->set('redirectType', '302')
+        ->call('saveSeoSettings');
+
+    $contents = file_get_contents($this->tempFullPath);
+
+    expect($contents)->toContain("redirect('https://example.com/temp', 302)");
+});
+
+it('removes the redirect block when redirectUrl is cleared', function (): void {
+    Livewire::actingAs($this->user)
+        ->test('pages::dashboard.pages.editor', ['file' => $this->tempRelativePath])
+        ->set('redirectUrl', 'https://example.com/new')
+        ->call('saveSeoSettings');
+
+    Livewire::actingAs($this->user)
+        ->test('pages::dashboard.pages.editor', ['file' => $this->tempRelativePath])
+        ->set('redirectUrl', '')
+        ->call('saveSeoSettings');
+
+    $contents = file_get_contents($this->tempFullPath);
+
+    expect($contents)->not->toContain('page-redirect');
+});
+
+it('does not inject abort code when a redirect is set, even for non-accessible statuses', function (): void {
+    Livewire::actingAs($this->user)
+        ->test('pages::dashboard.pages.editor', ['file' => $this->tempRelativePath])
+        ->set('pageStatus', 'unpublished')
+        ->set('redirectUrl', 'https://example.com/new')
+        ->call('saveSeoSettings');
+
+    $contents = file_get_contents($this->tempFullPath);
+
+    expect($contents)
+        ->toContain('page-redirect')
+        ->not->toContain('page-status-abort');
+});
+
+it('parses an existing redirect from the php section', function (): void {
+    file_put_contents($this->tempFullPath, <<<'BLADE'
+<?php
+
+use Livewire\Attributes\Layout;
+use Livewire\Attributes\Title;
+use Livewire\Component;
+
+new #[Layout('layouts.public')] #[Title('Test Page')] class extends Component {
+    // ROW:php:start:page-redirect
+    public function boot(): void
+    {
+        redirect('https://example.com/existing', 302);
+    }
+    // ROW:php:end:page-redirect
+}; ?>
+
+<div>
+{{-- ROW:start:hero-abc123 --}}
+<section>Hero content</section>
+{{-- ROW:end:hero-abc123 --}}
+</div>
+BLADE);
+
+    Livewire::actingAs($this->user)
+        ->test('pages::dashboard.pages.editor', ['file' => $this->tempRelativePath])
+        ->assertSet('redirectUrl', 'https://example.com/existing')
+        ->assertSet('redirectType', '302');
+});
+
+it('does not include redirect code in the preview file', function (): void {
+    Livewire::actingAs($this->user)
+        ->test('pages::dashboard.pages.editor', ['file' => $this->tempRelativePath])
+        ->set('redirectUrl', 'https://example.com/new')
+        ->call('saveSeoSettings');
+
+    $previewPath = (new \App\Support\VoltFileService)->previewFilePath($this->tempRelativePath);
+
+    if (file_exists($previewPath)) {
+        expect(file_get_contents($previewPath))->not->toContain('page-redirect');
+    }
+});
