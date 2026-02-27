@@ -411,6 +411,25 @@ class VoltFileService
     }
 
     /**
+     * Rename a top-level public page to a new slug, updating its route in routes/web.php.
+     * Returns the new relative path.
+     */
+    public function renamePage(string $oldRelativePath, string $newSlug, bool $cached = true): string
+    {
+        $oldFullPath = resource_path('views/'.$oldRelativePath);
+        $newRelativePath = 'pages/⚡'.$newSlug.'.blade.php';
+        $newFullPath = resource_path('views/'.$newRelativePath);
+
+        rename($oldFullPath, $newFullPath);
+
+        $oldSlug = str_replace(['pages/⚡', '.blade.php'], '', $oldRelativePath);
+        $this->removePublicRoute($oldSlug);
+        $this->addPublicRoute($newSlug, $cached);
+
+        return $newRelativePath;
+    }
+
+    /**
      * Delete a page file and remove its route from routes/web.php.
      */
     public function deletePage(string $relativePath): void
@@ -430,6 +449,7 @@ class VoltFileService
 
     /**
      * Remove a route line from routes/web.php by its route name.
+     * Handles both indented (cached group) and top-level (uncached) routes.
      */
     public function removePublicRoute(string $routeName): void
     {
@@ -438,7 +458,7 @@ class VoltFileService
         $escapedName = preg_quote($routeName, '/');
 
         $contents = preg_replace(
-            '/\n\s+Route::livewire\([^\n]+->name\(\''.$escapedName.'\'\);/',
+            '/\n[ \t]*Route::livewire\([^\n]+->name\(\''.$escapedName.'\'\);/',
             '',
             $contents
         );
@@ -447,21 +467,61 @@ class VoltFileService
     }
 
     /**
-     * Insert a new route into the cache middleware group in routes/web.php.
+     * Insert a new route into routes/web.php after the appropriate anchor comment.
+     * Cached pages go inside the cache middleware group; uncached pages go outside it.
      */
-    public function addPublicRoute(string $slug): void
+    public function addPublicRoute(string $slug, bool $cached = true): void
     {
         $routesPath = base_path('routes/web.php');
         $contents = file_get_contents($routesPath);
-        $routeLine = "    Route::livewire('{$slug}', 'pages::{$slug}')->name('{$slug}');";
 
-        $contents = preg_replace(
-            '/(\}\);)(\n\nRoute::livewire\(\'contact\')/',
-            $routeLine."\n$1$2",
-            $contents
-        );
+        if ($cached) {
+            $routeLine = "    Route::livewire('{$slug}', 'pages::{$slug}')->name('{$slug}');";
+
+            $contents = preg_replace(
+                '/^(    \/\/ new cached pages are inserted here)$/m',
+                "$1\n    {$routeLine}",
+                $contents,
+                1
+            );
+        } else {
+            $routeLine = "Route::livewire('{$slug}', 'pages::{$slug}')->name('{$slug}');";
+
+            $contents = preg_replace(
+                '/^(\/\/ new uncached pages are inserted here)$/m',
+                "$1\n{$routeLine}",
+                $contents,
+                1
+            );
+        }
 
         file_put_contents($routesPath, $contents);
+    }
+
+    /**
+     * Determine whether a public page's route is inside the cache middleware group.
+     * Returns true if cached (or if the route/anchor cannot be found).
+     */
+    public function isRouteCached(string $slug): bool
+    {
+        $routesPath = base_path('routes/web.php');
+        $contents = file_get_contents($routesPath);
+        $escapedSlug = preg_quote($slug, '/');
+
+        // If route is not registered at all, default to cached.
+        if (! preg_match("/Route::livewire\('{$escapedSlug}',/", $contents)) {
+            return true;
+        }
+
+        $uncachedAnchorPos = strpos($contents, '// new uncached pages are inserted here');
+
+        if ($uncachedAnchorPos === false) {
+            return true;
+        }
+
+        $beforeUncached = substr($contents, 0, $uncachedAnchorPos);
+
+        return (bool) preg_match("/Route::livewire\('{$escapedSlug}',/", $beforeUncached);
     }
 
     /**

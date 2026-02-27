@@ -14,7 +14,6 @@ Route::middleware([
     // SaaS pages
     Route::livewire('features', 'pages::features')->name('features');
     Route::livewire('pricing', 'pages::pricing')->name('pricing');
-    Route::livewire('test', 'pages::test')->name('test');
 
     // eCommerce pages
     Route::livewire('products', 'pages::products')->name('products');
@@ -35,11 +34,16 @@ Route::middleware([
     Route::livewire('blog', 'pages::blog.index')->name('blog.index');
     Route::livewire('blog/{slug}', 'pages::blog.show')->name('blog.show');
 
+
+    // new cached pages are inserted here
+        Route::livewire('test', 'pages::test')->name('test');
     Route::livewire('contact', 'pages::contact')->name('contact');
 
     // LW4 version of blog (For comparison)- /app/Livewire/Blog2.php
     // Route::get('blog2', \App\Livewire\Blog2::class)->name('blog2.index');
 });
+
+// new uncached pages are inserted here
 
 // Don't cache the contact page.
 // Route::livewire('contact', 'pages::contact')->name('contact');

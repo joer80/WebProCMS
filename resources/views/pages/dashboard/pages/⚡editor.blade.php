@@ -5,7 +5,6 @@ use App\Jobs\IndexDesignLibraryJob;
 use App\Models\ContentOverride;
 use App\Models\DesignRow;
 use App\Support\VoltFileService;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
@@ -15,7 +14,8 @@ use Livewire\Attributes\Validate;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 
-new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component {
+new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
+{
     use WithFileUploads;
 
     #[Url]
@@ -27,19 +27,35 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component 
     public array $rows = [];
 
     public bool $isDirty = false;
+
     public string $previewUrl = '';
+
     public string $liveUrl = '';
+
     public bool $showLibraryDrawer = false;
+
     public string $librarySearch = '';
+
     public string $libraryCategory = '';
+
     public ?int $insertAtIndex = null;
 
     public bool $showSeoModal = false;
+
+    public string $pageSlug = '';
+
+    public bool $isCachedPage = true;
+
     public string $seoTitle = '';
+
     public string $seoDescription = '';
+
     public bool $seoNoindex = false;
+
     public string $seoOgImage = '';
+
     public string $redirectUrl = '';
+
     public string $redirectType = '301';
 
     #[Validate('required|in:draft,published,unlisted,unpublished')]
@@ -47,6 +63,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component 
 
     // Content editor state
     public bool $showContentEditor = false;
+
     public ?int $editingRowIndex = null;
 
     /** @var array<int, array{slug: string, key: string, type: string, default: string, label: string}> */
@@ -59,6 +76,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component 
     public array $originalContentValues = [];
 
     public mixed $pendingImageUpload = null;
+
     public string $pendingImageKey = '';
 
     public function mount(): void
@@ -124,7 +142,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component 
             ->when($this->libraryCategory, fn ($q) => $q->where('category', $this->libraryCategory))
             ->when($this->librarySearch, fn ($q) => $q->where(function ($q) {
                 $q->where('name', 'like', '%'.$this->librarySearch.'%')
-                  ->orWhere('description', 'like', '%'.$this->librarySearch.'%');
+                    ->orWhere('description', 'like', '%'.$this->librarySearch.'%');
             }))
             ->orderBy('category')
             ->orderBy('sort_order')
@@ -148,6 +166,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component 
 
         if (! file_exists($fullPath)) {
             $this->dispatch('notify', message: 'File not found.');
+
             return;
         }
 
@@ -158,6 +177,8 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component 
         $this->rows = $parsed['rows'];
         $this->isDirty = false;
         $this->parseSeoFromPhpSection();
+        $this->pageSlug = preg_match('#^pages/⚡([^/]+)\.blade\.php$#u', $relativePath, $m) ? $m[1] : '';
+        $this->isCachedPage = $this->pageSlug ? $service->isRouteCached($this->pageSlug) : true;
         $this->liveUrl = $service->getRouteForFile($relativePath);
         $this->previewUrl = route('design-library.preview', ['token' => $service->previewToken($relativePath)]);
 
@@ -430,10 +451,41 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component 
 
     public function saveSeoSettings(): void
     {
-        $this->validate(['pageStatus' => 'required|in:draft,published,unlisted,unpublished']);
+        $isPublicPage = (bool) preg_match('#^pages/⚡[^/]+\.blade\.php$#u', $this->file);
+
+        $rules = ['pageStatus' => 'required|in:draft,published,unlisted,unpublished'];
+
+        if ($isPublicPage) {
+            $rules['pageSlug'] = ['required', 'regex:/^[a-z0-9]+(?:-[a-z0-9]+)*$/'];
+        }
+
+        $this->validate($rules);
 
         if (! $this->file) {
             return;
+        }
+
+        if ($isPublicPage && preg_match('#^pages/⚡([^/]+)\.blade\.php$#u', $this->file, $m)) {
+            $currentSlug = $m[1];
+            $service = new VoltFileService;
+
+            if ($this->pageSlug !== $currentSlug) {
+                $newRelativePath = 'pages/⚡'.$this->pageSlug.'.blade.php';
+
+                if (file_exists(resource_path('views/'.$newRelativePath))) {
+                    $this->addError('pageSlug', 'A page with this slug already exists.');
+
+                    return;
+                }
+
+                $newFile = $service->renamePage($this->file, $this->pageSlug, $this->isCachedPage);
+                $this->file = $newFile;
+                $this->liveUrl = $service->getRouteForFile($newFile);
+                $this->previewUrl = route('design-library.preview', ['token' => $service->previewToken($newFile)]);
+            } elseif ($service->isRouteCached($currentSlug) !== $this->isCachedPage) {
+                $service->removePublicRoute($currentSlug);
+                $service->addPublicRoute($currentSlug, $this->isCachedPage);
+            }
         }
 
         $this->updatePhpSectionWithSeo();
@@ -494,7 +546,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component 
 
         $newLayout = empty($data)
             ? "#[Layout('layouts.public')]"
-            : "#[Layout('layouts.public', [" . implode(', ', $data) . "])]";
+            : "#[Layout('layouts.public', [".implode(', ', $data).'])]';
 
         $this->phpSection = preg_replace(
             "/#\[Layout\('layouts\.public'(?:,\s*\[[^\]]*\])?\)\]/",
@@ -1071,6 +1123,27 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component 
         <flux:heading size="lg">Page Settings</flux:heading>
 
         <div class="mt-6 space-y-4">
+            @if (preg_match('#^pages/⚡[^/]+\.blade\.php$#u', $file))
+                {{-- Slug --}}
+                <div>
+                    <flux:field>
+                        <flux:label>Slug</flux:label>
+                        <flux:input wire:model="pageSlug" placeholder="my-page-slug" />
+                        <flux:description>URL path: /{{ $pageSlug ?: '…' }}</flux:description>
+                        <flux:error name="pageSlug" />
+                    </flux:field>
+                </div>
+
+                {{-- Cache --}}
+                <div>
+                    <flux:switch
+                        label="Cache response"
+                        description="Cache this page for 1 hour for unauthenticated visitors. Disable for pages with dynamic or user-specific content."
+                        wire:model="isCachedPage"
+                    />
+                </div>
+            @endif
+
             {{-- Visibility / Status --}}
             <div>
                 <flux:field>
