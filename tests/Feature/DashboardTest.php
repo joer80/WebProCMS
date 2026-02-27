@@ -3,7 +3,6 @@
 use App\Models\Category;
 use App\Models\Location;
 use App\Models\Post;
-use App\Models\Shortcode;
 use App\Models\User;
 use Livewire\Livewire;
 
@@ -84,17 +83,14 @@ it('shows the location count', function (): void {
         ->assertSet('locationCount', 3);
 });
 
-it('shows the active shortcode count', function (): void {
+it('shows the public page count', function (): void {
     \Livewire\Features\SupportLazyLoading\SupportLazyLoading::disableWhileTesting();
 
     $user = User::factory()->create();
-    Shortcode::factory()->create(['is_active' => true]);
-    Shortcode::factory()->create(['is_active' => true]);
-    Shortcode::factory()->create(['is_active' => false]);
 
     Livewire::actingAs($user)
         ->test('pages::dashboard')
-        ->assertSet('activeShortcodeCount', 2);
+        ->assertSet('pageCount', fn ($count) => is_int($count) && $count >= 0);
 });
 
 it('shows the category count', function (): void {

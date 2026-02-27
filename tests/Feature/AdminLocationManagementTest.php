@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\Role;
 use App\Models\Location;
 use App\Models\User;
 use Illuminate\Http\UploadedFile;
@@ -12,8 +13,8 @@ it('redirects unauthenticated users from the location dashboard', function (): v
     $this->get(route('dashboard.locations.create'))->assertRedirect(route('login'));
 });
 
-it('shows the locations dashboard to authenticated users', function (): void {
-    $user = User::factory()->create();
+it('shows the locations dashboard to manager users', function (): void {
+    $user = User::factory()->withRole(Role::Manager)->create();
 
     $this->actingAs($user)
         ->get(route('dashboard.locations.index'))

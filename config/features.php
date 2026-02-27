@@ -12,8 +12,6 @@ return [
     |
     */
 
-    'dashboard' => env('DASHBOARD_ENABLED', true),
-
     'website_type' => env('WEBSITE_TYPE', 'saas'),
 
 ];

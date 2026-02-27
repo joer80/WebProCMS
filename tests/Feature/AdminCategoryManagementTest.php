@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\Role;
 use App\Models\Category;
 use App\Models\Post;
 use App\Models\User;
@@ -10,8 +11,8 @@ it('redirects unauthenticated users from the category dashboard', function (): v
     $this->get(route('dashboard.categories.create'))->assertRedirect(route('login'));
 });
 
-it('shows the categories dashboard to authenticated users', function (): void {
-    $user = User::factory()->create();
+it('shows the categories dashboard to manager users', function (): void {
+    $user = User::factory()->withRole(Role::Manager)->create();
 
     $this->actingAs($user)
         ->get(route('dashboard.categories.index'))

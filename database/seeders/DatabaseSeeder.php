@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Enums\Role;
 use App\Models\Category;
 use App\Models\Post;
 use App\Models\User;
@@ -18,9 +19,11 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
+        $domain = parse_url(env('BUSINESS_URL', 'https://example.com'), PHP_URL_HOST) ?? 'example.com';
+
         User::firstOrCreate(
-            ['email' => 'test@example.com'],
-            ['name' => 'Test User', 'password' => bcrypt('password')],
+            ['email' => "test@{$domain}"],
+            ['name' => 'Test User', 'password' => bcrypt('password'), 'role' => Role::Standard, 'must_change_password' => true],
         );
 
         $categories = collect(['General', 'News', 'Events'])->map(

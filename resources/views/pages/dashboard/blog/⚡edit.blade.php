@@ -67,12 +67,6 @@ new #[Layout('layouts.app')] #[Title('Edit Post')] class extends Component {
     #[Validate('nullable|boolean')]
     public bool $isNoindex = false;
 
-    #[Validate('nullable|string|max:255')]
-    public string $ogTitle = '';
-
-    #[Validate('nullable|string|max:320')]
-    public string $ogDescription = '';
-
     #[Validate('nullable|url|max:2048')]
     public string $ogImage = '';
 
@@ -102,8 +96,6 @@ new #[Layout('layouts.app')] #[Title('Edit Post')] class extends Component {
         $this->metaTitle = $post->meta_title ?? '';
         $this->metaDescription = $post->meta_description ?? '';
         $this->isNoindex = $post->is_noindex ?? false;
-        $this->ogTitle = $post->og_title ?? '';
-        $this->ogDescription = $post->og_description ?? '';
         $this->ogImage = $post->og_image ?? '';
     }
 
@@ -203,8 +195,6 @@ new #[Layout('layouts.app')] #[Title('Edit Post')] class extends Component {
             'meta_title' => $this->metaTitle ?: null,
             'meta_description' => $this->metaDescription ?: null,
             'is_noindex' => $this->isNoindex,
-            'og_title' => $this->ogTitle ?: null,
-            'og_description' => $this->ogDescription ?: null,
             'og_image' => $this->ogImage ?: null,
         ]);
     }
@@ -560,19 +550,7 @@ new #[Layout('layouts.app')] #[Title('Edit Post')] class extends Component {
                                         </svg>
                                     </button>
 
-                                    <div x-show="ogOpen" x-transition class="mt-4 space-y-4">
-                                        <flux:field>
-                                            <flux:label>OG Title</flux:label>
-                                            <flux:input wire:model="ogTitle" type="text" placeholder="Defaults to meta title or post title…" />
-                                            <flux:error name="ogTitle" />
-                                        </flux:field>
-
-                                        <flux:field>
-                                            <flux:label>OG Description</flux:label>
-                                            <flux:textarea wire:model="ogDescription" rows="2" placeholder="Defaults to meta description or excerpt…" />
-                                            <flux:error name="ogDescription" />
-                                        </flux:field>
-
+                                    <div x-show="ogOpen" x-transition class="mt-4">
                                         <flux:field>
                                             <flux:label>OG Image URL</flux:label>
                                             <flux:input wire:model="ogImage" type="url" placeholder="Defaults to featured image…" />

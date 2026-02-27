@@ -7,6 +7,25 @@
     <meta name="description" content="{{ $description }}" />
 @endif
 
+@if (! empty($noindex))
+    <meta name="robots" content="noindex">
+@endif
+
+@if (! empty($ogImage))
+    <meta property="og:image" content="{{ $ogImage }}" />
+    <meta name="twitter:image" content="{{ $ogImage }}" />
+@endif
+
+<meta property="og:title" content="{{ $title ?? config('app.name') }}" />
+@if (! empty($description))
+    <meta property="og:description" content="{{ $description }}" />
+@endif
+
+<meta name="twitter:title" content="{{ $title ?? config('app.name') }}" />
+@if (! empty($description))
+    <meta name="twitter:description" content="{{ $description }}" />
+@endif
+
 <link rel="icon" href="/favicon.ico" sizes="any">
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
@@ -14,7 +33,7 @@
 <link rel="preconnect" href="https://fonts.bunny.net">
 <link href="https://fonts.bunny.net/css?family=instrument-sans:400,500,600" rel="stylesheet" />
 
-@vite(['resources/css/app.css', 'resources/js/app.js'])
+@vite([$cssBundle ?? 'resources/css/app.css', 'resources/js/app.js'])
 @fluxAppearance
 <script>localStorage.setItem('flux.appearance','light');document.documentElement.classList.remove('dark')</script>
 @stack('head')

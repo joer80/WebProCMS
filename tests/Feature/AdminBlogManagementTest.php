@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\Role;
 use App\Models\Category;
 use App\Models\Post;
 use App\Models\User;
@@ -13,8 +14,8 @@ it('redirects unauthenticated users from the blog dashboard', function (): void 
     $this->get(route('dashboard.blog.create'))->assertRedirect(route('login'));
 });
 
-it('shows the blog dashboard to authenticated users', function (): void {
-    $user = User::factory()->create();
+it('shows the blog dashboard to manager users', function (): void {
+    $user = User::factory()->withRole(Role::Manager)->create();
 
     $this->actingAs($user)
         ->get(route('dashboard.blog.index'))
