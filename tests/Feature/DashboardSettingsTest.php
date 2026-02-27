@@ -77,3 +77,33 @@ it('does not create duplicate posts when seeded twice', function (): void {
 
     expect($countAfterSecond)->toBe($countAfterFirst);
 });
+
+it('loads the saved full_page_cache_driver setting on mount', function (): void {
+    Setting::set('full_page_cache_driver', 'redis');
+
+    $user = User::factory()->create();
+
+    Livewire::actingAs($user)
+        ->test('pages::dashboard.settings')
+        ->assertSet('fullPageCacheDriver', 'redis');
+});
+
+it('defaults response cache driver to file when no setting exists', function (): void {
+    $user = User::factory()->create();
+
+    Livewire::actingAs($user)
+        ->test('pages::dashboard.settings')
+        ->assertSet('fullPageCacheDriver', 'file');
+});
+
+it('saves the response cache driver setting and dispatches a notification', function (): void {
+    $user = User::factory()->create();
+
+    Livewire::actingAs($user)
+        ->test('pages::dashboard.settings')
+        ->set('fullPageCacheDriver', 'file')
+        ->call('saveFullPageCacheDriver')
+        ->assertDispatched('notify', message: 'Settings saved.');
+
+    expect(Setting::get('full_page_cache_driver'))->toBe('file');
+});
