@@ -83,6 +83,8 @@ This single command starts everything you need for development:
 
 ## Production Setup
 
+> **Before deploying**, always run `npm run build` to compile and version the frontend assets. Skipping this step will result in a `ViteException` or stale/missing CSS and JavaScript in production.
+
 ```bash
 composer install --no-dev --optimize-autoloader
 cp .env.example .env
