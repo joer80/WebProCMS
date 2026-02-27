@@ -10,7 +10,7 @@
         <div
             wire:ignore
             x-data="{ show: false, message: '', _timer: null }"
-            @notify.window="message = $event.detail.message; show = true; clearTimeout(_timer); _timer = setTimeout(() => show = false, 5000)"
+            @notify.window="message = $event.detail.message; show = true; clearTimeout(_timer); _timer = setTimeout(() => show = false, 1000)"
             x-show="show"
             x-transition:enter="transition ease-out duration-200"
             x-transition:enter-start="opacity-0 translate-y-1"

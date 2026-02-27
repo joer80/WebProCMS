@@ -130,5 +130,15 @@
 
         @stack('scripts')
         @fluxScripts
+        <script>
+            if (window.self !== window.top) {
+                window.addEventListener('keydown', function(e) {
+                    if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+                        e.preventDefault();
+                        window.parent.postMessage({ type: 'editor-save-page' }, window.location.origin);
+                    }
+                });
+            }
+        </script>
     </body>
 </html>

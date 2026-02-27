@@ -590,12 +590,6 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component 
         @endif
     </flux:modal>
 
-    {{-- Global loading spinner --}}
-    <div wire:loading class="fixed inset-0 z-50 flex items-center justify-center pointer-events-none">
-        <div class="bg-white dark:bg-zinc-800 rounded-full p-3 shadow-xl">
-            <flux:icon name="arrow-path" class="size-6 animate-spin text-zinc-500 dark:text-zinc-400" />
-        </div>
-    </div>
 
     <div
         x-data="{
@@ -605,6 +599,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component 
         }"
         @keydown.ctrl.s.window.prevent="if ($wire.file) $wire.saveFile()"
         @keydown.meta.s.window.prevent="if ($wire.file) $wire.saveFile()"
+        @message.window="if ($event.origin === window.location.origin && $event.data && $event.data.type === 'editor-save-page' && $wire.file) $wire.saveFile()"
         class="flex flex-col min-h-screen bg-white dark:bg-zinc-900"
     >
         {{-- Editor toolbar --}}
