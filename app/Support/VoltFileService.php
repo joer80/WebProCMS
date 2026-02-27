@@ -499,6 +499,26 @@ class VoltFileService
     }
 
     /**
+     * Insert a redirect route into routes/web.php after the uncached pages anchor.
+     * Placed outside the cache group so it is always evaluated.
+     */
+    public function addRedirectRoute(string $fromSlug, string $toSlug, int $status = 301): void
+    {
+        $routesPath = base_path('routes/web.php');
+        $contents = file_get_contents($routesPath);
+        $routeLine = "Route::redirect('{$fromSlug}', '/{$toSlug}', {$status});";
+
+        $contents = preg_replace(
+            '/^(\/\/ new uncached pages are inserted here)$/m',
+            "$1\n{$routeLine}",
+            $contents,
+            1
+        );
+
+        file_put_contents($routesPath, $contents);
+    }
+
+    /**
      * Determine whether a public page's route is inside the cache middleware group.
      * Returns true if cached (or if the route/anchor cannot be found).
      */

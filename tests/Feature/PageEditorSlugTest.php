@@ -142,6 +142,66 @@ it('does not rename the file when the slug is unchanged', function (): void {
     expect(file_exists($this->tempFullPath))->toBeTrue();
 });
 
+it('does not create a redirect when createSlugRedirect is false', function (): void {
+    $newSlug = 'renamed-'.uniqid();
+    $this->renamedFullPath = resource_path('views/pages/⚡'.$newSlug.'.blade.php');
+
+    Livewire::actingAs($this->user)
+        ->test('pages::dashboard.pages.editor', ['file' => $this->tempRelativePath])
+        ->set('pageSlug', $newSlug)
+        ->set('createSlugRedirect', false)
+        ->call('saveSeoSettings');
+
+    $routes = file_get_contents(base_path('routes/web.php'));
+
+    expect($routes)->not->toContain("Route::redirect('{$this->slug}'");
+});
+
+it('creates a redirect route when createSlugRedirect is true', function (): void {
+    $newSlug = 'renamed-'.uniqid();
+    $this->renamedFullPath = resource_path('views/pages/⚡'.$newSlug.'.blade.php');
+
+    Livewire::actingAs($this->user)
+        ->test('pages::dashboard.pages.editor', ['file' => $this->tempRelativePath])
+        ->set('pageSlug', $newSlug)
+        ->set('createSlugRedirect', true)
+        ->set('slugRedirectType', '301')
+        ->call('saveSeoSettings');
+
+    $routes = file_get_contents(base_path('routes/web.php'));
+
+    expect($routes)->toContain("Route::redirect('{$this->slug}', '/{$newSlug}', 301)");
+});
+
+it('creates a 302 redirect when slugRedirectType is 302', function (): void {
+    $newSlug = 'renamed-'.uniqid();
+    $this->renamedFullPath = resource_path('views/pages/⚡'.$newSlug.'.blade.php');
+
+    Livewire::actingAs($this->user)
+        ->test('pages::dashboard.pages.editor', ['file' => $this->tempRelativePath])
+        ->set('pageSlug', $newSlug)
+        ->set('createSlugRedirect', true)
+        ->set('slugRedirectType', '302')
+        ->call('saveSeoSettings');
+
+    $routes = file_get_contents(base_path('routes/web.php'));
+
+    expect($routes)->toContain("Route::redirect('{$this->slug}', '/{$newSlug}', 302)");
+});
+
+it('resets createSlugRedirect after saving', function (): void {
+    $newSlug = 'renamed-'.uniqid();
+    $this->renamedFullPath = resource_path('views/pages/⚡'.$newSlug.'.blade.php');
+
+    Livewire::actingAs($this->user)
+        ->test('pages::dashboard.pages.editor', ['file' => $this->tempRelativePath])
+        ->set('pageSlug', $newSlug)
+        ->set('createSlugRedirect', true)
+        ->call('saveSeoSettings')
+        ->assertSet('createSlugRedirect', false)
+        ->assertSet('originalPageSlug', $newSlug);
+});
+
 it('does not apply slug validation for non-public page paths', function (): void {
     $nonPublicPath = 'pages/test-no-slug-'.uniqid().'.blade.php';
     $nonPublicFullPath = resource_path('views/'.$nonPublicPath);

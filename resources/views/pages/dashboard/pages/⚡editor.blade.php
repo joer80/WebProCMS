@@ -44,6 +44,12 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
 
     public string $pageSlug = '';
 
+    public string $originalPageSlug = '';
+
+    public bool $createSlugRedirect = false;
+
+    public string $slugRedirectType = '301';
+
     public bool $isCachedPage = true;
 
     public string $seoTitle = '';
@@ -178,6 +184,9 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
         $this->isDirty = false;
         $this->parseSeoFromPhpSection();
         $this->pageSlug = preg_match('#^pages/⚡([^/]+)\.blade\.php$#u', $relativePath, $m) ? $m[1] : '';
+        $this->originalPageSlug = $this->pageSlug;
+        $this->createSlugRedirect = false;
+        $this->slugRedirectType = '301';
         $this->isCachedPage = $this->pageSlug ? $service->isRouteCached($this->pageSlug) : true;
         $this->liveUrl = $service->getRouteForFile($relativePath);
         $this->previewUrl = route('design-library.preview', ['token' => $service->previewToken($relativePath)]);
@@ -482,10 +491,18 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                 $this->file = $newFile;
                 $this->liveUrl = $service->getRouteForFile($newFile);
                 $this->previewUrl = route('design-library.preview', ['token' => $service->previewToken($newFile)]);
+
+                if ($this->createSlugRedirect) {
+                    $service->addRedirectRoute($currentSlug, $this->pageSlug, (int) $this->slugRedirectType);
+                }
             } elseif ($service->isRouteCached($currentSlug) !== $this->isCachedPage) {
                 $service->removePublicRoute($currentSlug);
                 $service->addPublicRoute($currentSlug, $this->isCachedPage);
             }
+
+            $this->originalPageSlug = $this->pageSlug;
+            $this->createSlugRedirect = false;
+            $this->slugRedirectType = '301';
         }
 
         $this->updatePhpSectionWithSeo();
@@ -1128,17 +1145,39 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                 <div>
                     <flux:field>
                         <flux:label>Slug</flux:label>
-                        <flux:input wire:model="pageSlug" placeholder="my-page-slug" />
+                        <flux:input wire:model.live.debounce.300ms="pageSlug" placeholder="my-page-slug" />
                         <flux:description>URL path: /{{ $pageSlug ?: '…' }}</flux:description>
                         <flux:error name="pageSlug" />
                     </flux:field>
                 </div>
 
+                @if ($originalPageSlug && $pageSlug !== $originalPageSlug)
+                    {{-- Redirect from old slug --}}
+                    <div class="rounded-lg border border-zinc-200 dark:border-zinc-700 p-4 space-y-3">
+                        <flux:switch
+                            label="Redirect /{{ $originalPageSlug }} to /{{ $pageSlug ?: '…' }}"
+                            description="Forward visitors from the old URL to the new one."
+                            wire:model="createSlugRedirect"
+                        />
+
+                        @if ($createSlugRedirect)
+                            <flux:field>
+                                <flux:label>Redirect type</flux:label>
+                                <flux:select wire:model="slugRedirectType">
+                                    <flux:select.option value="301">301 — Permanent</flux:select.option>
+                                    <flux:select.option value="302">302 — Temporary</flux:select.option>
+                                </flux:select>
+                                <flux:description>Use 301 for permanent moves. Use 302 for temporary redirects.</flux:description>
+                            </flux:field>
+                        @endif
+                    </div>
+                @endif
+
                 {{-- Cache --}}
                 <div>
                     <flux:switch
                         label="Cache response"
-                        description="Cache this page for 1 hour for unauthenticated visitors. Disable for pages with dynamic or user-specific content."
+                        description="Full-page cache this page for 1 hour for unauthenticated visitors. Disable for pages with dynamic or user-specific content."
                         wire:model="isCachedPage"
                     />
                 </div>

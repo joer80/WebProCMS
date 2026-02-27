@@ -36,7 +36,7 @@ Route::middleware([
 
 
     // new cached pages are inserted here
-        Route::livewire('test', 'pages::test')->name('test');
+    Route::livewire('test', 'pages::test')->name('test');
     Route::livewire('contact', 'pages::contact')->name('contact');
 
     // LW4 version of blog (For comparison)- /app/Livewire/Blog2.php
