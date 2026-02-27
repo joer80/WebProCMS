@@ -1232,7 +1232,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                 <div>
                     <flux:switch
                         label="Cache response"
-                        description="Full-page cache this page for 1 hour for unauthenticated visitors. Disable for pages with dynamic or user-specific content."
+                        :description="'Full-page cache this page for ' . \Carbon\CarbonInterval::seconds(config('responsecache.cache_lifetime_in_seconds'))->cascade()->forHumans() . ' for unauthenticated visitors. Disable for pages with dynamic or user-specific content.'"
                         wire:model="isCachedPage"
                     />
                 </div>

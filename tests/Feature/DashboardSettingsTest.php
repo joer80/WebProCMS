@@ -78,8 +78,62 @@ it('does not create duplicate posts when seeded twice', function (): void {
     expect($countAfterSecond)->toBe($countAfterFirst);
 });
 
-it('loads the saved full_page_cache_driver setting on mount', function (): void {
-    Setting::set('full_page_cache_driver', 'redis');
+it('loads the session driver from config on mount', function (): void {
+    config(['session.driver' => 'redis']);
+
+    $user = User::factory()->create();
+
+    Livewire::actingAs($user)
+        ->test('pages::dashboard.settings')
+        ->assertSet('sessionDriver', 'redis');
+});
+
+it('writes SESSION_DRIVER to .env and dispatches a notification', function (): void {
+    $envPath = base_path('.env');
+    $originalEnv = file_get_contents($envPath);
+
+    $user = User::factory()->create();
+
+    Livewire::actingAs($user)
+        ->test('pages::dashboard.settings')
+        ->set('sessionDriver', 'file')
+        ->call('saveSessionDriver')
+        ->assertDispatched('notify', message: 'Settings saved.');
+
+    expect(file_get_contents($envPath))->toContain('SESSION_DRIVER=file');
+
+    file_put_contents($envPath, $originalEnv);
+});
+
+it('loads the cache store from config on mount', function (): void {
+    config(['cache.default' => 'redis']);
+
+    $user = User::factory()->create();
+
+    Livewire::actingAs($user)
+        ->test('pages::dashboard.settings')
+        ->assertSet('cacheStore', 'redis');
+});
+
+it('writes CACHE_STORE to .env and dispatches a notification', function (): void {
+    $envPath = base_path('.env');
+    $originalEnv = file_get_contents($envPath);
+
+    $user = User::factory()->create();
+
+    Livewire::actingAs($user)
+        ->test('pages::dashboard.settings')
+        ->set('cacheStore', 'file')
+        ->call('saveCacheStore')
+        ->assertDispatched('notify', message: 'Settings saved.');
+
+    expect(file_get_contents($envPath))->toContain('CACHE_STORE=file');
+
+    file_put_contents($envPath, $originalEnv);
+});
+
+it('loads the full page cache driver from config on mount', function (): void {
+    config(['responsecache.cache_store' => 'redis']);
 
     $user = User::factory()->create();
 
@@ -88,7 +142,9 @@ it('loads the saved full_page_cache_driver setting on mount', function (): void 
         ->assertSet('fullPageCacheDriver', 'redis');
 });
 
-it('defaults response cache driver to file when no setting exists', function (): void {
+it('defaults full page cache driver to file when env is not set', function (): void {
+    config(['responsecache.cache_store' => 'file']);
+
     $user = User::factory()->create();
 
     Livewire::actingAs($user)
@@ -96,14 +152,32 @@ it('defaults response cache driver to file when no setting exists', function ():
         ->assertSet('fullPageCacheDriver', 'file');
 });
 
-it('saves the response cache driver setting and dispatches a notification', function (): void {
+it('loads the full page cache lifetime from config on mount', function (): void {
+    config(['responsecache.cache_lifetime_in_seconds' => 7200]);
+
+    $user = User::factory()->create();
+
+    Livewire::actingAs($user)
+        ->test('pages::dashboard.settings')
+        ->assertSet('fullPageCacheLifetime', 7200);
+});
+
+it('writes RESPONSE_CACHE_DRIVER and RESPONSE_CACHE_LIFETIME to .env and dispatches a notification', function (): void {
+    $envPath = base_path('.env');
+    $originalEnv = file_get_contents($envPath);
+
     $user = User::factory()->create();
 
     Livewire::actingAs($user)
         ->test('pages::dashboard.settings')
         ->set('fullPageCacheDriver', 'file')
-        ->call('saveFullPageCacheDriver')
+        ->set('fullPageCacheLifetime', 7200)
+        ->call('saveFullPageCache')
         ->assertDispatched('notify', message: 'Settings saved.');
 
-    expect(Setting::get('full_page_cache_driver'))->toBe('file');
+    $env = file_get_contents($envPath);
+    expect($env)->toContain('RESPONSE_CACHE_DRIVER=file')
+        ->and($env)->toContain('RESPONSE_CACHE_LIFETIME=7200');
+
+    file_put_contents($envPath, $originalEnv);
 });
