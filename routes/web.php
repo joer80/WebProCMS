@@ -38,6 +38,7 @@ Route::middleware([
     // Route::get('blog2', \App\Livewire\Blog2::class)->name('blog2.index');
 
     // new cached pages are inserted here
+    Route::livewire('test', 'pages::test')->name('test');
     Route::livewire('contact', 'pages::contact')->name('contact');
 });
 
@@ -47,7 +48,6 @@ Route::middleware([
 Route::middleware(['auth'])->group(function (): void {
     Route::middleware([\Spatie\ResponseCache\Middlewares\CacheResponse::class])->group(function (): void {
         // new auth-cached pages are inserted here
-        Route::livewire('test', 'pages::test')->name('test');
     });
 
     // new auth-uncached pages are inserted here
@@ -96,6 +96,7 @@ Route::middleware(['auth', 'verified'])->group(function (): void {
         Route::livewire('dashboard/menus', 'pages::dashboard.menus')->name('dashboard.menus');
 
         Route::livewire('dashboard/design-library', 'pages::dashboard.design-library.index')->name('dashboard.design-library.index');
+        Route::livewire('dashboard/redirects', 'pages::dashboard.redirects')->name('dashboard.redirects');
         Route::livewire('dashboard/pages/editor', 'pages::dashboard.pages.editor')->name('dashboard.design-library.editor');
     });
 });

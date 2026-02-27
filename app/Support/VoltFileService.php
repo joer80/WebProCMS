@@ -626,6 +626,78 @@ class VoltFileService
     }
 
     /**
+     * Parse all Route::redirect() entries from routes/web.php.
+     *
+     * @return array<int, array{from: string, to: string, status: int}>
+     */
+    public function getRedirects(): array
+    {
+        $contents = file_get_contents(base_path('routes/web.php'));
+
+        preg_match_all(
+            "/Route::redirect\('([^']+)',\s*'([^']+)',\s*(\d+)\);/",
+            $contents,
+            $matches,
+            PREG_SET_ORDER
+        );
+
+        return collect($matches)
+            ->map(fn (array $m) => [
+                'from' => $m[1],
+                'to' => $m[2],
+                'status' => (int) $m[3],
+            ])
+            ->values()
+            ->all();
+    }
+
+    /**
+     * Add a redirect route directly with raw from/to paths.
+     */
+    public function createRedirect(string $fromPath, string $toUrl, int $status = 301): void
+    {
+        $routesPath = base_path('routes/web.php');
+        $contents = file_get_contents($routesPath);
+        $routeLine = "Route::redirect('{$fromPath}', '{$toUrl}', {$status});";
+
+        $contents = preg_replace(
+            '/^(\/\/ new uncached pages are inserted here)$/m',
+            "$1\n{$routeLine}",
+            $contents,
+            1
+        );
+
+        file_put_contents($routesPath, $contents);
+    }
+
+    /**
+     * Remove a redirect route from routes/web.php by its from path.
+     */
+    public function removeRedirect(string $fromPath): void
+    {
+        $routesPath = base_path('routes/web.php');
+        $contents = file_get_contents($routesPath);
+        $escaped = preg_quote($fromPath, '/');
+
+        $contents = preg_replace(
+            "/\nRoute::redirect\('{$escaped}',\s*'[^']+',\s*\d+\);/",
+            '',
+            $contents
+        );
+
+        file_put_contents($routesPath, $contents);
+    }
+
+    /**
+     * Update an existing redirect route in routes/web.php.
+     */
+    public function updateRedirect(string $originalFromPath, string $newFromPath, string $toUrl, int $status): void
+    {
+        $this->removeRedirect($originalFromPath);
+        $this->createRedirect($newFromPath, $toUrl, $status);
+    }
+
+    /**
      * Determine whether a public page's route is inside the cache middleware group.
      * Returns true if cached (or if the route/anchor cannot be found).
      */
