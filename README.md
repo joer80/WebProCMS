@@ -99,6 +99,34 @@ php artisan optimize
 > php artisan optimize
 > ```
 
+### Deploying with Laravel Forge
+
+Forge's default deployment script does **not** include a response cache clear step. Since this project uses `spatie/laravel-responsecache` to cache full HTML pages, a new deployment will produce new Vite asset fingerprints (e.g. `app-CClrwE2e.css`) while the cached HTML responses still reference the old filenames — causing 404 errors for CSS and JS.
+
+Add `php artisan responsecache:clear` to your Forge deploy script **before** `$ACTIVATE_RELEASE()`:
+
+```bash
+$CREATE_RELEASE()
+
+cd $FORGE_RELEASE_DIRECTORY
+
+$FORGE_COMPOSER install --no-dev --no-interaction --prefer-dist --optimize-autoloader
+$FORGE_PHP artisan optimize
+$FORGE_PHP artisan storage:link
+$FORGE_PHP artisan migrate --force
+
+npm ci || npm install
+npm run build
+
+$FORGE_PHP artisan responsecache:clear
+
+$ACTIVATE_RELEASE()
+
+$RESTART_QUEUES()
+```
+
+Without this step, visitors will see broken styles after every deployment until their cached page response expires.
+
 ### Production Nginx Configuration
 
 Add the following block inside your site's `server {}` block, **above** the PHP catch-all. This caches Vite-built assets in the browser for 6 months — safe because Vite generates content-hashed filenames that change whenever the file changes.
