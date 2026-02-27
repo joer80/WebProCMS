@@ -411,20 +411,16 @@ class VoltFileService
     }
 
     /**
-     * Rename a top-level public page to a new slug, updating its route in routes/web.php.
-     * Returns the new relative path.
+     * Rename a top-level public page file to a new slug and return the new relative path.
+     * Route management is the responsibility of the caller.
      */
-    public function renamePage(string $oldRelativePath, string $newSlug, bool $cached = true): string
+    public function renamePage(string $oldRelativePath, string $newSlug): string
     {
         $oldFullPath = resource_path('views/'.$oldRelativePath);
         $newRelativePath = 'pages/⚡'.$newSlug.'.blade.php';
         $newFullPath = resource_path('views/'.$newRelativePath);
 
         rename($oldFullPath, $newFullPath);
-
-        $oldSlug = str_replace(['pages/⚡', '.blade.php'], '', $oldRelativePath);
-        $this->removePublicRoute($oldSlug);
-        $this->addPublicRoute($newSlug, $cached);
 
         return $newRelativePath;
     }
@@ -443,8 +439,119 @@ class VoltFileService
         $routeName = $this->routeNameFromPath($relativePath);
 
         if ($routeName) {
-            $this->removePublicRoute($routeName);
+            $this->removePageRoute($routeName);
         }
+    }
+
+    /**
+     * Remove any Route::livewire entry for the given slug from routes/web.php,
+     * regardless of which section or middleware chain it belongs to.
+     */
+    public function removePageRoute(string $slug): void
+    {
+        $routesPath = base_path('routes/web.php');
+        $contents = file_get_contents($routesPath);
+        $escapedSlug = preg_quote($slug, '/');
+
+        $contents = preg_replace(
+            '/\n[ \t]*Route::livewire\(\''.$escapedSlug.'\'[^\n]+;/',
+            '',
+            $contents
+        );
+
+        file_put_contents($routesPath, $contents);
+    }
+
+    /**
+     * Add a route to the auth middleware group in routes/web.php.
+     * Cached auth routes go inside the nested CacheResponse sub-group; uncached go outside it.
+     * An optional role middleware is chained when a role restriction is required.
+     */
+    public function addAuthRoute(string $slug, bool $cached, string $role = ''): void
+    {
+        $routesPath = base_path('routes/web.php');
+        $contents = file_get_contents($routesPath);
+        $roleChain = $role ? "->middleware('role:{$role}')" : '';
+
+        if ($cached) {
+            $routeLine = "        Route::livewire('{$slug}', 'pages::{$slug}')->name('{$slug}'){$roleChain};";
+
+            $contents = preg_replace(
+                '/^(        \/\/ new auth-cached pages are inserted here)$/m',
+                "$1\n{$routeLine}",
+                $contents,
+                1
+            );
+        } else {
+            $routeLine = "    Route::livewire('{$slug}', 'pages::{$slug}')->name('{$slug}'){$roleChain};";
+
+            $contents = preg_replace(
+                '/^(    \/\/ new auth-uncached pages are inserted here)$/m',
+                "$1\n{$routeLine}",
+                $contents,
+                1
+            );
+        }
+
+        file_put_contents($routesPath, $contents);
+    }
+
+    /**
+     * Determine whether a slug has an auth-protected route registered.
+     */
+    public function isAuthRoute(string $slug): bool
+    {
+        $routesPath = base_path('routes/web.php');
+        $contents = file_get_contents($routesPath);
+
+        $authSectionStart = strpos($contents, '// new auth-cached pages are inserted here');
+
+        if ($authSectionStart === false) {
+            return false;
+        }
+
+        $authSection = substr($contents, $authSectionStart);
+        $escapedSlug = preg_quote($slug, '/');
+
+        return (bool) preg_match("/Route::livewire\('{$escapedSlug}',/", $authSection);
+    }
+
+    /**
+     * Determine whether an auth route is in the cached sub-group.
+     * Returns true if cached (or if the anchors cannot be found).
+     */
+    public function isAuthRouteCached(string $slug): bool
+    {
+        $routesPath = base_path('routes/web.php');
+        $contents = file_get_contents($routesPath);
+
+        $cachedPos = strpos($contents, '// new auth-cached pages are inserted here');
+        $uncachedPos = strpos($contents, '// new auth-uncached pages are inserted here');
+
+        if ($cachedPos === false || $uncachedPos === false) {
+            return true;
+        }
+
+        $cachedSection = substr($contents, $cachedPos, $uncachedPos - $cachedPos);
+        $escapedSlug = preg_quote($slug, '/');
+
+        return (bool) preg_match("/Route::livewire\('{$escapedSlug}',/", $cachedSection);
+    }
+
+    /**
+     * Return the required role from an auth route's chained middleware, or '' if none.
+     */
+    public function getRouteAuthRole(string $slug): string
+    {
+        $routesPath = base_path('routes/web.php');
+        $contents = file_get_contents($routesPath);
+        $escapedSlug = preg_quote($slug, '/');
+
+        if (preg_match("/Route::livewire\('{$escapedSlug}'[^;\n]+->middleware\('role:([^']+)'\)/", $contents, $m)) {
+            return $m[1];
+        }
+
+        return '';
     }
 
     /**

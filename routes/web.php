@@ -34,19 +34,24 @@ Route::middleware([
     Route::livewire('blog', 'pages::blog.index')->name('blog.index');
     Route::livewire('blog/{slug}', 'pages::blog.show')->name('blog.show');
 
-
-    // new cached pages are inserted here
-    Route::livewire('test', 'pages::test')->name('test');
-    Route::livewire('contact', 'pages::contact')->name('contact');
-
     // LW4 version of blog (For comparison)- /app/Livewire/Blog2.php
     // Route::get('blog2', \App\Livewire\Blog2::class)->name('blog2.index');
+
+    // new cached pages are inserted here
+    Route::livewire('contact', 'pages::contact')->name('contact');
 });
 
 // new uncached pages are inserted here
 
-// Don't cache the contact page.
-// Route::livewire('contact', 'pages::contact')->name('contact');
+// Auth-required public routes — auth middleware always runs before cache to prevent bypass
+Route::middleware(['auth'])->group(function (): void {
+    Route::middleware([\Spatie\ResponseCache\Middlewares\CacheResponse::class])->group(function (): void {
+        // new auth-cached pages are inserted here
+        Route::livewire('test', 'pages::test')->name('test');
+    });
+
+    // new auth-uncached pages are inserted here
+});
 
 // Design Library live preview (temp files scoped per user+page, gitignored)
 Route::get('design-editor-preview/{token}', function (string $token) {

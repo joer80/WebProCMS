@@ -6,6 +6,7 @@ use App\Models\ContentOverride;
 use App\Models\DesignRow;
 use App\Support\VoltFileService;
 use Illuminate\Support\Str;
+use Spatie\ResponseCache\Facades\ResponseCache;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
@@ -63,6 +64,10 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
     public string $redirectUrl = '';
 
     public string $redirectType = '301';
+
+    public bool $requiresLogin = false;
+
+    public string $requiredRole = '';
 
     #[Validate('required|in:draft,published,unlisted,unpublished')]
     public string $pageStatus = 'published';
@@ -187,7 +192,22 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
         $this->originalPageSlug = $this->pageSlug;
         $this->createSlugRedirect = false;
         $this->slugRedirectType = '301';
-        $this->isCachedPage = $this->pageSlug ? $service->isRouteCached($this->pageSlug) : true;
+
+        if ($this->pageSlug) {
+            $this->requiresLogin = $service->isAuthRoute($this->pageSlug);
+
+            if ($this->requiresLogin) {
+                $this->isCachedPage = $service->isAuthRouteCached($this->pageSlug);
+                $this->requiredRole = $service->getRouteAuthRole($this->pageSlug);
+            } else {
+                $this->isCachedPage = $service->isRouteCached($this->pageSlug);
+                $this->requiredRole = '';
+            }
+        } else {
+            $this->requiresLogin = false;
+            $this->isCachedPage = true;
+            $this->requiredRole = '';
+        }
         $this->liveUrl = $service->getRouteForFile($relativePath);
         $this->previewUrl = route('design-library.preview', ['token' => $service->previewToken($relativePath)]);
 
@@ -410,6 +430,10 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
         $fullPath = resource_path('views/'.$this->file);
         $service->writeFile($fullPath, $service->buildFileContent($this->phpSection, $this->rows));
 
+        if ($this->liveUrl) {
+            ResponseCache::forget($this->liveUrl);
+        }
+
         $this->isDirty = false;
         $this->dispatch('notify', message: 'Page saved.');
     }
@@ -466,6 +490,10 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
 
         if ($isPublicPage) {
             $rules['pageSlug'] = ['required', 'regex:/^[a-z0-9]+(?:-[a-z0-9]+)*$/'];
+
+            if ($this->requiresLogin && $this->requiredRole !== '') {
+                $rules['requiredRole'] = 'in:manager,admin,super';
+            }
         }
 
         $this->validate($rules);
@@ -487,7 +515,8 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                     return;
                 }
 
-                $newFile = $service->renamePage($this->file, $this->pageSlug, $this->isCachedPage);
+                $service->removePageRoute($currentSlug);
+                $newFile = $service->renamePage($this->file, $this->pageSlug);
                 $this->file = $newFile;
                 $this->liveUrl = $service->getRouteForFile($newFile);
                 $this->previewUrl = route('design-library.preview', ['token' => $service->previewToken($newFile)]);
@@ -495,9 +524,32 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                 if ($this->createSlugRedirect) {
                     $service->addRedirectRoute($currentSlug, $this->pageSlug, (int) $this->slugRedirectType);
                 }
-            } elseif ($service->isRouteCached($currentSlug) !== $this->isCachedPage) {
-                $service->removePublicRoute($currentSlug);
-                $service->addPublicRoute($currentSlug, $this->isCachedPage);
+
+                if ($this->requiresLogin) {
+                    $service->addAuthRoute($this->pageSlug, $this->isCachedPage, $this->requiredRole);
+                } else {
+                    $service->addPublicRoute($this->pageSlug, $this->isCachedPage);
+                }
+            } else {
+                $currentlyAuth = $service->isAuthRoute($currentSlug);
+                $currentRole = $currentlyAuth ? $service->getRouteAuthRole($currentSlug) : '';
+                $currentlyCached = $currentlyAuth
+                    ? $service->isAuthRouteCached($currentSlug)
+                    : $service->isRouteCached($currentSlug);
+
+                $routeChanged = $currentlyAuth !== $this->requiresLogin
+                    || $currentlyCached !== $this->isCachedPage
+                    || $currentRole !== $this->requiredRole;
+
+                if ($routeChanged) {
+                    $service->removePageRoute($currentSlug);
+
+                    if ($this->requiresLogin) {
+                        $service->addAuthRoute($currentSlug, $this->isCachedPage, $this->requiredRole);
+                    } else {
+                        $service->addPublicRoute($currentSlug, $this->isCachedPage);
+                    }
+                }
             }
 
             $this->originalPageSlug = $this->pageSlug;
@@ -592,6 +644,9 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                 'page-status-abort'
             );
         }
+
+        // Remove any legacy page-auth PHP block — auth is now handled at the route level.
+        $this->phpSection = $service->removePhpCode($this->phpSection, 'page-auth');
     }
 
     private function refreshPreview(): void
@@ -1180,6 +1235,29 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                         description="Full-page cache this page for 1 hour for unauthenticated visitors. Disable for pages with dynamic or user-specific content."
                         wire:model="isCachedPage"
                     />
+                </div>
+
+                {{-- Login Required --}}
+                <div x-data>
+                    <flux:switch
+                        label="Require login"
+                        description="Only authenticated users can access this page."
+                        wire:model.live="requiresLogin"
+                    />
+
+                    <div x-show="$wire.requiresLogin" x-transition class="mt-3">
+                        <flux:field>
+                            <flux:label>Required role</flux:label>
+                            <flux:select wire:model="requiredRole">
+                                <flux:select.option value="">Any logged-in user</flux:select.option>
+                                <flux:select.option value="manager">Manager or above</flux:select.option>
+                                <flux:select.option value="admin">Admin or above</flux:select.option>
+                                <flux:select.option value="super">Super only</flux:select.option>
+                            </flux:select>
+                            <flux:description>Restrict access to users with at least this role.</flux:description>
+                            <flux:error name="requiredRole" />
+                        </flux:field>
+                    </div>
                 </div>
             @endif
 
