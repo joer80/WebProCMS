@@ -217,7 +217,40 @@ class VoltFileService
      */
     public function writePreviewFile(string $phpSection, array $rows, string $relativePath): void
     {
-        $this->writeFile($this->previewFilePath($relativePath), $this->buildFileContent($phpSection, $rows));
+        $this->writeFile($this->previewFilePath($relativePath), $this->buildPreviewFileContent($phpSection, $rows));
+    }
+
+    /**
+     * Build preview-only file content: wraps each row in a data-editor-row div
+     * and injects a postMessage script so the editor iframe can detect row clicks.
+     */
+    private function buildPreviewFileContent(string $phpSection, array $rows): string
+    {
+        $blade = '';
+
+        foreach ($rows as $row) {
+            $slug = $row['slug'];
+            $blade .= "\n{{-- ROW:start:{$slug} --}}\n";
+            $blade .= "<div data-editor-row=\"{$slug}\">\n";
+            $blade .= $row['blade'];
+            $blade .= "\n</div>";
+            $blade .= "\n{{-- ROW:end:{$slug} --}}\n";
+        }
+
+        $script = <<<'JS'
+<script>
+(function () {
+    document.addEventListener('click', function (e) {
+        var el = e.target.closest('[data-editor-row]');
+        if (el) {
+            window.parent.postMessage({ editorRowSlug: el.dataset.editorRow }, '*');
+        }
+    }, true);
+})();
+</script>
+JS;
+
+        return $phpSection."\n<div>".trim($blade)."\n</div>\n".$script;
     }
 
     /**

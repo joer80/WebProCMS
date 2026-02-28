@@ -751,11 +751,25 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
         x-data="{
             previewWidth: null,
             showAllBreakpoints: false,
-            setWidth(w) { this.previewWidth = this.previewWidth === w ? null : w; }
+            setWidth(w) { this.previewWidth = this.previewWidth === w ? null : w; },
+            selectRowBySlug(slug) {
+                const rows = $wire.rows;
+                const index = rows.findIndex(r => r.slug === slug);
+                if (index !== -1) {
+                    $wire.openContentEditor(index);
+                    $nextTick(() => {
+                        const el = document.querySelector('[data-row-sidebar-index=\'' + index + '\']');
+                        if (el) { el.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); }
+                    });
+                }
+            }
         }"
         @keydown.ctrl.s.window.prevent="if ($wire.file) $wire.saveFile()"
         @keydown.meta.s.window.prevent="if ($wire.file) $wire.saveFile()"
-        @message.window="if ($event.origin === window.location.origin && $event.data && $event.data.type === 'editor-save-page' && $wire.file) $wire.saveFile()"
+        @message.window="
+            if ($event.data && $event.data.editorRowSlug) { selectRowBySlug($event.data.editorRowSlug); }
+            else if ($event.origin === window.location.origin && $event.data && $event.data.type === 'editor-save-page' && $wire.file) { $wire.saveFile(); }
+        "
         class="flex flex-col min-h-screen bg-white dark:bg-zinc-900"
     >
         {{-- Editor toolbar --}}
@@ -1094,6 +1108,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                             @forelse ($rows as $index => $row)
                                 <div
                                     wire:key="row-item-{{ $row['slug'] }}"
+                                    data-row-sidebar-index="{{ $index }}"
                                     class="rounded-lg border bg-white dark:bg-zinc-900 overflow-hidden transition-colors {{ $editingRowIndex === $index ? 'border-primary' : 'border-zinc-200 dark:border-zinc-700' }}"
                                     draggable="true"
                                     @dragstart="dragging = {{ $index }}"
