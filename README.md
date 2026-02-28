@@ -99,6 +99,28 @@ php artisan optimize
 > php artisan optimize
 > ```
 
+### Queue Worker (Required)
+
+Forge does **not** start a queue worker automatically. Without one, background jobs (like the Settings page seed) will be dispatched but never processed.
+
+1. In Forge, go to your **site → Queue** tab
+2. Click **Add Worker** with these settings:
+
+| Setting | Value |
+|---|---|
+| Connection | `database` |
+| Queue | *(leave blank for default)* |
+| Timeout | `90` |
+| Sleep | `3` |
+| Tries | `1` |
+| Max Processes | `1` |
+
+3. Click **Add Worker** — Forge will manage it with Supervisor and keep it running
+
+Also confirm your production `.env` has `QUEUE_CONNECTION=database` (or whichever driver you're using).
+
+---
+
 ### Deploying with Laravel Forge
 
 Forge's default deployment script does **not** include a response cache clear step. Since this project uses `spatie/laravel-responsecache` to cache full HTML pages, a new deployment will produce new Vite asset fingerprints (e.g. `app-CClrwE2e.css`) while the cached HTML responses still reference the old filenames — causing 404 errors for CSS and JS.
