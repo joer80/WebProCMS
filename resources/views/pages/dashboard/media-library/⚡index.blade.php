@@ -143,6 +143,10 @@ new #[Layout('layouts.app')] #[Title('Media Library')] class extends Component {
 
     public function saveAlt(int $id): void
     {
+        if ($this->editingAltId !== $id) {
+            return;
+        }
+
         $this->validate(['editingAltValue' => 'nullable|string|max:255']);
 
         MediaItem::query()->findOrFail($id)->update(['alt' => $this->editingAltValue]);
@@ -310,15 +314,16 @@ new #[Layout('layouts.app')] #[Title('Media Library')] class extends Component {
             class="flex min-h-screen"
         >
             {{-- ───── LEFT: Category Sidebar ───── --}}
-            <aside class="w-56 shrink-0 sticky top-0 max-h-screen overflow-y-auto flex flex-col border-r border-zinc-200 dark:border-zinc-700">
+            <aside class="w-56 shrink-0 sticky top-0 h-screen flex flex-col border-r border-zinc-200 dark:border-zinc-700">
 
                 {{-- Header --}}
                 <div class="px-4 py-4 border-b border-zinc-200 dark:border-zinc-700">
                     <flux:heading size="lg">Media Library</flux:heading>
                 </div>
 
-                {{-- All Media --}}
-                <nav class="flex-1 p-2 space-y-0.5 overflow-y-auto">
+                {{-- Nav (scrollable) --}}
+                <nav class="flex-1 min-h-0 p-2 space-y-0.5 overflow-y-auto">
+                    {{-- All Media --}}
                     <button
                         wire:click="selectCategory(null)"
                         class="w-full text-left flex items-center gap-2 px-3 py-2 rounded-md text-sm transition-colors {{ $selectedCategoryId === null ? 'bg-zinc-200 dark:bg-zinc-700 font-medium text-zinc-900 dark:text-zinc-100' : 'text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800' }}"
@@ -330,11 +335,35 @@ new #[Layout('layouts.app')] #[Title('Media Library')] class extends Component {
                         <flux:badge size="sm" variant="zinc" class="ml-auto shrink-0">{{ $this->totalCount }}</flux:badge>
                     </button>
 
-                    <div class="pt-2 pb-1 px-3">
-                        <span class="text-xs font-medium text-zinc-400 dark:text-zinc-500 uppercase tracking-wider">Categories</span>
-                    </div>
+                    {{-- Uncategorized (default) always sits directly below All Media --}}
+                    @foreach ($this->categories->where('is_default', true) as $category)
+                        <div
+                            wire:key="cat-{{ $category->id }}"
+                            @dragover.prevent="overCategoryId = {{ $category->id }}"
+                            @dragleave="if (!$el.contains($event.relatedTarget)) overCategoryId = null"
+                            @drop.prevent="$wire.moveToCategory({{ $category->id }}, draggingId); draggingId = null; overCategoryId = null"
+                            :class="overCategoryId === {{ $category->id }} ? 'ring-2 ring-inset ring-blue-500 rounded-md' : ''"
+                        >
+                            <div class="relative group rounded-md">
+                                <button
+                                    wire:click="selectCategory({{ $category->id }})"
+                                    class="w-full text-left flex items-center gap-2 px-3 py-2 rounded-md text-sm transition-colors min-w-0 {{ $selectedCategoryId === $category->id ? 'bg-zinc-200 dark:bg-zinc-700 font-medium text-zinc-900 dark:text-zinc-100' : 'text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800' }}"
+                                >
+                                    <span class="truncate flex-1">{{ $category->name }}</span>
+                                    <flux:badge size="sm" variant="zinc" class="ml-auto shrink-0">{{ $category->items_count }}</flux:badge>
+                                </button>
+                            </div>
+                        </div>
+                    @endforeach
 
-                    @foreach ($this->categories as $catIndex => $category)
+                    {{-- User-created categories --}}
+                    @if ($this->categories->where('is_default', false)->isNotEmpty())
+                        <div class="pt-2 pb-1 px-3">
+                            <span class="text-xs font-medium text-zinc-400 dark:text-zinc-500 uppercase tracking-wider">Categories</span>
+                        </div>
+                    @endif
+
+                    @foreach ($this->categories->where('is_default', false) as $category)
                         <div
                             wire:key="cat-{{ $category->id }}"
                             @dragover.prevent="overCategoryId = {{ $category->id }}"
@@ -362,37 +391,30 @@ new #[Layout('layouts.app')] #[Title('Media Library')] class extends Component {
                                         class="w-full text-left flex items-center gap-2 px-3 py-2 rounded-md text-sm transition-colors min-w-0 {{ $selectedCategoryId === $category->id ? 'bg-zinc-200 dark:bg-zinc-700 font-medium text-zinc-900 dark:text-zinc-100' : 'text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800' }}"
                                     >
                                         <span class="truncate flex-1">{{ $category->name }}</span>
-                                        {{-- Badge fades out on hover; icons fade in over the same spot --}}
-                                        @if (! $category->is_default)
-                                            <flux:badge size="sm" variant="zinc" class="ml-auto shrink-0 transition-opacity group-hover:opacity-0">{{ $category->items_count }}</flux:badge>
-                                        @else
-                                            <flux:badge size="sm" variant="zinc" class="ml-auto shrink-0">{{ $category->items_count }}</flux:badge>
-                                        @endif
+                                        <flux:badge size="sm" variant="zinc" class="ml-auto shrink-0 transition-opacity group-hover:opacity-0">{{ $category->items_count }}</flux:badge>
                                     </button>
 
-                                    @if (! $category->is_default)
-                                        @if ($confirmingDeleteCategory === $category->id)
-                                            <div class="absolute inset-y-0 right-1 flex items-center gap-0.5" wire:click.stop>
-                                                <flux:button wire:click="deleteCategory({{ $category->id }})" variant="danger" size="xs">Yes</flux:button>
-                                                <flux:button wire:click="$set('confirmingDeleteCategory', null)" variant="ghost" size="xs">No</flux:button>
-                                            </div>
-                                        @else
-                                            <div class="absolute inset-y-0 right-1 flex items-center opacity-0 group-hover:opacity-100 transition-opacity" wire:click.stop>
-                                                <flux:button
-                                                    wire:click="startRenamingCategory({{ $category->id }}, '{{ addslashes($category->name) }}')"
-                                                    variant="ghost"
-                                                    size="xs"
-                                                    icon="pencil"
-                                                />
-                                                <flux:button
-                                                    wire:click="$set('confirmingDeleteCategory', {{ $category->id }})"
-                                                    variant="ghost"
-                                                    size="xs"
-                                                    icon="trash"
-                                                    class="text-red-500 dark:text-red-400"
-                                                />
-                                            </div>
-                                        @endif
+                                    @if ($confirmingDeleteCategory === $category->id)
+                                        <div class="absolute inset-y-0 right-1 flex items-center gap-0.5" wire:click.stop>
+                                            <flux:button wire:click="deleteCategory({{ $category->id }})" variant="danger" size="xs">Yes</flux:button>
+                                            <flux:button wire:click="$set('confirmingDeleteCategory', null)" variant="ghost" size="xs">No</flux:button>
+                                        </div>
+                                    @else
+                                        <div class="absolute inset-y-0 right-1 flex items-center opacity-0 group-hover:opacity-100 transition-opacity" wire:click.stop>
+                                            <flux:button
+                                                wire:click="startRenamingCategory({{ $category->id }}, '{{ addslashes($category->name) }}')"
+                                                variant="ghost"
+                                                size="xs"
+                                                icon="pencil"
+                                            />
+                                            <flux:button
+                                                wire:click="$set('confirmingDeleteCategory', {{ $category->id }})"
+                                                variant="ghost"
+                                                size="xs"
+                                                icon="trash"
+                                                class="text-red-500 dark:text-red-400"
+                                            />
+                                        </div>
                                     @endif
                                 </div>
                             @endif
