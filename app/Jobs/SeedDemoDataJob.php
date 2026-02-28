@@ -16,7 +16,7 @@ class SeedDemoDataJob implements ShouldQueue
     public function handle(): void
     {
         if (! Post::query()->where('is_seeded', true)->exists()) {
-            $exitCode = Artisan::call('db:seed', ['--class' => 'DatabaseSeeder', '--no-interaction' => true]);
+            $exitCode = Artisan::call('db:seed', ['--class' => 'DatabaseSeeder', '--no-interaction' => true, '--force' => true]);
 
             if ($exitCode !== 0) {
                 throw new \RuntimeException('DatabaseSeeder failed. Check storage/logs/laravel.log for details.');
@@ -26,7 +26,7 @@ class SeedDemoDataJob implements ShouldQueue
         if (Setting::get('locations_mode', 'single') === 'multiple') {
             $this->seedMultipleLocations();
         } else {
-            $exitCode = Artisan::call('db:seed', ['--class' => 'LocationSeeder', '--no-interaction' => true]);
+            $exitCode = Artisan::call('db:seed', ['--class' => 'LocationSeeder', '--no-interaction' => true, '--force' => true]);
 
             if ($exitCode !== 0) {
                 throw new \RuntimeException('LocationSeeder failed. Check storage/logs/laravel.log for details.');
