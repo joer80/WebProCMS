@@ -23,7 +23,7 @@ it('loads business info from config on mount', function (): void {
     $user = User::factory()->create();
 
     Livewire::actingAs($user)
-        ->test('pages::dashboard.settings')
+        ->test('pages::dashboard.settings.general')
         ->assertSet('businessUrl', 'https://example.com')
         ->assertSet('businessPhone', '+1 (512) 555-0100')
         ->assertSet('businessEmail', 'sales@example.com')
@@ -39,7 +39,7 @@ it('writes config/business.php and dispatches a notification when saving busines
     $user = User::factory()->create();
 
     Livewire::actingAs($user)
-        ->test('pages::dashboard.settings')
+        ->test('pages::dashboard.settings.general')
         ->set('businessUrl', 'https://test.com')
         ->set('businessPhone', '+1 (555) 000-0001')
         ->set('businessEmail', 'info@test.com')
@@ -69,7 +69,7 @@ it('keeps admin_email as an env() call in the written business config', function
     $user = User::factory()->create();
 
     Livewire::actingAs($user)
-        ->test('pages::dashboard.settings')
+        ->test('pages::dashboard.settings.general')
         ->call('saveBusinessInfo');
 
     expect(file_get_contents($path))->toContain("env('BUSINESS_ADMIN_EMAIL'");
@@ -81,7 +81,7 @@ it('validates business email format', function (): void {
     $user = User::factory()->create();
 
     Livewire::actingAs($user)
-        ->test('pages::dashboard.settings')
+        ->test('pages::dashboard.settings.general')
         ->set('businessEmail', 'not-an-email')
         ->call('saveBusinessInfo')
         ->assertHasErrors(['businessEmail']);
@@ -105,7 +105,7 @@ it('loads SEO settings from config on mount', function (): void {
     $user = User::factory()->create();
 
     Livewire::actingAs($user)
-        ->test('pages::dashboard.settings')
+        ->test('pages::dashboard.settings.general')
         ->assertSet('seoSchemaType', 'LocalBusiness')
         ->assertSet('seoSchemaLogo', 'https://example.com/logo.png')
         ->assertSet('seoSchemaDescription', 'We build things.')
@@ -124,7 +124,7 @@ it('writes config/seo.php and dispatches a notification when saving SEO settings
     $user = User::factory()->create();
 
     Livewire::actingAs($user)
-        ->test('pages::dashboard.settings')
+        ->test('pages::dashboard.settings.general')
         ->set('seoSchemaType', 'LocalBusiness')
         ->set('seoSchemaDescription', 'A local biz.')
         ->set('seoAddressCity', 'Houston')
@@ -153,7 +153,7 @@ it('keeps phone and email as config() references in the written seo config', fun
     $user = User::factory()->create();
 
     Livewire::actingAs($user)
-        ->test('pages::dashboard.settings')
+        ->test('pages::dashboard.settings.general')
         ->call('saveSeoSettings');
 
     $written = file_get_contents($path);
@@ -168,7 +168,7 @@ it('validates seo schema type is an allowed value', function (): void {
     $user = User::factory()->create();
 
     Livewire::actingAs($user)
-        ->test('pages::dashboard.settings')
+        ->test('pages::dashboard.settings.general')
         ->set('seoSchemaType', 'InvalidType')
         ->call('saveSeoSettings')
         ->assertHasErrors(['seoSchemaType']);
@@ -184,7 +184,7 @@ it('shows the settings page to manager users', function (): void {
     $user = User::factory()->withRole(Role::Manager)->create();
 
     $this->actingAs($user)
-        ->get(route('dashboard.settings'))
+        ->get(route('dashboard.settings.general'))
         ->assertOk()
         ->assertSeeText('Locations');
 });
@@ -195,7 +195,7 @@ it('loads the saved locations_mode setting on mount', function (): void {
     $user = User::factory()->create();
 
     Livewire::actingAs($user)
-        ->test('pages::dashboard.settings')
+        ->test('pages::dashboard.settings.general')
         ->assertSet('locationsMode', 'multiple');
 });
 
@@ -203,7 +203,7 @@ it('defaults locations mode to single when no setting exists', function (): void
     $user = User::factory()->create();
 
     Livewire::actingAs($user)
-        ->test('pages::dashboard.settings')
+        ->test('pages::dashboard.settings.general')
         ->assertSet('locationsMode', 'single');
 });
 
@@ -211,7 +211,7 @@ it('saves the locations mode setting and dispatches a notification', function ()
     $user = User::factory()->create();
 
     Livewire::actingAs($user)
-        ->test('pages::dashboard.settings')
+        ->test('pages::dashboard.settings.general')
         ->set('locationsMode', 'multiple')
         ->call('saveLocationsMode')
         ->assertDispatched('notify', message: 'Settings saved.');
@@ -253,7 +253,7 @@ it('loads the session driver from config on mount', function (): void {
     $user = User::factory()->create();
 
     Livewire::actingAs($user)
-        ->test('pages::dashboard.settings')
+        ->test('pages::dashboard.settings.advanced')
         ->assertSet('sessionDriver', 'redis');
 });
 
@@ -265,7 +265,7 @@ it('writes SESSION_DRIVER to .env and dispatches a notification', function (): v
     $user = User::factory()->create();
 
     Livewire::actingAs($user)
-        ->test('pages::dashboard.settings')
+        ->test('pages::dashboard.settings.advanced')
         ->set('sessionDriver', 'file')
         ->call('saveSessionDriver')
         ->assertDispatched('notify', message: 'Settings saved.');
@@ -283,7 +283,7 @@ it('loads the cache store from config on mount', function (): void {
     $user = User::factory()->create();
 
     Livewire::actingAs($user)
-        ->test('pages::dashboard.settings')
+        ->test('pages::dashboard.settings.advanced')
         ->assertSet('cacheStore', 'redis');
 });
 
@@ -295,7 +295,7 @@ it('writes CACHE_STORE to .env and dispatches a notification', function (): void
     $user = User::factory()->create();
 
     Livewire::actingAs($user)
-        ->test('pages::dashboard.settings')
+        ->test('pages::dashboard.settings.advanced')
         ->set('cacheStore', 'file')
         ->call('saveCacheStore')
         ->assertDispatched('notify', message: 'Settings saved.');
@@ -313,7 +313,7 @@ it('loads the full page cache driver from config on mount', function (): void {
     $user = User::factory()->create();
 
     Livewire::actingAs($user)
-        ->test('pages::dashboard.settings')
+        ->test('pages::dashboard.settings.advanced')
         ->assertSet('fullPageCacheDriver', 'redis');
 });
 
@@ -323,7 +323,7 @@ it('defaults full page cache driver to file when env is not set', function (): v
     $user = User::factory()->create();
 
     Livewire::actingAs($user)
-        ->test('pages::dashboard.settings')
+        ->test('pages::dashboard.settings.advanced')
         ->assertSet('fullPageCacheDriver', 'file');
 });
 
@@ -333,7 +333,7 @@ it('loads the full page cache lifetime from config on mount', function (): void 
     $user = User::factory()->create();
 
     Livewire::actingAs($user)
-        ->test('pages::dashboard.settings')
+        ->test('pages::dashboard.settings.advanced')
         ->assertSet('fullPageCacheLifetime', 7200);
 });
 
@@ -345,7 +345,7 @@ it('writes RESPONSE_CACHE_DRIVER and RESPONSE_CACHE_LIFETIME to .env and dispatc
     $user = User::factory()->create();
 
     Livewire::actingAs($user)
-        ->test('pages::dashboard.settings')
+        ->test('pages::dashboard.settings.advanced')
         ->set('fullPageCacheDriver', 'file')
         ->set('fullPageCacheLifetime', 7200)
         ->call('saveFullPageCache')

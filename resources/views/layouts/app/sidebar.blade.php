@@ -40,14 +40,21 @@
                         <flux:sidebar.item icon="arrow-right-circle" :href="route('dashboard.redirects')" :current="request()->routeIs('dashboard.redirects')" wire:navigate>
                             {{ __('Redirects') }}
                         </flux:sidebar.item>
-                        <flux:sidebar.item icon="cog-6-tooth" :href="route('dashboard.settings')" :current="request()->routeIs('dashboard.settings')" wire:navigate>
-                            {{ __('Settings') }}
-                        </flux:sidebar.item>
-                        <flux:sidebar.item icon="wrench-screwdriver" :href="route('dashboard.tools')" :current="request()->routeIs('dashboard.tools')" wire:navigate>
-                            {{ __('Tools') }}
-                        </flux:sidebar.item>
                     @endif
                 </flux:sidebar.group>
+                @if (auth()->user()->isAtLeast(\App\Enums\Role::Manager))
+                    <flux:sidebar.group expandable icon="cog-6-tooth" heading="{{ __('Settings') }}" :expanded="request()->routeIs('dashboard.settings.*')" class="grid">
+                        <flux:sidebar.item :href="route('dashboard.settings.general')" :current="request()->routeIs('dashboard.settings.general')" wire:navigate>
+                            {{ __('General') }}
+                        </flux:sidebar.item>
+                        <flux:sidebar.item :href="route('dashboard.settings.advanced')" :current="request()->routeIs('dashboard.settings.advanced')" wire:navigate>
+                            {{ __('Advanced') }}
+                        </flux:sidebar.item>
+                    </flux:sidebar.group>
+                    <flux:sidebar.item icon="wrench-screwdriver" :href="route('dashboard.tools')" :current="request()->routeIs('dashboard.tools')" wire:navigate>
+                        {{ __('Tools') }}
+                    </flux:sidebar.item>
+                @endif
             </flux:sidebar.nav>
 
             <flux:spacer />
