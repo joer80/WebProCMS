@@ -5,6 +5,7 @@ use App\Models\Location;
 use App\Models\Post;
 use App\Models\Setting;
 use App\Models\User;
+use Illuminate\Support\Facades\Artisan;
 use Livewire\Livewire;
 
 it('redirects unauthenticated users from the settings page', function (): void {
@@ -89,6 +90,7 @@ it('loads the session driver from config on mount', function (): void {
 });
 
 it('writes SESSION_DRIVER to .env and dispatches a notification', function (): void {
+    $artisan = Artisan::spy();
     $envPath = base_path('.env');
     $originalEnv = file_get_contents($envPath);
 
@@ -101,6 +103,9 @@ it('writes SESSION_DRIVER to .env and dispatches a notification', function (): v
         ->assertDispatched('notify', message: 'Settings saved.');
 
     expect(file_get_contents($envPath))->toContain('SESSION_DRIVER=file');
+
+    $artisan->shouldHaveReceived('call')->with('config:cache')->once();
+    $artisan->shouldHaveReceived('call')->with('queue:restart')->once();
 
     file_put_contents($envPath, $originalEnv);
 });
@@ -116,6 +121,7 @@ it('loads the cache store from config on mount', function (): void {
 });
 
 it('writes CACHE_STORE to .env and dispatches a notification', function (): void {
+    $artisan = Artisan::spy();
     $envPath = base_path('.env');
     $originalEnv = file_get_contents($envPath);
 
@@ -128,6 +134,9 @@ it('writes CACHE_STORE to .env and dispatches a notification', function (): void
         ->assertDispatched('notify', message: 'Settings saved.');
 
     expect(file_get_contents($envPath))->toContain('CACHE_STORE=file');
+
+    $artisan->shouldHaveReceived('call')->with('config:cache')->once();
+    $artisan->shouldHaveReceived('call')->with('queue:restart')->once();
 
     file_put_contents($envPath, $originalEnv);
 });
@@ -163,6 +172,7 @@ it('loads the full page cache lifetime from config on mount', function (): void 
 });
 
 it('writes RESPONSE_CACHE_DRIVER and RESPONSE_CACHE_LIFETIME to .env and dispatches a notification', function (): void {
+    $artisan = Artisan::spy();
     $envPath = base_path('.env');
     $originalEnv = file_get_contents($envPath);
 
@@ -178,6 +188,9 @@ it('writes RESPONSE_CACHE_DRIVER and RESPONSE_CACHE_LIFETIME to .env and dispatc
     $env = file_get_contents($envPath);
     expect($env)->toContain('RESPONSE_CACHE_DRIVER=file')
         ->and($env)->toContain('RESPONSE_CACHE_LIFETIME=7200');
+
+    $artisan->shouldHaveReceived('call')->with('config:cache')->once();
+    $artisan->shouldHaveReceived('call')->with('queue:restart')->once();
 
     file_put_contents($envPath, $originalEnv);
 });

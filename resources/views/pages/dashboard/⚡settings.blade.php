@@ -63,7 +63,8 @@ new #[Layout('layouts.app')] #[Title('Settings')] class extends Component {
         }
 
         $this->writeEnvValue('SESSION_DRIVER', $this->sessionDriver, 'session');
-        Artisan::call('config:clear');
+        Artisan::call('config:cache');
+        Artisan::call('queue:restart');
 
         $this->dispatch('notify', message: 'Settings saved.');
     }
@@ -83,7 +84,8 @@ new #[Layout('layouts.app')] #[Title('Settings')] class extends Component {
         }
 
         $this->writeEnvValue('CACHE_STORE', $this->cacheStore, 'cache');
-        Artisan::call('config:clear');
+        Artisan::call('config:cache');
+        Artisan::call('queue:restart');
 
         $this->dispatch('notify', message: 'Settings saved.');
     }
@@ -107,7 +109,8 @@ new #[Layout('layouts.app')] #[Title('Settings')] class extends Component {
 
         $this->writeEnvValue('RESPONSE_CACHE_DRIVER', $this->fullPageCacheDriver);
         $this->writeEnvValue('RESPONSE_CACHE_LIFETIME', (string) $this->fullPageCacheLifetime);
-        Artisan::call('config:clear');
+        Artisan::call('config:cache');
+        Artisan::call('queue:restart');
 
         $this->dispatch('notify', message: 'Settings saved.');
     }
