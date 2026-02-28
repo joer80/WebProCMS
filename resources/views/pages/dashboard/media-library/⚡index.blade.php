@@ -427,22 +427,6 @@ new #[Layout('layouts.app')] #[Title('Media Library')] class extends Component {
                         </div>
                     @endforeach
 
-                    {{-- New Category Form --}}
-                    @if ($showNewCategoryForm)
-                        <form wire:submit="createCategory" class="mt-1 space-y-1.5 px-1">
-                            <flux:input
-                                wire:model="newCategoryName"
-                                placeholder="Category name"
-                                size="sm"
-                                autofocus
-                            />
-                            <flux:error name="newCategoryName" />
-                            <div class="flex gap-1">
-                                <flux:button type="submit" size="sm" variant="primary" class="flex-1">Add</flux:button>
-                                <flux:button wire:click="$set('showNewCategoryForm', false)" size="sm" variant="ghost">Cancel</flux:button>
-                            </div>
-                        </form>
-                    @endif
                 </nav>
             </aside>
 
@@ -638,4 +622,19 @@ new #[Layout('layouts.app')] #[Title('Media Library')] class extends Component {
             </div>
         </div>
     </flux:main>
+
+    <flux:modal wire:model="showNewCategoryForm" class="w-80">
+        <flux:heading size="lg">New Category</flux:heading>
+        <form wire:submit="createCategory" class="mt-4 space-y-4">
+            <flux:field>
+                <flux:label>Name</flux:label>
+                <flux:input wire:model="newCategoryName" placeholder="Category name" autofocus />
+                <flux:error name="newCategoryName" />
+            </flux:field>
+            <div class="flex justify-end gap-2">
+                <flux:button wire:click="$set('showNewCategoryForm', false)" variant="ghost">Cancel</flux:button>
+                <flux:button type="submit" variant="primary">Create</flux:button>
+            </div>
+        </form>
+    </flux:modal>
 </div>
