@@ -56,10 +56,17 @@ class VoltFileService
         $routeTypes = [];
 
         foreach ($navigation as $type => $config) {
-            $navRoutes = array_column($config['nav'] ?? [], 'route');
-            $footerRoutes = array_column($config['footer_company'] ?? [], 'route');
+            $routes = [];
 
-            foreach (array_unique(array_merge($navRoutes, $footerRoutes)) as $route) {
+            foreach ($config['menus'] ?? [] as $menu) {
+                foreach ($menu['items'] ?? [] as $item) {
+                    if (isset($item['route'])) {
+                        $routes[] = $item['route'];
+                    }
+                }
+            }
+
+            foreach (array_unique($routes) as $route) {
                 $routeTypes[$route][] = $type;
             }
         }
