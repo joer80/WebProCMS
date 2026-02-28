@@ -101,11 +101,6 @@ new class extends Component {
                                 class="w-full h-full object-cover"
                                 loading="lazy"
                             >
-                            @if ($selectedImageId === $image->id)
-                                <div class="absolute inset-0 bg-blue-500/20 flex items-center justify-center">
-                                    <flux:icon name="check-circle" class="size-8 text-blue-500" />
-                                </div>
-                            @endif
                             @if ($image->alt)
                                 <div class="absolute bottom-0 inset-x-0 bg-zinc-900/60 px-1.5 py-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
                                     <p class="text-xs text-white truncate">{{ $image->alt }}</p>

@@ -421,6 +421,13 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
     public function removeImage(string $key): void
     {
         $this->contentValues[$key] = '';
+
+        $field = collect($this->contentFields)->firstWhere('key', $key);
+
+        if ($field) {
+            session()->put('editor_draft_overrides.'.$field['slug'].':'.$key, ['type' => 'image', 'value' => '']);
+            $this->refreshPreview();
+        }
     }
 
     public function openMediaPicker(string $key): void
@@ -1405,7 +1412,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
     {{-- Media Library Picker --}}
     <flux:modal wire:model="showMediaPicker" name="media-picker" class="max-w-3xl! p-0!">
         @if ($showMediaPicker)
-            <livewire:pages.dashboard.media-library.picker
+            <livewire:pages::dashboard.media-library.picker
                 :field-key="$mediaPickerKey"
                 :key="'media-picker-'.$mediaPickerKey"
             />
