@@ -28,6 +28,10 @@ new #[Layout('layouts.app')] #[Title('Media Library')] class extends Component {
 
     public bool $showNewCategoryForm = false;
 
+    public ?int $renamingCategoryId = null;
+
+    public string $renamingCategoryName = '';
+
     public ?int $confirmingDeleteCategory = null;
 
     public ?int $confirmingDeleteImage = null;
@@ -242,6 +246,26 @@ new #[Layout('layouts.app')] #[Title('Media Library')] class extends Component {
         unset($this->categories);
     }
 
+    public function startRenamingCategory(int $id, string $name): void
+    {
+        $this->renamingCategoryId = $id;
+        $this->renamingCategoryName = $name;
+        $this->confirmingDeleteCategory = null;
+    }
+
+    public function renameCategory(): void
+    {
+        $this->validate(['renamingCategoryName' => 'required|string|max:255']);
+
+        MediaCategory::query()
+            ->findOrFail($this->renamingCategoryId)
+            ->update(['name' => $this->renamingCategoryName]);
+
+        $this->renamingCategoryId = null;
+        $this->renamingCategoryName = '';
+        unset($this->categories);
+    }
+
     public function deleteCategory(int $id): void
     {
         $category = MediaCategory::query()->findOrFail($id);
@@ -297,13 +321,13 @@ new #[Layout('layouts.app')] #[Title('Media Library')] class extends Component {
                 <nav class="flex-1 p-2 space-y-0.5 overflow-y-auto">
                     <button
                         wire:click="selectCategory(null)"
-                        class="w-full flex items-center justify-between gap-2 px-3 py-2 rounded-md text-sm transition-colors {{ $selectedCategoryId === null ? 'bg-zinc-200 dark:bg-zinc-700 font-medium text-zinc-900 dark:text-zinc-100' : 'text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800' }}"
+                        class="w-full text-left flex items-center gap-2 px-3 py-2 rounded-md text-sm transition-colors {{ $selectedCategoryId === null ? 'bg-zinc-200 dark:bg-zinc-700 font-medium text-zinc-900 dark:text-zinc-100' : 'text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800' }}"
                     >
-                        <span class="flex items-center gap-2 min-w-0">
+                        <span class="flex items-center gap-2 min-w-0 flex-1">
                             <flux:icon name="photo" class="size-4 shrink-0" />
                             <span class="truncate">All Media</span>
                         </span>
-                        <flux:badge size="sm" variant="zinc">{{ $this->totalCount }}</flux:badge>
+                        <flux:badge size="sm" variant="zinc" class="ml-auto shrink-0">{{ $this->totalCount }}</flux:badge>
                     </button>
 
                     <div class="pt-2 pb-1 px-3">
@@ -318,41 +342,60 @@ new #[Layout('layouts.app')] #[Title('Media Library')] class extends Component {
                             @drop.prevent="$wire.moveToCategory({{ $category->id }}, draggingId); draggingId = null; overCategoryId = null"
                             :class="overCategoryId === {{ $category->id }} ? 'ring-2 ring-inset ring-blue-500 rounded-md' : ''"
                         >
-                            <div class="flex items-center group rounded-md">
-                                {{-- Drag handle for reordering categories --}}
-                                <span
-                                    draggable="true"
-                                    @dragstart="draggingId = null; $wire.set('__categoryDragging', {{ $category->id }})"
-                                    class="pl-1 cursor-grab opacity-0 group-hover:opacity-100 transition-opacity"
-                                    @click.stop
-                                >
-                                </span>
+                            @if ($renamingCategoryId === $category->id)
+                                <form wire:submit="renameCategory" class="px-1 py-1 flex items-center gap-1">
+                                    <flux:input
+                                        wire:model="renamingCategoryName"
+                                        size="sm"
+                                        autofocus
+                                        class="flex-1 min-w-0"
+                                        x-on:keydown.escape="$wire.set('renamingCategoryId', null)"
+                                    />
+                                    <flux:button type="submit" size="xs" variant="primary" icon="check" />
+                                    <flux:button type="button" wire:click="$set('renamingCategoryId', null)" size="xs" variant="ghost" icon="x-mark" />
+                                </form>
+                                <flux:error name="renamingCategoryName" class="px-2 text-xs" />
+                            @else
+                                <div class="relative group rounded-md">
+                                    <button
+                                        wire:click="selectCategory({{ $category->id }})"
+                                        class="w-full text-left flex items-center gap-2 px-3 py-2 rounded-md text-sm transition-colors min-w-0 {{ $selectedCategoryId === $category->id ? 'bg-zinc-200 dark:bg-zinc-700 font-medium text-zinc-900 dark:text-zinc-100' : 'text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800' }}"
+                                    >
+                                        <span class="truncate flex-1">{{ $category->name }}</span>
+                                        {{-- Badge fades out on hover; icons fade in over the same spot --}}
+                                        @if (! $category->is_default)
+                                            <flux:badge size="sm" variant="zinc" class="ml-auto shrink-0 transition-opacity group-hover:opacity-0">{{ $category->items_count }}</flux:badge>
+                                        @else
+                                            <flux:badge size="sm" variant="zinc" class="ml-auto shrink-0">{{ $category->items_count }}</flux:badge>
+                                        @endif
+                                    </button>
 
-                                <button
-                                    wire:click="selectCategory({{ $category->id }})"
-                                    class="flex-1 flex items-center justify-between gap-2 px-3 py-2 rounded-md text-sm transition-colors min-w-0 {{ $selectedCategoryId === $category->id ? 'bg-zinc-200 dark:bg-zinc-700 font-medium text-zinc-900 dark:text-zinc-100' : 'text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800' }}"
-                                >
-                                    <span class="truncate">{{ $category->name }}</span>
-                                    <flux:badge size="sm" variant="zinc">{{ $category->items_count }}</flux:badge>
-                                </button>
-
-                                @if (! $category->is_default)
-                                    @if ($confirmingDeleteCategory === $category->id)
-                                        <div class="flex items-center gap-0.5 pr-1 shrink-0" wire:click.stop>
-                                            <flux:button wire:click="deleteCategory({{ $category->id }})" variant="danger" size="xs">Yes</flux:button>
-                                            <flux:button wire:click="$set('confirmingDeleteCategory', null)" variant="ghost" size="xs">No</flux:button>
-                                        </div>
-                                    @else
-                                        <flux:button
-                                            wire:click.stop="$set('confirmingDeleteCategory', {{ $category->id }})"
-                                            variant="ghost"
-                                            size="xs"
-                                            icon="trash"
-                                            class="opacity-0 group-hover:opacity-100 shrink-0 text-red-500 dark:text-red-400"
-                                        />
+                                    @if (! $category->is_default)
+                                        @if ($confirmingDeleteCategory === $category->id)
+                                            <div class="absolute inset-y-0 right-1 flex items-center gap-0.5" wire:click.stop>
+                                                <flux:button wire:click="deleteCategory({{ $category->id }})" variant="danger" size="xs">Yes</flux:button>
+                                                <flux:button wire:click="$set('confirmingDeleteCategory', null)" variant="ghost" size="xs">No</flux:button>
+                                            </div>
+                                        @else
+                                            <div class="absolute inset-y-0 right-1 flex items-center opacity-0 group-hover:opacity-100 transition-opacity" wire:click.stop>
+                                                <flux:button
+                                                    wire:click="startRenamingCategory({{ $category->id }}, '{{ addslashes($category->name) }}')"
+                                                    variant="ghost"
+                                                    size="xs"
+                                                    icon="pencil"
+                                                />
+                                                <flux:button
+                                                    wire:click="$set('confirmingDeleteCategory', {{ $category->id }})"
+                                                    variant="ghost"
+                                                    size="xs"
+                                                    icon="trash"
+                                                    class="text-red-500 dark:text-red-400"
+                                                />
+                                            </div>
+                                        @endif
                                     @endif
-                                @endif
-                            </div>
+                                </div>
+                            @endif
                         </div>
                     @endforeach
                 </nav>
