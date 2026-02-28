@@ -9,6 +9,7 @@ use Illuminate\Support\Str;
 use Spatie\ResponseCache\Facades\ResponseCache;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
+use Livewire\Attributes\On;
 use Livewire\Attributes\Title;
 use Livewire\Attributes\Url;
 use Livewire\Attributes\Validate;
@@ -89,6 +90,10 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
     public mixed $pendingImageUpload = null;
 
     public string $pendingImageKey = '';
+
+    public bool $showMediaPicker = false;
+
+    public string $mediaPickerKey = '';
 
     public function mount(): void
     {
@@ -416,6 +421,26 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
     public function removeImage(string $key): void
     {
         $this->contentValues[$key] = '';
+    }
+
+    public function openMediaPicker(string $key): void
+    {
+        $this->mediaPickerKey = $key;
+        $this->showMediaPicker = true;
+    }
+
+    #[On('media-image-picked')]
+    public function handleMediaImagePicked(string $key, string $path): void
+    {
+        $this->contentValues[$key] = $path;
+        $this->showMediaPicker = false;
+
+        $field = collect($this->contentFields)->firstWhere('key', $key);
+
+        if ($field) {
+            session()->put('editor_draft_overrides.'.$field['slug'].':'.$field['key'], ['type' => 'image', 'value' => $path]);
+            $this->refreshPreview();
+        }
     }
 
     public function saveFile(): void
@@ -962,6 +987,13 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                                                         "
                                                     >
                                                 </div>
+                                                <button
+                                                    wire:click="openMediaPicker('{{ $field['key'] }}')"
+                                                    type="button"
+                                                    class="mt-1.5 text-xs text-zinc-500 dark:text-zinc-400 hover:text-primary dark:hover:text-primary underline"
+                                                >
+                                                    or pick from Media Library
+                                                </button>
                                             @elseif ($field['type'] === 'richtext')
                                                 <flux:textarea
                                                     wire:model.live.debounce.400ms="contentValues.{{ $field['key'] }}"
@@ -1368,5 +1400,15 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
             </flux:modal.close>
             <flux:button variant="primary" wire:click="saveSeoSettings">Save</flux:button>
         </div>
+    </flux:modal>
+
+    {{-- Media Library Picker --}}
+    <flux:modal wire:model="showMediaPicker" name="media-picker" class="max-w-3xl! p-0!">
+        @if ($showMediaPicker)
+            <livewire:pages.dashboard.media-library.picker
+                :field-key="$mediaPickerKey"
+                :key="'media-picker-'.$mediaPickerKey"
+            />
+        @endif
     </flux:modal>
 </div>

@@ -25,7 +25,9 @@
       "Bash(vendor/bin/pint:*)",
       "Bash(xargs -I {} basename {})",
       "Bash(/Users/joepersonal/Sites/WebProCMS/resources/design-library/rows/cta/cta-banner.blade.php:*)",
-      "Bash(/Users/joepersonal/Sites/WebProCMS/resources/design-library/rows/hero/hero-centered.blade.php:*)"
+      "Bash(/Users/joepersonal/Sites/WebProCMS/resources/design-library/rows/hero/hero-centered.blade.php:*)",
+      "Bash(herd php --version)",
+      "Bash(herd php -r \"echo ini_get\\(''upload_max_filesize''\\) . '' / '' . ini_get\\(''post_max_size''\\) . '' / '' . ini_get\\(''max_file_uploads''\\);\")"
     ]
   },
   "defaultMode": "acceptEdits"

@@ -100,6 +100,8 @@ Route::middleware(['auth', 'verified'])->group(function (): void {
         Route::livewire('dashboard/design-library', 'pages::dashboard.design-library.index')->name('dashboard.design-library.index');
         Route::livewire('dashboard/redirects', 'pages::dashboard.redirects')->name('dashboard.redirects');
         Route::livewire('dashboard/pages/editor', 'pages::dashboard.pages.editor')->name('dashboard.design-library.editor');
+
+        Route::livewire('dashboard/media-library', 'pages::dashboard.media-library.index')->name('dashboard.media-library.index');
     });
 });
 

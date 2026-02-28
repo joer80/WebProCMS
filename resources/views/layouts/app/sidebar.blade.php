@@ -37,6 +37,9 @@
                         <flux:sidebar.item icon="squares-2x2" :href="route('dashboard.design-library.index')" :current="request()->routeIs('dashboard.design-library.*')" wire:navigate>
                             {{ __('Design Library') }}
                         </flux:sidebar.item>
+                        <flux:sidebar.item icon="photo" :href="route('dashboard.media-library.index')" :current="request()->routeIs('dashboard.media-library.*')" wire:navigate>
+                            {{ __('Media Library') }}
+                        </flux:sidebar.item>
                         <flux:sidebar.item icon="arrow-right-circle" :href="route('dashboard.redirects')" :current="request()->routeIs('dashboard.redirects')" wire:navigate>
                             {{ __('Redirects') }}
                         </flux:sidebar.item>
