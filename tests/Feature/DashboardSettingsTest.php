@@ -8,6 +8,174 @@ use App\Models\User;
 use Illuminate\Support\Facades\Artisan;
 use Livewire\Livewire;
 
+// ── Business Info ──────────────────────────────────────────────────────────────
+
+it('loads business info from config on mount', function (): void {
+    config([
+        'business.url' => 'https://example.com',
+        'business.phone' => '+1 (512) 555-0100',
+        'business.email' => 'sales@example.com',
+        'business.address_street' => '100 Congress Ave',
+        'business.address_city_state_zip' => 'Austin, TX 78701',
+        'business.hours' => 'Mon–Fri, 9am–5pm',
+    ]);
+
+    $user = User::factory()->create();
+
+    Livewire::actingAs($user)
+        ->test('pages::dashboard.settings')
+        ->assertSet('businessUrl', 'https://example.com')
+        ->assertSet('businessPhone', '+1 (512) 555-0100')
+        ->assertSet('businessEmail', 'sales@example.com')
+        ->assertSet('businessAddressStreet', '100 Congress Ave')
+        ->assertSet('businessAddressCityStateZip', 'Austin, TX 78701')
+        ->assertSet('businessHours', 'Mon–Fri, 9am–5pm');
+});
+
+it('writes config/business.php and dispatches a notification when saving business info', function (): void {
+    $path = config_path('business.php');
+    $original = file_get_contents($path);
+
+    $user = User::factory()->create();
+
+    Livewire::actingAs($user)
+        ->test('pages::dashboard.settings')
+        ->set('businessUrl', 'https://test.com')
+        ->set('businessPhone', '+1 (555) 000-0001')
+        ->set('businessEmail', 'info@test.com')
+        ->set('businessAddressStreet', '1 Main St')
+        ->set('businessAddressCityStateZip', 'Dallas, TX 75201')
+        ->set('businessHours', 'Mon–Fri, 8am–6pm')
+        ->call('saveBusinessInfo')
+        ->assertHasNoErrors()
+        ->assertDispatched('notify', message: 'Business info saved.');
+
+    $written = file_get_contents($path);
+    expect($written)
+        ->toContain("'url' => 'https://test.com'")
+        ->toContain("'phone' => '+1 (555) 000-0001'")
+        ->toContain("'email' => 'info@test.com'")
+        ->toContain("'address_street' => '1 Main St'")
+        ->toContain("'address_city_state_zip' => 'Dallas, TX 75201'")
+        ->toContain("'hours' => 'Mon–Fri, 8am–6pm'");
+
+    file_put_contents($path, $original);
+});
+
+it('keeps admin_email as an env() call in the written business config', function (): void {
+    $path = config_path('business.php');
+    $original = file_get_contents($path);
+
+    $user = User::factory()->create();
+
+    Livewire::actingAs($user)
+        ->test('pages::dashboard.settings')
+        ->call('saveBusinessInfo');
+
+    expect(file_get_contents($path))->toContain("env('BUSINESS_ADMIN_EMAIL'");
+
+    file_put_contents($path, $original);
+});
+
+it('validates business email format', function (): void {
+    $user = User::factory()->create();
+
+    Livewire::actingAs($user)
+        ->test('pages::dashboard.settings')
+        ->set('businessEmail', 'not-an-email')
+        ->call('saveBusinessInfo')
+        ->assertHasErrors(['businessEmail']);
+});
+
+// ── SEO Settings ───────────────────────────────────────────────────────────────
+
+it('loads SEO settings from config on mount', function (): void {
+    config([
+        'seo.schema.type' => 'LocalBusiness',
+        'seo.schema.logo' => 'https://example.com/logo.png',
+        'seo.schema.description' => 'We build things.',
+        'seo.schema.address.city' => 'Austin',
+        'seo.schema.address.region' => 'TX',
+        'seo.schema.address.postal_code' => '78701',
+        'seo.schema.address.country' => 'US',
+        'seo.og.default_image' => 'https://example.com/og.jpg',
+        'seo.twitter.handle' => '@example',
+    ]);
+
+    $user = User::factory()->create();
+
+    Livewire::actingAs($user)
+        ->test('pages::dashboard.settings')
+        ->assertSet('seoSchemaType', 'LocalBusiness')
+        ->assertSet('seoSchemaLogo', 'https://example.com/logo.png')
+        ->assertSet('seoSchemaDescription', 'We build things.')
+        ->assertSet('seoAddressCity', 'Austin')
+        ->assertSet('seoAddressRegion', 'TX')
+        ->assertSet('seoAddressPostalCode', '78701')
+        ->assertSet('seoAddressCountry', 'US')
+        ->assertSet('seoOgDefaultImage', 'https://example.com/og.jpg')
+        ->assertSet('seoTwitterHandle', '@example');
+});
+
+it('writes config/seo.php and dispatches a notification when saving SEO settings', function (): void {
+    $path = config_path('seo.php');
+    $original = file_get_contents($path);
+
+    $user = User::factory()->create();
+
+    Livewire::actingAs($user)
+        ->test('pages::dashboard.settings')
+        ->set('seoSchemaType', 'LocalBusiness')
+        ->set('seoSchemaDescription', 'A local biz.')
+        ->set('seoAddressCity', 'Houston')
+        ->set('seoAddressRegion', 'TX')
+        ->set('seoAddressPostalCode', '77001')
+        ->set('seoAddressCountry', 'US')
+        ->call('saveSeoSettings')
+        ->assertHasNoErrors()
+        ->assertDispatched('notify', message: 'SEO settings saved.');
+
+    $written = file_get_contents($path);
+    expect($written)
+        ->toContain("'type' => 'LocalBusiness'")
+        ->toContain("'description' => 'A local biz.'")
+        ->toContain("'city' => 'Houston'")
+        ->toContain("'region' => 'TX'")
+        ->toContain("'postal_code' => '77001'");
+
+    file_put_contents($path, $original);
+});
+
+it('keeps phone and email as config() references in the written seo config', function (): void {
+    $path = config_path('seo.php');
+    $original = file_get_contents($path);
+
+    $user = User::factory()->create();
+
+    Livewire::actingAs($user)
+        ->test('pages::dashboard.settings')
+        ->call('saveSeoSettings');
+
+    $written = file_get_contents($path);
+    expect($written)
+        ->toContain("config('business.phone'")
+        ->toContain("config('business.email'");
+
+    file_put_contents($path, $original);
+});
+
+it('validates seo schema type is an allowed value', function (): void {
+    $user = User::factory()->create();
+
+    Livewire::actingAs($user)
+        ->test('pages::dashboard.settings')
+        ->set('seoSchemaType', 'InvalidType')
+        ->call('saveSeoSettings')
+        ->assertHasErrors(['seoSchemaType']);
+});
+
+// ── General ────────────────────────────────────────────────────────────────────
+
 it('redirects unauthenticated users from the settings page', function (): void {
     $this->get(route('dashboard.settings'))->assertRedirect(route('login'));
 });

@@ -7,28 +7,28 @@ return [
     | Schema.org Structured Data (Organization / LocalBusiness)
     |--------------------------------------------------------------------------
     |
-    | Output on every page as JSON-LD. Set SEO_SCHEMA_TYPE to 'LocalBusiness'
+    | Output on every page as JSON-LD. Set type to 'LocalBusiness'
     | (or a more specific sub-type like 'Restaurant') if you have a physical
     | location, otherwise leave as 'Organization'.
     |
     */
 
     'schema' => [
-        'type' => env('SEO_SCHEMA_TYPE', 'Organization'),
+        'type' => 'Organization',
         'name' => env('APP_NAME', ''),
         'url' => env('APP_URL', ''),
-        'logo' => env('SEO_SCHEMA_LOGO', ''),
-        'description' => env('SEO_SCHEMA_DESCRIPTION', ''),
-        'phone' => env('BUSINESS_PHONE', ''),
-        'email' => env('BUSINESS_EMAIL', ''),
+        'logo' => '',
+        'description' => 'Business Name helps you manage your web content efficiently.',
+        'phone' => config('business.phone', ''),
+        'email' => config('business.email', ''),
         'address' => [
-            'street' => env('BUSINESS_ADDRESS_STREET', ''),
-            'city' => env('SEO_SCHEMA_ADDRESS_CITY', ''),
-            'region' => env('SEO_SCHEMA_ADDRESS_REGION', ''),
-            'postal_code' => env('SEO_SCHEMA_ADDRESS_POSTAL_CODE', ''),
-            'country' => env('SEO_SCHEMA_ADDRESS_COUNTRY', 'US'),
+            'street' => config('business.address_street', ''),
+            'city' => 'Austin',
+            'region' => 'TX',
+            'postal_code' => '78701',
+            'country' => 'US',
         ],
-        'hours' => env('BUSINESS_HOURS', ''),
+        'hours' => config('business.hours', ''),
     ],
 
     /*
@@ -42,7 +42,7 @@ return [
     */
 
     'og' => [
-        'default_image' => env('SEO_OG_DEFAULT_IMAGE', ''),
+        'default_image' => '',
     ],
 
     /*
@@ -52,7 +52,7 @@ return [
     */
 
     'twitter' => [
-        'handle' => env('SEO_TWITTER_HANDLE', ''),
+        'handle' => '@businessname',
     ],
 
 ];
