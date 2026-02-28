@@ -357,15 +357,21 @@ new #[Layout('layouts.app')] #[Title('Media Library')] class extends Component {
                     @endforeach
 
                     {{-- User-created categories --}}
-                    @if ($this->categories->where('is_default', false)->isNotEmpty())
-                        <div class="pt-2 pb-1 px-3">
-                            <span class="text-xs font-medium text-zinc-400 dark:text-zinc-500 uppercase tracking-wider">Categories</span>
-                        </div>
-                    @endif
+                    <div class="pt-2 pb-1 px-3 flex items-center justify-between">
+                        <span class="text-xs font-medium text-zinc-400 dark:text-zinc-500 uppercase tracking-wider">Categories</span>
+                        <button
+                            wire:click="$set('showNewCategoryForm', true)"
+                            class="text-zinc-400 dark:text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-200 transition-colors"
+                            title="New Category"
+                        >
+                            <flux:icon name="plus" class="size-3.5" />
+                        </button>
+                    </div>
 
                     @foreach ($this->categories->where('is_default', false) as $category)
                         <div
                             wire:key="cat-{{ $category->id }}"
+                            class="pl-2"
                             @dragover.prevent="overCategoryId = {{ $category->id }}"
                             @dragleave="if (!$el.contains($event.relatedTarget)) overCategoryId = null"
                             @drop.prevent="$wire.moveToCategory({{ $category->id }}, draggingId); draggingId = null; overCategoryId = null"
@@ -420,12 +426,10 @@ new #[Layout('layouts.app')] #[Title('Media Library')] class extends Component {
                             @endif
                         </div>
                     @endforeach
-                </nav>
 
-                {{-- New Category Form --}}
-                <div class="p-2 border-t border-zinc-200 dark:border-zinc-700">
+                    {{-- New Category Form --}}
                     @if ($showNewCategoryForm)
-                        <form wire:submit="createCategory" class="space-y-1.5">
+                        <form wire:submit="createCategory" class="mt-1 space-y-1.5 px-1">
                             <flux:input
                                 wire:model="newCategoryName"
                                 placeholder="Category name"
@@ -438,18 +442,8 @@ new #[Layout('layouts.app')] #[Title('Media Library')] class extends Component {
                                 <flux:button wire:click="$set('showNewCategoryForm', false)" size="sm" variant="ghost">Cancel</flux:button>
                             </div>
                         </form>
-                    @else
-                        <flux:button
-                            wire:click="$set('showNewCategoryForm', true)"
-                            variant="ghost"
-                            size="sm"
-                            icon="plus"
-                            class="w-full justify-start text-zinc-500 dark:text-zinc-400"
-                        >
-                            New Category
-                        </flux:button>
                     @endif
-                </div>
+                </nav>
             </aside>
 
             {{-- ───── RIGHT: Image Grid ───── --}}
@@ -499,7 +493,16 @@ new #[Layout('layouts.app')] #[Title('Media Library')] class extends Component {
                         @endif
                     </div>
 
-                    {{-- Upload button --}}
+                    {{-- Add Category + Upload --}}
+                    <div class="flex items-center gap-2 shrink-0">
+                    <flux:button
+                        wire:click="$set('showNewCategoryForm', true)"
+                        variant="ghost"
+                        size="sm"
+                        icon="folder-plus"
+                    >
+                        Add Category
+                    </flux:button>
                     <div x-data="{ uploading: false }" class="shrink-0"
                         x-on:livewire-upload-start.window="uploading = true"
                         x-on:livewire-upload-finish.window="uploading = false"
@@ -521,6 +524,7 @@ new #[Layout('layouts.app')] #[Title('Media Library')] class extends Component {
                             accept="image/*"
                             class="hidden"
                         >
+                    </div>
                     </div>
                 </div>
 
