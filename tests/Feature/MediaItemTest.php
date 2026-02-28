@@ -66,17 +66,35 @@ it('does not reorder images from different categories', function (): void {
 
 it('deletes an image and removes the file from storage', function (): void {
     Storage::fake('public');
-    Storage::disk('public')->put('media/test.jpg', 'fake-image');
+    Storage::disk('public')->put('uncategorized/test.jpg', 'fake-image');
 
     $user = User::factory()->create();
-    $item = MediaItem::factory()->create(['path' => 'media/test.jpg']);
+    $item = MediaItem::factory()->create(['path' => 'uncategorized/test.jpg']);
 
     Livewire::actingAs($user)
         ->test('pages::dashboard.media-library.index')
         ->call('deleteImage', $item->id);
 
     expect(MediaItem::find($item->id))->toBeNull();
-    Storage::disk('public')->assertMissing('media/test.jpg');
+    Storage::disk('public')->assertMissing('uncategorized/test.jpg');
+});
+
+it('uploads images into a folder named after the category slug', function (): void {
+    Storage::fake('public');
+
+    $user = User::factory()->create();
+    $category = MediaCategory::factory()->create(['name' => 'Team Photos', 'slug' => 'team-photos']);
+
+    Livewire::actingAs($user)
+        ->test('pages::dashboard.media-library.index')
+        ->set('selectedCategoryId', $category->id)
+        ->set('newImages', [\Illuminate\Http\UploadedFile::fake()->image('headshot.jpg')]);
+
+    $item = MediaItem::where('media_category_id', $category->id)->first();
+
+    expect($item)->not->toBeNull();
+    expect($item->path)->toStartWith('team-photos/');
+    Storage::disk('public')->assertExists($item->path);
 });
 
 it('bulk deletes selected images', function (): void {

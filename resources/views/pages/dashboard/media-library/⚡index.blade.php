@@ -103,21 +103,22 @@ new #[Layout('layouts.app')] #[Title('Media Library')] class extends Component {
     {
         $this->validate(['newImages.*' => 'image|max:51200']);
 
-        $categoryId = $this->selectedCategoryId
-            ?? MediaCategory::query()->where('is_default', true)->value('id');
+        $category = $this->selectedCategoryId
+            ? MediaCategory::query()->findOrFail($this->selectedCategoryId)
+            : MediaCategory::query()->where('is_default', true)->firstOrFail();
 
         $nextSortOrder = MediaItem::query()
-            ->where('media_category_id', $categoryId)
+            ->where('media_category_id', $category->id)
             ->max('sort_order') ?? 0;
 
         $count = 0;
 
         foreach ($this->newImages as $file) {
-            $path = $file->store('media', 'public');
+            $path = $file->store($category->slug, 'public');
             ImageResizer::resizeToMaxWidth($path);
 
             MediaItem::create([
-                'media_category_id' => $categoryId,
+                'media_category_id' => $category->id,
                 'path' => $path,
                 'filename' => $file->getClientOriginalName(),
                 'alt' => '',

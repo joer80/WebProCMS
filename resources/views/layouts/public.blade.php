@@ -19,7 +19,7 @@
         <header class="w-full max-w-4xl mx-auto text-sm mb-10" x-data="{ open: false }">
             <nav class="flex items-center justify-between gap-4">
                 <a href="{{ route('home') }}">
-                    <img src="{{ asset('images/logo.svg') }}" alt="{{ config('app.name') }}" class="h-8 w-auto" />
+                    <img src="{{ config('branding.logo_url', asset('images/logo.svg')) }}" alt="{{ config('app.name') }}" class="h-8 w-auto" />
                 </a>
 
                 {{-- Desktop nav --}}
@@ -86,7 +86,7 @@
             <div class="flex flex-col gap-8 sm:flex-row sm:justify-between">
                 <div class="flex flex-col gap-3">
                     <a href="{{ route('home') }}">
-                        <img src="{{ asset('images/logo.svg') }}" alt="{{ config('app.name') }}" class="h-7 w-auto" />
+                        <img src="{{ config('branding.logo_url', asset('images/logo.svg')) }}" alt="{{ config('app.name') }}" class="h-7 w-auto" />
                     </a>
                     <p class="text-sm text-[#706f6c] dark:text-[#A1A09A] max-w-xs">
                         Build, manage, and publish — without limits.

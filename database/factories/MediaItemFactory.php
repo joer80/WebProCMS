@@ -17,7 +17,7 @@ class MediaItemFactory extends Factory
 
         return [
             'media_category_id' => MediaCategory::factory(),
-            'path' => 'media/'.$filename,
+            'path' => 'uncategorized/'.$filename,
             'filename' => $filename,
             'alt' => fake()->sentence(4),
             'sort_order' => fake()->numberBetween(0, 100),

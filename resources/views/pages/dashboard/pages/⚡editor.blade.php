@@ -4,6 +4,7 @@ use App\Enums\RowCategory;
 use App\Jobs\IndexDesignLibraryJob;
 use App\Models\ContentOverride;
 use App\Models\DesignRow;
+use App\Models\MediaItem;
 use App\Support\VoltFileService;
 use Illuminate\Support\Str;
 use Spatie\ResponseCache\Facades\ResponseCache;
@@ -353,6 +354,19 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
             $dbKey = $field['slug'].':'.$field['key'];
             $dbValue = $overrides->get($dbKey)?->value;
 
+            // Alt text belongs to the image, not the page. Always read the live value from
+            // the MediaItem so edits in the media library are immediately reflected here.
+            if ($field['type'] === 'text' && str_ends_with($field['key'], '_alt')) {
+                $imageDbKey = $field['slug'].':'.substr($field['key'], 0, -4);
+                $imagePath = $drafts[$imageDbKey]['value'] ?? $overrides->get($imageDbKey)?->value;
+                if ($imagePath) {
+                    $liveAlt = MediaItem::query()->where('path', $imagePath)->value('alt');
+                    if ($liveAlt !== null) {
+                        $dbValue = $liveAlt;
+                    }
+                }
+            }
+
             // originalContentValues always reflects the last-saved DB state
             $this->originalContentValues[$field['key']] = $field['type'] === 'toggle'
                 ? ($dbValue !== null ? $dbValue === '1' : $field['default'] === '1')
@@ -410,6 +424,41 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
             }
         }
 
+        // Alt text belongs to the image. Sync any edited alt text back to the MediaItem
+        // and update every other page that references the same image.
+        foreach ($drafts as $draftKey => $draft) {
+            [$slug, $key] = explode(':', $draftKey, 2);
+
+            if ($draft['type'] !== 'text' || ! str_ends_with($key, '_alt') || $draft['value'] === '') {
+                continue;
+            }
+
+            $imageKey = substr($key, 0, -4);
+            $imagePath = ContentOverride::query()
+                ->where('row_slug', $slug)
+                ->where('key', $imageKey)
+                ->value('value');
+
+            if (! $imagePath) {
+                continue;
+            }
+
+            MediaItem::query()->where('path', $imagePath)->update(['alt' => $draft['value']]);
+
+            ContentOverride::query()
+                ->where('key', $imageKey)
+                ->where('value', $imagePath)
+                ->where('type', 'image')
+                ->where('row_slug', '!=', $slug)
+                ->pluck('row_slug')
+                ->each(function (string $affectedSlug) use ($key, $draft): void {
+                    ContentOverride::updateOrCreate(
+                        ['row_slug' => $affectedSlug, 'key' => $key],
+                        ['type' => 'text', 'value' => $draft['value']]
+                    );
+                });
+        }
+
         session()->forget('editor_draft_overrides');
     }
 
@@ -437,17 +486,29 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
     }
 
     #[On('media-image-picked')]
-    public function handleMediaImagePicked(string $key, string $path): void
+    public function handleMediaImagePicked(string $key, string $path, string $alt = ''): void
     {
         $this->contentValues[$key] = $path;
         $this->showMediaPicker = false;
 
         $field = collect($this->contentFields)->firstWhere('key', $key);
 
-        if ($field) {
-            session()->put('editor_draft_overrides.'.$field['slug'].':'.$field['key'], ['type' => 'image', 'value' => $path]);
-            $this->refreshPreview();
+        if (! $field) {
+            return;
         }
+
+        session()->put('editor_draft_overrides.'.$field['slug'].':'.$field['key'], ['type' => 'image', 'value' => $path]);
+
+        if ($alt !== '') {
+            $altKey = $key.'_alt';
+            $altField = collect($this->contentFields)->firstWhere('key', $altKey);
+            if ($altField) {
+                $this->contentValues[$altKey] = $alt;
+                session()->put('editor_draft_overrides.'.$altField['slug'].':'.$altField['key'], ['type' => 'text', 'value' => $alt]);
+            }
+        }
+
+        $this->refreshPreview();
     }
 
     public function saveFile(): void

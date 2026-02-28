@@ -48,7 +48,8 @@ new class extends Component {
 
     public function pickImage(int $id, string $path): void
     {
-        $this->dispatch('media-image-picked', key: $this->fieldKey, path: $path);
+        $item = $this->images->firstWhere('id', $id);
+        $this->dispatch('media-image-picked', key: $this->fieldKey, path: $path, alt: $item?->alt ?? '');
     }
 }; ?>
 
