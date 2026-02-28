@@ -79,3 +79,60 @@ it('deletes the ContentOverride record when saveFile is called after removeImage
 
     expect(ContentOverride::where('row_slug', $this->slug)->where('key', 'bg_image')->exists())->toBeFalse();
 });
+
+it('deletes the file from disk when a page-specific upload is removed', function (): void {
+    Storage::disk('public')->put('content-overrides/old.jpg', 'fake-image');
+
+    ContentOverride::create([
+        'row_slug' => $this->slug,
+        'key' => 'bg_image',
+        'type' => 'image',
+        'value' => 'content-overrides/old.jpg',
+    ]);
+
+    Livewire::actingAs($this->user)
+        ->test('pages::dashboard.pages.editor', ['file' => $this->tempRelativePath])
+        ->call('openContentEditor', 0)
+        ->call('removeImage', 'bg_image')
+        ->call('saveFile');
+
+    Storage::disk('public')->assertMissing('content-overrides/old.jpg');
+});
+
+it('deletes the old page-specific upload from disk when replaced with a new image', function (): void {
+    Storage::disk('public')->put('content-overrides/old.jpg', 'fake-image');
+
+    ContentOverride::create([
+        'row_slug' => $this->slug,
+        'key' => 'bg_image',
+        'type' => 'image',
+        'value' => 'content-overrides/old.jpg',
+    ]);
+
+    Livewire::actingAs($this->user)
+        ->test('pages::dashboard.pages.editor', ['file' => $this->tempRelativePath])
+        ->call('openContentEditor', 0)
+        ->call('handleMediaImagePicked', 'bg_image', 'logos/logo.svg', '')
+        ->call('saveFile');
+
+    Storage::disk('public')->assertMissing('content-overrides/old.jpg');
+});
+
+it('does not delete the file from disk when a media library image is removed from a page', function (): void {
+    Storage::disk('public')->put('logos/logo.svg', 'fake-svg');
+
+    ContentOverride::create([
+        'row_slug' => $this->slug,
+        'key' => 'bg_image',
+        'type' => 'image',
+        'value' => 'logos/logo.svg',
+    ]);
+
+    Livewire::actingAs($this->user)
+        ->test('pages::dashboard.pages.editor', ['file' => $this->tempRelativePath])
+        ->call('openContentEditor', 0)
+        ->call('removeImage', 'bg_image')
+        ->call('saveFile');
+
+    Storage::disk('public')->assertExists('logos/logo.svg');
+});

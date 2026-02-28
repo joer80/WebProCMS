@@ -6,6 +6,7 @@ use App\Models\ContentOverride;
 use App\Models\DesignRow;
 use App\Models\MediaItem;
 use App\Support\VoltFileService;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Spatie\ResponseCache\Facades\ResponseCache;
 use Livewire\Attributes\Computed;
@@ -411,6 +412,12 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
             $type = $draft['type'];
             $value = $draft['value'];
 
+            // For image fields, capture the old path before overwriting so we can clean up
+            // page-specific uploads (content-overrides/) that are being removed or replaced.
+            $oldPath = $type === 'image'
+                ? ContentOverride::query()->where('row_slug', $slug)->where('key', $key)->value('value')
+                : null;
+
             if ($value === '') {
                 ContentOverride::query()
                     ->where('row_slug', $slug)
@@ -421,6 +428,12 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                     ['row_slug' => $slug, 'key' => $key],
                     ['type' => $type, 'value' => $value]
                 );
+            }
+
+            // Only delete files that were uploaded directly to this page (content-overrides/).
+            // Media library images are managed independently and must not be deleted here.
+            if ($oldPath && str_starts_with($oldPath, 'content-overrides/')) {
+                Storage::disk('public')->delete($oldPath);
             }
         }
 
