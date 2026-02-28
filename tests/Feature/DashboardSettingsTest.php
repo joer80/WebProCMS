@@ -272,8 +272,7 @@ it('writes SESSION_DRIVER to .env and dispatches a notification', function (): v
 
     expect(file_get_contents($envPath))->toContain('SESSION_DRIVER=file');
 
-    $artisan->shouldHaveReceived('call')->with('config:cache')->once();
-    $artisan->shouldHaveReceived('call')->with('queue:restart')->once();
+    $artisan->shouldNotHaveReceived('call');
 
     file_put_contents($envPath, $originalEnv);
 });
@@ -303,8 +302,7 @@ it('writes CACHE_STORE to .env and dispatches a notification', function (): void
 
     expect(file_get_contents($envPath))->toContain('CACHE_STORE=file');
 
-    $artisan->shouldHaveReceived('call')->with('config:cache')->once();
-    $artisan->shouldHaveReceived('call')->with('queue:restart')->once();
+    $artisan->shouldNotHaveReceived('call');
 
     file_put_contents($envPath, $originalEnv);
 });
@@ -357,8 +355,7 @@ it('writes RESPONSE_CACHE_DRIVER and RESPONSE_CACHE_LIFETIME to .env and dispatc
     expect($env)->toContain('RESPONSE_CACHE_DRIVER=file')
         ->and($env)->toContain('RESPONSE_CACHE_LIFETIME=7200');
 
-    $artisan->shouldHaveReceived('call')->with('config:cache')->once();
-    $artisan->shouldHaveReceived('call')->with('queue:restart')->once();
+    $artisan->shouldNotHaveReceived('call');
 
     file_put_contents($envPath, $originalEnv);
 });
