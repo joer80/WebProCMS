@@ -103,19 +103,11 @@ php artisan optimize
 
 Forge does **not** start a queue worker automatically. Without one, background jobs (like the Settings page seed) will be dispatched but never processed.
 
-1. In Forge, go to your **site → Queue** tab
-2. Click **Add Worker** with these settings:
-
-| Setting | Value |
-|---|---|
-| Connection | `database` |
-| Queue | *(leave blank for default)* |
-| Timeout | `90` |
-| Sleep | `3` |
-| Tries | `1` |
-| Max Processes | `1` |
-
-3. Click **Add Worker** — Forge will manage it with Supervisor and keep it running
+1. In Forge, go to your **site → Processes** tab
+2. Click **New Background Process**
+3. Select the **Queue Worker** tab (use **Custom** instead if running Laravel Horizon)
+4. Set **Connection** to `database` and fill in your queue name (leave blank for default)
+5. Click **Create** — Forge will manage it with Supervisor and keep it running
 
 Also confirm your production `.env` has `QUEUE_CONNECTION=database` (or whichever driver you're using).
 
