@@ -14,6 +14,12 @@ new #[Layout('layouts.app')] #[Title('Pages')] #[Lazy] class extends Component {
 
     public string $search = '';
 
+    public bool $showCreateModal = false;
+
+    public string $createName = '';
+
+    public string $createSlug = '';
+
     public bool $showCloneModal = false;
 
     public string $cloneSourcePath = '';
@@ -78,6 +84,35 @@ new #[Layout('layouts.app')] #[Title('Pages')] #[Lazy] class extends Component {
         }
 
         return $files;
+    }
+
+    public function updatedCreateName(string $value): void
+    {
+        $this->createSlug = Str::slug($value);
+    }
+
+    public function createPage(): void
+    {
+        abort_if(! auth()->user()->isAtLeast(Role::Manager), 403);
+
+        $this->validate([
+            'createName' => ['required', 'string', 'max:100'],
+            'createSlug' => ['required', 'regex:/^[a-z0-9]+(?:-[a-z0-9]+)*$/'],
+        ]);
+
+        $relativePath = 'pages/⚡'.$this->createSlug.'.blade.php';
+
+        if (file_exists(resource_path('views/'.$relativePath))) {
+            $this->addError('createSlug', 'A page with this slug already exists.');
+
+            return;
+        }
+
+        (new VoltFileService)->createPage($this->createSlug, $this->createName);
+
+        $this->showCreateModal = false;
+        $this->createName = '';
+        $this->createSlug = '';
     }
 
     public function openCloneModal(string $path, string $label): void
@@ -153,11 +188,39 @@ new #[Layout('layouts.app')] #[Title('Pages')] #[Lazy] class extends Component {
             <flux:switch wire:model.live="showAll" label="Show all" />
         </div>
 
-        <div class="mb-6">
-            <flux:input wire:model.live.debounce.300ms="search" placeholder="Search pages…" icon="magnifying-glass" clearable />
+        <div class="mb-6 flex items-center gap-3">
+            <flux:input wire:model.live.debounce.300ms="search" placeholder="Search pages…" icon="magnifying-glass" clearable class="flex-1" />
+            @if (auth()->user()->isAtLeast(Role::Manager))
+                <flux:button wire:click="$set('showCreateModal', true)" variant="primary" icon="plus">New Page</flux:button>
+            @endif
         </div>
 
         @if (auth()->user()->isAtLeast(Role::Manager))
+            <flux:modal wire:model="showCreateModal" class="w-full max-w-md">
+                <flux:heading size="lg" class="mb-1">New Page</flux:heading>
+                <flux:text class="mb-5 text-zinc-500">Create a new blank page with a custom name and URL.</flux:text>
+
+                <div class="space-y-4">
+                    <flux:field>
+                        <flux:label>Page Name</flux:label>
+                        <flux:input wire:model.live="createName" placeholder="e.g. About Us" />
+                        <flux:error name="createName" />
+                    </flux:field>
+
+                    <flux:field>
+                        <flux:label>URL Slug</flux:label>
+                        <flux:input wire:model="createSlug" placeholder="e.g. about-us" />
+                        <flux:description>The URL path for this page: /{{ $createSlug ?: 'slug' }}</flux:description>
+                        <flux:error name="createSlug" />
+                    </flux:field>
+                </div>
+
+                <div class="flex justify-end gap-3 mt-6">
+                    <flux:button wire:click="$set('showCreateModal', false)" variant="ghost">Cancel</flux:button>
+                    <flux:button wire:click="createPage" variant="primary" icon="plus">Create Page</flux:button>
+                </div>
+            </flux:modal>
+
             <flux:modal wire:model="showCloneModal" class="w-full max-w-md">
                 <flux:heading size="lg" class="mb-1">Clone Page</flux:heading>
                 <flux:text class="mb-5 text-zinc-500">Create a copy of this page with a new name and URL.</flux:text>
