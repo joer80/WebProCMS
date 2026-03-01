@@ -1056,19 +1056,19 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                                     $groupOrder = ['content', 'image', 'cta', 'other'];
                                     $sortedGroups = $fieldGroups->sortBy(fn ($_, $key) => array_search($key, $groupOrder) !== false ? array_search($key, $groupOrder) : 99);
                                 @endphp
-                                <div class="{{ $showGroupHeaders ? 'space-y-2' : 'space-y-5' }}">
+                                <div class="{{ $showGroupHeaders ? 'space-y-4' : 'space-y-5' }}">
                                     @foreach ($sortedGroups as $groupKey => $groupFields)
                                         @if ($showGroupHeaders)
                                             <div x-data="{ open: true }" class="rounded-lg border border-zinc-200 dark:border-zinc-700 overflow-hidden">
                                                 <button
                                                     type="button"
                                                     @click="open = !open"
-                                                    class="w-full flex items-center justify-between px-3 py-2 bg-zinc-500 dark:bg-zinc-600"
+                                                    class="w-full flex items-center justify-between px-3 py-2 bg-zinc-50 dark:bg-zinc-800"
                                                 >
-                                                    <span class="text-[10px] uppercase tracking-wider font-semibold text-white/70">{{ $groupLabels[$groupKey] ?? ucfirst($groupKey) }}</span>
-                                                    <flux:icon name="chevron-down" class="size-3.5 text-white/50 transition-transform" :class="open ? '' : '-rotate-90'" />
+                                                    <span class="text-xs uppercase tracking-wider font-semibold text-zinc-600 dark:text-zinc-300">{{ $groupLabels[$groupKey] ?? ucfirst($groupKey) }}</span>
+                                                    <flux:icon name="chevron-down" class="size-3 text-zinc-400 dark:text-zinc-500 transition-transform shrink-0" :class="open ? '' : '-rotate-90'" />
                                                 </button>
-                                                <div x-show="open" x-collapse class="p-3 space-y-4">
+                                                <div x-show="open" x-collapse class="border-t border-zinc-200 dark:border-zinc-700 p-3 space-y-4">
                                                     @foreach ($groupFields as $field)
                                                         @include('pages.dashboard.pages.partials.content-field', ['field' => $field])
                                                     @endforeach

@@ -1,5 +1,5 @@
 <div wire:key="field-{{ $field['key'] }}">
-    <flux:label class="mb-1.5">{{ $field['label'] }}</flux:label>
+    <flux:label class="mb-1.5 text-zinc-500 dark:text-zinc-400">{{ $field['label'] }}</flux:label>
 
     @if ($field['type'] === 'image')
         @php $currentPath = $contentValues[$field['key']] ?? ''; @endphp
