@@ -3,8 +3,10 @@
 @description Two-column content section with text and image placeholder.
 @sort 10
 --}}
-<section class="py-section px-6 bg-white dark:bg-zinc-900">
-    <div class="max-w-6xl mx-auto grid md:grid-cols-2 gap-12 items-center">
+@php $sectionClasses = content('__SLUG__', 'section_classes', 'py-section px-6 bg-white dark:bg-zinc-900', 'classes', 'section'); @endphp
+<section class="{{ $sectionClasses }}">
+    @php $containerClasses = content('__SLUG__', 'container_classes', 'max-w-6xl mx-auto grid md:grid-cols-2 gap-12 items-center', 'classes', 'section'); @endphp
+    <div class="{{ $containerClasses }}">
         <div>
             <span class="text-sm font-semibold text-primary uppercase tracking-wider">{{ content('__SLUG__', 'badge', 'Our Story', 'text', 'content') }}</span>
             @php $showHeadline = content('__SLUG__', 'show_headline', '1', 'toggle', 'headline'); @endphp

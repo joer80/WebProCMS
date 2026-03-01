@@ -97,6 +97,12 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
 
     public string $mediaPickerKey = '';
 
+    /** @var array<string, array<string, string>> */
+    public array $rowDesignValues = [];
+
+    /** @var array<string, array<string, string>> */
+    public array $rowDesignDefaults = [];
+
     public function mount(): void
     {
         if ($this->file) {
@@ -143,6 +149,46 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
             : ($field['type'] === 'classes' && (string) $raw === $field['default'] ? '' : (string) $raw);
 
         session()->put('editor_draft_overrides.'.$field['slug'].':'.$key, ['type' => $field['type'], 'value' => $draftValue]);
+
+        $this->refreshPreview();
+    }
+
+    public function updatedRowDesignValues(mixed $value, string $key): void
+    {
+        $parts = explode('.', $key, 2);
+
+        if (count($parts) !== 2) {
+            return;
+        }
+
+        [$slug, $fieldKey] = $parts;
+        $default = $this->rowDesignDefaults[$slug][$fieldKey] ?? '';
+        $storeValue = (string) $value === $default ? '' : (string) $value;
+
+        if ($storeValue === '') {
+            ContentOverride::query()
+                ->where('row_slug', $slug)
+                ->where('key', $fieldKey)
+                ->delete();
+        } else {
+            ContentOverride::updateOrCreate(
+                ['row_slug' => $slug, 'key' => $fieldKey],
+                ['type' => 'classes', 'value' => $storeValue]
+            );
+        }
+
+        $this->refreshPreview();
+    }
+
+    public function resetRowDesignField(string $slug, string $fieldKey): void
+    {
+        $default = $this->rowDesignDefaults[$slug][$fieldKey] ?? '';
+        $this->rowDesignValues[$slug][$fieldKey] = $default;
+
+        ContentOverride::query()
+            ->where('row_slug', $slug)
+            ->where('key', $fieldKey)
+            ->delete();
 
         $this->refreshPreview();
     }
@@ -195,6 +241,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
 
         $this->phpSection = $parsed['phpSection'];
         $this->rows = $parsed['rows'];
+        $this->loadRowDesignValues();
         $this->isDirty = false;
         $this->parseSeoFromPhpSection();
         $this->pageSlug = preg_match('#^pages/⚡([^/]+)\.blade\.php$#u', $relativePath, $m) ? $m[1] : '';
@@ -268,6 +315,14 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
         $this->refreshPreview();
     }
 
+    public function toggleRowVisibility(int $index): void
+    {
+        $this->rows[$index]['hidden'] = empty($this->rows[$index]['hidden']) ? true : false;
+        $this->isDirty = true;
+
+        $this->refreshPreview();
+    }
+
     public function removeRow(int $index): void
     {
         $slug = $this->rows[$index]['slug'] ?? null;
@@ -282,6 +337,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
 
         array_splice($this->rows, $index, 1);
         $this->rows = array_values($this->rows);
+        $this->loadRowDesignValues();
         $this->isDirty = true;
 
         if ($this->editingRowIndex === $index) {
@@ -328,6 +384,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
 
         array_splice($this->rows, $atIndex, 0, [$newRow]);
         $this->rows = array_values($this->rows);
+        $this->loadRowDesignValues();
         $this->isDirty = true;
         $this->showLibraryDrawer = false;
 
@@ -338,7 +395,10 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
     {
         $this->editingRowIndex = $index;
         $row = $this->rows[$index];
-        $this->contentFields = $this->parseContentFields($row['blade']);
+        $this->contentFields = array_values(array_filter(
+            $this->parseContentFields($row['blade']),
+            fn ($f) => ! in_array($f['key'], ['section_classes', 'container_classes'], true)
+        ));
         $this->pendingImageKey = '';
         $this->pendingImageUpload = null;
 
@@ -373,14 +433,14 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
             // originalContentValues always reflects the last-saved DB state
             $this->originalContentValues[$field['key']] = $field['type'] === 'toggle'
                 ? ($dbValue !== null ? $dbValue === '1' : $field['default'] === '1')
-                : ($field['type'] === 'classes' ? ($dbValue ?: $field['default']) : ($dbValue ?? ''));
+                : (in_array($field['type'], ['classes', 'grid'], true) ? ($dbValue ?: $field['default']) : ($dbValue ?? ''));
 
             // contentValues prefers any unsaved session draft
             $draft = $drafts[$dbKey] ?? null;
             $rawValue = $draft !== null ? ($draft['value'] ?? null) : $dbValue;
             $this->contentValues[$field['key']] = $field['type'] === 'toggle'
                 ? ($rawValue !== null ? $rawValue === '1' : $field['default'] === '1')
-                : ($field['type'] === 'classes' ? ($rawValue ?: $field['default']) : ($rawValue ?? ''));
+                : (in_array($field['type'], ['classes', 'grid'], true) ? ($rawValue ?: $field['default']) : ($rawValue ?? ''));
         }
 
         $this->showContentEditor = true;
@@ -567,6 +627,46 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
     {
         if ($this->file) {
             $this->loadFile($this->file);
+        }
+    }
+
+    private function loadRowDesignValues(): void
+    {
+        $this->rowDesignDefaults = [];
+
+        foreach ($this->rows as $row) {
+            $fields = $this->parseContentFields($row['blade']);
+
+            foreach ($fields as $field) {
+                if (in_array($field['key'], ['section_classes', 'container_classes'], true)) {
+                    $this->rowDesignDefaults[$row['slug']][$field['key']] = $field['default'];
+                }
+            }
+        }
+
+        $slugs = array_keys($this->rowDesignDefaults);
+
+        if (empty($slugs)) {
+            $this->rowDesignValues = [];
+
+            return;
+        }
+
+        $overrides = ContentOverride::query()
+            ->whereIn('row_slug', $slugs)
+            ->whereIn('key', ['section_classes', 'container_classes'])
+            ->get()
+            ->keyBy(fn (ContentOverride $o) => $o->row_slug.':'.$o->key);
+
+        $this->rowDesignValues = [];
+
+        foreach ($this->rowDesignDefaults as $slug => $defaults) {
+            $this->rowDesignValues[$slug] = [];
+
+            foreach ($defaults as $fieldKey => $default) {
+                $override = $overrides->get($slug.':'.$fieldKey);
+                $this->rowDesignValues[$slug][$fieldKey] = $override?->value ?: $default;
+            }
         }
     }
 
@@ -1103,9 +1203,10 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                                                     ? $groupFields->reject(fn ($f) => $f['key'] === $headerToggleField['key'])
                                                     : $groupFields;
                                                 $groupHasClassesFields = $bodyFields->contains(fn ($f) => $f['type'] === 'classes');
+                                                $groupAllClasses = $bodyFields->every(fn ($f) => $f['type'] === 'classes');
                                             @endphp
-                                            <div x-data="{ open: true, groupDesignMode: false, groupContentMode: false, groupHasClasses: {{ $groupHasClassesFields ? 'true' : 'false' }} }" @set-group-design-mode.window="groupDesignMode = $event.detail.value; groupContentMode = false" @set-group-open.window="open = $event.detail.value" x-show="designMode ? {{ $groupHasClassesFields ? 'true' : 'false' }} : true" class="rounded-lg border border-zinc-200 dark:border-zinc-700 overflow-hidden">
-                                                <div class="flex items-center gap-2 px-3 py-2 bg-zinc-50 dark:bg-zinc-800">
+                                            <div x-data="{ open: true, groupDesignMode: {{ $groupAllClasses ? 'true' : 'false' }}, groupContentMode: false, groupHasClasses: {{ $groupHasClassesFields ? 'true' : 'false' }} }" @set-group-design-mode.window="groupDesignMode = $event.detail.value; groupContentMode = false" @set-group-open.window="open = $event.detail.value" x-show="designMode ? {{ $groupHasClassesFields ? 'true' : 'false' }} : true" class="rounded-lg border border-zinc-200 dark:border-zinc-700 overflow-hidden">
+                                                <div class="flex items-center gap-2 px-3 py-2 bg-zinc-100 dark:bg-zinc-700/50">
                                                     <button
                                                         type="button"
                                                         @click="open = !open"
@@ -1221,8 +1322,9 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                                 <div
                                     wire:key="row-item-{{ $row['slug'] }}"
                                     data-row-sidebar-index="{{ $index }}"
-                                    class="rounded-lg border bg-white dark:bg-zinc-900 overflow-hidden transition-colors"
-                                    :class="editorOpen && {{ $editingRowIndex ?? -1 }} === {{ $index }} ? 'border-primary' : 'border-zinc-200 dark:border-zinc-700'"
+                                    x-data="{ designOpen: false }"
+                                    class="rounded-lg border bg-white dark:bg-zinc-900 overflow-hidden transition-colors {{ !empty($row['hidden']) ? 'opacity-60' : '' }}"
+                                    :class="editorOpen && {{ $editingRowIndex ?? -1 }} === {{ $index }} ? 'border-primary' : (designOpen ? 'border-primary/50' : 'border-zinc-200 dark:border-zinc-700')"
                                     draggable="true"
                                     @dragstart="dragging = {{ $index }}"
                                     @dragover.prevent="over = {{ $index }}"
@@ -1234,14 +1336,78 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                                         'border-bottom': over === {{ $index }} && dragging !== null && dragging < {{ $index }} ? '2px solid var(--color-primary)' : ''
                                     }"
                                 >
-                                    {{-- Clickable name area opens content editor --}}
-                                    <button
-                                        wire:click="openContentEditor({{ $index }})"
-                                        class="w-full text-left px-3 pt-3 pb-2 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors"
-                                    >
-                                        <div class="text-sm font-medium text-zinc-800 dark:text-zinc-200 truncate">{{ $row['name'] }}</div>
-                                        <div class="text-[10px] font-mono text-zinc-400 dark:text-zinc-500 truncate mt-0.5">{{ $row['slug'] }}</div>
-                                    </button>
+                                    {{-- Row header: clickable name area + paintbrush + visibility toggle --}}
+                                    <div class="flex items-center gap-2 px-3 py-2 bg-zinc-100 dark:bg-zinc-700/50">
+                                        <button
+                                            wire:click="openContentEditor({{ $index }})"
+                                            class="flex-1 min-w-0 text-left hover:opacity-75 transition-opacity"
+                                        >
+                                            <div class="text-sm font-medium text-zinc-800 dark:text-zinc-200 truncate">{{ $row['name'] }}</div>
+                                            <div class="text-[10px] font-mono text-zinc-400 dark:text-zinc-500 truncate mt-0.5">{{ $row['slug'] }}</div>
+                                        </button>
+                                        @if (isset($rowDesignDefaults[$row['slug']]))
+                                            <button
+                                                type="button"
+                                                @click.stop="designOpen = !designOpen"
+                                                :class="designOpen ? 'text-primary' : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-800 dark:hover:text-zinc-200'"
+                                                class="transition-colors shrink-0"
+                                                title="Edit section styles"
+                                            >
+                                                <flux:icon name="paint-brush" class="size-3.5" />
+                                            </button>
+                                        @endif
+                                        <flux:switch
+                                            :checked="empty($row['hidden'])"
+                                            @click.stop="$wire.toggleRowVisibility({{ $index }})"
+                                            title="{{ !empty($row['hidden']) ? 'Row hidden — click to show' : 'Click to hide row' }}"
+                                        />
+                                    </div>
+
+                                    {{-- Inline design panel --}}
+                                    @if (isset($rowDesignDefaults[$row['slug']]))
+                                        <div x-show="designOpen" x-collapse class="border-t border-zinc-200 dark:border-zinc-700 p-3 space-y-3">
+                                            @foreach (['section_classes' => 'Section Classes', 'container_classes' => 'Container Classes'] as $fieldKey => $fieldLabel)
+                                                @if (isset($rowDesignDefaults[$row['slug']][$fieldKey]))
+                                                    <div>
+                                                        <div class="flex items-center justify-between mb-1.5">
+                                                            <span class="text-[11px] uppercase tracking-wider font-semibold text-zinc-500 dark:text-zinc-400">{{ $fieldLabel }}</span>
+                                                            <button wire:click="resetRowDesignField('{{ $row['slug'] }}', '{{ $fieldKey }}')" type="button" class="text-xs text-zinc-400 dark:text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 transition-colors">Reset</button>
+                                                        </div>
+                                                        <div x-data="twAutocomplete('{{ $row['slug'] }}_{{ $fieldKey }}')" class="relative">
+                                                            <textarea
+                                                                x-ref="input"
+                                                                wire:model.live.debounce.400ms="rowDesignValues.{{ $row['slug'] }}.{{ $fieldKey }}"
+                                                                rows="2"
+                                                                x-on:input="suggest($event)"
+                                                                x-on:keydown="handleKey($event)"
+                                                                x-on:blur="delayClose()"
+                                                                placeholder="{{ $rowDesignDefaults[$row['slug']][$fieldKey] }}"
+                                                                class="w-full font-mono text-xs rounded-lg border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-900 text-zinc-900 dark:text-white px-3 py-2 resize-none focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition"
+                                                            ></textarea>
+                                                            <div
+                                                                x-show="open"
+                                                                x-transition:enter="transition ease-out duration-75"
+                                                                x-transition:enter-start="opacity-0 -translate-y-1"
+                                                                x-transition:enter-end="opacity-100 translate-y-0"
+                                                                x-bind:style="dropdownStyle"
+                                                                class="bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg shadow-lg overflow-y-auto max-h-48"
+                                                            >
+                                                                <template x-for="(item, i) in suggestions" :key="item">
+                                                                    <button
+                                                                        type="button"
+                                                                        @mousedown.prevent="pick(item)"
+                                                                        :class="i === activeIndex ? 'bg-primary text-white' : 'text-zinc-700 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-700'"
+                                                                        class="block w-full text-left px-3 py-1.5 text-xs font-mono transition-colors"
+                                                                        x-text="item"
+                                                                    ></button>
+                                                                </template>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                @endif
+                                            @endforeach
+                                        </div>
+                                    @endif
 
                                     {{-- Row actions --}}
                                     <div class="relative flex items-center px-2 pb-2">

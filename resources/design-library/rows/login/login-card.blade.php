@@ -3,8 +3,10 @@
 @description Centered login card with email and password fields.
 @sort 10
 --}}
-<section class="min-h-screen bg-zinc-50 dark:bg-zinc-950 flex items-center justify-center px-6 py-12">
-    <div class="w-full max-w-sm">
+@php $sectionClasses = content('__SLUG__', 'section_classes', 'min-h-screen bg-zinc-50 dark:bg-zinc-950 flex items-center justify-center px-6 py-12', 'classes', 'section'); @endphp
+<section class="{{ $sectionClasses }}">
+    @php $containerClasses = content('__SLUG__', 'container_classes', 'w-full max-w-sm', 'classes', 'section'); @endphp
+    <div class="{{ $containerClasses }}">
         <div class="text-center mb-8">
             <a href="/" class="text-2xl font-bold text-zinc-900 dark:text-white">{{ content('__SLUG__', 'brand_name', 'Brand', 'text', 'content') }}</a>
             @php $showHeadline = content('__SLUG__', 'show_headline', '1', 'toggle', 'headline'); @endphp

@@ -3,8 +3,10 @@
 @description Two-column hero with text on the left and image placeholder on the right.
 @sort 20
 --}}
-<section class="py-section px-6 bg-white dark:bg-zinc-900">
-    <div class="max-w-6xl mx-auto grid md:grid-cols-2 gap-12 items-center">
+@php $sectionClasses = content('__SLUG__', 'section_classes', 'py-section px-6 bg-white dark:bg-zinc-900', 'classes', 'section'); @endphp
+<section class="{{ $sectionClasses }}">
+    @php $containerClasses = content('__SLUG__', 'container_classes', 'max-w-6xl mx-auto grid md:grid-cols-2 gap-12 items-center', 'classes', 'section'); @endphp
+    <div class="{{ $containerClasses }}">
         <div>
             @php $showHeadline = content('__SLUG__', 'show_headline', '1', 'toggle', 'headline'); @endphp
             @if($showHeadline)

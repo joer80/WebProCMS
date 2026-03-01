@@ -3,8 +3,10 @@
 @description Multi-column footer with logo, link groups, and newsletter signup.
 @sort 20
 --}}
-<footer class="bg-zinc-900 pt-16 pb-8 px-6">
-    <div class="max-w-6xl mx-auto">
+@php $sectionClasses = content('__SLUG__', 'section_classes', 'bg-zinc-900 pt-16 pb-8 px-6', 'classes', 'section'); @endphp
+<footer class="{{ $sectionClasses }}">
+    @php $containerClasses = content('__SLUG__', 'container_classes', 'max-w-6xl mx-auto', 'classes', 'section'); @endphp
+    <div class="{{ $containerClasses }}">
         <div class="grid grid-cols-2 md:grid-cols-4 gap-10 mb-12">
             <div class="col-span-2 md:col-span-1">
                 <a href="/" class="text-xl font-bold text-white">{{ content('__SLUG__', 'brand_name', 'Brand', 'text', 'content') }}</a>

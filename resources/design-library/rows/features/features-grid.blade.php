@@ -3,8 +3,10 @@
 @description Three-column feature grid with icons, headings, and descriptions.
 @sort 10
 --}}
-<section class="py-section px-6 bg-white dark:bg-zinc-900">
-    <div class="max-w-6xl mx-auto">
+@php $sectionClasses = content('__SLUG__', 'section_classes', 'py-section px-6 bg-white dark:bg-zinc-900', 'classes', 'section'); @endphp
+<section class="{{ $sectionClasses }}">
+    @php $containerClasses = content('__SLUG__', 'container_classes', 'max-w-6xl mx-auto', 'classes', 'section'); @endphp
+    <div class="{{ $containerClasses }}">
         <div class="text-center mb-16">
             @php $showHeadline = content('__SLUG__', 'show_headline', '1', 'toggle', 'headline'); @endphp
             @if($showHeadline)
@@ -19,8 +21,13 @@
             <p class="{{ $subheadlineClasses }}">{{ $subheadlineText }}</p>
             @endif
         </div>
-        <div class="grid md:grid-cols-3 gap-8">
-            @foreach ([['icon' => '⚡', 'title' => 'Lightning Fast', 'desc' => 'Optimized for speed at every level of the stack.'], ['icon' => '🔒', 'title' => 'Secure by Default', 'desc' => 'Enterprise-grade security built into every feature.'], ['icon' => '📊', 'title' => 'Detailed Analytics', 'desc' => 'Gain insight into every aspect of your business.'], ['icon' => '🔧', 'title' => 'Easy to Customize', 'desc' => 'Tailor the platform to your exact requirements.'], ['icon' => '🌍', 'title' => 'Global Scale', 'desc' => 'Built to handle millions of users worldwide.'], ['icon' => '💬', 'title' => '24/7 Support', 'desc' => 'Our team is always here when you need us.']] as $feature)
+        @php
+            $featuresJson = content('__SLUG__', 'features', '[{"icon":"⚡","title":"Lightning Fast","desc":"Optimized for speed at every level of the stack."},{"icon":"🔒","title":"Secure by Default","desc":"Enterprise-grade security built into every feature."},{"icon":"📊","title":"Detailed Analytics","desc":"Gain insight into every aspect of your business."},{"icon":"🔧","title":"Easy to Customize","desc":"Tailor the platform to your exact requirements."},{"icon":"🌍","title":"Global Scale","desc":"Built to handle millions of users worldwide."},{"icon":"💬","title":"24/7 Support","desc":"Our team is always here when you need us."}]', 'grid', 'content');
+            $features = json_decode($featuresJson, true) ?: [];
+        @endphp
+        @php $gridClasses = content('__SLUG__', 'grid_classes', 'grid md:grid-cols-3 gap-8', 'classes', 'content'); @endphp
+        <div class="{{ $gridClasses }}">
+            @foreach ($features as $feature)
                 <div class="p-6 rounded-card border border-zinc-200 dark:border-zinc-700 hover:border-primary/40 transition-colors">
                     <div class="text-3xl mb-4">{{ $feature['icon'] }}</div>
                     <h3 class="text-lg font-semibold text-zinc-900 dark:text-white mb-2">{{ $feature['title'] }}</h3>

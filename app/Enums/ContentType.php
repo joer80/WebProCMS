@@ -9,6 +9,7 @@ enum ContentType: string
     case Image = 'image';
     case Toggle = 'toggle';
     case Classes = 'classes';
+    case Grid = 'grid';
 
     public function label(): string
     {
@@ -18,6 +19,7 @@ enum ContentType: string
             ContentType::Image => 'Image',
             ContentType::Toggle => 'Toggle',
             ContentType::Classes => 'Classes',
+            ContentType::Grid => 'Grid',
         };
     }
 }

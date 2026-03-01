@@ -3,8 +3,10 @@
 @description Masonry-style photo gallery grid with hover overlay.
 @sort 10
 --}}
-<section class="py-section px-6 bg-white dark:bg-zinc-900">
-    <div class="max-w-6xl mx-auto">
+@php $sectionClasses = content('__SLUG__', 'section_classes', 'py-section px-6 bg-white dark:bg-zinc-900', 'classes', 'section'); @endphp
+<section class="{{ $sectionClasses }}">
+    @php $containerClasses = content('__SLUG__', 'container_classes', 'max-w-6xl mx-auto', 'classes', 'section'); @endphp
+    <div class="{{ $containerClasses }}">
         <div class="text-center mb-12">
             <h2 class="font-heading text-4xl font-bold text-zinc-900 dark:text-white">{{ content('__SLUG__', 'headline', 'Our Gallery', 'text', 'content') }}</h2>
             <p class="mt-4 text-zinc-500 dark:text-zinc-400">{{ content('__SLUG__', 'subheadline', 'A glimpse into our work and culture.', 'text', 'content') }}</p>

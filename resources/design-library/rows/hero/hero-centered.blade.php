@@ -3,8 +3,10 @@
 @description Full-width centered hero with headline, subheadline, and dual CTA buttons.
 @sort 10
 --}}
-<section class="py-section px-6 bg-white dark:bg-zinc-900 text-center">
-    <div class="max-w-3xl mx-auto">
+@php $sectionClasses = content('__SLUG__', 'section_classes', 'py-section px-6 bg-white dark:bg-zinc-900 text-center', 'classes', 'section'); @endphp
+<section class="{{ $sectionClasses }}">
+    @php $containerClasses = content('__SLUG__', 'container_classes', 'max-w-3xl mx-auto', 'classes', 'section'); @endphp
+    <div class="{{ $containerClasses }}">
         @if(content('__SLUG__', 'show_badge', '1', 'toggle', 'content'))
         <span class="inline-block px-3 py-1 text-xs font-semibold tracking-widest uppercase bg-primary/10 text-primary rounded-full mb-6">{{ content('__SLUG__', 'badge', 'Welcome', 'text', 'content') }}</span>
         @endif

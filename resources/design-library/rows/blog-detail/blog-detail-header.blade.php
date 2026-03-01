@@ -3,8 +3,10 @@
 @description Blog post header with category, title, author, date, and featured image.
 @sort 10
 --}}
-<article class="pt-20 pb-12 px-6 bg-white dark:bg-zinc-900">
-    <div class="max-w-3xl mx-auto">
+@php $sectionClasses = content('__SLUG__', 'section_classes', 'pt-20 pb-12 px-6 bg-white dark:bg-zinc-900', 'classes', 'section'); @endphp
+<article class="{{ $sectionClasses }}">
+    @php $containerClasses = content('__SLUG__', 'container_classes', 'max-w-3xl mx-auto', 'classes', 'section'); @endphp
+    <div class="{{ $containerClasses }}">
         @if ($post->category ?? null)
             <a href="/blog" class="text-sm font-semibold text-primary uppercase tracking-wider hover:text-primary/80">
                 {{ $post->category->name }}

@@ -3,8 +3,10 @@
 @description Three-tier pricing cards with features list and CTA buttons.
 @sort 10
 --}}
-<section class="py-section px-6 bg-zinc-50 dark:bg-zinc-950">
-    <div class="max-w-5xl mx-auto">
+@php $sectionClasses = content('__SLUG__', 'section_classes', 'py-section px-6 bg-zinc-50 dark:bg-zinc-950', 'classes', 'section'); @endphp
+<section class="{{ $sectionClasses }}">
+    @php $containerClasses = content('__SLUG__', 'container_classes', 'max-w-5xl mx-auto', 'classes', 'section'); @endphp
+    <div class="{{ $containerClasses }}">
         <div class="text-center mb-16">
             @php $showHeadline = content('__SLUG__', 'show_headline', '1', 'toggle', 'headline'); @endphp
             @if($showHeadline)

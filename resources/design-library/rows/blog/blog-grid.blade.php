@@ -3,8 +3,10 @@
 @description Three-column blog post grid with featured image, category, title, and date.
 @sort 10
 --}}
-<section class="py-section px-6 bg-white dark:bg-zinc-900">
-    <div class="max-w-6xl mx-auto">
+@php $sectionClasses = content('__SLUG__', 'section_classes', 'py-section px-6 bg-white dark:bg-zinc-900', 'classes', 'section'); @endphp
+<section class="{{ $sectionClasses }}">
+    @php $containerClasses = content('__SLUG__', 'container_classes', 'max-w-6xl mx-auto', 'classes', 'section'); @endphp
+    <div class="{{ $containerClasses }}">
         <div class="flex items-center justify-between mb-12">
             <div>
                 @php $showHeadline = content('__SLUG__', 'show_headline', '1', 'toggle', 'headline'); @endphp

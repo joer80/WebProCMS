@@ -3,8 +3,10 @@
 @description Clean 404 not found page with large error code and navigation links.
 @sort 10
 --}}
-<section class="min-h-screen bg-white dark:bg-zinc-900 flex items-center justify-center px-6">
-    <div class="text-center">
+@php $sectionClasses = content('__SLUG__', 'section_classes', 'min-h-screen bg-white dark:bg-zinc-900 flex items-center justify-center px-6', 'classes', 'section'); @endphp
+<section class="{{ $sectionClasses }}">
+    @php $containerClasses = content('__SLUG__', 'container_classes', 'text-center', 'classes', 'section'); @endphp
+    <div class="{{ $containerClasses }}">
         <div class="text-8xl font-black text-zinc-200 dark:text-zinc-700">404</div>
         @php $showHeadline = content('__SLUG__', 'show_headline', '1', 'toggle', 'headline'); @endphp
         @if($showHeadline)

@@ -134,7 +134,7 @@ class VoltFileService
     /**
      * Reconstruct a volt file's content from its PHP section and rows array.
      *
-     * @param  list<array{slug: string, name: string, blade: string}>  $rows
+     * @param  list<array{slug: string, name: string, blade: string, hidden: bool}>  $rows
      */
     public function buildFileContent(string $phpSection, array $rows): string
     {
@@ -142,8 +142,18 @@ class VoltFileService
 
         foreach ($rows as $row) {
             $slug = $row['slug'];
-            $blade .= "\n{{-- ROW:start:{$slug} --}}\n";
-            $blade .= $row['blade'];
+            $hidden = ! empty($row['hidden']);
+            $hiddenFlag = $hidden ? ':hidden=1' : '';
+            $blade .= "\n{{-- ROW:start:{$slug}{$hiddenFlag} --}}\n";
+
+            if ($hidden) {
+                $blade .= "@if(false)\n";
+                $blade .= $row['blade'];
+                $blade .= "\n@endif";
+            } else {
+                $blade .= $row['blade'];
+            }
+
             $blade .= "\n{{-- ROW:end:{$slug} --}}\n";
         }
 
@@ -223,12 +233,17 @@ class VoltFileService
     /**
      * Build preview-only file content: wraps each row in a data-editor-row div
      * and injects a postMessage script so the editor iframe can detect row clicks.
+     * Hidden rows are omitted entirely from the preview.
      */
     private function buildPreviewFileContent(string $phpSection, array $rows): string
     {
         $blade = '';
 
         foreach ($rows as $row) {
+            if (! empty($row['hidden'])) {
+                continue;
+            }
+
             $slug = $row['slug'];
             $blade .= "\n{{-- ROW:start:{$slug} --}}\n";
             $blade .= "<div data-editor-row=\"{$slug}\">\n";
@@ -276,14 +291,14 @@ JS;
      * Parse the blade section into rows using ROW:start/end comment markers.
      * Wraps any unmarked content in a legacy block.
      *
-     * @return list<array{slug: string, name: string, blade: string}>
+     * @return list<array{slug: string, name: string, blade: string, hidden: bool}>
      */
     private function parseBladeRows(string $bladeSection): array
     {
         $rows = [];
         $startTag = 'ROW:start:';
         $endTag = 'ROW:end:';
-        $pattern = '/\{\{--\s*'.$startTag.'([\w-]+)\s*--\}\}(.*?)\{\{--\s*'.$endTag.'\1\s*--\}\}/s';
+        $pattern = '/\{\{--\s*'.$startTag.'([\w-]+)(:hidden=1)?\s*--\}\}(.*?)\{\{--\s*'.$endTag.'\1\s*--\}\}/s';
 
         preg_match_all($pattern, $bladeSection, $matches, PREG_SET_ORDER | PREG_OFFSET_CAPTURE);
 
@@ -293,6 +308,7 @@ JS;
                     'slug' => 'legacy-'.Str::random(6),
                     'name' => 'Existing Content',
                     'blade' => trim($bladeSection),
+                    'hidden' => false,
                 ];
             }
 
@@ -305,7 +321,13 @@ JS;
             $fullMatchStart = $match[0][1];
             $fullMatchLen = strlen($match[0][0]);
             $slug = $match[1][0];
-            $blade = trim($match[2][0]);
+            $hidden = $match[2][0] === ':hidden=1';
+            $blade = trim($match[3][0]);
+
+            // Strip the @if(false)...@endif wrapper written by buildFileContent for hidden rows.
+            if ($hidden && str_starts_with($blade, '@if(false)') && str_ends_with($blade, '@endif')) {
+                $blade = trim(substr($blade, strlen('@if(false)'), -strlen('@endif')));
+            }
 
             $before = substr($bladeSection, $lastEnd, $fullMatchStart - $lastEnd);
 
@@ -314,6 +336,7 @@ JS;
                     'slug' => 'legacy-'.Str::random(6),
                     'name' => 'Existing Content',
                     'blade' => trim($before),
+                    'hidden' => false,
                 ];
             }
 
@@ -321,6 +344,7 @@ JS;
                 'slug' => $slug,
                 'name' => $this->labelFromSlug($slug),
                 'blade' => $blade,
+                'hidden' => $hidden,
             ];
 
             $lastEnd = $fullMatchStart + $fullMatchLen;
@@ -333,6 +357,7 @@ JS;
                 'slug' => 'legacy-'.Str::random(6),
                 'name' => 'Existing Content',
                 'blade' => trim($after),
+                'hidden' => false,
             ];
         }
 

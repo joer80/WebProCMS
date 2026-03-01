@@ -3,8 +3,10 @@
 @description Horizontal row of icon + label pairs, great for trust signals or features.
 @sort 10
 --}}
-<section class="py-12 px-6 bg-zinc-50 dark:bg-zinc-800/50 border-y border-zinc-200 dark:border-zinc-700">
-    <div class="max-w-5xl mx-auto">
+@php $sectionClasses = content('__SLUG__', 'section_classes', 'py-12 px-6 bg-zinc-50 dark:bg-zinc-800/50 border-y border-zinc-200 dark:border-zinc-700', 'classes', 'section'); @endphp
+<section class="{{ $sectionClasses }}">
+    @php $containerClasses = content('__SLUG__', 'container_classes', 'max-w-5xl mx-auto', 'classes', 'section'); @endphp
+    <div class="{{ $containerClasses }}">
         <div class="grid grid-cols-2 md:grid-cols-4 gap-8">
             <div class="flex items-center gap-3">
                 <div class="size-8 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold text-sm shrink-0">✓</div>

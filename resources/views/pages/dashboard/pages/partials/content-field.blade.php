@@ -144,6 +144,65 @@
                 </div>
             </div>
         </div>
+    @elseif ($field['type'] === 'grid')
+        @php
+            $gridRaw = $contentValues[$field['key']] ?? $field['default'];
+            $gridItems = json_decode($gridRaw, true) ?: [];
+            $gridKeys = !empty($gridItems) ? array_keys($gridItems[0]) : [];
+        @endphp
+        <div
+            x-data="{
+                items: @json($gridItems),
+                keys: @json($gridKeys),
+                sync() {
+                    $wire.set('contentValues.{{ $field['key'] }}', JSON.stringify(this.items));
+                },
+                updateField(idx, fKey, val) {
+                    this.items[idx][fKey] = val;
+                    this.sync();
+                },
+                removeItem(idx) {
+                    this.items.splice(idx, 1);
+                    this.sync();
+                },
+                addItem() {
+                    this.items.push(Object.fromEntries(this.keys.map(k => [k, ''])));
+                    this.sync();
+                }
+            }"
+            class="space-y-2"
+        >
+            <template x-for="(item, idx) in items" :key="idx">
+                <div class="rounded-lg border border-zinc-200 dark:border-zinc-700 p-3 space-y-2 relative">
+                    <button
+                        type="button"
+                        @click="removeItem(idx)"
+                        class="absolute top-2 right-2 text-zinc-400 hover:text-red-500 transition-colors"
+                        title="Remove item"
+                    >
+                        <flux:icon name="x-mark" class="size-3.5" />
+                    </button>
+                    <template x-for="fKey in keys" :key="fKey">
+                        <div class="pr-4">
+                            <p class="text-[10px] uppercase tracking-wider font-semibold text-zinc-500 dark:text-zinc-400 mb-1" x-text="fKey"></p>
+                            <input
+                                :value="item[fKey]"
+                                @change="updateField(idx, fKey, $event.target.value)"
+                                type="text"
+                                class="w-full text-sm rounded-lg border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-900 text-zinc-900 dark:text-white px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition"
+                            />
+                        </div>
+                    </template>
+                </div>
+            </template>
+            <button
+                type="button"
+                @click="addItem"
+                class="w-full py-2 border-2 border-dashed border-zinc-300 dark:border-zinc-600 rounded-lg text-sm text-zinc-500 dark:text-zinc-400 hover:border-primary hover:text-primary transition-colors"
+            >
+                + Add Item
+            </button>
+        </div>
     @elseif ($field['type'] === 'toggle')
         <div class="flex items-center gap-2">
             <flux:switch wire:model.live="contentValues.{{ $field['key'] }}" />

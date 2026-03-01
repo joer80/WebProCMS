@@ -3,8 +3,10 @@
 @description Clean footer with logo, nav links, and copyright.
 @sort 10
 --}}
-<footer class="bg-zinc-900 text-zinc-400 py-12 px-6">
-    <div class="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
+@php $sectionClasses = content('__SLUG__', 'section_classes', 'bg-zinc-900 text-zinc-400 py-12 px-6', 'classes', 'section'); @endphp
+<footer class="{{ $sectionClasses }}">
+    @php $containerClasses = content('__SLUG__', 'container_classes', 'max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6', 'classes', 'section'); @endphp
+    <div class="{{ $containerClasses }}">
         <div>
             <a href="/" class="text-xl font-bold text-white">{{ content('__SLUG__', 'brand_name', 'Brand', 'text', 'content') }}</a>
             <p class="mt-2 text-sm">{{ content('__SLUG__', 'tagline', 'Helping you build better things.', 'text', 'content') }}</p>
