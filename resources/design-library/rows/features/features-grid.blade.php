@@ -21,19 +21,24 @@
             <p class="{{ $subheadlineClasses }}">{{ $subheadlineText }}</p>
             @endif
         </div>
+        @php $showFeatures = content('__SLUG__', 'show_features', '1', 'toggle', 'grid'); @endphp
         @php
-            $featuresJson = content('__SLUG__', 'features', '[{"icon":"⚡","title":"Lightning Fast","desc":"Optimized for speed at every level of the stack."},{"icon":"🔒","title":"Secure by Default","desc":"Enterprise-grade security built into every feature."},{"icon":"📊","title":"Detailed Analytics","desc":"Gain insight into every aspect of your business."},{"icon":"🔧","title":"Easy to Customize","desc":"Tailor the platform to your exact requirements."},{"icon":"🌍","title":"Global Scale","desc":"Built to handle millions of users worldwide."},{"icon":"💬","title":"24/7 Support","desc":"Our team is always here when you need us."}]', 'grid', 'content');
+            $featuresJson = content('__SLUG__', 'features', '[{"icon":"bolt","title":"Lightning Fast","desc":"Optimized for speed at every level of the stack."},{"icon":"shield-check","title":"Secure by Default","desc":"Enterprise-grade security built into every feature."},{"icon":"chart-bar","title":"Detailed Analytics","desc":"Gain insight into every aspect of your business."},{"icon":"adjustments-horizontal","title":"Easy to Customize","desc":"Tailor the platform to your exact requirements."},{"icon":"globe-alt","title":"Global Scale","desc":"Built to handle millions of users worldwide."},{"icon":"chat-bubble-left-right","title":"24/7 Support","desc":"Our team is always here when you need us."}]', 'grid', 'grid');
             $features = json_decode($featuresJson, true) ?: [];
         @endphp
-        @php $gridClasses = content('__SLUG__', 'grid_classes', 'grid md:grid-cols-3 gap-8', 'classes', 'content'); @endphp
-        <div class="{{ $gridClasses }}">
+        @php $featuresGridClasses = content('__SLUG__', 'features_grid_classes', 'grid md:grid-cols-3 gap-8', 'classes', 'grid'); @endphp
+        @if($showFeatures)
+        <div class="{{ $featuresGridClasses }}">
             @foreach ($features as $feature)
                 <div class="p-6 rounded-card border border-zinc-200 dark:border-zinc-700 hover:border-primary/40 transition-colors">
-                    <div class="text-3xl mb-4">{{ $feature['icon'] }}</div>
+                    <div class="mb-4 text-primary">
+                        <x-heroicon name="{{ $feature['icon'] }}" class="size-8" />
+                    </div>
                     <h3 class="text-lg font-semibold text-zinc-900 dark:text-white mb-2">{{ $feature['title'] }}</h3>
                     <p class="text-zinc-500 dark:text-zinc-400 text-sm leading-relaxed">{{ $feature['desc'] }}</p>
                 </div>
             @endforeach
         </div>
+        @endif
     </div>
 </section>

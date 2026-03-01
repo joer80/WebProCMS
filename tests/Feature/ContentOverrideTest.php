@@ -38,6 +38,38 @@ it('returns the default for image type when no override exists', function (): vo
     expect(content('hero-abc123', 'image', '/placeholder.jpg', 'image'))->toBe('/placeholder.jpg');
 });
 
+it('returns the json default string for grid type when no override exists', function (): void {
+    $default = '[{"icon":"⚡","title":"Lightning Fast"}]';
+
+    expect(content('features-abc123', 'features', $default, 'grid'))->toBe($default);
+});
+
+it('returns the stored json string for grid type from db', function (): void {
+    $json = '[{"icon":"🔒","title":"Secure"}]';
+
+    ContentOverride::create([
+        'row_slug' => 'features-abc123',
+        'key' => 'features',
+        'type' => 'grid',
+        'value' => $json,
+    ]);
+
+    expect(content('features-abc123', 'features', '[{"icon":"⚡","title":"Default"}]', 'grid'))->toBe($json);
+});
+
+it('casts type to ContentType grid enum', function (): void {
+    $override = ContentOverride::create([
+        'row_slug' => 'features-abc123',
+        'key' => 'features',
+        'type' => 'grid',
+        'value' => '[]',
+    ]);
+
+    expect($override->type)->toBe(ContentType::Grid)
+        ->and(ContentType::Grid->value)->toBe('grid')
+        ->and(ContentType::Grid->label())->toBe('Grid');
+});
+
 it('enforces unique row_slug and key combination', function (): void {
     ContentOverride::create([
         'row_slug' => 'cta-xyz789',
@@ -168,5 +200,22 @@ describe('session draft overrides', function (): void {
         simulatePreviewRequest();
 
         expect(content('hero-abc123', 'headline', 'Default'))->toBe('DB Value');
+    });
+
+    it('returns session draft json for grid type on preview request', function (): void {
+        $draftJson = '[{"icon":"✏️","title":"Draft Feature"}]';
+
+        session(['editor_draft_overrides' => ['features-abc123:features' => ['type' => 'grid', 'value' => $draftJson]]]);
+
+        ContentOverride::create([
+            'row_slug' => 'features-abc123',
+            'key' => 'features',
+            'type' => 'grid',
+            'value' => '[{"icon":"⚡","title":"Saved Feature"}]',
+        ]);
+
+        simulatePreviewRequest();
+
+        expect(content('features-abc123', 'features', '[]', 'grid'))->toBe($draftJson);
     });
 });

@@ -152,8 +152,8 @@
         @endphp
         <div
             x-data="{
-                items: @json($gridItems),
-                keys: @json($gridKeys),
+                items: {{ json_encode($gridItems) }},
+                keys: {{ json_encode($gridKeys) }},
                 sync() {
                     $wire.set('contentValues.{{ $field['key'] }}', JSON.stringify(this.items));
                 },
@@ -185,12 +185,85 @@
                     <template x-for="fKey in keys" :key="fKey">
                         <div class="pr-4">
                             <p class="text-[10px] uppercase tracking-wider font-semibold text-zinc-500 dark:text-zinc-400 mb-1" x-text="fKey"></p>
-                            <input
-                                :value="item[fKey]"
-                                @change="updateField(idx, fKey, $event.target.value)"
-                                type="text"
-                                class="w-full text-sm rounded-lg border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-900 text-zinc-900 dark:text-white px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition"
-                            />
+                            <template x-if="fKey === 'icon'">
+                                <div x-data="{ pickerOpen: false }">
+                                    {{-- Compact current selection --}}
+                                    <div class="flex items-center gap-2 px-2.5 py-2 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900">
+                                        <div class="size-5 shrink-0 text-zinc-600 dark:text-zinc-300">
+                                            @foreach (['bolt', 'rocket-launch', 'shield-check', 'lock-closed', 'key', 'chart-bar', 'chart-pie', 'arrow-trending-up', 'chat-bubble-left-right', 'envelope', 'bell', 'cog-6-tooth', 'adjustments-horizontal', 'wrench-screwdriver', 'globe-alt', 'server', 'cloud', 'light-bulb', 'sparkles', 'star', 'puzzle-piece', 'link', 'user-group', 'device-phone-mobile'] as $iconName)
+                                                <template x-if="item[fKey] === '{{ $iconName }}'">
+                                                    <flux:icon name="{{ $iconName }}" class="size-5" />
+                                                </template>
+                                            @endforeach
+                                        </div>
+                                        <span class="text-sm text-zinc-500 dark:text-zinc-400 flex-1 font-mono truncate" x-text="item[fKey] || '—'"></span>
+                                        <button type="button" @click="pickerOpen = true" class="text-xs text-primary hover:text-primary/80 shrink-0 transition-colors">
+                                            Change
+                                        </button>
+                                    </div>
+
+                                    {{-- Modal overlay --}}
+                                    <div
+                                        x-show="pickerOpen"
+                                        x-transition:enter="transition ease-out duration-100"
+                                        x-transition:enter-start="opacity-0"
+                                        x-transition:enter-end="opacity-100"
+                                        x-transition:leave="transition ease-in duration-75"
+                                        x-transition:leave-start="opacity-100"
+                                        x-transition:leave-end="opacity-0"
+                                        class="fixed inset-0 z-50 flex items-center justify-center"
+                                    >
+                                        <div class="absolute inset-0 bg-black/50" @click="pickerOpen = false"></div>
+                                        <div class="relative z-10 bg-white dark:bg-zinc-800 rounded-xl shadow-2xl p-5 w-80 max-h-[80vh] overflow-y-auto">
+                                            <div class="flex items-center justify-between mb-3">
+                                                <p class="text-sm font-semibold text-zinc-900 dark:text-white">Select Icon</p>
+                                                <button type="button" @click="pickerOpen = false" class="text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 transition-colors">
+                                                    <flux:icon name="x-mark" class="size-4" />
+                                                </button>
+                                            </div>
+                                            <div class="grid grid-cols-6 gap-1.5 mb-4">
+                                                @foreach (['bolt', 'rocket-launch', 'shield-check', 'lock-closed', 'key', 'chart-bar', 'chart-pie', 'arrow-trending-up', 'chat-bubble-left-right', 'envelope', 'bell', 'cog-6-tooth', 'adjustments-horizontal', 'wrench-screwdriver', 'globe-alt', 'server', 'cloud', 'light-bulb', 'sparkles', 'star', 'puzzle-piece', 'link', 'user-group', 'device-phone-mobile'] as $iconName)
+                                                    <button
+                                                        type="button"
+                                                        @click="updateField(idx, fKey, '{{ $iconName }}'); pickerOpen = false"
+                                                        :class="item[fKey] === '{{ $iconName }}' ? 'border-primary bg-primary/10 text-primary' : 'border-zinc-200 dark:border-zinc-700 hover:border-zinc-400 dark:hover:border-zinc-500 text-zinc-500 dark:text-zinc-400'"
+                                                        class="flex items-center justify-center p-2 rounded-lg border transition-colors"
+                                                        title="{{ $iconName }}"
+                                                    >
+                                                        <flux:icon name="{{ $iconName }}" class="size-5" />
+                                                    </button>
+                                                @endforeach
+                                            </div>
+                                            <div class="border-t border-zinc-200 dark:border-zinc-700 pt-3">
+                                                <p class="text-xs text-zinc-500 dark:text-zinc-400 mb-1.5">Or type any Heroicon name:</p>
+                                                <input
+                                                    :value="item[fKey]"
+                                                    @change="updateField(idx, fKey, $event.target.value); pickerOpen = false"
+                                                    type="text"
+                                                    placeholder="e.g. arrow-right"
+                                                    class="w-full text-sm rounded-lg border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-900 text-zinc-900 dark:text-white px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition"
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </template>
+                            <template x-if="fKey === 'desc' || fKey === 'description'">
+                                <textarea
+                                    :value="item[fKey]"
+                                    @change="updateField(idx, fKey, $event.target.value)"
+                                    rows="3"
+                                    class="w-full text-sm rounded-lg border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-900 text-zinc-900 dark:text-white px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition resize-none"
+                                ></textarea>
+                            </template>
+                            <template x-if="fKey !== 'icon' && fKey !== 'desc' && fKey !== 'description'">
+                                <input
+                                    :value="item[fKey]"
+                                    @change="updateField(idx, fKey, $event.target.value)"
+                                    type="text"
+                                    class="w-full text-sm rounded-lg border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-900 text-zinc-900 dark:text-white px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition"
+                                />
+                            </template>
                         </div>
                     </template>
                 </div>

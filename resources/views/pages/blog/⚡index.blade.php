@@ -66,11 +66,15 @@ new #[Layout('layouts.public', ['description' => 'Insights, updates, and news fr
     {{-- Search + category filters --}}
     <div class="flex flex-col sm:flex-row sm:items-center gap-4 mb-8">
         <div class="relative flex-1 max-w-sm">
-            <flux:input
+            <div class="pointer-events-none absolute inset-y-0 inset-s-0 flex items-center ps-3 text-zinc-400/75">
+                <svg class="size-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M9 3.5a5.5 5.5 0 1 0 0 11 5.5 5.5 0 0 0 0-11ZM2 9a7 7 0 1 1 12.452 4.391l3.328 3.329a.75.75 0 1 1-1.06 1.06l-3.329-3.328A7 7 0 0 1 2 9Z" clip-rule="evenodd" /></svg>
+
+            </div>
+            <input
                 wire:model.live.debounce.300ms="search"
                 type="search"
                 placeholder="Search posts…"
-                icon="magnifying-glass"
+                class="w-full border border-zinc-200 border-b-zinc-300/80 rounded-lg bg-white text-base sm:text-sm py-2 h-10 ps-10 pe-3 text-zinc-700 placeholder-zinc-400 dark:bg-white/10 dark:border-white/10 dark:text-zinc-300 dark:placeholder-zinc-400"
             />
         </div>
 
