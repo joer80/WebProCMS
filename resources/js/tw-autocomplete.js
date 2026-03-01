@@ -5,11 +5,16 @@
 
 const COLORS = ['slate','gray','zinc','neutral','stone','red','orange','amber','yellow','lime','green','emerald','teal','cyan','sky','blue','indigo','violet','purple','fuchsia','pink','rose'];
 const SHADES = [50,100,200,300,400,500,600,700,800,900,950];
+const CUSTOM_COLORS = ['primary','primary-hover','primary-foreground','primary-surface','accent','accent-content','accent-foreground'];
 const SPACING = ['0','px','0.5','1','1.5','2','2.5','3','3.5','4','5','6','7','8','9','10','11','12','14','16','20','24','28','32','36','40','44','48','52','56','60','64','72','80','96'];
 const MODIFIERS = ['dark:','sm:','md:','lg:','xl:','2xl:','hover:','focus:','active:','disabled:','focus-within:','focus-visible:','group-hover:','group-focus:','peer-hover:','first:','last:','odd:','even:','motion-reduce:','print:'];
 
 function buildTwClasses() {
     const cls = [];
+
+    // — Custom theme colors —
+    const COLOR_PREFIXES = ['text','bg','border','ring','ring-offset','outline','shadow','from','via','to','divide','decoration','caret','accent','placeholder'];
+    CUSTOM_COLORS.forEach(c => COLOR_PREFIXES.forEach(p => cls.push(`${p}-${c}`)));
 
     // — Text —
     cls.push('text-xs','text-sm','text-base','text-lg','text-xl','text-2xl','text-3xl','text-4xl','text-5xl','text-6xl','text-7xl','text-8xl','text-9xl');

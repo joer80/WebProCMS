@@ -54,6 +54,40 @@ new #[Layout('layouts.app')] #[Title('Tools')] class extends Component {
 
         $this->dispatch('notify', message: 'Design Library sync started.');
     }
+
+    public function rebuildAutocomplete(): void
+    {
+        $css = file_get_contents(resource_path('css/app.css'));
+
+        preg_match('/@theme\s*\{([^}]+)\}/s', $css, $themeMatch);
+        $themeBlock = $themeMatch[1] ?? '';
+
+        preg_match_all('/--color-([a-z][a-z0-9-]+)\s*:/', $themeBlock, $matches);
+        $colorNames = $matches[1] ?? [];
+
+        $standardColors = ['slate', 'gray', 'zinc', 'neutral', 'stone', 'red', 'orange', 'amber', 'yellow', 'lime', 'green', 'emerald', 'teal', 'cyan', 'sky', 'blue', 'indigo', 'violet', 'purple', 'fuchsia', 'pink', 'rose'];
+        $standardShades = ['50', '100', '200', '300', '400', '500', '600', '700', '800', '900', '950'];
+
+        $customColors = array_unique(array_values(array_filter($colorNames, function (string $name) use ($standardColors, $standardShades): bool {
+            foreach ($standardColors as $color) {
+                foreach ($standardShades as $shade) {
+                    if ($name === "{$color}-{$shade}") {
+                        return false;
+                    }
+                }
+            }
+
+            return true;
+        })));
+
+        $jsPath = resource_path('js/tw-autocomplete.js');
+        $js = file_get_contents($jsPath);
+        $encoded = implode("','", $customColors);
+        $js = preg_replace("/^const CUSTOM_COLORS = \[.*?\];$/m", "const CUSTOM_COLORS = ['{$encoded}'];", $js);
+        file_put_contents($jsPath, $js);
+
+        $this->dispatch('notify', message: 'Autocomplete rebuilt with ' . count($customColors) . ' custom color' . (count($customColors) === 1 ? '' : 's') . '. Rebuild assets to apply.');
+    }
 }; ?>
 
 <div>
@@ -111,6 +145,18 @@ new #[Layout('layouts.app')] #[Title('Tools')] class extends Component {
                     </div>
                     <flux:button wire:click="syncDesignLibrary" variant="outline" class="shrink-0">
                         Sync Library
+                    </flux:button>
+                </div>
+            </div>
+
+            <div class="rounded-lg border border-zinc-200 dark:border-zinc-700 p-6">
+                <div class="flex items-start justify-between gap-6">
+                    <div>
+                        <flux:heading>Rebuild CSS Autocomplete</flux:heading>
+                        <flux:text class="mt-1">Sync the design editor's class autocomplete with the custom colors defined in <code class="text-xs bg-zinc-100 dark:bg-zinc-800 px-1 py-0.5 rounded">resources/css/app.css</code>. Run after adding or changing theme colors, then rebuild your assets.</flux:text>
+                    </div>
+                    <flux:button wire:click="rebuildAutocomplete" variant="outline" class="shrink-0">
+                        Rebuild
                     </flux:button>
                 </div>
             </div>
