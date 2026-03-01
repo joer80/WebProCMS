@@ -1,4 +1,4 @@
-<div wire:key="field-{{ $field['key'] }}">
+<div wire:key="field-{{ $field['key'] }}" x-show="{{ $field['type'] === 'classes' ? 'designMode' : '!designMode' }}">
     @if ($field['type'] !== 'toggle')
         <flux:label class="mb-1.5 text-zinc-500 dark:text-zinc-400">{{ $field['label'] }}</flux:label>
     @endif
