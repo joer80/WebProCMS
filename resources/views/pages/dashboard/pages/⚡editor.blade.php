@@ -530,6 +530,8 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
 
         $this->persistAllDraftOverrides();
 
+        $this->resetEmptyClassesFields();
+
         $service = new VoltFileService;
         $fullPath = resource_path('views/'.$this->file);
         $service->writeFile($fullPath, $service->buildFileContent($this->phpSection, $this->rows));
@@ -540,6 +542,15 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
 
         $this->isDirty = false;
         $this->dispatch('notify', message: 'Page saved.');
+    }
+
+    public function resetEmptyClassesFields(): void
+    {
+        foreach ($this->contentFields as $field) {
+            if ($field['type'] === 'classes' && ($this->contentValues[$field['key']] ?? '') === '') {
+                $this->contentValues[$field['key']] = $field['default'];
+            }
+        }
     }
 
     public function discardChanges(): void
@@ -1038,8 +1049,8 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                                 <div class="text-[10px] font-mono text-zinc-400 dark:text-zinc-500 truncate">{{ $rows[$editingRowIndex]['slug'] }}</div>
                             </div>
                             <div class="flex rounded-md border border-zinc-200 dark:border-zinc-700 text-[11px] font-medium overflow-hidden shrink-0">
-                                <button type="button" @click="designMode = false" :class="!designMode ? 'bg-zinc-800 text-white dark:bg-zinc-100 dark:text-zinc-900' : 'bg-white text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200'" class="px-2.5 py-1 transition-colors">Content</button>
-                                <button type="button" @click="designMode = true" :class="designMode ? 'bg-zinc-800 text-white dark:bg-zinc-100 dark:text-zinc-900' : 'bg-white text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200'" class="px-2.5 py-1 transition-colors border-l border-zinc-200 dark:border-zinc-700">Design</button>
+                                <button type="button" @click="designMode = false; $wire.resetEmptyClassesFields()" :class="!designMode ? 'bg-zinc-800 text-white dark:bg-zinc-100 dark:text-zinc-900' : 'bg-white text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200'" class="px-2.5 py-1 transition-colors">Content</button>
+                                <button type="button" @click="designMode = true; $wire.resetEmptyClassesFields()" :class="designMode ? 'bg-zinc-800 text-white dark:bg-zinc-100 dark:text-zinc-900' : 'bg-white text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200'" class="px-2.5 py-1 transition-colors border-l border-zinc-200 dark:border-zinc-700">Design</button>
                             </div>
                         </div>
 
@@ -1074,18 +1085,38 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                                                     : $groupFields;
                                                 $groupHasClassesFields = $bodyFields->contains(fn ($f) => $f['type'] === 'classes');
                                             @endphp
-                                            <div x-data="{ open: true }" x-show="designMode ? {{ $groupHasClassesFields ? 'true' : 'false' }} : true" class="rounded-lg border border-zinc-200 dark:border-zinc-700 overflow-hidden">
+                                            <div x-data="{ open: true, groupDesignMode: false, groupContentMode: false }" x-show="designMode ? {{ $groupHasClassesFields ? 'true' : 'false' }} : true" class="rounded-lg border border-zinc-200 dark:border-zinc-700 overflow-hidden">
                                                 <div class="flex items-center gap-2 px-3 py-2 bg-zinc-50 dark:bg-zinc-800">
                                                     <button
                                                         type="button"
                                                         @click="open = !open"
-                                                        class="flex items-center gap-1.5 flex-1 min-w-0 text-left"
-                                                    >
-                                                        <span class="text-xs uppercase tracking-wider font-semibold text-zinc-600 dark:text-zinc-300">{{ ucwords($groupKey) }}</span>
-                                                        <flux:icon name="chevron-down" class="size-3 text-zinc-400 dark:text-zinc-500 transition-transform shrink-0" :class="open ? '' : '-rotate-90'" />
-                                                    </button>
+                                                        class="flex-1 min-w-0 text-left text-xs uppercase tracking-wider font-semibold text-zinc-600 dark:text-zinc-300"
+                                                    >{{ ucwords($groupKey) }}</button>
+                                                    @if ($groupHasClassesFields)
+                                                        <button
+                                                            type="button"
+                                                            x-show="!designMode"
+                                                            @click="groupDesignMode = !groupDesignMode; $wire.resetEmptyClassesFields()"
+                                                            :class="groupDesignMode ? 'text-primary' : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-800 dark:hover:text-zinc-200'"
+                                                            class="transition-colors"
+                                                            title="Toggle design mode for this group"
+                                                        >
+                                                            <flux:icon x-show="!groupDesignMode" name="paint-brush" class="size-3.5" />
+                                                            <flux:icon x-show="groupDesignMode" name="document-text" class="size-3.5" />
+                                                        </button>
+                                                        <button
+                                                            type="button"
+                                                            x-show="designMode"
+                                                            @click="groupContentMode = !groupContentMode"
+                                                            :class="groupContentMode ? 'text-primary' : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-800 dark:hover:text-zinc-200'"
+                                                            class="transition-colors"
+                                                            title="Switch to content mode for this group"
+                                                        >
+                                                            <flux:icon name="document-text" class="size-3.5" />
+                                                        </button>
+                                                    @endif
                                                     @if ($headerToggleField)
-                                                        <flux:switch x-show="!designMode" wire:model.live="contentValues.{{ $headerToggleField['key'] }}" />
+                                                        <flux:switch wire:model.live="contentValues.{{ $headerToggleField['key'] }}" />
                                                     @endif
                                                 </div>
                                                 <div x-show="open" x-collapse class="border-t border-zinc-200 dark:border-zinc-700 p-3 space-y-4">
