@@ -3,16 +3,16 @@
 @description Four-column product card grid with image, name, price, and add-to-cart button.
 @sort 10
 --}}
-<section class="py-20 px-6 bg-white dark:bg-zinc-900">
+<section class="py-section px-6 bg-white dark:bg-zinc-900">
     <div class="max-w-6xl mx-auto">
         <div class="flex items-center justify-between mb-12">
-            <h2 class="text-4xl font-bold text-zinc-900 dark:text-white">{{ content('__SLUG__', 'headline', 'Featured Products', 'text', 'content') }}</h2>
+            <h2 class="font-heading text-4xl font-bold text-zinc-900 dark:text-white">{{ content('__SLUG__', 'headline', 'Featured Products', 'text', 'content') }}</h2>
             <a href="/products" class="text-primary font-semibold hover:text-primary/80 transition-colors text-sm">View all →</a>
         </div>
         <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
             @foreach (['Product Alpha', 'Product Beta', 'Product Gamma', 'Product Delta'] as $product)
                 <div class="group">
-                    <div class="rounded-xl bg-zinc-100 dark:bg-zinc-800 aspect-square mb-4 overflow-hidden">
+                    <div class="rounded-card bg-zinc-100 dark:bg-zinc-800 aspect-square mb-4 overflow-hidden">
                         <div class="w-full h-full flex items-center justify-center text-zinc-400 dark:text-zinc-500 text-sm">Image</div>
                     </div>
                     <h3 class="font-semibold text-zinc-900 dark:text-white">{{ $product }}</h3>

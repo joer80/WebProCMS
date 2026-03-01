@@ -5,7 +5,7 @@
 --}}
 <header class="sticky top-0 z-50 bg-white/80 dark:bg-zinc-900/80 backdrop-blur border-b border-zinc-200 dark:border-zinc-800">
     <div class="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
-        <a href="/" class="text-xl font-bold text-zinc-900 dark:text-white">{{ content('__SLUG__', 'brand_name', 'Brand', 'text', 'content') }}</a>
+        <a href="/" class="font-heading text-xl font-bold text-zinc-900 dark:text-white">{{ content('__SLUG__', 'brand_name', 'Brand', 'text', 'content') }}</a>
         <nav class="hidden md:flex items-center gap-8">
             <a href="#" class="text-sm text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition-colors">Features</a>
             <a href="#" class="text-sm text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition-colors">Pricing</a>

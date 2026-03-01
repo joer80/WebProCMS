@@ -10,7 +10,7 @@
             @php $showHeadline = content('__SLUG__', 'show_headline', '1', 'toggle', 'headline'); @endphp
             @if($showHeadline)
             @php $headlineText = content('__SLUG__', 'headline', 'Welcome back', 'text', 'headline'); @endphp
-            @php $headlineClasses = content('__SLUG__', 'headline_classes', 'mt-4 text-xl font-semibold text-zinc-800 dark:text-zinc-100', 'classes', 'headline'); @endphp
+            @php $headlineClasses = content('__SLUG__', 'headline_classes', 'font-heading mt-4 text-xl font-semibold text-zinc-800 dark:text-zinc-100', 'classes', 'headline'); @endphp
             <h1 class="{{ $headlineClasses }}">{{ $headlineText }}</h1>
             @endif
             @php $showSubheadline = content('__SLUG__', 'show_subheadline', '1', 'toggle', 'subheadline'); @endphp
@@ -20,7 +20,7 @@
             <p class="{{ $subheadlineClasses }}">{{ $subheadlineText }}</p>
             @endif
         </div>
-        <div class="bg-white dark:bg-zinc-900 rounded-2xl shadow-sm border border-zinc-200 dark:border-zinc-700 p-8">
+        <div class="bg-white dark:bg-zinc-900 rounded-card shadow-card border border-zinc-200 dark:border-zinc-700 p-8">
             <form class="space-y-5">
                 <div>
                     <label class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">Email</label>

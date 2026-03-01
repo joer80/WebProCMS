@@ -5,6 +5,8 @@
 
 const COLORS = ['slate','gray','zinc','neutral','stone','red','orange','amber','yellow','lime','green','emerald','teal','cyan','sky','blue','indigo','violet','purple','fuchsia','pink','rose'];
 const SHADES = [50,100,200,300,400,500,600,700,800,900,950];
+// Custom theme tokens from resources/css/app.css @theme block.
+// Update this list whenever you add or rename tokens there, then run npm run build.
 const CUSTOM_COLORS = ['primary','primary-hover','primary-foreground','primary-surface','accent','accent-content','accent-foreground'];
 const SPACING = ['0','px','0.5','1','1.5','2','2.5','3','3.5','4','5','6','7','8','9','10','11','12','14','16','20','24','28','32','36','40','44','48','52','56','60','64','72','80','96'];
 const MODIFIERS = ['dark:','sm:','md:','lg:','xl:','2xl:','hover:','focus:','active:','disabled:','focus-within:','focus-visible:','group-hover:','group-focus:','peer-hover:','first:','last:','odd:','even:','motion-reduce:','print:'];
@@ -24,7 +26,7 @@ function buildTwClasses() {
 
     // — Font —
     cls.push('font-thin','font-extralight','font-light','font-normal','font-medium','font-semibold','font-bold','font-extrabold','font-black');
-    cls.push('font-sans','font-serif','font-mono');
+    cls.push('font-sans','font-serif','font-mono','font-heading');
     cls.push('italic','not-italic');
 
     // — Text decoration / transform —
@@ -70,7 +72,7 @@ function buildTwClasses() {
     cls.push('divide-solid','divide-dashed','divide-dotted','divide-none');
 
     // — Rounded —
-    const roundedSizes = ['','sm','md','lg','xl','2xl','3xl','full','none'];
+    const roundedSizes = ['','sm','md','lg','xl','2xl','3xl','full','none','card'];
     roundedSizes.forEach(r => cls.push(r ? `rounded-${r}` : 'rounded'));
     ['t','r','b','l','tl','tr','bl','br','ss','se','es','ee'].forEach(side => {
         roundedSizes.forEach(r => cls.push(r ? `rounded-${side}-${r}` : `rounded-${side}`));
@@ -84,7 +86,7 @@ function buildTwClasses() {
     COLORS.forEach(c => SHADES.forEach(s => cls.push(`ring-offset-${c}-${s}`)));
 
     // — Shadow —
-    cls.push('shadow-sm','shadow','shadow-md','shadow-lg','shadow-xl','shadow-2xl','shadow-inner','shadow-none');
+    cls.push('shadow-sm','shadow','shadow-md','shadow-lg','shadow-xl','shadow-2xl','shadow-inner','shadow-none','shadow-card');
     COLORS.forEach(c => [500,600,700].forEach(s => cls.push(`shadow-${c}-${s}`)));
 
     // — Outline —
@@ -95,13 +97,13 @@ function buildTwClasses() {
     // — Padding —
     ['p','px','py','pt','pr','pb','pl'].forEach(p => {
         SPACING.forEach(s => cls.push(`${p}-${s}`));
-        cls.push(`${p}-auto`);
+        cls.push(`${p}-auto`,`${p}-section`);
     });
 
     // — Margin —
     ['m','mx','my','mt','mr','mb','ml'].forEach(p => {
         SPACING.forEach(s => cls.push(`${p}-${s}`));
-        cls.push(`${p}-auto`);
+        cls.push(`${p}-auto`,`${p}-section`);
         SPACING.filter(s => s !== '0').forEach(s => cls.push(`-${p}-${s}`));
     });
 

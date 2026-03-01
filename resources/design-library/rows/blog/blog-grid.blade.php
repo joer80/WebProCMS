@@ -3,14 +3,14 @@
 @description Three-column blog post grid with featured image, category, title, and date.
 @sort 10
 --}}
-<section class="py-20 px-6 bg-white dark:bg-zinc-900">
+<section class="py-section px-6 bg-white dark:bg-zinc-900">
     <div class="max-w-6xl mx-auto">
         <div class="flex items-center justify-between mb-12">
             <div>
                 @php $showHeadline = content('__SLUG__', 'show_headline', '1', 'toggle', 'headline'); @endphp
                 @if($showHeadline)
                 @php $headlineText = content('__SLUG__', 'headline', 'Latest Articles', 'text', 'headline'); @endphp
-                @php $headlineClasses = content('__SLUG__', 'headline_classes', 'text-4xl font-bold text-zinc-900 dark:text-white', 'classes', 'headline'); @endphp
+                @php $headlineClasses = content('__SLUG__', 'headline_classes', 'font-heading text-4xl font-bold text-zinc-900 dark:text-white', 'classes', 'headline'); @endphp
                 <h2 class="{{ $headlineClasses }}">{{ $headlineText }}</h2>
                 @endif
                 @php $showSubheadline = content('__SLUG__', 'show_subheadline', '1', 'toggle', 'subheadline'); @endphp
@@ -28,7 +28,7 @@
             @foreach ($this->recentPosts ?? [] as $post)
                 <article class="group">
                     <a href="{{ route('blog.show', $post->slug) }}" class="block">
-                        <div class="rounded-xl overflow-hidden bg-zinc-100 dark:bg-zinc-800 aspect-video mb-4">
+                        <div class="rounded-card overflow-hidden bg-zinc-100 dark:bg-zinc-800 aspect-video mb-4">
                             @if ($post->featured_image)
                                 <img src="{{ Storage::url($post->featured_image) }}" alt="{{ $post->featured_image_alt }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
                             @else

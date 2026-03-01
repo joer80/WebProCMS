@@ -3,13 +3,13 @@
 @description Three-tier pricing cards with features list and CTA buttons.
 @sort 10
 --}}
-<section class="py-20 px-6 bg-zinc-50 dark:bg-zinc-950">
+<section class="py-section px-6 bg-zinc-50 dark:bg-zinc-950">
     <div class="max-w-5xl mx-auto">
         <div class="text-center mb-16">
             @php $showHeadline = content('__SLUG__', 'show_headline', '1', 'toggle', 'headline'); @endphp
             @if($showHeadline)
             @php $headlineText = content('__SLUG__', 'headline', 'Simple, Transparent Pricing', 'text', 'headline'); @endphp
-            @php $headlineClasses = content('__SLUG__', 'headline_classes', 'text-4xl font-bold text-zinc-900 dark:text-white', 'classes', 'headline'); @endphp
+            @php $headlineClasses = content('__SLUG__', 'headline_classes', 'font-heading text-4xl font-bold text-zinc-900 dark:text-white', 'classes', 'headline'); @endphp
             <h2 class="{{ $headlineClasses }}">{{ $headlineText }}</h2>
             @endif
             @php $showSubheadline = content('__SLUG__', 'show_subheadline', '1', 'toggle', 'subheadline'); @endphp
@@ -21,7 +21,7 @@
         </div>
         <div class="grid md:grid-cols-3 gap-8">
             @foreach ([['name' => 'Starter', 'price' => '$9', 'desc' => 'Perfect for individuals', 'features' => ['5 projects', '10GB storage', 'Email support'], 'featured' => false], ['name' => 'Pro', 'price' => '$29', 'desc' => 'Great for small teams', 'features' => ['Unlimited projects', '100GB storage', 'Priority support', 'Analytics'], 'featured' => true], ['name' => 'Enterprise', 'price' => '$99', 'desc' => 'For large organizations', 'features' => ['Unlimited everything', 'Dedicated support', 'Custom integrations', 'SLA guarantee'], 'featured' => false]] as $plan)
-                <div class="rounded-2xl p-8 {{ $plan['featured'] ? 'bg-primary text-white ring-2 ring-primary' : 'bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700' }}">
+                <div class="rounded-card p-8 {{ $plan['featured'] ? 'bg-primary text-white ring-2 ring-primary' : 'bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700' }}">
                     <h3 class="text-lg font-semibold {{ $plan['featured'] ? 'text-white' : 'text-zinc-900 dark:text-white' }}">{{ $plan['name'] }}</h3>
                     <p class="mt-1 text-sm {{ $plan['featured'] ? 'text-white/70' : 'text-zinc-500 dark:text-zinc-400' }}">{{ $plan['desc'] }}</p>
                     <div class="mt-6 text-4xl font-bold {{ $plan['featured'] ? 'text-white' : 'text-zinc-900 dark:text-white' }}">

@@ -3,12 +3,12 @@
 @description Full-width call-to-action banner with headline and button.
 @sort 10
 --}}
-<section class="bg-primary py-16 px-6 text-center">
+<section class="bg-primary py-section px-6 text-center">
     <div class="max-w-3xl mx-auto">
         @php $showHeadline = content('__SLUG__', 'show_headline', '1', 'toggle', 'headline'); @endphp
         @if($showHeadline)
         @php $headlineText = content('__SLUG__', 'headline', 'Ready to Get Started?', 'text', 'headline'); @endphp
-        @php $headlineClasses = content('__SLUG__', 'headline_classes', 'text-4xl font-bold text-white', 'classes', 'headline'); @endphp
+        @php $headlineClasses = content('__SLUG__', 'headline_classes', 'font-heading text-4xl font-bold text-white', 'classes', 'headline'); @endphp
         <h2 class="{{ $headlineClasses }}">{{ $headlineText }}</h2>
         @endif
         @php $showSubheadline = content('__SLUG__', 'show_subheadline', '1', 'toggle', 'subheadline'); @endphp

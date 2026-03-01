@@ -3,13 +3,13 @@
 @description Contact section with form fields and contact details sidebar.
 @sort 10
 --}}
-<section class="py-20 px-6 bg-white dark:bg-zinc-900">
+<section class="py-section px-6 bg-white dark:bg-zinc-900">
     <div class="max-w-5xl mx-auto">
         <div class="text-center mb-16">
             @php $showHeadline = content('__SLUG__', 'show_headline', '1', 'toggle', 'headline'); @endphp
             @if($showHeadline)
             @php $headlineText = content('__SLUG__', 'headline', 'Get in Touch', 'text', 'headline'); @endphp
-            @php $headlineClasses = content('__SLUG__', 'headline_classes', 'text-4xl font-bold text-zinc-900 dark:text-white', 'classes', 'headline'); @endphp
+            @php $headlineClasses = content('__SLUG__', 'headline_classes', 'font-heading text-4xl font-bold text-zinc-900 dark:text-white', 'classes', 'headline'); @endphp
             <h2 class="{{ $headlineClasses }}">{{ $headlineText }}</h2>
             @endif
             @php $showSubheadline = content('__SLUG__', 'show_subheadline', '1', 'toggle', 'subheadline'); @endphp

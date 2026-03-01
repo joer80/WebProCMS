@@ -3,13 +3,13 @@
 @description Two-column hero with text on the left and image placeholder on the right.
 @sort 20
 --}}
-<section class="py-20 px-6 bg-white dark:bg-zinc-900">
+<section class="py-section px-6 bg-white dark:bg-zinc-900">
     <div class="max-w-6xl mx-auto grid md:grid-cols-2 gap-12 items-center">
         <div>
             @php $showHeadline = content('__SLUG__', 'show_headline', '1', 'toggle', 'headline'); @endphp
             @if($showHeadline)
             @php $headlineText = content('__SLUG__', 'headline', 'Build Something Amazing', 'text', 'headline'); @endphp
-            @php $headlineClasses = content('__SLUG__', 'headline_classes', 'text-5xl font-bold text-zinc-900 dark:text-white leading-tight', 'classes', 'headline'); @endphp
+            @php $headlineClasses = content('__SLUG__', 'headline_classes', 'font-heading text-5xl font-bold text-zinc-900 dark:text-white leading-tight', 'classes', 'headline'); @endphp
             <h1 class="{{ $headlineClasses }}">{{ $headlineText }}</h1>
             @endif
             @php $showSubheadline = content('__SLUG__', 'show_subheadline', '1', 'toggle', 'subheadline'); @endphp
@@ -39,7 +39,7 @@
             </div>
         </div>
         @if(content('__SLUG__', 'show_image', '1', 'toggle', 'media'))
-        <div class="rounded-2xl overflow-hidden bg-zinc-100 dark:bg-zinc-800 aspect-video flex items-center justify-center">
+        <div class="rounded-card overflow-hidden bg-zinc-100 dark:bg-zinc-800 aspect-video flex items-center justify-center">
             @php $heroImage = content('__SLUG__', 'image', '', 'image', 'media'); @endphp
             @if ($heroImage)
                 <img src="{{ $heroImage }}" alt="{{ content('__SLUG__', 'image_alt', '', 'text', 'media') }}" class="w-full h-full object-cover">

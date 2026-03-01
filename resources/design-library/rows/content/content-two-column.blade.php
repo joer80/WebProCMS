@@ -3,14 +3,14 @@
 @description Two-column content section with text and image placeholder.
 @sort 10
 --}}
-<section class="py-20 px-6 bg-white dark:bg-zinc-900">
+<section class="py-section px-6 bg-white dark:bg-zinc-900">
     <div class="max-w-6xl mx-auto grid md:grid-cols-2 gap-12 items-center">
         <div>
             <span class="text-sm font-semibold text-primary uppercase tracking-wider">{{ content('__SLUG__', 'badge', 'Our Story', 'text', 'content') }}</span>
             @php $showHeadline = content('__SLUG__', 'show_headline', '1', 'toggle', 'headline'); @endphp
             @if($showHeadline)
             @php $headlineText = content('__SLUG__', 'headline', 'We Are Building the Future of Work', 'text', 'headline'); @endphp
-            @php $headlineClasses = content('__SLUG__', 'headline_classes', 'mt-3 text-4xl font-bold text-zinc-900 dark:text-white leading-tight', 'classes', 'headline'); @endphp
+            @php $headlineClasses = content('__SLUG__', 'headline_classes', 'font-heading mt-3 text-4xl font-bold text-zinc-900 dark:text-white leading-tight', 'classes', 'headline'); @endphp
             <h2 class="{{ $headlineClasses }}">{{ $headlineText }}</h2>
             @endif
             <p class="mt-6 text-zinc-500 dark:text-zinc-400 leading-relaxed">
@@ -32,7 +32,7 @@
             @endif
         </div>
         @if(content('__SLUG__', 'show_image', '1', 'toggle', 'media'))
-        <div class="rounded-2xl overflow-hidden bg-zinc-100 dark:bg-zinc-800 aspect-square flex items-center justify-center">
+        <div class="rounded-card overflow-hidden bg-zinc-100 dark:bg-zinc-800 aspect-square flex items-center justify-center">
             @php $sectionImage = content('__SLUG__', 'image', '', 'image', 'media'); @endphp
             @if ($sectionImage)
                 <img src="{{ $sectionImage }}" alt="{{ content('__SLUG__', 'image_alt', '', 'text', 'media') }}" class="w-full h-full object-cover">

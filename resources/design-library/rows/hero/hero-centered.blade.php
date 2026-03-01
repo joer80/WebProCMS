@@ -3,7 +3,7 @@
 @description Full-width centered hero with headline, subheadline, and dual CTA buttons.
 @sort 10
 --}}
-<section class="py-24 px-6 bg-white dark:bg-zinc-900 text-center">
+<section class="py-section px-6 bg-white dark:bg-zinc-900 text-center">
     <div class="max-w-3xl mx-auto">
         @if(content('__SLUG__', 'show_badge', '1', 'toggle', 'content'))
         <span class="inline-block px-3 py-1 text-xs font-semibold tracking-widest uppercase bg-primary/10 text-primary rounded-full mb-6">{{ content('__SLUG__', 'badge', 'Welcome', 'text', 'content') }}</span>
@@ -11,7 +11,7 @@
         @php $showHeadline = content('__SLUG__', 'show_headline', '1', 'toggle', 'headline'); @endphp
         @if($showHeadline)
         @php $headlineText = content('__SLUG__', 'headline', 'Your Headline Goes Here', 'text', 'headline'); @endphp
-        @php $headlineClasses = content('__SLUG__', 'headline_classes', 'text-5xl sm:text-6xl font-bold text-zinc-900 dark:text-white leading-tight', 'classes', 'headline'); @endphp
+        @php $headlineClasses = content('__SLUG__', 'headline_classes', 'font-heading text-5xl sm:text-6xl font-bold text-zinc-900 dark:text-white leading-tight', 'classes', 'headline'); @endphp
         <h1 class="{{ $headlineClasses }}">{{ $headlineText }}</h1>
         @endif
         @php $showSubheadline = content('__SLUG__', 'show_subheadline', '1', 'toggle', 'subheadline'); @endphp

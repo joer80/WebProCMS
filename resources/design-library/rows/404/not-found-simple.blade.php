@@ -9,7 +9,7 @@
         @php $showHeadline = content('__SLUG__', 'show_headline', '1', 'toggle', 'headline'); @endphp
         @if($showHeadline)
         @php $headlineText = content('__SLUG__', 'headline', 'Page Not Found', 'text', 'headline'); @endphp
-        @php $headlineClasses = content('__SLUG__', 'headline_classes', 'mt-4 text-3xl font-bold text-zinc-900 dark:text-white', 'classes', 'headline'); @endphp
+        @php $headlineClasses = content('__SLUG__', 'headline_classes', 'font-heading mt-4 text-3xl font-bold text-zinc-900 dark:text-white', 'classes', 'headline'); @endphp
         <h1 class="{{ $headlineClasses }}">{{ $headlineText }}</h1>
         @endif
         @php $showSubheadline = content('__SLUG__', 'show_subheadline', '1', 'toggle', 'subheadline'); @endphp
