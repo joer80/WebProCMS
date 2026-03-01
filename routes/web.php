@@ -89,6 +89,7 @@ Route::middleware(['auth', 'verified'])->group(function (): void {
         Route::livewire('dashboard/tools', 'pages::dashboard.tools')->name('dashboard.tools');
         Route::redirect('dashboard/settings', '/dashboard/settings/general')->name('dashboard.settings');
         Route::livewire('dashboard/settings/general', 'pages::dashboard.settings.general')->name('dashboard.settings.general');
+        Route::livewire('dashboard/settings/branding', 'pages::dashboard.settings.branding')->name('dashboard.settings.branding');
         Route::livewire('dashboard/settings/advanced', 'pages::dashboard.settings.advanced')->name('dashboard.settings.advanced');
 
         Route::livewire('dashboard/users', 'pages::dashboard.users')->name('dashboard.users');

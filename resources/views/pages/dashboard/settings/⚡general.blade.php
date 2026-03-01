@@ -6,8 +6,6 @@ use Livewire\Attributes\Title;
 use Livewire\Component;
 
 new #[Layout('layouts.app')] #[Title('General Settings')] class extends Component {
-    public string $logoUrl = '';
-
     public string $locationsMode = 'single';
 
     public string $businessUrl = '';
@@ -42,8 +40,6 @@ new #[Layout('layouts.app')] #[Title('General Settings')] class extends Componen
 
     public function mount(): void
     {
-        $this->logoUrl = config('branding.logo_url', '');
-
         $this->locationsMode = Setting::get('locations_mode', 'single');
 
         $this->businessUrl = config('business.url', '');
@@ -62,24 +58,6 @@ new #[Layout('layouts.app')] #[Title('General Settings')] class extends Componen
         $this->seoAddressCountry = config('seo.schema.address.country', 'US');
         $this->seoOgDefaultImage = config('seo.og.default_image', '');
         $this->seoTwitterHandle = config('seo.twitter.handle', '');
-    }
-
-    public function saveBranding(): void
-    {
-        $this->validate([
-            'logoUrl' => ['nullable', 'url'],
-        ]);
-
-        $path = config_path('branding.php');
-        file_put_contents($path, $this->buildBrandingConfig());
-
-        if (function_exists('opcache_invalidate')) {
-            opcache_invalidate($path, true);
-        }
-
-        config(['branding.logo_url' => $this->logoUrl]);
-
-        $this->dispatch('notify', message: 'Branding saved.');
     }
 
     public function saveBusinessInfo(): void
@@ -157,22 +135,6 @@ new #[Layout('layouts.app')] #[Title('General Settings')] class extends Componen
         $this->dispatch('notify', message: 'Settings saved.');
     }
 
-    protected function buildBrandingConfig(): string
-    {
-        $e = fn (string $v): string => str_replace("'", "\\'", $v);
-
-        return implode("\n", [
-            '<?php',
-            '',
-            'return [',
-            '',
-            "    'logo_url' => '{$e($this->logoUrl)}',",
-            '',
-            '];',
-            '',
-        ]);
-    }
-
     protected function buildBusinessConfig(): string
     {
         $e = fn (string $v): string => str_replace("'", "\\'", $v);
@@ -244,27 +206,6 @@ new #[Layout('layouts.app')] #[Title('General Settings')] class extends Componen
         </div>
 
         <div class="max-w-2xl space-y-4">
-            <div class="rounded-lg border border-zinc-200 dark:border-zinc-700 p-6">
-                <div class="flex items-start justify-between gap-6">
-                    <div class="flex-1">
-                        <flux:heading>Branding</flux:heading>
-                        <flux:text class="mt-1">Logo and brand assets used across your site.</flux:text>
-                        <div class="mt-4 space-y-4">
-                            @if ($logoUrl)
-                                <div>
-                                    <flux:label>Current Logo</flux:label>
-                                    <div class="mt-2 p-3 rounded-md bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 inline-block">
-                                        <img src="{{ $logoUrl }}" alt="Logo preview" class="h-10 w-auto" />
-                                    </div>
-                                </div>
-                            @endif
-                            <flux:input wire:model="logoUrl" label="Logo URL" placeholder="https://domain.com/storage/logos/logo.svg" description="Copy the URL from your Media Library." />
-                        </div>
-                    </div>
-                    <flux:button wire:click="saveBranding" variant="outline" class="shrink-0">Save</flux:button>
-                </div>
-            </div>
-
             <div class="rounded-lg border border-zinc-200 dark:border-zinc-700 p-6">
                 <div class="flex items-start justify-between gap-6">
                     <div class="flex-1">

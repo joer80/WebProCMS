@@ -50,6 +50,9 @@
                         <flux:sidebar.item :href="route('dashboard.settings.general')" :current="request()->routeIs('dashboard.settings.general')" wire:navigate>
                             {{ __('General') }}
                         </flux:sidebar.item>
+                        <flux:sidebar.item :href="route('dashboard.settings.branding')" :current="request()->routeIs('dashboard.settings.branding')" wire:navigate>
+                            {{ __('Branding') }}
+                        </flux:sidebar.item>
                         <flux:sidebar.item :href="route('dashboard.settings.advanced')" :current="request()->routeIs('dashboard.settings.advanced')" wire:navigate>
                             {{ __('Advanced') }}
                         </flux:sidebar.item>
