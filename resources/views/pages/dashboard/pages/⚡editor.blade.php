@@ -382,12 +382,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
         }
 
         $this->showContentEditor = true;
-    }
-
-    public function closeContentEditor(): void
-    {
-        $this->showContentEditor = false;
-        $this->editingRowIndex = null;
+        $this->dispatch('content-editor-opened');
     }
 
     public function cancelContentEditor(): void
@@ -400,6 +395,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
         $this->refreshPreview();
         $this->showContentEditor = false;
         $this->editingRowIndex = null;
+        $this->dispatch('content-editor-closed');
     }
 
     private function persistAllDraftOverrides(): void
@@ -1023,12 +1019,18 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
         @else
             <div class="flex" style="height: calc(100vh - 120px);">
                 {{-- Right panel: row list / inline content editor --}}
-                <div class="w-96 shrink-0 order-last border-l border-zinc-200 dark:border-zinc-700 flex flex-col">
-                    @if ($showContentEditor && $editingRowIndex !== null && isset($rows[$editingRowIndex]))
-                        {{-- Content editor view --}}
+                <div
+                    class="w-96 shrink-0 order-last border-l border-zinc-200 dark:border-zinc-700 flex flex-col"
+                    x-data="{ editorOpen: false }"
+                    x-on:content-editor-opened.window="editorOpen = true"
+                    x-on:content-editor-closed.window="editorOpen = false"
+                >
+                    {{-- Content editor view --}}
+                    <div x-show="editorOpen" class="flex flex-col flex-1" style="display: none">
+                        @if ($editingRowIndex !== null && isset($rows[$editingRowIndex]))
                         <div class="shrink-0 flex items-center gap-2 p-3 border-b border-zinc-200 dark:border-zinc-700">
                             <flux:button
-                                wire:click="cancelContentEditor"
+                                @click="editorOpen = false"
                                 variant="ghost"
                                 size="sm"
                                 icon="arrow-left"
@@ -1076,15 +1078,18 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                         </div>
 
                         <div class="shrink-0 flex gap-2 p-3 border-t border-zinc-200 dark:border-zinc-700">
-                            <flux:button wire:click="closeContentEditor" variant="outline" icon="arrow-left" class="flex-1">
+                            <flux:button @click="editorOpen = false" variant="outline" icon="arrow-left" class="flex-1">
                                 {{ __('Back') }}
                             </flux:button>
                             <flux:button wire:click="cancelContentEditor" variant="outline" icon="x-mark" title="Discard changes made since opening this row">
                                 {{ __('Cancel') }}
                             </flux:button>
                         </div>
-                    @else
-                        {{-- Row list view --}}
+                        @endif
+                    </div>
+
+                    {{-- Row list view --}}
+                    <div x-show="!editorOpen" class="flex flex-col flex-1">
                         <div class="shrink-0 px-4 py-3 border-b border-zinc-200 dark:border-zinc-700 flex items-center justify-between">
                             <flux:heading size="sm" class="text-zinc-600 dark:text-zinc-400">{{ __('Page Rows') }}</flux:heading>
                             @php
@@ -1139,7 +1144,8 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                                 <div
                                     wire:key="row-item-{{ $row['slug'] }}"
                                     data-row-sidebar-index="{{ $index }}"
-                                    class="rounded-lg border bg-white dark:bg-zinc-900 overflow-hidden transition-colors {{ $editingRowIndex === $index ? 'border-primary' : 'border-zinc-200 dark:border-zinc-700' }}"
+                                    class="rounded-lg border bg-white dark:bg-zinc-900 overflow-hidden transition-colors"
+                                    :class="editorOpen && {{ $editingRowIndex ?? -1 }} === {{ $index }} ? 'border-primary' : 'border-zinc-200 dark:border-zinc-700'"
                                     draggable="true"
                                     @dragstart="dragging = {{ $index }}"
                                     @dragover.prevent="over = {{ $index }}"
@@ -1243,7 +1249,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                                 {{ __('Add Row') }}
                             </button>
                         </div>
-                    @endif
+                    </div>
                 </div>
 
                 {{-- Left panel: iframe preview --}}
