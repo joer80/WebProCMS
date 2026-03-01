@@ -1054,7 +1054,12 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                                     $groupLabels = ['content' => 'Content', 'image' => 'Image', 'cta' => 'Call to Action', 'other' => 'Other'];
                                     $showGroupHeaders = $fieldGroups->count() > 1;
                                     $groupOrder = ['content', 'image', 'cta', 'other'];
-                                    $sortedGroups = $fieldGroups->sortBy(fn ($_, $key) => array_search($key, $groupOrder) !== false ? array_search($key, $groupOrder) : 99);
+                                    $ctaKeyOrder = ['primary_cta', 'primary_cta_url', 'primary_cta_new_tab', 'secondary_cta', 'secondary_cta_url', 'secondary_cta_new_tab', 'show_secondary_cta'];
+                                    $sortedGroups = $fieldGroups
+                                        ->sortBy(fn ($_, $key) => array_search($key, $groupOrder) !== false ? array_search($key, $groupOrder) : 99)
+                                        ->map(fn ($fields, $groupKey) => $groupKey === 'cta'
+                                            ? $fields->sortBy(fn ($f) => ($i = array_search($f['key'], $ctaKeyOrder)) !== false ? $i : 99)
+                                            : $fields);
                                 @endphp
                                 <div class="{{ $showGroupHeaders ? 'space-y-4' : 'space-y-5' }}">
                                     @foreach ($sortedGroups as $groupKey => $groupFields)
@@ -1070,6 +1075,9 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                                                 </button>
                                                 <div x-show="open" x-collapse class="border-t border-zinc-200 dark:border-zinc-700 p-3 space-y-4">
                                                     @foreach ($groupFields as $field)
+                                                        @if ($groupKey === 'cta' && $field['key'] === 'secondary_cta')
+                                                            <div class="border-t border-zinc-200 dark:border-zinc-700"></div>
+                                                        @endif
                                                         @include('pages.dashboard.pages.partials.content-field', ['field' => $field])
                                                     @endforeach
                                                 </div>

@@ -65,6 +65,12 @@
             type="url"
             placeholder="{{ $field['default'] ?: 'https://' }}"
         />
+    @elseif ($field['key'] === 'subheadline')
+        <flux:textarea
+            wire:model.live.debounce.400ms="contentValues.{{ $field['key'] }}"
+            rows="3"
+            placeholder="{{ $field['default'] }}"
+        />
     @else
         <flux:input
             wire:model.live.debounce.400ms="contentValues.{{ $field['key'] }}"
