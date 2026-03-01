@@ -8,6 +8,7 @@ enum ContentType: string
     case Richtext = 'richtext';
     case Image = 'image';
     case Toggle = 'toggle';
+    case Classes = 'classes';
 
     public function label(): string
     {
@@ -16,6 +17,7 @@ enum ContentType: string
             ContentType::Richtext => 'Rich Text',
             ContentType::Image => 'Image',
             ContentType::Toggle => 'Toggle',
+            ContentType::Classes => 'Classes',
         };
     }
 }
