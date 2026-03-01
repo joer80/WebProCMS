@@ -9,7 +9,7 @@ if (! function_exists('content')) {
      * On editor preview requests, unsaved draft values stored in the session take precedence.
      * For 'image' type, the stored path is converted to a public URL.
      */
-    function content(string $slug, string $key, string $default = '', string $type = 'text'): string
+    function content(string $slug, string $key, string $default = '', string $type = 'text', string $group = ''): string
     {
         if (request()->routeIs('design-library.preview')) {
             $drafts = session('editor_draft_overrides', []);

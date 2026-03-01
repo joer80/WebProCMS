@@ -212,6 +212,62 @@ it('syncs the library when the insert drawer is opened', function (): void {
     expect(DesignRow::where('source_file', $sourceFile)->exists())->toBeTrue();
 });
 
+it('parses content field groups from the 5th argument', function (): void {
+    $path = 'pages/test-groups-'.uniqid().'.blade.php';
+    $fullPath = resource_path('views/'.$path);
+
+    file_put_contents($fullPath, <<<'BLADE'
+        {{-- ROW:start:row-grp-test --}}
+        <section>
+            {{ content('row-grp-test', 'headline', 'Title', 'text', 'content') }}
+            {{ content('row-grp-test', 'image', '', 'image', 'media') }}
+            {{ content('row-grp-test', 'primary_cta', 'Click', 'text', 'call to action') }}
+        </section>
+        {{-- ROW:end:row-grp-test --}}
+        BLADE);
+
+    $user = User::factory()->create();
+
+    $component = Livewire::actingAs($user)
+        ->test('pages::dashboard.pages.editor')
+        ->call('loadFile', $path)
+        ->call('openContentEditor', 0);
+
+    $fields = $component->get('contentFields');
+
+    expect($fields)->toHaveCount(3);
+    expect($fields[0])->toMatchArray(['key' => 'headline', 'group' => 'content']);
+    expect($fields[1])->toMatchArray(['key' => 'image', 'group' => 'media']);
+    expect($fields[2])->toMatchArray(['key' => 'primary_cta', 'group' => 'call to action']);
+
+    unlink($fullPath);
+});
+
+it('falls back to other group when 5th argument is omitted', function (): void {
+    $path = 'pages/test-nogroup-'.uniqid().'.blade.php';
+    $fullPath = resource_path('views/'.$path);
+
+    file_put_contents($fullPath, <<<'BLADE'
+        {{-- ROW:start:row-nogrp-test --}}
+        <section>{{ content('row-nogrp-test', 'custom_field', 'Value') }}</section>
+        {{-- ROW:end:row-nogrp-test --}}
+        BLADE);
+
+    $user = User::factory()->create();
+
+    $component = Livewire::actingAs($user)
+        ->test('pages::dashboard.pages.editor')
+        ->call('loadFile', $path)
+        ->call('openContentEditor', 0);
+
+    $fields = $component->get('contentFields');
+
+    expect($fields)->toHaveCount(1);
+    expect($fields[0])->toMatchArray(['key' => 'custom_field', 'group' => 'other']);
+
+    unlink($fullPath);
+});
+
 it('discards changes by reloading from disk', function (): void {
     $user = User::factory()->create();
 

@@ -555,7 +555,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
     private function parseContentFields(string $blade): array
     {
         preg_match_all(
-            "/content\('([^']+)',\s*'([^']+)',\s*'([^']*)'(?:,\s*'([^']*)')?\)/",
+            "/content\('([^']+)',\s*'([^']+)',\s*'([^']*)'(?:,\s*'([^']*)')?(?:,\s*'([^']*)')?\)/",
             $blade,
             $matches,
             PREG_SET_ORDER
@@ -574,12 +574,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
             $seen[$dedupeKey] = true;
             $key = $match[2];
             $type = $match[4] ?? 'text';
-            $group = match (true) {
-                in_array($key, ['headline', 'subheadline', 'badge']) => 'content',
-                $type === 'image' || str_ends_with($key, '_alt') || str_ends_with($key, '_image') => 'image',
-                str_contains($key, '_cta') || str_starts_with($key, 'cta') || $key === 'show_secondary_cta' => 'cta',
-                default => 'other',
-            };
+            $group = ! empty($match[5] ?? '') ? $match[5] : 'other';
             $fields[] = [
                 'slug' => $match[1],
                 'key' => $key,
@@ -1051,18 +1046,10 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                             @else
                                 @php
                                     $fieldGroups = collect($contentFields)->groupBy('group');
-                                    $groupLabels = ['content' => 'Content', 'image' => 'Image', 'cta' => 'Call to Action', 'other' => 'Other'];
                                     $showGroupHeaders = $fieldGroups->count() > 1;
-                                    $groupOrder = ['content', 'image', 'cta', 'other'];
-                                    $ctaKeyOrder = ['primary_cta', 'primary_cta_url', 'primary_cta_new_tab', 'secondary_cta', 'secondary_cta_url', 'secondary_cta_new_tab', 'show_secondary_cta'];
-                                    $sortedGroups = $fieldGroups
-                                        ->sortBy(fn ($_, $key) => array_search($key, $groupOrder) !== false ? array_search($key, $groupOrder) : 99)
-                                        ->map(fn ($fields, $groupKey) => $groupKey === 'cta'
-                                            ? $fields->sortBy(fn ($f) => ($i = array_search($f['key'], $ctaKeyOrder)) !== false ? $i : 99)
-                                            : $fields);
                                 @endphp
                                 <div class="{{ $showGroupHeaders ? 'space-y-4' : 'space-y-5' }}">
-                                    @foreach ($sortedGroups as $groupKey => $groupFields)
+                                    @foreach ($fieldGroups as $groupKey => $groupFields)
                                         @if ($showGroupHeaders)
                                             <div x-data="{ open: true }" class="rounded-lg border border-zinc-200 dark:border-zinc-700 overflow-hidden">
                                                 <button
@@ -1070,14 +1057,11 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                                                     @click="open = !open"
                                                     class="w-full flex items-center justify-between px-3 py-2 bg-zinc-50 dark:bg-zinc-800"
                                                 >
-                                                    <span class="text-xs uppercase tracking-wider font-semibold text-zinc-600 dark:text-zinc-300">{{ $groupLabels[$groupKey] ?? ucfirst($groupKey) }}</span>
+                                                    <span class="text-xs uppercase tracking-wider font-semibold text-zinc-600 dark:text-zinc-300">{{ ucwords($groupKey) }}</span>
                                                     <flux:icon name="chevron-down" class="size-3 text-zinc-400 dark:text-zinc-500 transition-transform shrink-0" :class="open ? '' : '-rotate-90'" />
                                                 </button>
                                                 <div x-show="open" x-collapse class="border-t border-zinc-200 dark:border-zinc-700 p-3 space-y-4">
                                                     @foreach ($groupFields as $field)
-                                                        @if ($groupKey === 'cta' && $field['key'] === 'secondary_cta')
-                                                            <div class="border-t border-zinc-200 dark:border-zinc-700"></div>
-                                                        @endif
                                                         @include('pages.dashboard.pages.partials.content-field', ['field' => $field])
                                                     @endforeach
                                                 </div>
