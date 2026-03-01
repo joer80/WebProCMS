@@ -195,16 +195,16 @@
                         <div>
                             <p class="text-[10px] uppercase tracking-wider font-semibold text-zinc-500 dark:text-zinc-400 mb-1" x-text="fKey"></p>
                             <template x-if="fKey === 'icon'">
-                                <div
-                                    x-data="{ pickerOpen: false, search: '', openSections: { outline: false, solid: false, mini: false, micro: false } }"
-                                    x-init="$watch('search', v => { if (v.trim()) { openSections.outline = openSections.solid = openSections.mini = openSections.micro = true; } })"
-                                >
+                                <div x-data="{ pickerOpen: false, search: '', variant: 'outline' }">
                                     {{-- Compact current selection --}}
                                     <div class="flex items-center gap-2 px-2.5 py-2 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900">
                                         <div class="size-5 shrink-0 text-zinc-600 dark:text-zinc-300">
                                             @foreach (['bolt', 'rocket-launch', 'shield-check', 'lock-closed', 'key', 'chart-bar', 'chart-pie', 'arrow-trending-up', 'chat-bubble-left-right', 'envelope', 'bell', 'cog-6-tooth', 'adjustments-horizontal', 'wrench-screwdriver', 'globe-alt', 'server', 'cloud', 'light-bulb', 'sparkles', 'star', 'puzzle-piece', 'link', 'user-group', 'device-phone-mobile'] as $iconName)
                                                 <template x-if="item[fKey] === '{{ $iconName }}'">
                                                     <x-heroicon name="{{ $iconName }}" class="size-5" />
+                                                </template>
+                                                <template x-if="item[fKey] === '{{ $iconName }}:solid'">
+                                                    <x-heroicon name="{{ $iconName }}" variant="solid" class="size-5" />
                                                 </template>
                                             @endforeach
                                         </div>
@@ -220,8 +220,6 @@
                                             $allIconsData = require resource_path('heroicons/data.php');
                                             $outlineIcons = array_keys($allIconsData['outline']);
                                             $solidIcons   = array_keys($allIconsData['solid']);
-                                            $miniIcons    = array_keys($allIconsData['mini']);
-                                            $microIcons   = array_keys($allIconsData['micro']);
                                         @endphp
                                     @endonce
                                     <div
@@ -239,9 +237,15 @@
                                             {{-- Header --}}
                                             <div class="flex items-center justify-between px-5 pt-5 pb-3 border-b border-zinc-200 dark:border-zinc-700 shrink-0">
                                                 <p class="text-sm font-semibold text-zinc-900 dark:text-white">Select Icon</p>
-                                                <button type="button" @click="pickerOpen = false; search = ''" class="text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 transition-colors">
-                                                    <flux:icon name="x-mark" class="size-4" />
-                                                </button>
+                                                <div class="flex items-center gap-3">
+                                                    <div class="flex rounded-lg border border-zinc-200 dark:border-zinc-700 p-0.5">
+                                                        <button type="button" @click="variant = 'outline'" :class="variant === 'outline' ? 'bg-zinc-100 dark:bg-zinc-700 text-zinc-900 dark:text-white' : 'text-zinc-500 dark:text-zinc-400'" class="px-2.5 py-1 text-xs font-medium rounded-md transition-colors">Outline</button>
+                                                        <button type="button" @click="variant = 'solid'" :class="variant === 'solid' ? 'bg-zinc-100 dark:bg-zinc-700 text-zinc-900 dark:text-white' : 'text-zinc-500 dark:text-zinc-400'" class="px-2.5 py-1 text-xs font-medium rounded-md transition-colors">Solid</button>
+                                                    </div>
+                                                    <button type="button" @click="pickerOpen = false; search = ''" class="text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 transition-colors">
+                                                        <flux:icon name="x-mark" class="size-4" />
+                                                    </button>
+                                                </div>
                                             </div>
                                             {{-- Search --}}
                                             <div class="px-5 py-3 border-b border-zinc-200 dark:border-zinc-700 shrink-0">
@@ -253,103 +257,17 @@
                                                     @keydown.enter.prevent="if (search.trim()) { updateField(idx, fKey, search.trim()); search = ''; pickerOpen = false; }"
                                                 />
                                             </div>
-                                            {{-- Variant sections --}}
-                                            <div class="overflow-y-auto divide-y divide-zinc-100 dark:divide-zinc-700/50">
-                                                {{-- Outline --}}
-                                                <div>
-                                                    <button type="button" @click="openSections.outline = !openSections.outline" class="flex items-center justify-between w-full px-5 py-3 text-left hover:bg-zinc-50 dark:hover:bg-zinc-700/30 transition-colors">
-                                                        <div class="flex items-center gap-2">
-                                                            <span class="text-sm font-medium text-zinc-800 dark:text-zinc-200">Outline</span>
-                                                            <span class="text-xs text-zinc-400 dark:text-zinc-500">{{ count($outlineIcons) }}</span>
-                                                        </div>
-                                                        <flux:icon name="chevron-right" class="size-4 text-zinc-400 transition-transform duration-150" :class="openSections.outline ? 'rotate-90' : ''" />
-                                                    </button>
-                                                    <div x-show="openSections.outline" x-transition class="px-5 pb-4">
-                                                        <div class="grid grid-cols-10 gap-1">
-                                                            @foreach ($outlineIcons as $iconName)
-                                                                <button
-                                                                    type="button"
-                                                                    x-show="!search || '{{ $iconName }}'.includes(search)"
-                                                                    @click="updateField(idx, fKey, '{{ $iconName }}'); search = ''; pickerOpen = false"
-                                                                    :class="item[fKey] === '{{ $iconName }}' ? 'border-primary bg-primary/10 text-primary' : 'border-zinc-200 dark:border-zinc-700 hover:border-zinc-400 dark:hover:border-zinc-500 text-zinc-500 dark:text-zinc-400'"
-                                                                    class="flex items-center justify-center p-2 rounded-lg border transition-colors"
-                                                                    title="{{ $iconName }}"
-                                                                ><x-heroicon name="{{ $iconName }}" class="size-5" /></button>
-                                                            @endforeach
-                                                        </div>
-                                                    </div>
+                                            {{-- Icon grids --}}
+                                            <div class="overflow-y-auto p-5">
+                                                <div x-show="variant === 'outline'" class="grid grid-cols-10 gap-1">
+                                                    @foreach ($outlineIcons as $iconName)
+                                                        <button type="button" x-show="!search || '{{ $iconName }}'.includes(search)" @click="updateField(idx, fKey, '{{ $iconName }}'); search = ''; pickerOpen = false" :class="item[fKey] === '{{ $iconName }}' ? 'border-primary bg-primary/10 text-primary' : 'border-zinc-200 dark:border-zinc-700 hover:border-zinc-400 dark:hover:border-zinc-500 text-zinc-500 dark:text-zinc-400'" class="flex items-center justify-center p-2 rounded-lg border transition-colors" title="{{ $iconName }}"><x-heroicon name="{{ $iconName }}" class="size-5" /></button>
+                                                    @endforeach
                                                 </div>
-                                                {{-- Solid --}}
-                                                <div>
-                                                    <button type="button" @click="openSections.solid = !openSections.solid" class="flex items-center justify-between w-full px-5 py-3 text-left hover:bg-zinc-50 dark:hover:bg-zinc-700/30 transition-colors">
-                                                        <div class="flex items-center gap-2">
-                                                            <span class="text-sm font-medium text-zinc-800 dark:text-zinc-200">Solid</span>
-                                                            <span class="text-xs text-zinc-400 dark:text-zinc-500">{{ count($solidIcons) }}</span>
-                                                        </div>
-                                                        <flux:icon name="chevron-right" class="size-4 text-zinc-400 transition-transform duration-150" :class="openSections.solid ? 'rotate-90' : ''" />
-                                                    </button>
-                                                    <div x-show="openSections.solid" x-transition class="px-5 pb-4">
-                                                        <div class="grid grid-cols-10 gap-1">
-                                                            @foreach ($solidIcons as $iconName)
-                                                                <button
-                                                                    type="button"
-                                                                    x-show="!search || '{{ $iconName }}'.includes(search)"
-                                                                    @click="updateField(idx, fKey, '{{ $iconName }}'); search = ''; pickerOpen = false"
-                                                                    :class="item[fKey] === '{{ $iconName }}' ? 'border-primary bg-primary/10 text-primary' : 'border-zinc-200 dark:border-zinc-700 hover:border-zinc-400 dark:hover:border-zinc-500 text-zinc-500 dark:text-zinc-400'"
-                                                                    class="flex items-center justify-center p-2 rounded-lg border transition-colors"
-                                                                    title="{{ $iconName }}"
-                                                                ><x-heroicon name="{{ $iconName }}" variant="solid" class="size-5" /></button>
-                                                            @endforeach
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                                {{-- Mini --}}
-                                                <div>
-                                                    <button type="button" @click="openSections.mini = !openSections.mini" class="flex items-center justify-between w-full px-5 py-3 text-left hover:bg-zinc-50 dark:hover:bg-zinc-700/30 transition-colors">
-                                                        <div class="flex items-center gap-2">
-                                                            <span class="text-sm font-medium text-zinc-800 dark:text-zinc-200">Mini</span>
-                                                            <span class="text-xs text-zinc-400 dark:text-zinc-500">{{ count($miniIcons) }}</span>
-                                                        </div>
-                                                        <flux:icon name="chevron-right" class="size-4 text-zinc-400 transition-transform duration-150" :class="openSections.mini ? 'rotate-90' : ''" />
-                                                    </button>
-                                                    <div x-show="openSections.mini" x-transition class="px-5 pb-4">
-                                                        <div class="grid grid-cols-10 gap-1">
-                                                            @foreach ($miniIcons as $iconName)
-                                                                <button
-                                                                    type="button"
-                                                                    x-show="!search || '{{ $iconName }}'.includes(search)"
-                                                                    @click="updateField(idx, fKey, '{{ $iconName }}'); search = ''; pickerOpen = false"
-                                                                    :class="item[fKey] === '{{ $iconName }}' ? 'border-primary bg-primary/10 text-primary' : 'border-zinc-200 dark:border-zinc-700 hover:border-zinc-400 dark:hover:border-zinc-500 text-zinc-500 dark:text-zinc-400'"
-                                                                    class="flex items-center justify-center p-2 rounded-lg border transition-colors"
-                                                                    title="{{ $iconName }}"
-                                                                ><x-heroicon name="{{ $iconName }}" variant="mini" class="size-5" /></button>
-                                                            @endforeach
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                                {{-- Micro --}}
-                                                <div>
-                                                    <button type="button" @click="openSections.micro = !openSections.micro" class="flex items-center justify-between w-full px-5 py-3 text-left hover:bg-zinc-50 dark:hover:bg-zinc-700/30 transition-colors">
-                                                        <div class="flex items-center gap-2">
-                                                            <span class="text-sm font-medium text-zinc-800 dark:text-zinc-200">Micro</span>
-                                                            <span class="text-xs text-zinc-400 dark:text-zinc-500">{{ count($microIcons) }}</span>
-                                                        </div>
-                                                        <flux:icon name="chevron-right" class="size-4 text-zinc-400 transition-transform duration-150" :class="openSections.micro ? 'rotate-90' : ''" />
-                                                    </button>
-                                                    <div x-show="openSections.micro" x-transition class="px-5 pb-4">
-                                                        <div class="grid grid-cols-10 gap-1">
-                                                            @foreach ($microIcons as $iconName)
-                                                                <button
-                                                                    type="button"
-                                                                    x-show="!search || '{{ $iconName }}'.includes(search)"
-                                                                    @click="updateField(idx, fKey, '{{ $iconName }}'); search = ''; pickerOpen = false"
-                                                                    :class="item[fKey] === '{{ $iconName }}' ? 'border-primary bg-primary/10 text-primary' : 'border-zinc-200 dark:border-zinc-700 hover:border-zinc-400 dark:hover:border-zinc-500 text-zinc-500 dark:text-zinc-400'"
-                                                                    class="flex items-center justify-center p-2 rounded-lg border transition-colors"
-                                                                    title="{{ $iconName }}"
-                                                                ><x-heroicon name="{{ $iconName }}" variant="micro" class="size-5" /></button>
-                                                            @endforeach
-                                                        </div>
-                                                    </div>
+                                                <div x-show="variant === 'solid'" class="grid grid-cols-10 gap-1">
+                                                    @foreach ($solidIcons as $iconName)
+                                                        <button type="button" x-show="!search || '{{ $iconName }}'.includes(search)" @click="updateField(idx, fKey, '{{ $iconName }}:solid'); search = ''; pickerOpen = false" :class="item[fKey] === '{{ $iconName }}:solid' ? 'border-primary bg-primary/10 text-primary' : 'border-zinc-200 dark:border-zinc-700 hover:border-zinc-400 dark:hover:border-zinc-500 text-zinc-500 dark:text-zinc-400'" class="flex items-center justify-center p-2 rounded-lg border transition-colors" title="{{ $iconName }}"><x-heroicon name="{{ $iconName }}" variant="solid" class="size-5" /></button>
+                                                    @endforeach
                                                 </div>
                                             </div>
                                         </div>

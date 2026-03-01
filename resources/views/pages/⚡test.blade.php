@@ -88,8 +88,9 @@ new #[Layout('layouts.public')] #[Title('Test Page')] class extends Component {}
         <div class="{{ $featuresGridClasses }}">
             @foreach ($features as $feature)
                 <div class="p-6 rounded-card border border-zinc-200 dark:border-zinc-700 hover:border-primary/40 transition-colors">
+                    @php [$iconName, $iconVariant] = array_pad(explode(':', $feature['icon'] ?? 'bolt', 2), 2, 'outline'); @endphp
                     <div class="mb-4 text-primary">
-                        <x-heroicon name="{{ $feature['icon'] }}" class="size-8" />
+                        <x-heroicon name="{{ $iconName }}" variant="{{ $iconVariant }}" class="size-8" />
                     </div>
                     <h3 class="text-lg font-semibold text-zinc-900 dark:text-white mb-2">{{ $feature['title'] }}</h3>
                     <p class="text-zinc-500 dark:text-zinc-400 text-sm leading-relaxed">{{ $feature['desc'] }}</p>
