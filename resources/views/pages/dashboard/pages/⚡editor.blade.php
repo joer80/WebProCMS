@@ -544,6 +544,15 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
         $this->dispatch('notify', message: 'Page saved.');
     }
 
+    public function resetClassesField(string $key): void
+    {
+        $field = collect($this->contentFields)->firstWhere('key', $key);
+
+        if ($field && $field['type'] === 'classes') {
+            $this->contentValues[$key] = $field['default'];
+        }
+    }
+
     public function resetEmptyClassesFields(): void
     {
         foreach ($this->contentFields as $field) {

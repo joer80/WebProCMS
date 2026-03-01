@@ -11,7 +11,7 @@
 @theme {
     --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
 
-    --color-primary: #3B4A99;
+    --color-primary: #3B4A99; /*gives you text-primary, bg-primary, border-primary, ring-primary, etc */
     --color-primary-hover: #2f3b7a;
     --color-primary-foreground: #ffffff;
     --color-primary-surface: #eef0f9;

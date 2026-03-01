@@ -1,5 +1,10 @@
 <div wire:key="field-{{ $field['key'] }}" x-show="{{ $field['type'] === 'classes' ? '(designMode || groupDesignMode) && !groupContentMode' : 'groupContentMode || (!designMode && !groupDesignMode)' }}">
-    @if ($field['type'] !== 'toggle')
+    @if ($field['type'] === 'classes')
+        <div class="flex items-center justify-between mb-1.5">
+            <flux:label class="text-zinc-500 dark:text-zinc-400">{{ $field['label'] }}</flux:label>
+            <button wire:click="resetClassesField('{{ $field['key'] }}')" type="button" class="text-xs text-zinc-400 dark:text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 transition-colors">Reset</button>
+        </div>
+    @elseif ($field['type'] !== 'toggle')
         <flux:label class="mb-1.5 text-zinc-500 dark:text-zinc-400">{{ $field['label'] }}</flux:label>
     @endif
 
