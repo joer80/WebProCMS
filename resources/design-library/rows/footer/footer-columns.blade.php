@@ -7,9 +7,9 @@
     <div class="max-w-6xl mx-auto">
         <div class="grid grid-cols-2 md:grid-cols-4 gap-10 mb-12">
             <div class="col-span-2 md:col-span-1">
-                <a href="/" class="text-xl font-bold text-white">Brand</a>
+                <a href="/" class="text-xl font-bold text-white">{{ content('__SLUG__', 'brand_name', 'Brand', 'text', 'content') }}</a>
                 <p class="mt-3 text-sm text-zinc-400 leading-relaxed">
-                    A short description of your company and what makes you unique.
+                    {{ content('__SLUG__', 'description', 'A short description of your company and what makes you unique.', 'text', 'content') }}
                 </p>
             </div>
             <div>
@@ -37,7 +37,7 @@
             </div>
         </div>
         <div class="border-t border-zinc-800 pt-8 flex flex-col sm:flex-row items-center justify-between gap-2 text-sm text-zinc-500">
-            <span>&copy; {{ date('Y') }} Brand, Inc. All rights reserved.</span>
+            <span>&copy; {{ date('Y') }} {{ content('__SLUG__', 'brand_name', 'Brand', 'text', 'content') }}, Inc. All rights reserved.</span>
             <span>Powered by <a href="https://www.webprocms.com" class="hover:text-white transition-colors">WebProCMS</a></span>
         </div>
     </div>

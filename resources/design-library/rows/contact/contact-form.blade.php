@@ -6,8 +6,18 @@
 <section class="py-20 px-6 bg-white dark:bg-zinc-900">
     <div class="max-w-5xl mx-auto">
         <div class="text-center mb-16">
-            <h2 class="text-4xl font-bold text-zinc-900 dark:text-white">Get in Touch</h2>
-            <p class="mt-4 text-lg text-zinc-500 dark:text-zinc-400">We'd love to hear from you. Send us a message and we'll respond as soon as possible.</p>
+            @php $showHeadline = content('__SLUG__', 'show_headline', '1', 'toggle', 'headline'); @endphp
+            @if($showHeadline)
+            @php $headlineText = content('__SLUG__', 'headline', 'Get in Touch', 'text', 'headline'); @endphp
+            @php $headlineClasses = content('__SLUG__', 'headline_classes', 'text-4xl font-bold text-zinc-900 dark:text-white', 'classes', 'headline'); @endphp
+            <h2 class="{{ $headlineClasses }}">{{ $headlineText }}</h2>
+            @endif
+            @php $showSubheadline = content('__SLUG__', 'show_subheadline', '1', 'toggle', 'subheadline'); @endphp
+            @if($showSubheadline)
+            @php $subheadlineText = content('__SLUG__', 'subheadline', 'We\'d love to hear from you. Send us a message and we\'ll respond as soon as possible.', 'text', 'subheadline'); @endphp
+            @php $subheadlineClasses = content('__SLUG__', 'subheadline_classes', 'mt-4 text-lg text-zinc-500 dark:text-zinc-400', 'classes', 'subheadline'); @endphp
+            <p class="{{ $subheadlineClasses }}">{{ $subheadlineText }}</p>
+            @endif
         </div>
         <div class="grid md:grid-cols-2 gap-12">
             <form class="space-y-6">
@@ -30,24 +40,24 @@
                     <textarea rows="5" class="w-full px-4 py-2.5 rounded-lg border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition resize-none"></textarea>
                 </div>
                 <button type="submit" class="w-full px-6 py-3 bg-primary text-white font-semibold rounded-lg hover:bg-primary/90 transition-colors">
-                    Send Message
+                    {{ content('__SLUG__', 'button_label', 'Send Message', 'text', 'content') }}
                 </button>
             </form>
             <div class="space-y-8">
                 <div>
                     <h3 class="text-lg font-semibold text-zinc-900 dark:text-white">Contact Information</h3>
                     <div class="mt-4 space-y-4 text-zinc-500 dark:text-zinc-400 text-sm">
-                        <p>📍 123 Main Street, Suite 100<br>San Francisco, CA 94105</p>
-                        <p>📞 (555) 123-4567</p>
-                        <p>✉️ hello@example.com</p>
+                        <p>📍 {{ content('__SLUG__', 'address_street', '123 Main Street, Suite 100', 'text', 'contact details') }}<br>{{ content('__SLUG__', 'address_city', 'San Francisco, CA 94105', 'text', 'contact details') }}</p>
+                        <p>📞 {{ content('__SLUG__', 'phone', '(555) 123-4567', 'text', 'contact details') }}</p>
+                        <p>✉️ {{ content('__SLUG__', 'email', 'hello@example.com', 'text', 'contact details') }}</p>
                     </div>
                 </div>
                 <div>
                     <h3 class="text-lg font-semibold text-zinc-900 dark:text-white">Business Hours</h3>
                     <div class="mt-4 space-y-1 text-zinc-500 dark:text-zinc-400 text-sm">
-                        <p>Monday–Friday: 9am–6pm PST</p>
-                        <p>Saturday: 10am–4pm PST</p>
-                        <p>Sunday: Closed</p>
+                        <p>{{ content('__SLUG__', 'hours_weekday', 'Monday–Friday: 9am–6pm PST', 'text', 'contact details') }}</p>
+                        <p>{{ content('__SLUG__', 'hours_saturday', 'Saturday: 10am–4pm PST', 'text', 'contact details') }}</p>
+                        <p>{{ content('__SLUG__', 'hours_sunday', 'Sunday: Closed', 'text', 'contact details') }}</p>
                     </div>
                 </div>
             </div>

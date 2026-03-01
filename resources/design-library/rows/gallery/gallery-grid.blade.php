@@ -6,8 +6,8 @@
 <section class="py-20 px-6 bg-white dark:bg-zinc-900">
     <div class="max-w-6xl mx-auto">
         <div class="text-center mb-12">
-            <h2 class="text-4xl font-bold text-zinc-900 dark:text-white">Our Gallery</h2>
-            <p class="mt-4 text-zinc-500 dark:text-zinc-400">A glimpse into our work and culture.</p>
+            <h2 class="text-4xl font-bold text-zinc-900 dark:text-white">{{ content('__SLUG__', 'headline', 'Our Gallery', 'text', 'content') }}</h2>
+            <p class="mt-4 text-zinc-500 dark:text-zinc-400">{{ content('__SLUG__', 'subheadline', 'A glimpse into our work and culture.', 'text', 'content') }}</p>
         </div>
         <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
             @for ($i = 1; $i <= 6; $i++)

@@ -6,8 +6,18 @@
 <section class="py-20 px-6 bg-white dark:bg-zinc-900">
     <div class="max-w-6xl mx-auto">
         <div class="text-center mb-16">
-            <h2 class="text-4xl font-bold text-zinc-900 dark:text-white">Loved by Thousands</h2>
-            <p class="mt-4 text-lg text-zinc-500 dark:text-zinc-400">Here's what our customers have to say.</p>
+            @php $showHeadline = content('__SLUG__', 'show_headline', '1', 'toggle', 'headline'); @endphp
+            @if($showHeadline)
+            @php $headlineText = content('__SLUG__', 'headline', 'Loved by Thousands', 'text', 'headline'); @endphp
+            @php $headlineClasses = content('__SLUG__', 'headline_classes', 'text-4xl font-bold text-zinc-900 dark:text-white', 'classes', 'headline'); @endphp
+            <h2 class="{{ $headlineClasses }}">{{ $headlineText }}</h2>
+            @endif
+            @php $showSubheadline = content('__SLUG__', 'show_subheadline', '1', 'toggle', 'subheadline'); @endphp
+            @if($showSubheadline)
+            @php $subheadlineText = content('__SLUG__', 'subheadline', 'Here\'s what our customers have to say.', 'text', 'subheadline'); @endphp
+            @php $subheadlineClasses = content('__SLUG__', 'subheadline_classes', 'mt-4 text-lg text-zinc-500 dark:text-zinc-400', 'classes', 'subheadline'); @endphp
+            <p class="{{ $subheadlineClasses }}">{{ $subheadlineText }}</p>
+            @endif
         </div>
         <div class="grid md:grid-cols-3 gap-6">
             @foreach ([['quote' => 'This product completely transformed how our team works. I can\'t imagine going back.', 'name' => 'Sarah Johnson', 'role' => 'CEO at Acme Co'], ['quote' => 'The best investment we\'ve made this year. Setup was a breeze and support is incredible.', 'name' => 'Mark Davis', 'role' => 'CTO at BuildIt'], ['quote' => 'Our productivity has doubled since we started using this. Highly recommended.', 'name' => 'Lisa Chen', 'role' => 'Product Manager at TechCorp']] as $testimonial)

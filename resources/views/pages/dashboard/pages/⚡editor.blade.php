@@ -1051,17 +1051,38 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                                 <div class="{{ $showGroupHeaders ? 'space-y-4' : 'space-y-5' }}">
                                     @foreach ($fieldGroups as $groupKey => $groupFields)
                                         @if ($showGroupHeaders)
+                                            @php
+                                                // Detect a group-level toggle: a show_ toggle whose prefix matches all other field keys in the group.
+                                                $groupShowField = $groupFields->first(fn ($f) => $f['type'] === 'toggle' && str_starts_with($f['key'], 'show_'));
+                                                $headerToggleField = null;
+                                                if ($groupShowField) {
+                                                    $showPrefix = str_replace('show_', '', $groupShowField['key']);
+                                                    $otherFields = $groupFields->reject(fn ($f) => $f['key'] === $groupShowField['key']);
+                                                    $isGroupToggle = $otherFields->every(fn ($f) => str_ends_with($f['key'], '_new_tab') || str_contains($f['key'], $showPrefix));
+                                                    if ($isGroupToggle) {
+                                                        $headerToggleField = $groupShowField;
+                                                    }
+                                                }
+                                                $bodyFields = $headerToggleField
+                                                    ? $groupFields->reject(fn ($f) => $f['key'] === $headerToggleField['key'])
+                                                    : $groupFields;
+                                            @endphp
                                             <div x-data="{ open: true }" class="rounded-lg border border-zinc-200 dark:border-zinc-700 overflow-hidden">
-                                                <button
-                                                    type="button"
-                                                    @click="open = !open"
-                                                    class="w-full flex items-center justify-between px-3 py-2 bg-zinc-50 dark:bg-zinc-800"
-                                                >
-                                                    <span class="text-xs uppercase tracking-wider font-semibold text-zinc-600 dark:text-zinc-300">{{ ucwords($groupKey) }}</span>
-                                                    <flux:icon name="chevron-down" class="size-3 text-zinc-400 dark:text-zinc-500 transition-transform shrink-0" :class="open ? '' : '-rotate-90'" />
-                                                </button>
+                                                <div class="flex items-center gap-2 px-3 py-2 bg-zinc-50 dark:bg-zinc-800">
+                                                    <button
+                                                        type="button"
+                                                        @click="open = !open"
+                                                        class="flex items-center gap-1.5 flex-1 min-w-0 text-left"
+                                                    >
+                                                        <span class="text-xs uppercase tracking-wider font-semibold text-zinc-600 dark:text-zinc-300">{{ ucwords($groupKey) }}</span>
+                                                        <flux:icon name="chevron-down" class="size-3 text-zinc-400 dark:text-zinc-500 transition-transform shrink-0" :class="open ? '' : '-rotate-90'" />
+                                                    </button>
+                                                    @if ($headerToggleField)
+                                                        <flux:switch wire:model.live="contentValues.{{ $headerToggleField['key'] }}" />
+                                                    @endif
+                                                </div>
                                                 <div x-show="open" x-collapse class="border-t border-zinc-200 dark:border-zinc-700 p-3 space-y-4">
-                                                    @foreach ($groupFields as $field)
+                                                    @foreach ($bodyFields as $field)
                                                         @include('pages.dashboard.pages.partials.content-field', ['field' => $field])
                                                     @endforeach
                                                 </div>

@@ -7,8 +7,18 @@
     <div class="max-w-6xl mx-auto">
         <div class="flex items-center justify-between mb-12">
             <div>
-                <h2 class="text-4xl font-bold text-zinc-900 dark:text-white">Latest Articles</h2>
-                <p class="mt-2 text-zinc-500 dark:text-zinc-400">Insights, tutorials, and company news.</p>
+                @php $showHeadline = content('__SLUG__', 'show_headline', '1', 'toggle', 'headline'); @endphp
+                @if($showHeadline)
+                @php $headlineText = content('__SLUG__', 'headline', 'Latest Articles', 'text', 'headline'); @endphp
+                @php $headlineClasses = content('__SLUG__', 'headline_classes', 'text-4xl font-bold text-zinc-900 dark:text-white', 'classes', 'headline'); @endphp
+                <h2 class="{{ $headlineClasses }}">{{ $headlineText }}</h2>
+                @endif
+                @php $showSubheadline = content('__SLUG__', 'show_subheadline', '1', 'toggle', 'subheadline'); @endphp
+                @if($showSubheadline)
+                @php $subheadlineText = content('__SLUG__', 'subheadline', 'Insights, tutorials, and company news.', 'text', 'subheadline'); @endphp
+                @php $subheadlineClasses = content('__SLUG__', 'subheadline_classes', 'mt-2 text-zinc-500 dark:text-zinc-400', 'classes', 'subheadline'); @endphp
+                <p class="{{ $subheadlineClasses }}">{{ $subheadlineText }}</p>
+                @endif
             </div>
             <a href="/blog" class="text-primary font-semibold hover:text-primary/80 transition-colors text-sm">
                 View all →

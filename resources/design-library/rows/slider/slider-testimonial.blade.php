@@ -14,7 +14,7 @@
     x-init="autoPlay()"
 >
     <div class="max-w-3xl mx-auto text-center">
-        <h2 class="text-4xl font-bold text-zinc-900 dark:text-white mb-12">What Our Customers Say</h2>
+        <h2 class="text-4xl font-bold text-zinc-900 dark:text-white mb-12">{{ content('__SLUG__', 'headline', 'What Our Customers Say', 'text', 'content') }}</h2>
 
         <div class="relative">
             @foreach ([['quote' => 'This is honestly the best tool I\'ve used in years. It transformed how we work.', 'name' => 'Alex Thompson', 'role' => 'Founder at StartupXYZ'], ['quote' => 'The onboarding was seamless and the results were immediate. I highly recommend it.', 'name' => 'Jamie Rivera', 'role' => 'VP of Engineering'], ['quote' => 'Customer support is incredible. They went above and beyond to help our team.', 'name' => 'Morgan Lee', 'role' => 'Director of Operations']] as $i => $t)

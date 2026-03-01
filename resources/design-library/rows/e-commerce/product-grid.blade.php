@@ -6,7 +6,7 @@
 <section class="py-20 px-6 bg-white dark:bg-zinc-900">
     <div class="max-w-6xl mx-auto">
         <div class="flex items-center justify-between mb-12">
-            <h2 class="text-4xl font-bold text-zinc-900 dark:text-white">Featured Products</h2>
+            <h2 class="text-4xl font-bold text-zinc-900 dark:text-white">{{ content('__SLUG__', 'headline', 'Featured Products', 'text', 'content') }}</h2>
             <a href="/products" class="text-primary font-semibold hover:text-primary/80 transition-colors text-sm">View all →</a>
         </div>
         <div class="grid grid-cols-2 md:grid-cols-4 gap-6">

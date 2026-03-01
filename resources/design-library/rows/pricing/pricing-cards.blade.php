@@ -6,8 +6,18 @@
 <section class="py-20 px-6 bg-zinc-50 dark:bg-zinc-950">
     <div class="max-w-5xl mx-auto">
         <div class="text-center mb-16">
-            <h2 class="text-4xl font-bold text-zinc-900 dark:text-white">Simple, Transparent Pricing</h2>
-            <p class="mt-4 text-lg text-zinc-500 dark:text-zinc-400">No hidden fees. Cancel anytime.</p>
+            @php $showHeadline = content('__SLUG__', 'show_headline', '1', 'toggle', 'headline'); @endphp
+            @if($showHeadline)
+            @php $headlineText = content('__SLUG__', 'headline', 'Simple, Transparent Pricing', 'text', 'headline'); @endphp
+            @php $headlineClasses = content('__SLUG__', 'headline_classes', 'text-4xl font-bold text-zinc-900 dark:text-white', 'classes', 'headline'); @endphp
+            <h2 class="{{ $headlineClasses }}">{{ $headlineText }}</h2>
+            @endif
+            @php $showSubheadline = content('__SLUG__', 'show_subheadline', '1', 'toggle', 'subheadline'); @endphp
+            @if($showSubheadline)
+            @php $subheadlineText = content('__SLUG__', 'subheadline', 'No hidden fees. Cancel anytime.', 'text', 'subheadline'); @endphp
+            @php $subheadlineClasses = content('__SLUG__', 'subheadline_classes', 'mt-4 text-lg text-zinc-500 dark:text-zinc-400', 'classes', 'subheadline'); @endphp
+            <p class="{{ $subheadlineClasses }}">{{ $subheadlineText }}</p>
+            @endif
         </div>
         <div class="grid md:grid-cols-3 gap-8">
             @foreach ([['name' => 'Starter', 'price' => '$9', 'desc' => 'Perfect for individuals', 'features' => ['5 projects', '10GB storage', 'Email support'], 'featured' => false], ['name' => 'Pro', 'price' => '$29', 'desc' => 'Great for small teams', 'features' => ['Unlimited projects', '100GB storage', 'Priority support', 'Analytics'], 'featured' => true], ['name' => 'Enterprise', 'price' => '$99', 'desc' => 'For large organizations', 'features' => ['Unlimited everything', 'Dedicated support', 'Custom integrations', 'SLA guarantee'], 'featured' => false]] as $plan)

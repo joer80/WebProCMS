@@ -1,5 +1,7 @@
 <div wire:key="field-{{ $field['key'] }}">
-    <flux:label class="mb-1.5 text-zinc-500 dark:text-zinc-400">{{ $field['label'] }}</flux:label>
+    @if ($field['type'] !== 'toggle')
+        <flux:label class="mb-1.5 text-zinc-500 dark:text-zinc-400">{{ $field['label'] }}</flux:label>
+    @endif
 
     @if ($field['type'] === 'image')
         @php $currentPath = $contentValues[$field['key']] ?? ''; @endphp
@@ -54,11 +56,19 @@
             placeholder="{{ $field['default'] }}"
         />
         <flux:text class="text-xs text-zinc-400 mt-1">HTML is supported.</flux:text>
-    @elseif ($field['type'] === 'toggle')
-        <flux:checkbox
-            wire:model.live="contentValues.{{ $field['key'] }}"
-            label="Yes"
+    @elseif ($field['type'] === 'classes')
+        <flux:textarea
+            wire:model.live.debounce.400ms="contentValues.{{ $field['key'] }}"
+            rows="2"
+            placeholder="{{ $field['default'] }}"
+            class="font-mono text-xs"
         />
+        <flux:text class="text-xs text-zinc-400 mt-1">Tailwind CSS classes.</flux:text>
+    @elseif ($field['type'] === 'toggle')
+        <div class="flex items-center gap-2">
+            <flux:switch wire:model.live="contentValues.{{ $field['key'] }}" />
+            <span class="text-sm text-zinc-500 dark:text-zinc-400">{{ $field['label'] }}</span>
+        </div>
     @elseif (str_ends_with($field['key'], '_url'))
         <flux:input
             wire:model.live.debounce.400ms="contentValues.{{ $field['key'] }}"
