@@ -13,7 +13,8 @@
             <a href="#" class="text-sm text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition-colors">Contact</a>
         </nav>
         @php $primaryCtaLabel = content('__SLUG__', 'primary_cta', 'Get Started', 'text', 'primary button'); @endphp
-        <a href="{{ content('__SLUG__', 'primary_cta_url', '#', 'text', 'primary button') }}" class="px-4 py-2 bg-primary text-white text-sm font-semibold rounded-lg hover:bg-primary/90 transition-colors">
+        @php $primaryCtaClasses = content('__SLUG__', 'primary_cta_classes', 'px-4 py-2 bg-primary text-white text-sm font-semibold rounded-lg hover:bg-primary/90 transition-colors', 'classes', 'primary button'); @endphp
+        <a href="{{ content('__SLUG__', 'primary_cta_url', '#', 'text', 'primary button') }}" class="{{ $primaryCtaClasses }}">
             {{ $primaryCtaLabel }}
         </a>
     </div>

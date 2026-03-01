@@ -23,19 +23,21 @@
         <div class="mt-10 flex flex-wrap items-center justify-center gap-4">
             @php $showPrimaryCta = content('__SLUG__', 'show_primary_cta', '1', 'toggle', 'primary button'); @endphp
             @php $primaryCtaLabel = content('__SLUG__', 'primary_cta', 'Get Started', 'text', 'primary button'); @endphp
+            @php $primaryCtaClasses = content('__SLUG__', 'primary_cta_classes', 'px-6 py-3 bg-primary text-white font-semibold rounded-lg hover:bg-primary/90 transition-colors', 'classes', 'primary button'); @endphp
             @if($showPrimaryCta)
             <a
                 href="{{ content('__SLUG__', 'primary_cta_url', '#', 'text', 'primary button') }}"
                 @if(content('__SLUG__', 'primary_cta_new_tab', '', 'toggle', 'primary button')) target="_blank" rel="noopener noreferrer" @endif
-                class="px-6 py-3 bg-primary text-white font-semibold rounded-lg hover:bg-primary/90 transition-colors"
+                class="{{ $primaryCtaClasses }}"
             >{{ $primaryCtaLabel }}</a>
             @endif
             @if(content('__SLUG__', 'show_secondary_cta', '1', 'toggle', 'secondary button'))
             @php $secondaryCtaLabel = content('__SLUG__', 'secondary_cta', 'Learn More', 'text', 'secondary button'); @endphp
+            @php $secondaryCtaClasses = content('__SLUG__', 'secondary_cta_classes', 'px-6 py-3 border border-zinc-300 dark:border-zinc-600 text-zinc-700 dark:text-zinc-200 font-semibold rounded-lg hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors', 'classes', 'secondary button'); @endphp
             <a
                 href="{{ content('__SLUG__', 'secondary_cta_url', '#', 'text', 'secondary button') }}"
                 @if(content('__SLUG__', 'secondary_cta_new_tab', '', 'toggle', 'secondary button')) target="_blank" rel="noopener noreferrer" @endif
-                class="px-6 py-3 border border-zinc-300 dark:border-zinc-600 text-zinc-700 dark:text-zinc-200 font-semibold rounded-lg hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors"
+                class="{{ $secondaryCtaClasses }}"
             >{{ $secondaryCtaLabel }}</a>
             @endif
         </div>

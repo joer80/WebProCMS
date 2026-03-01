@@ -13,19 +13,22 @@
             @php $headlineClasses = content('__SLUG__', 'headline_classes', 'font-heading mt-3 text-4xl font-bold text-zinc-900 dark:text-white leading-tight', 'classes', 'headline'); @endphp
             <h2 class="{{ $headlineClasses }}">{{ $headlineText }}</h2>
             @endif
-            <p class="mt-6 text-zinc-500 dark:text-zinc-400 leading-relaxed">
+            @php $bodyClasses = content('__SLUG__', 'body_classes', 'mt-6 text-zinc-500 dark:text-zinc-400 leading-relaxed', 'classes', 'content'); @endphp
+            <p class="{{ $bodyClasses }}">
                 {{ content('__SLUG__', 'body', 'Founded in 2020, we have been on a mission to help teams collaborate more effectively. Our platform combines the best of communication, project management, and automation into one seamless experience.', 'text', 'content') }}
             </p>
-            <p class="mt-4 text-zinc-500 dark:text-zinc-400 leading-relaxed">
+            @php $bodySecondaryClasses = content('__SLUG__', 'body_secondary_classes', 'mt-4 text-zinc-500 dark:text-zinc-400 leading-relaxed', 'classes', 'content'); @endphp
+            <p class="{{ $bodySecondaryClasses }}">
                 {{ content('__SLUG__', 'body_secondary', 'Today, we are trusted by over 10,000 companies worldwide, from startups to Fortune 500 enterprises.', 'text', 'content') }}
             </p>
             @php $showCta = content('__SLUG__', 'show_cta', '1', 'toggle', 'primary button'); @endphp
             @php $ctaLabel = content('__SLUG__', 'cta_label', 'Learn more about us', 'text', 'primary button'); @endphp
+            @php $ctaClasses = content('__SLUG__', 'cta_classes', 'mt-8 inline-flex items-center text-primary font-semibold hover:text-primary/80 transition-colors', 'classes', 'primary button'); @endphp
             @if($showCta)
             <a
                 href="{{ content('__SLUG__', 'cta_url', '#', 'text', 'primary button') }}"
                 @if(content('__SLUG__', 'cta_new_tab', '', 'toggle', 'primary button')) target="_blank" rel="noopener noreferrer" @endif
-                class="mt-8 inline-flex items-center text-primary font-semibold hover:text-primary/80 transition-colors"
+                class="{{ $ctaClasses }}"
             >
                 {{ $ctaLabel }} →
             </a>

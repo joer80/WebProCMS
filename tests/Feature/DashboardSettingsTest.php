@@ -337,6 +337,106 @@ it('loads the full page cache lifetime from config on mount', function (): void 
         ->assertSet('fullPageCacheLifetime', 7200);
 });
 
+// ── Branding — Typography ───────────────────────────────────────────────────────
+
+it('loads font choices from branding config on mount', function (): void {
+    config(['branding.body_font' => 'inter', 'branding.heading_font' => 'system']);
+
+    $user = User::factory()->create();
+
+    Livewire::actingAs($user)
+        ->test('pages::dashboard.settings.branding')
+        ->assertSet('bodyFont', 'inter')
+        ->assertSet('headingFont', 'system')
+        ->assertSet('sectionSpacing', '5rem');
+});
+
+it('saves typography to css files and writes branding config', function (): void {
+    app()->detectEnvironment(fn () => 'local');
+
+    $appCssPath = resource_path('css/app.css');
+    $publicCssPath = resource_path('css/public.css');
+    $editorCssPath = resource_path('css/editor.css');
+    $brandingPath = config_path('branding.php');
+
+    $originalApp = file_get_contents($appCssPath);
+    $originalPublic = file_get_contents($publicCssPath);
+    $originalEditor = file_get_contents($editorCssPath);
+    $originalBranding = file_get_contents($brandingPath);
+
+    $user = User::factory()->create();
+
+    Livewire::actingAs($user)
+        ->test('pages::dashboard.settings.branding')
+        ->set('bodyFont', 'inter')
+        ->set('headingFont', 'instrument-sans')
+        ->set('sectionSpacing', '6rem')
+        ->call('saveTypography')
+        ->assertHasNoErrors()
+        ->assertDispatched('notify', message: 'Typography saved. Rebuild assets to apply.');
+
+    expect(file_get_contents($appCssPath))
+        ->toContain("--font-sans: 'Inter',")
+        ->toContain("--font-heading: 'Instrument Sans',")
+        ->toContain('--spacing-section: 6rem;');
+
+    expect(file_get_contents($publicCssPath))->toContain("--font-sans: 'Inter',");
+    expect(file_get_contents($editorCssPath))->toContain("--font-sans: 'Inter',");
+    expect(file_get_contents($brandingPath))->toContain("'body_font' => 'inter'");
+
+    file_put_contents($appCssPath, $originalApp);
+    file_put_contents($publicCssPath, $originalPublic);
+    file_put_contents($editorCssPath, $originalEditor);
+    file_put_contents($brandingPath, $originalBranding);
+});
+
+it('saves system font choice without a named font in the css stack', function (): void {
+    app()->detectEnvironment(fn () => 'local');
+
+    $appCssPath = resource_path('css/app.css');
+    $originalApp = file_get_contents($appCssPath);
+
+    $user = User::factory()->create();
+
+    Livewire::actingAs($user)
+        ->test('pages::dashboard.settings.branding')
+        ->set('bodyFont', 'system')
+        ->set('headingFont', 'system')
+        ->set('sectionSpacing', '5rem')
+        ->call('saveTypography')
+        ->assertHasNoErrors();
+
+    expect(file_get_contents($appCssPath))->toContain('--font-sans: ui-sans-serif,');
+
+    file_put_contents($appCssPath, $originalApp);
+});
+
+it('validates that body font is one of the allowed choices', function (): void {
+    app()->detectEnvironment(fn () => 'local');
+
+    $user = User::factory()->create();
+
+    Livewire::actingAs($user)
+        ->test('pages::dashboard.settings.branding')
+        ->set('bodyFont', 'comic-sans')
+        ->call('saveTypography')
+        ->assertHasErrors(['bodyFont']);
+});
+
+it('validates that section spacing uses a valid css unit', function (): void {
+    app()->detectEnvironment(fn () => 'local');
+
+    $user = User::factory()->create();
+
+    Livewire::actingAs($user)
+        ->test('pages::dashboard.settings.branding')
+        ->set('sectionSpacing', 'invalid')
+        ->call('saveTypography')
+        ->assertHasErrors(['sectionSpacing']);
+});
+
+// ── Advanced ────────────────────────────────────────────────────────────────────
+
 it('writes RESPONSE_CACHE_DRIVER and RESPONSE_CACHE_LIFETIME to .env and dispatches a notification', function (): void {
     $artisan = Artisan::spy();
     $envPath = base_path('.env');

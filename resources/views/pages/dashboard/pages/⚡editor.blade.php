@@ -550,6 +550,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
 
         if ($field && $field['type'] === 'classes') {
             $this->contentValues[$key] = $field['default'];
+            $this->updatedContentValues($field['default'], $key);
         }
     }
 
@@ -1058,8 +1059,8 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                                 <div class="text-[10px] font-mono text-zinc-400 dark:text-zinc-500 truncate">{{ $rows[$editingRowIndex]['slug'] }}</div>
                             </div>
                             <div class="flex rounded-md border border-zinc-200 dark:border-zinc-700 text-[11px] font-medium overflow-hidden shrink-0">
-                                <button type="button" @click="designMode = false; $wire.resetEmptyClassesFields()" :class="!designMode ? 'bg-zinc-800 text-white dark:bg-zinc-100 dark:text-zinc-900' : 'bg-white text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200'" class="px-2.5 py-1 transition-colors">Content</button>
-                                <button type="button" @click="designMode = true; $wire.resetEmptyClassesFields()" :class="designMode ? 'bg-zinc-800 text-white dark:bg-zinc-100 dark:text-zinc-900' : 'bg-white text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200'" class="px-2.5 py-1 transition-colors border-l border-zinc-200 dark:border-zinc-700">Design</button>
+                                <button type="button" @click="designMode = false; $wire.resetEmptyClassesFields(); $dispatch('set-group-design-mode', { value: false })" :class="!designMode ? 'bg-zinc-800 text-white dark:bg-zinc-100 dark:text-zinc-900' : 'bg-white text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200'" class="px-2.5 py-1 transition-colors">Content</button>
+                                <button type="button" @click="designMode = true; $wire.resetEmptyClassesFields(); $dispatch('set-group-design-mode', { value: true })" :class="designMode ? 'bg-zinc-800 text-white dark:bg-zinc-100 dark:text-zinc-900' : 'bg-white text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200'" class="px-2.5 py-1 transition-colors border-l border-zinc-200 dark:border-zinc-700">Design</button>
                             </div>
                         </div>
 
@@ -1094,7 +1095,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                                                     : $groupFields;
                                                 $groupHasClassesFields = $bodyFields->contains(fn ($f) => $f['type'] === 'classes');
                                             @endphp
-                                            <div x-data="{ open: true, groupDesignMode: false, groupContentMode: false }" x-show="designMode ? {{ $groupHasClassesFields ? 'true' : 'false' }} : true" class="rounded-lg border border-zinc-200 dark:border-zinc-700 overflow-hidden">
+                                            <div x-data="{ open: true, groupDesignMode: false, groupContentMode: false, groupHasClasses: {{ $groupHasClassesFields ? 'true' : 'false' }} }" @set-group-design-mode.window="groupDesignMode = $event.detail.value; groupContentMode = false" x-show="designMode ? {{ $groupHasClassesFields ? 'true' : 'false' }} : true" class="rounded-lg border border-zinc-200 dark:border-zinc-700 overflow-hidden">
                                                 <div class="flex items-center gap-2 px-3 py-2 bg-zinc-50 dark:bg-zinc-800">
                                                     <button
                                                         type="button"

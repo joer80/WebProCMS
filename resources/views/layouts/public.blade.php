@@ -15,7 +15,7 @@
     <head>
         @include('partials.head', ['cssBundle' => 'resources/css/public.css', 'noindex' => $noindex, 'ogImage' => $ogImage])
     </head>
-    <body class="bg-[#FDFDFC] dark:bg-[#0a0a0a] text-[#1b1b18] dark:text-[#EDEDEC] flex p-6 lg:p-8 min-h-screen flex-col antialiased" style="font-family: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif;">
+    <body class="bg-[#FDFDFC] dark:bg-[#0a0a0a] text-[#1b1b18] dark:text-[#EDEDEC] flex p-6 lg:p-8 min-h-screen flex-col antialiased">
         <header class="w-full max-w-4xl mx-auto text-sm mb-10" x-data="{ open: false }">
             <nav class="flex items-center justify-between gap-4">
                 <a href="{{ route('home') }}">

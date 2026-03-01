@@ -24,19 +24,21 @@ new #[Layout('layouts.public')] #[Title('Test Page')] class extends Component {}
             <div class="mt-8 flex flex-wrap gap-4">
                 @php $showPrimaryCta = content('hero-dd317W', 'show_primary_cta', '1', 'toggle', 'primary button'); @endphp
                 @php $primaryCtaLabel = content('hero-dd317W', 'primary_cta', 'Start Free Trial', 'text', 'primary button'); @endphp
+                @php $primaryCtaClasses = content('hero-dd317W', 'primary_cta_classes', 'px-6 py-3 bg-primary text-white font-semibold rounded-lg hover:bg-primary/90 transition-colors', 'classes', 'primary button'); @endphp
                 @if($showPrimaryCta)
                 <a
                     href="{{ content('hero-dd317W', 'primary_cta_url', '#', 'text', 'primary button') }}"
                     @if(content('hero-dd317W', 'primary_cta_new_tab', '', 'toggle', 'primary button')) target="_blank" rel="noopener noreferrer" @endif
-                    class="px-6 py-3 bg-primary text-white font-semibold rounded-lg hover:bg-primary/90 transition-colors"
+                    class="{{ $primaryCtaClasses }}"
                 >{{ $primaryCtaLabel }}</a>
                 @endif
                 @if(content('hero-dd317W', 'show_secondary_cta', '1', 'toggle', 'secondary button'))
                 @php $secondaryCtaLabel = content('hero-dd317W', 'secondary_cta', 'Watch Demo →', 'text', 'secondary button'); @endphp
+                @php $secondaryCtaClasses = content('hero-dd317W', 'secondary_cta_classes', 'px-6 py-3 text-zinc-600 dark:text-zinc-300 font-semibold hover:text-zinc-900 dark:hover:text-white transition-colors', 'classes', 'secondary button'); @endphp
                 <a
                     href="{{ content('hero-dd317W', 'secondary_cta_url', '#', 'text', 'secondary button') }}"
                     @if(content('hero-dd317W', 'secondary_cta_new_tab', '', 'toggle', 'secondary button')) target="_blank" rel="noopener noreferrer" @endif
-                    class="px-6 py-3 text-zinc-600 dark:text-zinc-300 font-semibold hover:text-zinc-900 dark:hover:text-white transition-colors"
+                    class="{{ $secondaryCtaClasses }}"
                 >{{ $secondaryCtaLabel }}</a>
                 @endif
             </div>
@@ -73,19 +75,21 @@ new #[Layout('layouts.public')] #[Title('Test Page')] class extends Component {}
         <div class="mt-8 flex flex-wrap items-center justify-center gap-4">
             @php $showPrimaryCta = content('cta-0khbdJ', 'show_primary_cta', '1', 'toggle', 'primary button'); @endphp
             @php $primaryCtaLabel = content('cta-0khbdJ', 'primary_cta', 'Start Free Trial', 'text', 'primary button'); @endphp
+            @php $primaryCtaClasses = content('cta-0khbdJ', 'primary_cta_classes', 'px-8 py-3 bg-white text-primary font-semibold rounded-lg hover:bg-zinc-100 transition-colors', 'classes', 'primary button'); @endphp
             @if($showPrimaryCta)
             <a
                 href="{{ content('cta-0khbdJ', 'primary_cta_url', '#', 'text', 'primary button') }}"
                 @if(content('cta-0khbdJ', 'primary_cta_new_tab', '', 'toggle', 'primary button')) target="_blank" rel="noopener noreferrer" @endif
-                class="px-8 py-3 bg-white text-primary font-semibold rounded-lg hover:bg-zinc-100 transition-colors"
+                class="{{ $primaryCtaClasses }}"
             >{{ $primaryCtaLabel }}</a>
             @endif
             @if(content('cta-0khbdJ', 'show_secondary_cta', '1', 'toggle', 'secondary button'))
             @php $secondaryCtaLabel = content('cta-0khbdJ', 'secondary_cta', 'Talk to Sales', 'text', 'secondary button'); @endphp
+            @php $secondaryCtaClasses = content('cta-0khbdJ', 'secondary_cta_classes', 'px-8 py-3 border border-white/30 text-white font-semibold rounded-lg hover:bg-white/10 transition-colors', 'classes', 'secondary button'); @endphp
             <a
                 href="{{ content('cta-0khbdJ', 'secondary_cta_url', '#', 'text', 'secondary button') }}"
                 @if(content('cta-0khbdJ', 'secondary_cta_new_tab', '', 'toggle', 'secondary button')) target="_blank" rel="noopener noreferrer" @endif
-                class="px-8 py-3 border border-white/30 text-white font-semibold rounded-lg hover:bg-white/10 transition-colors"
+                class="{{ $secondaryCtaClasses }}"
             >{{ $secondaryCtaLabel }}</a>
             @endif
         </div>

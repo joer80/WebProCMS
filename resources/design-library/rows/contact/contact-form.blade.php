@@ -39,7 +39,8 @@
                     <label class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">Message</label>
                     <textarea rows="5" class="w-full px-4 py-2.5 rounded-lg border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition resize-none"></textarea>
                 </div>
-                <button type="submit" class="w-full px-6 py-3 bg-primary text-white font-semibold rounded-lg hover:bg-primary/90 transition-colors">
+                @php $buttonClasses = content('__SLUG__', 'button_classes', 'w-full px-6 py-3 bg-primary text-white font-semibold rounded-lg hover:bg-primary/90 transition-colors', 'classes', 'content'); @endphp
+                <button type="submit" class="{{ $buttonClasses }}">
                     {{ content('__SLUG__', 'button_label', 'Send Message', 'text', 'content') }}
                 </button>
             </form>

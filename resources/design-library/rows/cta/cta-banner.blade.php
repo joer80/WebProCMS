@@ -20,19 +20,21 @@
         <div class="mt-8 flex flex-wrap items-center justify-center gap-4">
             @php $showPrimaryCta = content('__SLUG__', 'show_primary_cta', '1', 'toggle', 'primary button'); @endphp
             @php $primaryCtaLabel = content('__SLUG__', 'primary_cta', 'Start Free Trial', 'text', 'primary button'); @endphp
+            @php $primaryCtaClasses = content('__SLUG__', 'primary_cta_classes', 'px-8 py-3 bg-white text-primary font-semibold rounded-lg hover:bg-zinc-100 transition-colors', 'classes', 'primary button'); @endphp
             @if($showPrimaryCta)
             <a
                 href="{{ content('__SLUG__', 'primary_cta_url', '#', 'text', 'primary button') }}"
                 @if(content('__SLUG__', 'primary_cta_new_tab', '', 'toggle', 'primary button')) target="_blank" rel="noopener noreferrer" @endif
-                class="px-8 py-3 bg-white text-primary font-semibold rounded-lg hover:bg-zinc-100 transition-colors"
+                class="{{ $primaryCtaClasses }}"
             >{{ $primaryCtaLabel }}</a>
             @endif
             @if(content('__SLUG__', 'show_secondary_cta', '1', 'toggle', 'secondary button'))
             @php $secondaryCtaLabel = content('__SLUG__', 'secondary_cta', 'Talk to Sales', 'text', 'secondary button'); @endphp
+            @php $secondaryCtaClasses = content('__SLUG__', 'secondary_cta_classes', 'px-8 py-3 border border-white/30 text-white font-semibold rounded-lg hover:bg-white/10 transition-colors', 'classes', 'secondary button'); @endphp
             <a
                 href="{{ content('__SLUG__', 'secondary_cta_url', '#', 'text', 'secondary button') }}"
                 @if(content('__SLUG__', 'secondary_cta_new_tab', '', 'toggle', 'secondary button')) target="_blank" rel="noopener noreferrer" @endif
-                class="px-8 py-3 border border-white/30 text-white font-semibold rounded-lg hover:bg-white/10 transition-colors"
+                class="{{ $secondaryCtaClasses }}"
             >{{ $secondaryCtaLabel }}</a>
             @endif
         </div>

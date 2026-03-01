@@ -1,4 +1,4 @@
-<div wire:key="field-{{ $field['key'] }}" x-show="{{ $field['type'] === 'classes' ? '(designMode || groupDesignMode) && !groupContentMode' : 'groupContentMode || (!designMode && !groupDesignMode)' }}">
+<div wire:key="field-{{ $field['key'] }}" x-show="{{ $field['type'] === 'classes' ? '(designMode || groupDesignMode) && !groupContentMode' : 'groupContentMode || !groupHasClasses || (!designMode && !groupDesignMode)' }}">
     @if ($field['type'] === 'classes')
         <div class="flex items-center justify-between mb-1.5">
             <flux:label class="text-zinc-500 dark:text-zinc-400">{{ $field['label'] }}</flux:label>
@@ -66,7 +66,7 @@
             <textarea
                 x-ref="input"
                 wire:model.live.debounce.400ms="contentValues.{{ $field['key'] }}"
-                rows="2"
+                rows="3"
                 x-on:input="suggest($event)"
                 x-on:keydown="handleKey($event)"
                 x-on:blur="delayClose()"
