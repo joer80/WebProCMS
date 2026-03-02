@@ -142,7 +142,7 @@ new #[Layout('layouts.app')] #[Title('Menus')] class extends Component {
         } else {
             $this->validate([
                 'newCustomLabel' => ['required', 'string', 'max:255'],
-                'newCustomUrl' => ['required', 'string', 'max:2048'],
+                'newCustomUrl' => ['required', 'url', 'max:2048'],
             ]);
 
             $item = [
@@ -222,7 +222,7 @@ new #[Layout('layouts.app')] #[Title('Menus')] class extends Component {
         } else {
             $this->validate([
                 'editItemLabel' => ['required', 'string', 'max:255'],
-                'editItemUrl' => ['required', 'string', 'max:2048'],
+                'editItemUrl' => ['required', 'url', 'max:2048'],
             ]);
 
             $item = [

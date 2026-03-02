@@ -95,6 +95,11 @@ new #[Layout('layouts.app')] #[Title('Dashboard')] #[Lazy] class extends Compone
         return Category::query()->count();
     }
 
+    public function getLocationCountProperty(): int
+    {
+        return \App\Models\Location::query()->count();
+    }
+
     /** @return \Illuminate\Database\Eloquent\Collection<int, Post> */
     public function getRecentPostsProperty(): \Illuminate\Database\Eloquent\Collection
     {

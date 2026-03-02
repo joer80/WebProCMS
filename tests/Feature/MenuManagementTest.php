@@ -25,12 +25,18 @@ it('shows the menus page to manager users', function (): void {
         ->assertSeeText('Menus');
 });
 
-it('loads nav items from the active website type config on mount', function (): void {
+it('loads menus from the active website type config on mount', function (): void {
     config([
         'features.website_type' => 'saas',
-        'navigation.saas.nav' => [
-            ['label' => 'Features', 'route' => 'features'],
-            ['label' => 'Pricing', 'route' => 'pricing'],
+        'navigation.saas.menus' => [
+            [
+                'slug' => 'main-navigation',
+                'label' => 'Main Navigation',
+                'items' => [
+                    ['label' => 'Features', 'route' => 'features', 'active' => true],
+                    ['label' => 'Pricing', 'route' => 'pricing', 'active' => true],
+                ],
+            ],
         ],
     ]);
 
@@ -38,62 +44,68 @@ it('loads nav items from the active website type config on mount', function (): 
 
     Livewire::actingAs($user)
         ->test('pages::dashboard.menus')
-        ->assertSet('navItems', [
-            ['label' => 'Features', 'route' => 'features'],
-            ['label' => 'Pricing', 'route' => 'pricing'],
+        ->assertSet('menus', [
+            [
+                'slug' => 'main-navigation',
+                'label' => 'Main Navigation',
+                'items' => [
+                    ['label' => 'Features', 'route' => 'features', 'active' => true],
+                    ['label' => 'Pricing', 'route' => 'pricing', 'active' => true],
+                ],
+            ],
         ]);
 });
 
-it('reorders nav items by drag from index 2 to index 0', function (): void {
+it('reorders items in the active menu by drag from index 2 to index 0', function (): void {
     $user = User::factory()->create();
 
     Livewire::actingAs($user)
         ->test('pages::dashboard.menus')
-        ->set('navItems', [
-            ['label' => 'Features', 'route' => 'features'],
-            ['label' => 'Pricing', 'route' => 'pricing'],
+        ->set('menus', [[
+            'slug' => 'main-navigation',
+            'label' => 'Main Navigation',
+            'items' => [
+                ['label' => 'Features', 'route' => 'features'],
+                ['label' => 'Pricing', 'route' => 'pricing'],
+                ['label' => 'About', 'route' => 'about'],
+            ],
+        ]])
+        ->call('reorderItems', 2, 0)
+        ->assertSet('menus.0.items', [
             ['label' => 'About', 'route' => 'about'],
-        ])
-        ->call('reorderNavItems', 2, 0)
-        ->assertSet('navItems', [
-            ['label' => 'About', 'route' => 'about'],
             ['label' => 'Features', 'route' => 'features'],
             ['label' => 'Pricing', 'route' => 'pricing'],
         ]);
 });
 
-it('does not change nav items when reordering from and to the same index', function (): void {
+it('does not change items when reordering from and to the same index', function (): void {
     $user = User::factory()->create();
 
     Livewire::actingAs($user)
         ->test('pages::dashboard.menus')
-        ->set('navItems', [
-            ['label' => 'Features', 'route' => 'features'],
-            ['label' => 'Pricing', 'route' => 'pricing'],
-        ])
-        ->call('reorderNavItems', 1, 1)
-        ->assertSet('navItems', [
+        ->set('menus', [[
+            'slug' => 'main-navigation',
+            'label' => 'Main Navigation',
+            'items' => [
+                ['label' => 'Features', 'route' => 'features'],
+                ['label' => 'Pricing', 'route' => 'pricing'],
+            ],
+        ]])
+        ->call('reorderItems', 1, 1)
+        ->assertSet('menus.0.items', [
             ['label' => 'Features', 'route' => 'features'],
             ['label' => 'Pricing', 'route' => 'pricing'],
         ]);
 });
 
-it('reorders footer items by drag', function (): void {
+it('reorders footer menu column order by drag', function (): void {
     $user = User::factory()->create();
 
     Livewire::actingAs($user)
         ->test('pages::dashboard.menus')
-        ->set('footerItems', [
-            ['label' => 'Contact', 'route' => 'contact'],
-            ['label' => 'Blog', 'route' => 'blog.index'],
-            ['label' => 'Privacy', 'url' => 'https://example.com/privacy'],
-        ])
-        ->call('reorderFooterItems', 0, 2)
-        ->assertSet('footerItems', [
-            ['label' => 'Blog', 'route' => 'blog.index'],
-            ['label' => 'Privacy', 'url' => 'https://example.com/privacy'],
-            ['label' => 'Contact', 'route' => 'contact'],
-        ]);
+        ->set('footerSlugs', ['company', 'legal', 'resources'])
+        ->call('reorderFooterSlugs', 0, 2)
+        ->assertSet('footerSlugs', ['legal', 'resources', 'company']);
 });
 
 it('moves an item up in the list', function (): void {
@@ -101,12 +113,16 @@ it('moves an item up in the list', function (): void {
 
     Livewire::actingAs($user)
         ->test('pages::dashboard.menus')
-        ->set('navItems', [
-            ['label' => 'Features', 'route' => 'features'],
-            ['label' => 'Pricing', 'route' => 'pricing'],
-        ])
-        ->call('moveUp', 1)
-        ->assertSet('navItems', [
+        ->set('menus', [[
+            'slug' => 'main-navigation',
+            'label' => 'Main Navigation',
+            'items' => [
+                ['label' => 'Features', 'route' => 'features'],
+                ['label' => 'Pricing', 'route' => 'pricing'],
+            ],
+        ]])
+        ->call('moveItemUp', 1)
+        ->assertSet('menus.0.items', [
             ['label' => 'Pricing', 'route' => 'pricing'],
             ['label' => 'Features', 'route' => 'features'],
         ]);
@@ -117,12 +133,16 @@ it('does not move the first item further up', function (): void {
 
     Livewire::actingAs($user)
         ->test('pages::dashboard.menus')
-        ->set('navItems', [
-            ['label' => 'Features', 'route' => 'features'],
-            ['label' => 'Pricing', 'route' => 'pricing'],
-        ])
-        ->call('moveUp', 0)
-        ->assertSet('navItems', [
+        ->set('menus', [[
+            'slug' => 'main-navigation',
+            'label' => 'Main Navigation',
+            'items' => [
+                ['label' => 'Features', 'route' => 'features'],
+                ['label' => 'Pricing', 'route' => 'pricing'],
+            ],
+        ]])
+        ->call('moveItemUp', 0)
+        ->assertSet('menus.0.items', [
             ['label' => 'Features', 'route' => 'features'],
             ['label' => 'Pricing', 'route' => 'pricing'],
         ]);
@@ -133,12 +153,16 @@ it('moves an item down in the list', function (): void {
 
     Livewire::actingAs($user)
         ->test('pages::dashboard.menus')
-        ->set('navItems', [
-            ['label' => 'Features', 'route' => 'features'],
-            ['label' => 'Pricing', 'route' => 'pricing'],
-        ])
-        ->call('moveDown', 0)
-        ->assertSet('navItems', [
+        ->set('menus', [[
+            'slug' => 'main-navigation',
+            'label' => 'Main Navigation',
+            'items' => [
+                ['label' => 'Features', 'route' => 'features'],
+                ['label' => 'Pricing', 'route' => 'pricing'],
+            ],
+        ]])
+        ->call('moveItemDown', 0)
+        ->assertSet('menus.0.items', [
             ['label' => 'Pricing', 'route' => 'pricing'],
             ['label' => 'Features', 'route' => 'features'],
         ]);
@@ -149,12 +173,16 @@ it('does not move the last item further down', function (): void {
 
     Livewire::actingAs($user)
         ->test('pages::dashboard.menus')
-        ->set('navItems', [
-            ['label' => 'Features', 'route' => 'features'],
-            ['label' => 'Pricing', 'route' => 'pricing'],
-        ])
-        ->call('moveDown', 1)
-        ->assertSet('navItems', [
+        ->set('menus', [[
+            'slug' => 'main-navigation',
+            'label' => 'Main Navigation',
+            'items' => [
+                ['label' => 'Features', 'route' => 'features'],
+                ['label' => 'Pricing', 'route' => 'pricing'],
+            ],
+        ]])
+        ->call('moveItemDown', 1)
+        ->assertSet('menus.0.items', [
             ['label' => 'Features', 'route' => 'features'],
             ['label' => 'Pricing', 'route' => 'pricing'],
         ]);
@@ -165,12 +193,16 @@ it('removes an item from the list', function (): void {
 
     Livewire::actingAs($user)
         ->test('pages::dashboard.menus')
-        ->set('navItems', [
-            ['label' => 'Features', 'route' => 'features'],
-            ['label' => 'Pricing', 'route' => 'pricing'],
-        ])
+        ->set('menus', [[
+            'slug' => 'main-navigation',
+            'label' => 'Main Navigation',
+            'items' => [
+                ['label' => 'Features', 'route' => 'features'],
+                ['label' => 'Pricing', 'route' => 'pricing'],
+            ],
+        ]])
         ->call('removeItem', 0)
-        ->assertSet('navItems', [
+        ->assertSet('menus.0.items', [
             ['label' => 'Pricing', 'route' => 'pricing'],
         ]);
 });
@@ -180,13 +212,13 @@ it('adds a page route item via the modal', function (): void {
 
     Livewire::actingAs($user)
         ->test('pages::dashboard.menus')
-        ->set('navItems', [])
+        ->set('menus', [['slug' => 'main-navigation', 'label' => 'Main Navigation', 'items' => []]])
         ->set('addType', 'page')
         ->set('newPageRoute', 'about')
         ->set('newPageLabel', 'About Us')
         ->call('addItem')
-        ->assertSet('navItems', [
-            ['label' => 'About Us', 'route' => 'about'],
+        ->assertSet('menus.0.items', [
+            ['label' => 'About Us', 'route' => 'about', 'active' => true],
         ])
         ->assertSet('showAddModal', false);
 });
@@ -196,14 +228,14 @@ it('adds a custom url item with new window flag via the modal', function (): voi
 
     Livewire::actingAs($user)
         ->test('pages::dashboard.menus')
-        ->set('navItems', [])
+        ->set('menus', [['slug' => 'main-navigation', 'label' => 'Main Navigation', 'items' => []]])
         ->set('addType', 'custom')
         ->set('newCustomLabel', 'Our Store')
         ->set('newCustomUrl', 'https://store.example.com')
         ->set('newCustomNewWindow', true)
         ->call('addItem')
-        ->assertSet('navItems', [
-            ['label' => 'Our Store', 'url' => 'https://store.example.com', 'new_window' => true],
+        ->assertSet('menus.0.items', [
+            ['label' => 'Our Store', 'url' => 'https://store.example.com', 'active' => true, 'new_window' => true],
         ])
         ->assertSet('showAddModal', false);
 });
@@ -213,14 +245,14 @@ it('omits new_window key when false for custom url items', function (): void {
 
     Livewire::actingAs($user)
         ->test('pages::dashboard.menus')
-        ->set('navItems', [])
+        ->set('menus', [['slug' => 'main-navigation', 'label' => 'Main Navigation', 'items' => []]])
         ->set('addType', 'custom')
         ->set('newCustomLabel', 'Our Store')
         ->set('newCustomUrl', 'https://store.example.com')
         ->set('newCustomNewWindow', false)
         ->call('addItem')
-        ->assertSet('navItems', [
-            ['label' => 'Our Store', 'url' => 'https://store.example.com'],
+        ->assertSet('menus.0.items', [
+            ['label' => 'Our Store', 'url' => 'https://store.example.com', 'active' => true],
         ]);
 });
 
@@ -280,7 +312,7 @@ it('does not overwrite a manually set page label when route changes', function (
         ->assertSet('newPageLabel', 'Read Our Blog');
 });
 
-it('saves nav changes to the config file and redirects for a fresh load', function (): void {
+it('saves menus changes to the config file', function (): void {
     $configPath = config_path('navigation.php');
     $originalContent = file_get_contents($configPath);
 
@@ -294,29 +326,20 @@ it('saves nav changes to the config file and redirects for a fresh load', functi
     try {
         Livewire::actingAs($user)
             ->test('pages::dashboard.menus')
-            ->set('navItems', [['label' => 'Test Page', 'route' => 'about']])
-            ->call('save')
-            ->assertRedirect(route('dashboard.menus'));
-
-        expect(config('navigation.saas.nav'))->toBe([
-            ['label' => 'Test Page', 'route' => 'about'],
-        ]);
+            ->set('menus', [[
+                'slug' => 'main-navigation',
+                'label' => 'Main Navigation',
+                'items' => [['label' => 'Test Page', 'route' => 'about', 'active' => true]],
+            ]])
+            ->call('save');
 
         $written = require $configPath;
-        expect($written['saas']['nav'])->toBe([
-            ['label' => 'Test Page', 'route' => 'about'],
+        $mainNav = collect($written['saas']['menus'])->firstWhere('slug', 'main-navigation');
+
+        expect($mainNav['items'])->toBe([
+            ['label' => 'Test Page', 'route' => 'about', 'active' => true],
         ]);
     } finally {
         file_put_contents($configPath, $originalContent);
     }
-});
-
-it('sets justSaved to true on mount when the session flash is present', function (): void {
-    session()->put('menus.saved', true);
-
-    $user = User::factory()->create();
-
-    Livewire::actingAs($user)
-        ->test('pages::dashboard.menus')
-        ->assertSet('justSaved', true);
 });

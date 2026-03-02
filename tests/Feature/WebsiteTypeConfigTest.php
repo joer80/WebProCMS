@@ -14,19 +14,26 @@ it('loads navigation config for each valid type', function (string $type): void 
     $navConfig = config("navigation.{$type}");
 
     expect($navConfig)->toBeArray()
-        ->toHaveKey('nav')
+        ->toHaveKey('menus')
         ->toHaveKey('show_auth_links')
-        ->toHaveKey('footer_company');
+        ->toHaveKey('footer_slugs');
 
-    expect($navConfig['nav'])->toBeArray()->not->toBeEmpty();
-    expect($navConfig['footer_company'])->toBeArray()->not->toBeEmpty();
+    expect($navConfig['menus'])->toBeArray()->not->toBeEmpty();
+
+    $mainNav = collect($navConfig['menus'])->firstWhere('slug', 'main-navigation');
+    expect($mainNav)->toBeArray()->toHaveKey('items');
+    expect($mainNav['items'])->toBeArray()->not->toBeEmpty();
 })->with(['saas', 'service', 'ecommerce', 'law', 'nonprofit', 'healthcare', 'custom']);
 
 it('has route defined for every nav item in every type', function (string $type): void {
     $navConfig = config("navigation.{$type}");
 
-    foreach ($navConfig['nav'] as $item) {
-        expect(route($item['route']))->toBeString()->not->toBeEmpty();
+    foreach ($navConfig['menus'] as $menu) {
+        foreach ($menu['items'] as $item) {
+            if (isset($item['route']) && ($item['active'] ?? true)) {
+                expect(route($item['route']))->toBeString()->not->toBeEmpty();
+            }
+        }
     }
 })->with(['saas', 'service', 'ecommerce', 'law', 'nonprofit', 'healthcare', 'custom']);
 
