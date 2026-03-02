@@ -283,3 +283,136 @@ protected function isAccessible(User $user, ?string $path = null): bool
 - IMPORTANT: Activate `developing-with-fortify` skill when working with Fortify authentication features.
 
 </laravel-boost-guidelines>
+
+## Project Overview
+
+- Laravel 12 / Livewire 4 Volt / Flux UI Free / Tailwind v4
+- Served by Laravel Herd at `https://webprocms.test`
+- `config/navigation.php` — per-website-type nav/footer config, written at runtime
+- `routes/web.php` — also written at runtime when pages are created/cloned
+- `config('features.website_type')` — current site type (e.g. `saas`) from `.env WEBSITE_TYPE`
+
+## Footer Requirement
+
+Every footer must include "Powered by WebProCMS" linking to `https://www.webprocms.com`.
+Applies to: `resources/design-library/rows/footer/`, `resources/views/layouts/public.blade.php`, any new footer section.
+
+## CSS Bundles
+
+Three separate bundles — do NOT cross-contaminate sources:
+
+- `resources/css/app.css` — dashboard/admin UI; includes Flux CSS, sources all of `../views`, vendor Flux stubs
+- `resources/css/public.css` — public-facing site; sources page views and components only; no Flux, no design library
+- `resources/css/editor.css` — page editor; includes Flux CSS, sources design library (`../design-library/**/*.blade.php`) and vendor Flux stubs; design library belongs here because the editor is what inserts rows into pages
+
+## CSS Theme Tokens
+
+Tokens defined in `resources/css/app.css` `@theme {}`. When adding new tokens, also update `resources/js/tw-autocomplete.js`.
+Current tokens: `primary`, `font-heading`, `py-section`, `rounded-card`, `shadow-card`, `accent`.
+
+## Design Library
+
+Location: `resources/design-library/rows/[category]/[name].blade.php`
+
+### Required metadata block
+
+```blade
+{{--
+@name Category - Name
+@description One-line description.
+@sort 10
+--}}
+```
+
+### content() helper
+
+```php
+content(string $slug, string $key, string $default, string $type = 'text', string $group = ''): string
+```
+
+- `__SLUG__` is replaced at insert time with the row's unique slug
+- Field order in editor sidebar = document order of `content()` calls
+- Without a group arg → field falls into `'other'` (no headers rendered when only one group)
+
+### Content Types
+
+| Type | Editor UI | Notes |
+|------|-----------|-------|
+| `text` | Single-line input | Default |
+| `richtext` | Multi-line textarea | HTML supported |
+| `toggle` | Switch | Default `'1'` = shown, `''` = hidden |
+| `image` | Upload / media picker | Returns Storage URL |
+| `classes` | Monospace textarea + TW autocomplete | Falls back to default if empty |
+| `grid` | Repeater (add/edit/remove items) | JSON-encoded array; item keys inferred from first item |
+
+Standard groups: `'content'`, `'headline'`, `'subheadline'`, `'primary button'`, `'secondary button'`, `'media'`, `'contact details'`, `'section'`
+
+### Section / Container Pattern (required on every row)
+
+```blade
+@php $sectionClasses = content('__SLUG__', 'section_classes', 'py-section px-6 bg-white dark:bg-zinc-900', 'classes', 'section'); @endphp
+<section class="{{ $sectionClasses }}">
+    @php $containerClasses = content('__SLUG__', 'container_classes', 'max-w-6xl mx-auto', 'classes', 'section'); @endphp
+    <div class="{{ $containerClasses }}">
+```
+
+### ALL classes must use content()
+
+**Never use hardcoded class strings directly on elements.** Every element's classes must be editable via `content()` with type `classes`. This applies to cards, wrappers, icons, headings, paragraphs, grids, buttons, etc.
+
+### Grid rows
+
+- JSON default must be an **inline string literal** in the `content()` call (not a PHP variable) — the parseContentFields regex requires it
+- Item keys inferred from keys of first item; new items use those same keys
+- Default JSON must use only double quotes
+
+### Heroicons in grid rows
+
+Icons stored as `"bolt"` (outline) or `"bolt:solid"` (solid). Always parse with:
+
+```php
+[$iconName, $iconVariant] = array_pad(explode(':', $item['icon'] ?? 'bolt', 2), 2, 'outline');
+```
+
+Render with `<x-heroicon name="{{ $iconName }}" variant="{{ $iconVariant }}" class="size-8" />`.
+
+`<x-heroicon>` is **public side only** — it is NOT available via `<flux:icon>` on the public layout (Flux only works on the dashboard side). Use `<x-heroicon>` in all design library row files.
+
+### Other notes
+
+- Template files only affect newly inserted rows. Existing page blade files have row code copied inline at insert time — update them separately if needed.
+- Hoist any value used inside an `@if` or HTML attribute with `@php $var = content(...)` to control editor sidebar order.
+- `section_classes` and `container_classes` also appear in the inline design panel on the row card (paintbrush button).
+- The editor auto-promotes a `show_X` toggle to the group header switch when every other field in the group contains the prefix `X` or ends with `_new_tab`.
+
+## Key Lessons
+
+### Vite HMR Reloads on Runtime-Written Files
+
+`refresh: true` watches `config/**` by default. Runtime writes to config files trigger full page reload, wiping Alpine state. Fix: add to `watch.ignored` in `vite.config.js`. Already ignored: `config/navigation.php`, `routes/web.php`, `resources/views/pages/⚡*.blade.php`.
+
+### flux:button `:class` vs `x-bind:class`
+
+Flux components process `:class` as a PHP prop (evaluated server-side). Use `x-bind:class` to pass Alpine expressions through to the DOM.
+
+### Sidebar Nav (flux:sidebar)
+
+File: `resources/views/layouts/app/sidebar.blade.php`
+
+- Never nest `flux:sidebar.group` inside another — Blaze reuses the same PHP variable, causing outer group to render with wrong props.
+- Expandable groups must be siblings of (not children of) the Platform group.
+
+### Livewire File Uploads: Two Size Limits
+
+1. Livewire temp upload endpoint — `config/livewire.php` `temporary_file_upload.rules` (returns 422 if exceeded)
+2. Component-level `$this->validate()` — runs after temp upload
+
+Both must match. Default temp limit is 12MB.
+
+### Infrastructure Data in Migrations
+
+Seeders are for demo data only. Data every install must have belongs in the migration using `DB::table()->insert()`.
+
+### Bulk Design Library Row Edits
+
+When asked to update many design library rows at once (e.g. "make all classes editable"), **skip directly to a single Task subagent call** (subagent_type: `general-purpose`). Do NOT attempt Read → Write/Edit in the main context — context compression causes the "File has not been read yet" error on Write/Edit even after successful reads. The subagent has fresh context, reads and writes files without that issue, and handles all files in one shot. Provide the full list of files and required changes in the prompt.
