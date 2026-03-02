@@ -126,3 +126,46 @@ PHP;
     expect($result)->not->toContain('ROW:php:start:hero-abc123')
         ->and($result)->not->toContain('$heroTitle');
 });
+
+it('parses a row with the new templateName:randomId slug format', function (): void {
+    $file = tempnam(sys_get_temp_dir(), 'volttest_').'.blade.php';
+    file_put_contents($file, <<<'VOLT'
+<?php
+new class extends Component { }; ?>
+
+{{-- ROW:start:features-grid:Z7Jgur --}}
+<section class="py-20"><h1>Features</h1></section>
+{{-- ROW:end:features-grid:Z7Jgur --}}
+VOLT);
+
+    $result = $this->service->parseFile($file);
+
+    expect($result['rows'])->toHaveCount(1)
+        ->and($result['rows'][0]['slug'])->toBe('features-grid:Z7Jgur')
+        ->and($result['rows'][0]['blade'])->toContain('<section class="py-20">');
+
+    unlink($file);
+});
+
+it('parses both old and new slug formats in the same file', function (): void {
+    $file = tempnam(sys_get_temp_dir(), 'volttest_').'.blade.php';
+    file_put_contents($file, <<<'VOLT'
+<?php
+new class extends Component { }; ?>
+
+{{-- ROW:start:hero-aaa111 --}}
+<section>Old format</section>
+{{-- ROW:end:hero-aaa111 --}}
+{{-- ROW:start:features-grid:Z7Jgur --}}
+<section>New format</section>
+{{-- ROW:end:features-grid:Z7Jgur --}}
+VOLT);
+
+    $result = $this->service->parseFile($file);
+
+    expect($result['rows'])->toHaveCount(2)
+        ->and($result['rows'][0]['slug'])->toBe('hero-aaa111')
+        ->and($result['rows'][1]['slug'])->toBe('features-grid:Z7Jgur');
+
+    unlink($file);
+});

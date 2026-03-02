@@ -3,23 +3,23 @@
 @description Three-tier pricing cards with features list and CTA buttons.
 @sort 10
 --}}
-@php $sectionClasses = content('__SLUG__', 'section_classes', 'py-section px-6 bg-zinc-50 dark:bg-zinc-950', 'classes', 'section'); @endphp
+@php $sectionClasses = content('__SLUG__', 'section_classes', 'py-section px-6 bg-zinc-50 dark:bg-zinc-950'); @endphp
 <section class="{{ $sectionClasses }}">
-    @php $containerClasses = content('__SLUG__', 'container_classes', 'max-w-5xl mx-auto', 'classes', 'section'); @endphp
-    <div class="{{ $containerClasses }}">
-        @php $headerWrapperClasses = content('__SLUG__', 'header_wrapper_classes', 'text-center mb-16', 'classes', 'content'); @endphp
-        @php $pricingGridClasses = content('__SLUG__', 'pricing_grid_classes', 'grid md:grid-cols-3 gap-8', 'classes', 'content'); @endphp
+    @php $sectionContainerClasses = content('__SLUG__', 'section_container_classes', 'max-w-5xl mx-auto'); @endphp
+    <div class="{{ $sectionContainerClasses }}">
+        @php $headerWrapperClasses = content('__SLUG__', 'header_wrapper_classes', 'text-center mb-16'); @endphp
+        @php $pricingGridClasses = content('__SLUG__', 'pricing_grid_classes', 'grid md:grid-cols-3 gap-8'); @endphp
         <div class="{{ $headerWrapperClasses }}">
-            @php $showHeadline = content('__SLUG__', 'show_headline', '1', 'toggle', 'headline'); @endphp
-            @if($showHeadline)
-            @php $headlineText = content('__SLUG__', 'headline', 'Simple, Transparent Pricing', 'text', 'headline'); @endphp
-            @php $headlineClasses = content('__SLUG__', 'headline_classes', 'font-heading text-4xl font-bold text-zinc-900 dark:text-white', 'classes', 'headline'); @endphp
+            @php $toggleHeadline = content('__SLUG__', 'toggle_headline', '1'); @endphp
+            @if($toggleHeadline)
+            @php $headlineText = content('__SLUG__', 'headline', 'Simple, Transparent Pricing'); @endphp
+            @php $headlineClasses = content('__SLUG__', 'headline_classes', 'font-heading text-4xl font-bold text-zinc-900 dark:text-white'); @endphp
             <h2 class="{{ $headlineClasses }}">{{ $headlineText }}</h2>
             @endif
-            @php $showSubheadline = content('__SLUG__', 'show_subheadline', '1', 'toggle', 'subheadline'); @endphp
-            @if($showSubheadline)
-            @php $subheadlineText = content('__SLUG__', 'subheadline', 'No hidden fees. Cancel anytime.', 'text', 'subheadline'); @endphp
-            @php $subheadlineClasses = content('__SLUG__', 'subheadline_classes', 'mt-4 text-lg text-zinc-500 dark:text-zinc-400', 'classes', 'subheadline'); @endphp
+            @php $toggleSubheadline = content('__SLUG__', 'toggle_subheadline', '1'); @endphp
+            @if($toggleSubheadline)
+            @php $subheadlineText = content('__SLUG__', 'subheadline', 'No hidden fees. Cancel anytime.'); @endphp
+            @php $subheadlineClasses = content('__SLUG__', 'subheadline_classes', 'mt-4 text-lg text-zinc-500 dark:text-zinc-400'); @endphp
             <p class="{{ $subheadlineClasses }}">{{ $subheadlineText }}</p>
             @endif
         </div>

@@ -3,32 +3,32 @@
 @description Three-column blog post grid with featured image, category, title, and date.
 @sort 10
 --}}
-@php $sectionClasses = content('__SLUG__', 'section_classes', 'py-section px-6 bg-white dark:bg-zinc-900', 'classes', 'section'); @endphp
+@php $sectionClasses = content('__SLUG__', 'section_classes', 'py-section px-6 bg-white dark:bg-zinc-900'); @endphp
 <section class="{{ $sectionClasses }}">
-    @php $containerClasses = content('__SLUG__', 'container_classes', 'max-w-6xl mx-auto', 'classes', 'section'); @endphp
-    <div class="{{ $containerClasses }}">
-        @php $headerWrapperClasses = content('__SLUG__', 'header_wrapper_classes', 'flex items-center justify-between mb-12', 'classes', 'content'); @endphp
-        @php $viewAllClasses = content('__SLUG__', 'view_all_classes', 'text-primary font-semibold hover:text-primary/80 transition-colors text-sm', 'classes', 'content'); @endphp
-        @php $postsGridClasses = content('__SLUG__', 'posts_grid_classes', 'grid md:grid-cols-3 gap-8', 'classes', 'content'); @endphp
-        @php $articleClasses = content('__SLUG__', 'article_classes', 'group', 'classes', 'content'); @endphp
-        @php $imageWrapperClasses = content('__SLUG__', 'image_wrapper_classes', 'rounded-card overflow-hidden bg-zinc-100 dark:bg-zinc-800 aspect-video mb-4', 'classes', 'content'); @endphp
-        @php $imageClasses = content('__SLUG__', 'image_classes', 'w-full h-full object-cover group-hover:scale-105 transition-transform duration-300', 'classes', 'content'); @endphp
-        @php $categoryClasses = content('__SLUG__', 'category_classes', 'text-xs font-semibold text-primary uppercase tracking-wider', 'classes', 'content'); @endphp
-        @php $postTitleClasses = content('__SLUG__', 'post_title_classes', 'mt-2 text-lg font-semibold text-zinc-900 dark:text-white group-hover:text-primary transition-colors line-clamp-2', 'classes', 'content'); @endphp
-        @php $postExcerptClasses = content('__SLUG__', 'post_excerpt_classes', 'mt-2 text-sm text-zinc-500 dark:text-zinc-400 line-clamp-2', 'classes', 'content'); @endphp
-        @php $postDateClasses = content('__SLUG__', 'post_date_classes', 'mt-3 text-xs text-zinc-400 dark:text-zinc-500', 'classes', 'content'); @endphp
+    @php $sectionContainerClasses = content('__SLUG__', 'section_container_classes', 'max-w-6xl mx-auto'); @endphp
+    <div class="{{ $sectionContainerClasses }}">
+        @php $headerWrapperClasses = content('__SLUG__', 'header_wrapper_classes', 'flex items-center justify-between mb-12'); @endphp
+        @php $viewAllClasses = content('__SLUG__', 'view_all_classes', 'text-primary font-semibold hover:text-primary/80 transition-colors text-sm'); @endphp
+        @php $postsGridClasses = content('__SLUG__', 'posts_grid_classes', 'grid md:grid-cols-3 gap-8'); @endphp
+        @php $articleClasses = content('__SLUG__', 'article_classes', 'group'); @endphp
+        @php $imageWrapperClasses = content('__SLUG__', 'image_wrapper_classes', 'rounded-card overflow-hidden bg-zinc-100 dark:bg-zinc-800 aspect-video mb-4'); @endphp
+        @php $imageClasses = content('__SLUG__', 'image_classes', 'w-full h-full object-cover group-hover:scale-105 transition-transform duration-300'); @endphp
+        @php $categoryClasses = content('__SLUG__', 'category_classes', 'text-xs font-semibold text-primary uppercase tracking-wider'); @endphp
+        @php $postTitleClasses = content('__SLUG__', 'post_title_classes', 'mt-2 text-lg font-semibold text-zinc-900 dark:text-white group-hover:text-primary transition-colors line-clamp-2'); @endphp
+        @php $postExcerptClasses = content('__SLUG__', 'post_excerpt_classes', 'mt-2 text-sm text-zinc-500 dark:text-zinc-400 line-clamp-2'); @endphp
+        @php $postDateClasses = content('__SLUG__', 'post_date_classes', 'mt-3 text-xs text-zinc-400 dark:text-zinc-500'); @endphp
         <div class="{{ $headerWrapperClasses }}">
             <div>
-                @php $showHeadline = content('__SLUG__', 'show_headline', '1', 'toggle', 'headline'); @endphp
-                @if($showHeadline)
-                @php $headlineText = content('__SLUG__', 'headline', 'Latest Articles', 'text', 'headline'); @endphp
-                @php $headlineClasses = content('__SLUG__', 'headline_classes', 'font-heading text-4xl font-bold text-zinc-900 dark:text-white', 'classes', 'headline'); @endphp
+                @php $toggleHeadline = content('__SLUG__', 'toggle_headline', '1'); @endphp
+                @if($toggleHeadline)
+                @php $headlineText = content('__SLUG__', 'headline', 'Latest Articles'); @endphp
+                @php $headlineClasses = content('__SLUG__', 'headline_classes', 'font-heading text-4xl font-bold text-zinc-900 dark:text-white'); @endphp
                 <h2 class="{{ $headlineClasses }}">{{ $headlineText }}</h2>
                 @endif
-                @php $showSubheadline = content('__SLUG__', 'show_subheadline', '1', 'toggle', 'subheadline'); @endphp
-                @if($showSubheadline)
-                @php $subheadlineText = content('__SLUG__', 'subheadline', 'Insights, tutorials, and company news.', 'text', 'subheadline'); @endphp
-                @php $subheadlineClasses = content('__SLUG__', 'subheadline_classes', 'mt-2 text-zinc-500 dark:text-zinc-400', 'classes', 'subheadline'); @endphp
+                @php $toggleSubheadline = content('__SLUG__', 'toggle_subheadline', '1'); @endphp
+                @if($toggleSubheadline)
+                @php $subheadlineText = content('__SLUG__', 'subheadline', 'Insights, tutorials, and company news.'); @endphp
+                @php $subheadlineClasses = content('__SLUG__', 'subheadline_classes', 'mt-2 text-zinc-500 dark:text-zinc-400'); @endphp
                 <p class="{{ $subheadlineClasses }}">{{ $subheadlineText }}</p>
                 @endif
             </div>

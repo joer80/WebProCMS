@@ -2,8 +2,10 @@
 
 use App\Enums\Role;
 use App\Models\ContentOverride;
+use App\Models\DesignRow;
 use App\Models\User;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Livewire\Livewire;
 
 beforeEach(function (): void {
@@ -11,9 +13,17 @@ beforeEach(function (): void {
 
     $this->user = User::factory()->withRole(Role::Manager)->create();
 
-    $this->slug = 'test-img-'.uniqid();
-    $this->tempRelativePath = 'pages/⚡'.$this->slug.'.blade.php';
+    $this->templateName = 'test-img-'.uniqid();
+    $this->rowSlug = $this->templateName.':'.Str::random(6);
+    $this->tempRelativePath = 'pages/⚡'.$this->templateName.'.blade.php';
     $this->tempFullPath = resource_path('views/'.$this->tempRelativePath);
+
+    DesignRow::factory()->create([
+        'source_file' => 'rows/test/'.$this->templateName.'.blade.php',
+        'schema_fields' => [
+            ['key' => 'bg_image', 'type' => 'image', 'group' => 'media', 'default' => '', 'label' => 'Bg Image'],
+        ],
+    ]);
 
     file_put_contents($this->tempFullPath, <<<BLADE
 <?php
@@ -25,9 +35,9 @@ use Livewire\Component;
 new #[Layout('layouts.public')] #[Title('Test Page')] class extends Component {}; ?>
 
 <div>
-{{-- ROW:start:{$this->slug} --}}
-<section>{{ content('{$this->slug}', 'bg_image', '', 'image') }}</section>
-{{-- ROW:end:{$this->slug} --}}
+{{-- ROW:start:{$this->rowSlug} --}}
+<section>{{ content('{$this->rowSlug}', 'bg_image', '') }}</section>
+{{-- ROW:end:{$this->rowSlug} --}}
 </div>
 BLADE);
 });
@@ -46,7 +56,7 @@ afterEach(function (): void {
 
 it('stores an empty draft in the session when removeImage is called', function (): void {
     ContentOverride::create([
-        'row_slug' => $this->slug,
+        'row_slug' => $this->rowSlug,
         'key' => 'bg_image',
         'type' => 'image',
         'value' => 'content-overrides/old.jpg',
@@ -59,13 +69,13 @@ it('stores an empty draft in the session when removeImage is called', function (
         ->call('removeImage', 'bg_image');
 
     $drafts = session('editor_draft_overrides');
-    expect($drafts)->toHaveKey("{$this->slug}:bg_image")
-        ->and($drafts["{$this->slug}:bg_image"])->toBe(['type' => 'image', 'value' => '']);
+    expect($drafts)->toHaveKey("{$this->rowSlug}:bg_image")
+        ->and($drafts["{$this->rowSlug}:bg_image"])->toBe(['type' => 'image', 'value' => '']);
 });
 
 it('deletes the ContentOverride record when saveFile is called after removeImage', function (): void {
     ContentOverride::create([
-        'row_slug' => $this->slug,
+        'row_slug' => $this->rowSlug,
         'key' => 'bg_image',
         'type' => 'image',
         'value' => 'content-overrides/old.jpg',
@@ -77,14 +87,14 @@ it('deletes the ContentOverride record when saveFile is called after removeImage
         ->call('removeImage', 'bg_image')
         ->call('saveFile');
 
-    expect(ContentOverride::where('row_slug', $this->slug)->where('key', 'bg_image')->exists())->toBeFalse();
+    expect(ContentOverride::where('row_slug', $this->rowSlug)->where('key', 'bg_image')->exists())->toBeFalse();
 });
 
 it('deletes the file from disk when a page-specific upload is removed', function (): void {
     Storage::disk('public')->put('content-overrides/old.jpg', 'fake-image');
 
     ContentOverride::create([
-        'row_slug' => $this->slug,
+        'row_slug' => $this->rowSlug,
         'key' => 'bg_image',
         'type' => 'image',
         'value' => 'content-overrides/old.jpg',
@@ -103,7 +113,7 @@ it('deletes the old page-specific upload from disk when replaced with a new imag
     Storage::disk('public')->put('content-overrides/old.jpg', 'fake-image');
 
     ContentOverride::create([
-        'row_slug' => $this->slug,
+        'row_slug' => $this->rowSlug,
         'key' => 'bg_image',
         'type' => 'image',
         'value' => 'content-overrides/old.jpg',
@@ -122,7 +132,7 @@ it('does not delete the file from disk when a media library image is removed fro
     Storage::disk('public')->put('logos/logo.svg', 'fake-svg');
 
     ContentOverride::create([
-        'row_slug' => $this->slug,
+        'row_slug' => $this->rowSlug,
         'key' => 'bg_image',
         'type' => 'image',
         'value' => 'logos/logo.svg',

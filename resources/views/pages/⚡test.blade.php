@@ -5,51 +5,54 @@ use Livewire\Attributes\Title;
 use Livewire\Component;
 
 new #[Layout('layouts.public')] #[Title('Test Page')] class extends Component {}; ?>
-<div>{{-- ROW:start:hero-0PcmrC --}}
-@php $sectionClasses = content('hero-0PcmrC', 'section_classes', 'py-section px-6 bg-white dark:bg-zinc-900', 'classes', 'section'); @endphp
+<div>{{-- ROW:start:hero-split:oE5Mc1 --}}
+@php $sectionClasses = content('hero-split:oE5Mc1', 'section_classes', 'py-section px-6 bg-white dark:bg-zinc-900'); @endphp
 <section class="{{ $sectionClasses }}">
-    @php $containerClasses = content('hero-0PcmrC', 'container_classes', 'max-w-6xl mx-auto grid md:grid-cols-2 gap-12 items-center', 'classes', 'section'); @endphp
-    <div class="{{ $containerClasses }}">
+    @php $sectionContainerClasses = content('hero-split:oE5Mc1', 'section_container_classes', 'max-w-6xl mx-auto grid md:grid-cols-2 gap-12 items-center'); @endphp
+    <div class="{{ $sectionContainerClasses }}">
         <div>
-            @php $showHeadline = content('hero-0PcmrC', 'show_headline', '1', 'toggle', 'headline'); @endphp
-            @if($showHeadline)
-            @php $headlineText = content('hero-0PcmrC', 'headline', 'Build Something Amazing', 'text', 'headline'); @endphp
-            @php $headlineClasses = content('hero-0PcmrC', 'headline_classes', 'font-heading text-5xl font-bold text-zinc-900 dark:text-white leading-tight', 'classes', 'headline'); @endphp
+            @php $toggleHeadline = content('hero-split:oE5Mc1', 'toggle_headline', '1'); @endphp
+            @if($toggleHeadline)
+            @php $headlineText = content('hero-split:oE5Mc1', 'headline', 'Build Something Amazing'); @endphp
+            @php $headlineClasses = content('hero-split:oE5Mc1', 'headline_classes', 'font-heading text-5xl font-bold text-zinc-900 dark:text-white leading-tight'); @endphp
             <h1 class="{{ $headlineClasses }}">{{ $headlineText }}</h1>
             @endif
-            @php $showSubheadline = content('hero-0PcmrC', 'show_subheadline', '1', 'toggle', 'subheadline'); @endphp
-            @if($showSubheadline)
-            @php $subheadlineText = content('hero-0PcmrC', 'subheadline', 'Describe your product or service here. Keep it concise and focused on the value you deliver to customers.', 'text', 'subheadline'); @endphp
-            @php $subheadlineClasses = content('hero-0PcmrC', 'subheadline_classes', 'mt-6 text-lg text-zinc-500 dark:text-zinc-400', 'classes', 'subheadline'); @endphp
+            @php $toggleSubheadline = content('hero-split:oE5Mc1', 'toggle_subheadline', '1'); @endphp
+            @if($toggleSubheadline)
+            @php $subheadlineText = content('hero-split:oE5Mc1', 'subheadline', 'Describe your product or service here. Keep it concise and focused on the value you deliver to customers.'); @endphp
+            @php $subheadlineClasses = content('hero-split:oE5Mc1', 'subheadline_classes', 'mt-6 text-lg text-zinc-500 dark:text-zinc-400'); @endphp
             <p class="{{ $subheadlineClasses }}">{{ $subheadlineText }}</p>
             @endif
-            <div class="mt-8 flex flex-wrap gap-4">
-                @php $showPrimaryCta = content('hero-0PcmrC', 'show_primary_cta', '1', 'toggle', 'primary button'); @endphp
-                @php $primaryCtaLabel = content('hero-0PcmrC', 'primary_cta', 'Start Free Trial', 'text', 'primary button'); @endphp
-                @php $primaryCtaClasses = content('hero-0PcmrC', 'primary_cta_classes', 'px-6 py-3 bg-primary text-white font-semibold rounded-lg hover:bg-primary/90 transition-colors', 'classes', 'primary button'); @endphp
-                @if($showPrimaryCta)
+            @php $buttonsWrapperClasses = content('hero-split:oE5Mc1', 'buttons_wrapper_classes', 'mt-8 flex flex-wrap gap-4'); @endphp
+            <div class="{{ $buttonsWrapperClasses }}">
+                @php $togglePrimaryCta = content('hero-split:oE5Mc1', 'toggle_primary_cta', '1'); @endphp
+                @php $primaryCtaLabel = content('hero-split:oE5Mc1', 'primary_cta', 'Start Free Trial'); @endphp
+                @php $primaryCtaClasses = content('hero-split:oE5Mc1', 'primary_cta_classes', 'px-6 py-3 bg-primary text-white font-semibold rounded-lg hover:bg-primary/90 transition-colors'); @endphp
+                @if($togglePrimaryCta)
                 <a
-                    href="{{ content('hero-0PcmrC', 'primary_cta_url', '#', 'text', 'primary button') }}"
-                    @if(content('hero-0PcmrC', 'primary_cta_new_tab', '', 'toggle', 'primary button')) target="_blank" rel="noopener noreferrer" @endif
+                    href="{{ content('hero-split:oE5Mc1', 'primary_cta_url', '#') }}"
+                    @if(content('hero-split:oE5Mc1', 'primary_cta_new_tab', '')) target="_blank" rel="noopener noreferrer" @endif
                     class="{{ $primaryCtaClasses }}"
                 >{{ $primaryCtaLabel }}</a>
                 @endif
-                @if(content('hero-0PcmrC', 'show_secondary_cta', '1', 'toggle', 'secondary button'))
-                @php $secondaryCtaLabel = content('hero-0PcmrC', 'secondary_cta', 'Watch Demo →', 'text', 'secondary button'); @endphp
-                @php $secondaryCtaClasses = content('hero-0PcmrC', 'secondary_cta_classes', 'px-6 py-3 text-zinc-600 dark:text-zinc-300 font-semibold hover:text-zinc-900 dark:hover:text-white transition-colors', 'classes', 'secondary button'); @endphp
+                @if(content('hero-split:oE5Mc1', 'toggle_secondary_cta', '1'))
+                @php $secondaryCtaLabel = content('hero-split:oE5Mc1', 'secondary_cta', 'Watch Demo →'); @endphp
+                @php $secondaryCtaClasses = content('hero-split:oE5Mc1', 'secondary_cta_classes', 'px-6 py-3 text-zinc-600 dark:text-zinc-300 font-semibold hover:text-zinc-900 dark:hover:text-white transition-colors'); @endphp
                 <a
-                    href="{{ content('hero-0PcmrC', 'secondary_cta_url', '#', 'text', 'secondary button') }}"
-                    @if(content('hero-0PcmrC', 'secondary_cta_new_tab', '', 'toggle', 'secondary button')) target="_blank" rel="noopener noreferrer" @endif
+                    href="{{ content('hero-split:oE5Mc1', 'secondary_cta_url', '#') }}"
+                    @if(content('hero-split:oE5Mc1', 'secondary_cta_new_tab', '')) target="_blank" rel="noopener noreferrer" @endif
                     class="{{ $secondaryCtaClasses }}"
                 >{{ $secondaryCtaLabel }}</a>
                 @endif
             </div>
         </div>
-        @if(content('hero-0PcmrC', 'show_image', '1', 'toggle', 'media'))
-        <div class="rounded-card overflow-hidden bg-zinc-100 dark:bg-zinc-800 aspect-video flex items-center justify-center">
-            @php $heroImage = content('hero-0PcmrC', 'image', '', 'image', 'media'); @endphp
+        @php $imageWrapperClasses = content('hero-split:oE5Mc1', 'image_wrapper_classes', 'rounded-card overflow-hidden bg-zinc-100 dark:bg-zinc-800 aspect-video flex items-center justify-center'); @endphp
+        @php $imageClasses = content('hero-split:oE5Mc1', 'image_classes', 'w-full h-full object-cover'); @endphp
+        @if(content('hero-split:oE5Mc1', 'toggle_image', '1'))
+        <div class="{{ $imageWrapperClasses }}">
+            @php $heroImage = content('hero-split:oE5Mc1', 'image', ''); @endphp
             @if ($heroImage)
-                <img src="{{ $heroImage }}" alt="{{ content('hero-0PcmrC', 'image_alt', '', 'text', 'media') }}" class="w-full h-full object-cover">
+                <img src="{{ $heroImage }}" alt="{{ content('hero-split:oE5Mc1', 'image_alt', '') }}" class="{{ $imageClasses }}">
             @else
                 <span class="text-zinc-400 dark:text-zinc-500 text-sm">Image / Video</span>
             @endif
@@ -57,39 +60,39 @@ new #[Layout('layouts.public')] #[Title('Test Page')] class extends Component {}
         @endif
     </div>
 </section>
-{{-- ROW:end:hero-0PcmrC --}}
+{{-- ROW:end:hero-split:oE5Mc1 --}}
 
-{{-- ROW:start:features-Z7Jgur --}}
-@php $sectionClasses = content('features-Z7Jgur', 'section_classes', 'py-section px-6 bg-white dark:bg-zinc-900', 'classes', 'section'); @endphp
+{{-- ROW:start:features-grid:yBNWwy --}}
+@php $sectionClasses = content('features-grid:yBNWwy', 'section_classes', 'py-section px-6 bg-white dark:bg-zinc-900'); @endphp
 <section class="{{ $sectionClasses }}">
-    @php $containerClasses = content('features-Z7Jgur', 'container_classes', 'max-w-6xl mx-auto', 'classes', 'section'); @endphp
-    <div class="{{ $containerClasses }}">
+    @php $sectionContainerClasses = content('features-grid:yBNWwy', 'section_container_classes', 'max-w-6xl mx-auto'); @endphp
+    <div class="{{ $sectionContainerClasses }}">
         <div class="text-center mb-16">
-            @php $showHeadline = content('features-Z7Jgur', 'show_headline', '1', 'toggle', 'headline'); @endphp
-            @if($showHeadline)
-            @php $headlineText = content('features-Z7Jgur', 'headline', 'Everything You Need', 'text', 'headline'); @endphp
-            @php $headlineClasses = content('features-Z7Jgur', 'headline_classes', 'font-heading text-4xl font-bold text-zinc-900 dark:text-white', 'classes', 'headline'); @endphp
+            @php $toggleHeadline = content('features-grid:yBNWwy', 'toggle_headline', '1'); @endphp
+            @if($toggleHeadline)
+            @php $headlineText = content('features-grid:yBNWwy', 'headline', 'Everything You Need'); @endphp
+            @php $headlineClasses = content('features-grid:yBNWwy', 'headline_classes', 'font-heading text-4xl font-bold text-zinc-900 dark:text-white'); @endphp
             <h2 class="{{ $headlineClasses }}">{{ $headlineText }}</h2>
             @endif
-            @php $showSubheadline = content('features-Z7Jgur', 'show_subheadline', '1', 'toggle', 'subheadline'); @endphp
-            @if($showSubheadline)
-            @php $subheadlineText = content('features-Z7Jgur', 'subheadline', 'Powerful features designed to help you succeed.', 'text', 'subheadline'); @endphp
-            @php $subheadlineClasses = content('features-Z7Jgur', 'subheadline_classes', 'mt-4 text-lg text-zinc-500 dark:text-zinc-400', 'classes', 'subheadline'); @endphp
+            @php $toggleSubheadline = content('features-grid:yBNWwy', 'toggle_subheadline', '1'); @endphp
+            @if($toggleSubheadline)
+            @php $subheadlineText = content('features-grid:yBNWwy', 'subheadline', 'Powerful features designed to help you succeed.'); @endphp
+            @php $subheadlineClasses = content('features-grid:yBNWwy', 'subheadline_classes', 'mt-4 text-lg text-zinc-500 dark:text-zinc-400'); @endphp
             <p class="{{ $subheadlineClasses }}">{{ $subheadlineText }}</p>
             @endif
         </div>
-        @php $showFeatures = content('features-Z7Jgur', 'show_features', '1', 'toggle', 'grid'); @endphp
+        @php $toggleFeatures = content('features-grid:yBNWwy', 'toggle_features', '1'); @endphp
         @php
-            $featuresJson = content('features-Z7Jgur', 'features', '[{"icon":"bolt","title":"Lightning Fast","desc":"Optimized for speed at every level of the stack."},{"icon":"shield-check","title":"Secure by Default","desc":"Enterprise-grade security built into every feature."},{"icon":"chart-bar","title":"Detailed Analytics","desc":"Gain insight into every aspect of your business."},{"icon":"adjustments-horizontal","title":"Easy to Customize","desc":"Tailor the platform to your exact requirements."},{"icon":"globe-alt","title":"Global Scale","desc":"Built to handle millions of users worldwide."},{"icon":"chat-bubble-left-right","title":"24/7 Support","desc":"Our team is always here when you need us."}]', 'grid', 'grid');
+            $featuresJson = content('features-grid:yBNWwy', 'grid_features', '[{"icon":"bolt","title":"Lightning Fast","desc":"Optimized for speed at every level of the stack."},{"icon":"shield-check","title":"Secure by Default","desc":"Enterprise-grade security built into every feature."},{"icon":"chart-bar","title":"Detailed Analytics","desc":"Gain insight into every aspect of your business."},{"icon":"adjustments-horizontal","title":"Easy to Customize","desc":"Tailor the platform to your exact requirements."},{"icon":"globe-alt","title":"Global Scale","desc":"Built to handle millions of users worldwide."},{"icon":"chat-bubble-left-right","title":"24/7 Support","desc":"Our team is always here when you need us."}]');
             $features = json_decode($featuresJson, true) ?: [];
         @endphp
-        @php $featuresGridClasses = content('features-Z7Jgur', 'features_grid_classes', 'grid md:grid-cols-3 gap-8', 'classes', 'grid'); @endphp
-        @php $featureCardClasses = content('features-Z7Jgur', 'feature_card_classes', 'p-6 rounded-card border border-zinc-200 dark:border-zinc-700 hover:border-primary/40 transition-colors', 'classes', 'grid'); @endphp
-        @php $iconWrapperClasses = content('features-Z7Jgur', 'icon_wrapper_classes', 'mb-4 text-primary', 'classes', 'grid'); @endphp
-        @php $iconSizeClasses = content('features-Z7Jgur', 'icon_size_classes', 'size-8', 'classes', 'grid'); @endphp
-        @php $featureTitleClasses = content('features-Z7Jgur', 'feature_title_classes', 'text-lg font-semibold text-zinc-900 dark:text-white mb-2', 'classes', 'grid'); @endphp
-        @php $featureDescClasses = content('features-Z7Jgur', 'feature_desc_classes', 'text-zinc-500 dark:text-zinc-400 text-sm leading-relaxed', 'classes', 'grid'); @endphp
-        @if($showFeatures)
+        @php $featuresGridClasses = content('features-grid:yBNWwy', 'features_grid_classes', 'grid md:grid-cols-3 gap-8'); @endphp
+        @php $featureCardClasses = content('features-grid:yBNWwy', 'feature_card_classes', 'p-6 rounded-card border border-zinc-200 dark:border-zinc-700 hover:border-primary/40 transition-colors'); @endphp
+        @php $iconWrapperClasses = content('features-grid:yBNWwy', 'icon_wrapper_classes', 'mb-4 text-primary'); @endphp
+        @php $iconSizeClasses = content('features-grid:yBNWwy', 'icon_size_classes', 'size-8'); @endphp
+        @php $featureTitleClasses = content('features-grid:yBNWwy', 'feature_title_classes', 'text-lg font-semibold text-zinc-900 dark:text-white mb-2'); @endphp
+        @php $featureDescClasses = content('features-grid:yBNWwy', 'feature_desc_classes', 'text-zinc-500 dark:text-zinc-400 text-sm leading-relaxed'); @endphp
+        @if($toggleFeatures)
         <div class="{{ $featuresGridClasses }}">
             @foreach ($features as $feature)
                 <div class="{{ $featureCardClasses }}">
@@ -105,47 +108,5 @@ new #[Layout('layouts.public')] #[Title('Test Page')] class extends Component {}
         @endif
     </div>
 </section>
-{{-- ROW:end:features-Z7Jgur --}}
-
-{{-- ROW:start:cta-8pPODC --}}
-@php $sectionClasses = content('cta-8pPODC', 'section_classes', 'bg-primary py-section px-6 text-center', 'classes', 'section'); @endphp
-<section class="{{ $sectionClasses }}">
-    @php $containerClasses = content('cta-8pPODC', 'container_classes', 'max-w-3xl mx-auto', 'classes', 'section'); @endphp
-    <div class="{{ $containerClasses }}">
-        @php $showHeadline = content('cta-8pPODC', 'show_headline', '1', 'toggle', 'headline'); @endphp
-        @if($showHeadline)
-        @php $headlineText = content('cta-8pPODC', 'headline', 'Ready to Get Started?', 'text', 'headline'); @endphp
-        @php $headlineClasses = content('cta-8pPODC', 'headline_classes', 'font-heading text-4xl font-bold text-white', 'classes', 'headline'); @endphp
-        <h2 class="{{ $headlineClasses }}">{{ $headlineText }}</h2>
-        @endif
-        @php $showSubheadline = content('cta-8pPODC', 'show_subheadline', '1', 'toggle', 'subheadline'); @endphp
-        @if($showSubheadline)
-        @php $subheadlineText = content('cta-8pPODC', 'subheadline', 'Join thousands of satisfied customers today.', 'text', 'subheadline'); @endphp
-        @php $subheadlineClasses = content('cta-8pPODC', 'subheadline_classes', 'mt-4 text-lg text-white/80', 'classes', 'subheadline'); @endphp
-        <p class="{{ $subheadlineClasses }}">{{ $subheadlineText }}</p>
-        @endif
-        <div class="mt-8 flex flex-wrap items-center justify-center gap-4">
-            @php $showPrimaryCta = content('cta-8pPODC', 'show_primary_cta', '1', 'toggle', 'primary button'); @endphp
-            @php $primaryCtaLabel = content('cta-8pPODC', 'primary_cta', 'Start Free Trial', 'text', 'primary button'); @endphp
-            @php $primaryCtaClasses = content('cta-8pPODC', 'primary_cta_classes', 'px-8 py-3 bg-white text-primary font-semibold rounded-lg hover:bg-zinc-100 transition-colors', 'classes', 'primary button'); @endphp
-            @if($showPrimaryCta)
-            <a
-                href="{{ content('cta-8pPODC', 'primary_cta_url', '#', 'text', 'primary button') }}"
-                @if(content('cta-8pPODC', 'primary_cta_new_tab', '', 'toggle', 'primary button')) target="_blank" rel="noopener noreferrer" @endif
-                class="{{ $primaryCtaClasses }}"
-            >{{ $primaryCtaLabel }}</a>
-            @endif
-            @if(content('cta-8pPODC', 'show_secondary_cta', '1', 'toggle', 'secondary button'))
-            @php $secondaryCtaLabel = content('cta-8pPODC', 'secondary_cta', 'Talk to Sales', 'text', 'secondary button'); @endphp
-            @php $secondaryCtaClasses = content('cta-8pPODC', 'secondary_cta_classes', 'px-8 py-3 border border-white/30 text-white font-semibold rounded-lg hover:bg-white/10 transition-colors', 'classes', 'secondary button'); @endphp
-            <a
-                href="{{ content('cta-8pPODC', 'secondary_cta_url', '#', 'text', 'secondary button') }}"
-                @if(content('cta-8pPODC', 'secondary_cta_new_tab', '', 'toggle', 'secondary button')) target="_blank" rel="noopener noreferrer" @endif
-                class="{{ $secondaryCtaClasses }}"
-            >{{ $secondaryCtaLabel }}</a>
-            @endif
-        </div>
-    </div>
-</section>
-{{-- ROW:end:cta-8pPODC --}}
+{{-- ROW:end:features-grid:yBNWwy --}}
 </div>

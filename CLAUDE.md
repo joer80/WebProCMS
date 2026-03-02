@@ -318,9 +318,13 @@ When the user asks to remember something, ask whether it should go in their **pe
 
 Location: `resources/design-library/rows/[category]/[name].blade.php`
 
-Full blade code patterns for standard groups (headline, subheadline, primary/secondary buttons, media, grid) are in `memory/design-library.md` in the Claude auto-memory directory for this project.
+### Slug format
 
-### Required metadata block
+Row slugs use the format `{templateName}:{randomId}` — e.g. `features-grid:Z7Jgur`. The template name (filename without `.blade.php`) is embedded so the runtime can look up schema fields without a separate mapping.
+
+### Required metadata block (no @schema)
+
+Every row file must have a frontmatter comment with `@name`, `@description`, and `@sort`. There is **no** `@schema` block — field type and group are inferred from the key name:
 
 ```blade
 {{--
@@ -328,17 +332,44 @@ Full blade code patterns for standard groups (headline, subheadline, primary/sec
 @description One-line description.
 @sort 10
 --}}
+@php $sectionClasses = content('__SLUG__', 'section_classes', 'py-section px-6 bg-white dark:bg-zinc-900'); @endphp
+<section class="{{ $sectionClasses }}">
+    @php $sectionContainerClasses = content('__SLUG__', 'section_container_classes', 'max-w-6xl mx-auto'); @endphp
+    <div class="{{ $sectionContainerClasses }}">
 ```
+
+### Key naming conventions (type + group inference)
+
+Type and group are derived entirely from the key name — no metadata columns needed:
+
+| Key pattern | Type | Group (derived by stripping prefix/suffix) |
+|-------------|------|--------------------------------------------|
+| `toggle_*` | `toggle` | key with `toggle_` stripped |
+| `grid_*` | `grid` | key with `grid_` stripped |
+| `*_new_tab` | `toggle` | key with `_new_tab` stripped |
+| `*_classes` | `classes` | key with `_classes` stripped |
+| `*_image` or `image` | `image` | key with `_image` stripped (or `media`) |
+| `*_url` | `text` | key with `_url` stripped |
+| `*_alt` | `text` | key with `_alt` stripped |
+| anything else | `text` | key itself |
+
+- `label` is auto-derived: `ucwords(str_replace('_', ' ', $key))`
+- Field order in the editor sidebar = order of `content()` calls in the blade (first occurrence wins)
 
 ### content() helper
 
 ```php
-content(string $slug, string $key, string $default, string $type = 'text', string $group = ''): string
+content(string $slug, string $key, ?string $default = null): string
 ```
 
 - `__SLUG__` is replaced at insert time with the row's unique slug
-- Field order in editor sidebar = document order of `content()` calls
-- Without a group arg → field falls into `'other'` (no headers rendered when only one group)
+- Type and group are resolved from `SchemaCache` (populated by `design-library:index` from parsing the blade)
+- The inline default is a PHP runtime fallback; use `''` only if the value is optional
+
+**Standard call (3 args only):**
+```php
+@php $headlineText = content('__SLUG__', 'headline', 'My Headline'); @endphp
+```
 
 ### Content Types
 
@@ -351,26 +382,104 @@ content(string $slug, string $key, string $default, string $type = 'text', strin
 | `classes` | Monospace textarea + TW autocomplete | Falls back to default if empty |
 | `grid` | Repeater (add/edit/remove items) | JSON-encoded array; item keys inferred from first item |
 
-Standard groups: `'content'`, `'headline'`, `'subheadline'`, `'primary button'`, `'secondary button'`, `'media'`, `'contact details'`, `'section'`
-
 ### Section / Container Pattern (required on every row)
 
 ```blade
-@php $sectionClasses = content('__SLUG__', 'section_classes', 'py-section px-6 bg-white dark:bg-zinc-900', 'classes', 'section'); @endphp
+@php $sectionClasses = content('__SLUG__', 'section_classes', 'py-section px-6 bg-white dark:bg-zinc-900'); @endphp
 <section class="{{ $sectionClasses }}">
-    @php $containerClasses = content('__SLUG__', 'container_classes', 'max-w-6xl mx-auto', 'classes', 'section'); @endphp
-    <div class="{{ $containerClasses }}">
+    @php $sectionContainerClasses = content('__SLUG__', 'section_container_classes', 'max-w-6xl mx-auto'); @endphp
+    <div class="{{ $sectionContainerClasses }}">
 ```
+
+`section_classes` and `section_container_classes` also appear in the inline design panel on the row card (paintbrush button). The key `section_container_classes` infers type `classes`, group `section_container`.
 
 ### ALL classes must use content()
 
-**Never use hardcoded class strings directly on elements.** Every element's classes must be editable via `content()` with type `classes`. This applies to cards, wrappers, icons, headings, paragraphs, grids, buttons, etc.
+**Never use hardcoded class strings directly on elements.** Every element's classes must be editable via `content()` with a `*_classes` key. This applies to cards, wrappers, icons, headings, paragraphs, grids, buttons, etc.
+
+### Standard Group Patterns
+
+**Headline:**
+```blade
+@php $toggleHeadline = content('__SLUG__', 'toggle_headline', '1'); @endphp
+@if($toggleHeadline)
+@php $headlineText = content('__SLUG__', 'headline', 'Your Headline'); @endphp
+@php $headlineClasses = content('__SLUG__', 'headline_classes', 'font-heading text-4xl font-bold text-zinc-900 dark:text-white'); @endphp
+<h2 class="{{ $headlineClasses }}">{{ $headlineText }}</h2>
+@endif
+```
+
+**Subheadline:**
+```blade
+@php $toggleSubheadline = content('__SLUG__', 'toggle_subheadline', '1'); @endphp
+@if($toggleSubheadline)
+@php $subheadlineText = content('__SLUG__', 'subheadline', 'Your subheadline.'); @endphp
+@php $subheadlineClasses = content('__SLUG__', 'subheadline_classes', 'mt-4 text-lg text-zinc-500 dark:text-zinc-400'); @endphp
+<p class="{{ $subheadlineClasses }}">{{ $subheadlineText }}</p>
+@endif
+```
+
+**Primary button:**
+```blade
+@php $togglePrimaryCta = content('__SLUG__', 'toggle_primary_cta', '1'); @endphp
+@php $primaryCtaLabel = content('__SLUG__', 'primary_cta', 'Get Started'); @endphp
+@php $primaryCtaClasses = content('__SLUG__', 'primary_cta_classes', 'px-6 py-3 bg-primary text-white font-semibold rounded-lg hover:bg-primary/90 transition-colors'); @endphp
+@if($togglePrimaryCta)
+<a href="{{ content('__SLUG__', 'primary_cta_url', '#') }}"
+   @if(content('__SLUG__', 'primary_cta_new_tab', '')) target="_blank" rel="noopener noreferrer" @endif
+   class="{{ $primaryCtaClasses }}"
+>{{ $primaryCtaLabel }}</a>
+@endif
+```
+
+**Secondary button:**
+```blade
+@if(content('__SLUG__', 'toggle_secondary_cta', '1'))
+@php $secondaryCtaLabel = content('__SLUG__', 'secondary_cta', 'Learn More'); @endphp
+@php $secondaryCtaClasses = content('__SLUG__', 'secondary_cta_classes', 'px-6 py-3 border border-zinc-300 dark:border-zinc-600 text-zinc-700 dark:text-zinc-200 font-semibold rounded-lg hover:bg-zinc-50 transition-colors'); @endphp
+<a href="{{ content('__SLUG__', 'secondary_cta_url', '#') }}"
+   @if(content('__SLUG__', 'secondary_cta_new_tab', '')) target="_blank" rel="noopener noreferrer" @endif
+   class="{{ $secondaryCtaClasses }}"
+>{{ $secondaryCtaLabel }}</a>
+@endif
+```
+
+**Media (image with toggle):**
+```blade
+@php $imageWrapperClasses = content('__SLUG__', 'image_wrapper_classes', 'rounded-card overflow-hidden aspect-video'); @endphp
+@php $imageClasses = content('__SLUG__', 'image_classes', 'w-full h-full object-cover'); @endphp
+@if(content('__SLUG__', 'toggle_image', '1'))
+<div class="{{ $imageWrapperClasses }}">
+    @php $heroImage = content('__SLUG__', 'image', ''); @endphp
+    @if($heroImage)
+        <img src="{{ $heroImage }}" alt="{{ content('__SLUG__', 'image_alt', '') }}" class="{{ $imageClasses }}">
+    @else
+        <span class="text-zinc-400 dark:text-zinc-500 text-sm">Image Placeholder</span>
+    @endif
+</div>
+@endif
+```
+
+The editor auto-promotes a `toggle_X` field to the group header switch when every other field in the group has a key containing `X` or ending with `_new_tab`.
 
 ### Grid rows
 
-- JSON default must be an **inline string literal** in the `content()` call (not a PHP variable) — the parseContentFields regex requires it
-- Item keys inferred from keys of first item; new items use those same keys
-- Default JSON must use only double quotes
+- Use the `grid_` prefix for the grid field key: `grid_features`, `grid_items`, etc.
+- The inline `content()` default must be a valid single-line JSON array (double quotes only)
+- Item keys are inferred from the keys of the first item; new items use those same keys
+
+```php
+@php $toggleFeatures = content('__SLUG__', 'toggle_features', '1'); @endphp
+@php
+    $featuresJson = content('__SLUG__', 'grid_features', '[{"icon":"bolt","title":"Fast","desc":"Speed."}]');
+    $features = json_decode($featuresJson, true) ?: [];
+@endphp
+@if($toggleFeatures)
+<div class="{{ $featuresGridClasses }}">
+    @foreach ($features as $feature) ... @endforeach
+</div>
+@endif
+```
 
 ### Heroicons in grid rows
 
@@ -384,12 +493,19 @@ Render with `<x-heroicon name="{{ $iconName }}" variant="{{ $iconVariant }}" cla
 
 `<x-heroicon>` is **public side only** — it is NOT available via `<flux:icon>` on the public layout (Flux only works on the dashboard side). Use `<x-heroicon>` in all design library row files.
 
+### Adding a new row to the design library
+
+1. Create a new `.blade.php` file in the appropriate category folder
+2. Add the metadata comment with `@name`, `@description`, and `@sort` (no `@schema` block)
+3. Use `content('__SLUG__', 'key', 'default')` with keys that follow the naming conventions above
+4. Run `php artisan design-library:index` to register it in the database
+
+No manual DB insert is required — the index command handles it.
+
 ### Other notes
 
 - Template files only affect newly inserted rows. Existing page blade files have row code copied inline at insert time — update them separately if needed.
 - Hoist any value used inside an `@if` or HTML attribute with `@php $var = content(...)` to control editor sidebar order.
-- `section_classes` and `container_classes` also appear in the inline design panel on the row card (paintbrush button).
-- The editor auto-promotes a `show_X` toggle to the group header switch when every other field in the group contains the prefix `X` or ends with `_new_tab`.
 
 ## Key Lessons
 

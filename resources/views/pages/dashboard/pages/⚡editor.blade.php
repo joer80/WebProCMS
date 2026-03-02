@@ -367,7 +367,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
             return;
         }
 
-        $slug = $designRow->category->value.'-'.Str::random(6);
+        $slug = basename($designRow->source_file, '.blade.php').':'.Str::random(6);
         $newRow = [
             'slug' => $slug,
             'name' => $designRow->name,
@@ -396,8 +396,8 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
         $this->editingRowIndex = $index;
         $row = $this->rows[$index];
         $this->contentFields = array_values(array_filter(
-            $this->parseContentFields($row['blade']),
-            fn ($f) => ! in_array($f['key'], ['section_classes', 'container_classes'], true)
+            $this->parseContentFields($row['blade'], $row['slug']),
+            fn ($f) => ! in_array($f['key'], ['section_classes', 'section_container_classes'], true)
         ));
         $this->pendingImageKey = '';
         $this->pendingImageUpload = null;
@@ -466,7 +466,9 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
         $drafts = session('editor_draft_overrides', []);
 
         foreach ($drafts as $draftKey => $draft) {
-            [$slug, $key] = explode(':', $draftKey, 2);
+            $lastColon = strrpos($draftKey, ':');
+            $slug = substr($draftKey, 0, $lastColon);
+            $key = substr($draftKey, $lastColon + 1);
             $type = $draft['type'];
             $value = $draft['value'];
 
@@ -498,7 +500,9 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
         // Alt text belongs to the image. Sync any edited alt text back to the MediaItem
         // and update every other page that references the same image.
         foreach ($drafts as $draftKey => $draft) {
-            [$slug, $key] = explode(':', $draftKey, 2);
+            $lastColon = strrpos($draftKey, ':');
+            $slug = substr($draftKey, 0, $lastColon);
+            $key = substr($draftKey, $lastColon + 1);
 
             if ($draft['type'] !== 'text' || ! str_ends_with($key, '_alt') || $draft['value'] === '') {
                 continue;
@@ -655,10 +659,10 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
         $this->rowDesignDefaults = [];
 
         foreach ($this->rows as $row) {
-            $fields = $this->parseContentFields($row['blade']);
+            $fields = $this->parseContentFields($row['blade'], $row['slug']);
 
             foreach ($fields as $field) {
-                if (in_array($field['key'], ['section_classes', 'container_classes'], true)) {
+                if (in_array($field['key'], ['section_classes', 'section_container_classes'], true)) {
                     $this->rowDesignDefaults[$row['slug']][$field['key']] = $field['default'];
                 }
             }
@@ -674,7 +678,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
 
         $overrides = ContentOverride::query()
             ->whereIn('row_slug', $slugs)
-            ->whereIn('key', ['section_classes', 'container_classes'])
+            ->whereIn('key', ['section_classes', 'section_container_classes'])
             ->get()
             ->keyBy(fn (ContentOverride $o) => $o->row_slug.':'.$o->key);
 
@@ -691,44 +695,16 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
     }
 
     /**
-     * Parse content() calls from a row's blade code into editable field definitions.
+     * Parse editable field definitions for a row from its @schema block.
      *
      * @return array<int, array{slug: string, key: string, type: string, default: string, label: string, group: string}>
      */
-    private function parseContentFields(string $blade): array
+    private function parseContentFields(string $blade, string $slug): array
     {
-        preg_match_all(
-            "/content\('([^']+)',\s*'([^']+)',\s*'([^']*)'(?:,\s*'([^']*)')?(?:,\s*'([^']*)')?\)/",
-            $blade,
-            $matches,
-            PREG_SET_ORDER
-        );
+        $templateName = explode(':', $slug, 2)[0];
+        $schemaFields = app(\App\Support\SchemaCache::class)->getFieldsForRow($templateName);
 
-        $fields = [];
-        $seen = [];
-
-        foreach ($matches as $match) {
-            $dedupeKey = $match[1].':'.$match[2];
-
-            if (isset($seen[$dedupeKey])) {
-                continue;
-            }
-
-            $seen[$dedupeKey] = true;
-            $key = $match[2];
-            $type = $match[4] ?? 'text';
-            $group = ! empty($match[5] ?? '') ? $match[5] : 'other';
-            $fields[] = [
-                'slug' => $match[1],
-                'key' => $key,
-                'default' => $match[3],
-                'type' => $type,
-                'label' => ucwords(str_replace('_', ' ', $key)),
-                'group' => $group,
-            ];
-        }
-
-        return $fields;
+        return array_map(fn ($field) => array_merge($field, ['slug' => $slug]), $schemaFields);
     }
 
     public function saveSeoSettings(): void
@@ -1196,7 +1172,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                         <div class="flex-1 overflow-y-auto p-4">
                             @if (empty($contentFields))
                                 <div class="text-center py-8 text-zinc-400 dark:text-zinc-500">
-                                    <flux:icon name="pencil-slash" class="size-10 mx-auto mb-2 opacity-40" />
+                                    <flux:icon name="pencil" class="size-10 mx-auto mb-2 opacity-40" />
                                     <p class="text-sm">This row has no editable content fields.</p>
                                 </div>
                             @else
@@ -1209,10 +1185,10 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                                         @if ($showGroupHeaders)
                                             @php
                                                 // Detect a group-level toggle: a show_ toggle whose prefix matches all other field keys in the group.
-                                                $groupShowField = $groupFields->first(fn ($f) => $f['type'] === 'toggle' && str_starts_with($f['key'], 'show_'));
+                                                $groupShowField = $groupFields->first(fn ($f) => $f['type'] === 'toggle' && str_starts_with($f['key'], 'toggle_'));
                                                 $headerToggleField = null;
                                                 if ($groupShowField) {
-                                                    $showPrefix = str_replace('show_', '', $groupShowField['key']);
+                                                    $showPrefix = str_replace('toggle_', '', $groupShowField['key']);
                                                     $otherFields = $groupFields->reject(fn ($f) => $f['key'] === $groupShowField['key']);
                                                     $isGroupToggle = $otherFields->every(fn ($f) => str_ends_with($f['key'], '_new_tab') || str_contains($f['key'], $showPrefix));
                                                     if ($isGroupToggle) {
@@ -1386,7 +1362,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                                     {{-- Inline design panel --}}
                                     @if (isset($rowDesignDefaults[$row['slug']]))
                                         <div x-show="designOpen" x-collapse class="border-t border-zinc-200 dark:border-zinc-700 p-3 space-y-3">
-                                            @foreach (['section_classes' => 'Section Classes', 'container_classes' => 'Container Classes'] as $fieldKey => $fieldLabel)
+                                            @foreach (['section_classes' => 'Section Classes', 'section_container_classes' => 'Container Classes'] as $fieldKey => $fieldLabel)
                                                 @if (isset($rowDesignDefaults[$row['slug']][$fieldKey]))
                                                     <div>
                                                         <div class="flex items-center justify-between mb-1.5">

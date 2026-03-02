@@ -298,7 +298,7 @@ JS;
         $rows = [];
         $startTag = 'ROW:start:';
         $endTag = 'ROW:end:';
-        $pattern = '/\{\{--\s*'.$startTag.'([\w-]+)(:hidden=1)?\s*--\}\}(.*?)\{\{--\s*'.$endTag.'\1\s*--\}\}/s';
+        $pattern = '/\{\{--\s*'.$startTag.'([\w-]+(?::[A-Za-z0-9]+)?)(:hidden=1)?\s*--\}\}(.*?)\{\{--\s*'.$endTag.'\1\s*--\}\}/s';
 
         preg_match_all($pattern, $bladeSection, $matches, PREG_SET_ORDER | PREG_OFFSET_CAPTURE);
 
@@ -790,10 +790,17 @@ JS;
 
     /**
      * Generate a human-readable label from a row slug.
-     * e.g. "hero-a1b2c3" => "Hero"
+     * New format "features-grid:Z7Jgur" => "Features Grid"
+     * Legacy format "hero-a1b2c3" => "Hero"
      */
     private function labelFromSlug(string $slug): string
     {
+        if (str_contains($slug, ':')) {
+            $templateName = explode(':', $slug, 2)[0];
+
+            return ucwords(str_replace('-', ' ', $templateName));
+        }
+
         $parts = explode('-', $slug);
 
         if (count($parts) > 1 && strlen(end($parts)) === 6) {

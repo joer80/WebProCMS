@@ -212,23 +212,34 @@ it('syncs the library when the insert drawer is opened', function (): void {
     expect(DesignRow::where('source_file', $sourceFile)->exists())->toBeTrue();
 });
 
-it('parses content field groups from the 5th argument', function (): void {
-    $path = 'pages/test-groups-'.uniqid().'.blade.php';
+it('parses content fields from @schema block', function (): void {
+    $templateName = 'test-schema-'.uniqid();
+    $slug = $templateName.':abc123';
+
+    DesignRow::factory()->create([
+        'source_file' => 'rows/test/'.$templateName.'.blade.php',
+        'schema_fields' => [
+            ['key' => 'headline', 'type' => 'text', 'group' => 'content', 'default' => 'Title', 'label' => 'Headline'],
+            ['key' => 'image', 'type' => 'image', 'group' => 'media', 'default' => '', 'label' => 'Image'],
+            ['key' => 'primary_cta', 'type' => 'text', 'group' => 'call to action', 'default' => 'Click', 'label' => 'Primary Cta'],
+        ],
+    ]);
+
+    $path = 'pages/test-schema-fields-'.uniqid().'.blade.php';
     $fullPath = resource_path('views/'.$path);
 
-    file_put_contents($fullPath, <<<'BLADE'
-        {{-- ROW:start:row-grp-test --}}
+    file_put_contents($fullPath, <<<BLADE
+        <?php use Livewire\Component; new class extends Component {}; ?>
+        {{-- ROW:start:{$slug} --}}
         <section>
-            {{ content('row-grp-test', 'headline', 'Title', 'text', 'content') }}
-            {{ content('row-grp-test', 'image', '', 'image', 'media') }}
-            {{ content('row-grp-test', 'primary_cta', 'Click', 'text', 'call to action') }}
+            @php \$headline = content('{$slug}', 'headline', 'Title'); @endphp
+            @php \$image = content('{$slug}', 'image', ''); @endphp
+            @php \$cta = content('{$slug}', 'primary_cta', 'Click'); @endphp
         </section>
-        {{-- ROW:end:row-grp-test --}}
+        {{-- ROW:end:{$slug} --}}
         BLADE);
 
-    $user = User::factory()->create();
-
-    $component = Livewire::actingAs($user)
+    $component = Livewire::actingAs(User::factory()->create())
         ->test('pages::dashboard.pages.editor')
         ->call('loadFile', $path)
         ->call('openContentEditor', 0);
@@ -243,27 +254,26 @@ it('parses content field groups from the 5th argument', function (): void {
     unlink($fullPath);
 });
 
-it('falls back to other group when 5th argument is omitted', function (): void {
-    $path = 'pages/test-nogroup-'.uniqid().'.blade.php';
+it('returns empty fields for a row with no matching design row', function (): void {
+    $path = 'pages/test-noschema-'.uniqid().'.blade.php';
     $fullPath = resource_path('views/'.$path);
 
+    // Slug with no colon: no template name can be extracted, SchemaCache returns []
     file_put_contents($fullPath, <<<'BLADE'
-        {{-- ROW:start:row-nogrp-test --}}
-        <section>{{ content('row-nogrp-test', 'custom_field', 'Value') }}</section>
-        {{-- ROW:end:row-nogrp-test --}}
+        <?php use Livewire\Component; new class extends Component {}; ?>
+        {{-- ROW:start:legacy-noschema --}}
+        <section>{{ content('legacy-noschema', 'custom_field', 'Value') }}</section>
+        {{-- ROW:end:legacy-noschema --}}
         BLADE);
 
-    $user = User::factory()->create();
-
-    $component = Livewire::actingAs($user)
+    $component = Livewire::actingAs(User::factory()->create())
         ->test('pages::dashboard.pages.editor')
         ->call('loadFile', $path)
         ->call('openContentEditor', 0);
 
     $fields = $component->get('contentFields');
 
-    expect($fields)->toHaveCount(1);
-    expect($fields[0])->toMatchArray(['key' => 'custom_field', 'group' => 'other']);
+    expect($fields)->toBeEmpty();
 
     unlink($fullPath);
 });

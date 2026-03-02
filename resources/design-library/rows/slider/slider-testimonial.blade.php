@@ -3,7 +3,7 @@
 @description Alpine.js testimonial slider with navigation dots and auto-advance.
 @sort 10
 --}}
-@php $sectionClasses = content('__SLUG__', 'section_classes', 'py-section px-6 bg-zinc-50 dark:bg-zinc-950 overflow-hidden', 'classes', 'section'); @endphp
+@php $sectionClasses = content('__SLUG__', 'section_classes', 'py-section px-6 bg-zinc-50 dark:bg-zinc-950 overflow-hidden'); @endphp
 <section class="{{ $sectionClasses }}"
     x-data="{
         current: 0,
@@ -14,21 +14,21 @@
     }"
     x-init="autoPlay()"
 >
-    @php $containerClasses = content('__SLUG__', 'container_classes', 'max-w-3xl mx-auto text-center', 'classes', 'section'); @endphp
-    <div class="{{ $containerClasses }}">
-        @php $showHeadline = content('__SLUG__', 'show_headline', '1', 'toggle', 'headline'); @endphp
-        @if($showHeadline)
-        @php $headlineText = content('__SLUG__', 'headline', 'What Our Customers Say', 'text', 'headline'); @endphp
-        @php $headlineClasses = content('__SLUG__', 'headline_classes', 'font-heading text-4xl font-bold text-zinc-900 dark:text-white mb-12', 'classes', 'headline'); @endphp
+    @php $sectionContainerClasses = content('__SLUG__', 'section_container_classes', 'max-w-3xl mx-auto text-center'); @endphp
+    <div class="{{ $sectionContainerClasses }}">
+        @php $toggleHeadline = content('__SLUG__', 'toggle_headline', '1'); @endphp
+        @if($toggleHeadline)
+        @php $headlineText = content('__SLUG__', 'headline', 'What Our Customers Say'); @endphp
+        @php $headlineClasses = content('__SLUG__', 'headline_classes', 'font-heading text-4xl font-bold text-zinc-900 dark:text-white mb-12'); @endphp
         <h2 class="{{ $headlineClasses }}">{{ $headlineText }}</h2>
         @endif
 
-        @php $quoteClasses = content('__SLUG__', 'quote_classes', 'text-xl text-zinc-700 dark:text-zinc-300 italic leading-relaxed', 'classes', 'content'); @endphp
-        @php $authorWrapperClasses = content('__SLUG__', 'author_wrapper_classes', 'mt-6', 'classes', 'content'); @endphp
-        @php $authorNameClasses = content('__SLUG__', 'author_name_classes', 'font-semibold text-zinc-900 dark:text-white', 'classes', 'content'); @endphp
-        @php $authorRoleClasses = content('__SLUG__', 'author_role_classes', 'text-sm text-zinc-500 dark:text-zinc-400', 'classes', 'content'); @endphp
-        @php $dotsWrapperClasses = content('__SLUG__', 'dots_wrapper_classes', 'flex items-center justify-center gap-2 mt-8', 'classes', 'content'); @endphp
-        @php $dotBaseClasses = content('__SLUG__', 'dot_base_classes', 'h-2 rounded-full transition-all duration-300', 'classes', 'content'); @endphp
+        @php $quoteClasses = content('__SLUG__', 'quote_classes', 'text-xl text-zinc-700 dark:text-zinc-300 italic leading-relaxed'); @endphp
+        @php $authorWrapperClasses = content('__SLUG__', 'author_wrapper_classes', 'mt-6'); @endphp
+        @php $authorNameClasses = content('__SLUG__', 'author_name_classes', 'font-semibold text-zinc-900 dark:text-white'); @endphp
+        @php $authorRoleClasses = content('__SLUG__', 'author_role_classes', 'text-sm text-zinc-500 dark:text-zinc-400'); @endphp
+        @php $dotsWrapperClasses = content('__SLUG__', 'dots_wrapper_classes', 'flex items-center justify-center gap-2 mt-8'); @endphp
+        @php $dotBaseClasses = content('__SLUG__', 'dot_base_classes', 'h-2 rounded-full transition-all duration-300'); @endphp
 
         <div class="relative">
             @foreach ([['quote' => 'This is honestly the best tool I\'ve used in years. It transformed how we work.', 'name' => 'Alex Thompson', 'role' => 'Founder at StartupXYZ'], ['quote' => 'The onboarding was seamless and the results were immediate. I highly recommend it.', 'name' => 'Jamie Rivera', 'role' => 'VP of Engineering'], ['quote' => 'Customer support is incredible. They went above and beyond to help our team.', 'name' => 'Morgan Lee', 'role' => 'Director of Operations']] as $i => $t)

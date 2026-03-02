@@ -110,3 +110,78 @@ it('defaults name to filename when @name is missing', function (): void {
 
     unlink($file);
 });
+
+it('infers schema_fields from content() calls in blade code', function (): void {
+    $file = tempnam(sys_get_temp_dir(), 'dltest_').'.blade.php';
+    file_put_contents($file, <<<'BLADE'
+{{--
+@name Hero - Split
+@description Split hero.
+@sort 5
+--}}
+@php $sectionClasses = content('__SLUG__', 'section_classes', 'py-section px-6 bg-white'); @endphp
+@php $sectionContainerClasses = content('__SLUG__', 'section_container_classes', 'max-w-6xl mx-auto'); @endphp
+@php $toggleHeadline = content('__SLUG__', 'toggle_headline', '1'); @endphp
+@php $headlineText = content('__SLUG__', 'headline', 'Build Something Amazing'); @endphp
+BLADE);
+
+    $data = $this->service->parseTemplateFile($file);
+
+    expect($data['schema_fields'])->toHaveCount(4)
+        ->and($data['schema_fields'][0]['key'])->toBe('section_classes')
+        ->and($data['schema_fields'][0]['type'])->toBe('classes')
+        ->and($data['schema_fields'][0]['group'])->toBe('section')
+        ->and($data['schema_fields'][0]['default'])->toBe('py-section px-6 bg-white')
+        ->and($data['schema_fields'][1]['key'])->toBe('section_container_classes')
+        ->and($data['schema_fields'][1]['type'])->toBe('classes')
+        ->and($data['schema_fields'][1]['group'])->toBe('section_container')
+        ->and($data['schema_fields'][2]['key'])->toBe('toggle_headline')
+        ->and($data['schema_fields'][2]['type'])->toBe('toggle')
+        ->and($data['schema_fields'][2]['group'])->toBe('headline')
+        ->and($data['schema_fields'][2]['default'])->toBe('1')
+        ->and($data['schema_fields'][3]['key'])->toBe('headline')
+        ->and($data['schema_fields'][3]['label'])->toBe('Headline');
+
+    unlink($file);
+});
+
+it('infers grid type from grid_ prefix', function (): void {
+    $file = tempnam(sys_get_temp_dir(), 'dltest_').'.blade.php';
+    file_put_contents($file, <<<'BLADE'
+{{--
+@name Features
+@sort 10
+--}}
+@php $featuresJson = content('__SLUG__', 'grid_features', '[{"icon":"bolt","title":"Fast","desc":"Speed."},{"icon":"shield-check","title":"Secure","desc":"Safety."}]'); @endphp
+BLADE);
+
+    $data = $this->service->parseTemplateFile($file);
+
+    expect($data['schema_fields'])->toHaveCount(1)
+        ->and($data['schema_fields'][0]['key'])->toBe('grid_features')
+        ->and($data['schema_fields'][0]['type'])->toBe('grid')
+        ->and($data['schema_fields'][0]['group'])->toBe('features');
+
+    $decoded = json_decode($data['schema_fields'][0]['default'], true);
+    expect($decoded)->toHaveCount(2)
+        ->and($decoded[0]['icon'])->toBe('bolt');
+
+    unlink($file);
+});
+
+it('returns empty schema_fields when no content() calls present', function (): void {
+    $file = tempnam(sys_get_temp_dir(), 'dltest_').'.blade.php';
+    file_put_contents($file, <<<'BLADE'
+{{--
+@name Old Row
+@sort 1
+--}}
+<section></section>
+BLADE);
+
+    $data = $this->service->parseTemplateFile($file);
+
+    expect($data['schema_fields'])->toBeArray()->toBeEmpty();
+
+    unlink($file);
+});

@@ -18,6 +18,7 @@ class DesignRow extends Model
         'blade_code',
         'php_code',
         'source_file',
+        'schema_fields',
         'sort_order',
     ];
 
@@ -26,6 +27,7 @@ class DesignRow extends Model
         return [
             'category' => RowCategory::class,
             'sort_order' => 'integer',
+            'schema_fields' => 'array',
         ];
     }
 }

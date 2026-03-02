@@ -7,7 +7,7 @@ class DesignLibraryService
     /**
      * Parse a design library .blade.php template file into structured data.
      *
-     * @return array{name: string, description: string, sort_order: int, blade_code: string, php_code: string, source_file: string}
+     * @return array{name: string, description: string, sort_order: int, blade_code: string, php_code: string, source_file: string, schema_fields: list<array{key: string, type: string, group: string, default: string, label: string}>}
      */
     public function parseTemplateFile(string $fullPath): array
     {
@@ -17,6 +17,7 @@ class DesignLibraryService
         $description = '';
         $sortOrder = 0;
         $phpCode = '';
+        $schemaFields = [];
 
         // Extract frontmatter from the first {{-- ... --}} block
         if (preg_match('/^\{\{--\s*(.*?)\s*--\}\}/s', $contents, $frontmatterMatch)) {
@@ -45,6 +46,7 @@ class DesignLibraryService
         }
 
         $bladeCode = trim($contents);
+        $schemaFields = $this->parseContentCallFields($bladeCode);
 
         return [
             'name' => $name ?: basename($fullPath, '.blade.php'),
@@ -53,13 +55,100 @@ class DesignLibraryService
             'blade_code' => $bladeCode,
             'php_code' => $phpCode,
             'source_file' => $this->relativeSourcePath($fullPath),
+            'schema_fields' => $schemaFields,
         ];
+    }
+
+    /**
+     * Parse editable field definitions from content() calls in blade code.
+     * Infers type and group from key naming conventions:
+     *  - toggle_*  → toggle
+     *  - grid_*    → grid
+     *  - *_new_tab → toggle
+     *  - *_classes → classes
+     *  - *_image or image → image
+     *  - *_url, *_alt → text (group strips suffix)
+     *  - anything else → text
+     *
+     * @return list<array{key: string, type: string, group: string, default: string, label: string}>
+     */
+    public function parseContentCallFields(string $bladeCode): array
+    {
+        $fields = [];
+        $seen = [];
+
+        preg_match_all(
+            "/content\('__SLUG__',\s*'([^']+)',\s*'((?:[^'\\\\]|\\\\.)*)'\)/",
+            $bladeCode,
+            $matches,
+            PREG_SET_ORDER
+        );
+
+        foreach ($matches as $match) {
+            $key = $match[1];
+            $default = stripslashes($match[2]);
+
+            if (isset($seen[$key])) {
+                continue;
+            }
+
+            $seen[$key] = true;
+            [$type, $group] = $this->inferTypeAndGroup($key);
+
+            $fields[] = [
+                'key' => $key,
+                'type' => $type,
+                'group' => $group,
+                'default' => $default,
+                'label' => ucwords(str_replace('_', ' ', $key)),
+            ];
+        }
+
+        return $fields;
+    }
+
+    /**
+     * Infer the field type and group from the key name.
+     *
+     * @return array{string, string} [type, group]
+     */
+    private function inferTypeAndGroup(string $key): array
+    {
+        if (str_starts_with($key, 'toggle_')) {
+            return ['toggle', substr($key, 7)];
+        }
+
+        if (str_starts_with($key, 'grid_')) {
+            return ['grid', substr($key, 5)];
+        }
+
+        if (str_ends_with($key, '_new_tab')) {
+            return ['toggle', substr($key, 0, -8)];
+        }
+
+        if (str_ends_with($key, '_classes')) {
+            return ['classes', substr($key, 0, -8)];
+        }
+
+        if (str_ends_with($key, '_image') || $key === 'image') {
+            return ['image', $key === 'image' ? 'media' : substr($key, 0, -6)];
+        }
+
+        if (str_ends_with($key, '_url')) {
+            return ['text', substr($key, 0, -4)];
+        }
+
+        if (str_ends_with($key, '_alt')) {
+            return ['text', substr($key, 0, -4)];
+        }
+
+        return ['text', $key];
     }
 
     /**
      * Build a .blade.php template file string from structured data.
      *
-     * @param  array{name: string, description: string, sort_order: int, blade_code: string, php_code: string}  $data
+     * @param  array{name: string, description: string, sort_order: int, blade_code: string, php_code: string, schema_fields?: list<array{key: string, type: string, group: string, default: string}>}  $data
      */
     public function buildTemplateFile(array $data): string
     {

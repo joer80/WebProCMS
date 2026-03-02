@@ -3,29 +3,29 @@
 @description Alpine.js-powered accordion FAQ section with expand/collapse.
 @sort 10
 --}}
-@php $sectionClasses = content('__SLUG__', 'section_classes', 'py-section px-6 bg-white dark:bg-zinc-900', 'classes', 'section'); @endphp
+@php $sectionClasses = content('__SLUG__', 'section_classes', 'py-section px-6 bg-white dark:bg-zinc-900'); @endphp
 <section class="{{ $sectionClasses }}">
-    @php $containerClasses = content('__SLUG__', 'container_classes', 'max-w-3xl mx-auto', 'classes', 'section'); @endphp
-    <div class="{{ $containerClasses }}">
-        @php $headerWrapperClasses = content('__SLUG__', 'header_wrapper_classes', 'text-center mb-16', 'classes', 'content'); @endphp
-        @php $accordionClasses = content('__SLUG__', 'accordion_classes', 'divide-y divide-zinc-200 dark:divide-zinc-700', 'classes', 'content'); @endphp
-        @php $itemClasses = content('__SLUG__', 'item_classes', 'py-5', 'classes', 'content'); @endphp
-        @php $questionButtonClasses = content('__SLUG__', 'question_button_classes', 'w-full flex items-center justify-between text-left', 'classes', 'content'); @endphp
-        @php $questionTextClasses = content('__SLUG__', 'question_text_classes', 'text-base font-semibold text-zinc-900 dark:text-white', 'classes', 'content'); @endphp
-        @php $chevronClasses = content('__SLUG__', 'chevron_classes', 'size-5 text-zinc-400 shrink-0 transition-transform duration-200', 'classes', 'content'); @endphp
-        @php $answerClasses = content('__SLUG__', 'answer_classes', 'mt-3 text-zinc-500 dark:text-zinc-400 text-sm leading-relaxed', 'classes', 'content'); @endphp
+    @php $sectionContainerClasses = content('__SLUG__', 'section_container_classes', 'max-w-3xl mx-auto'); @endphp
+    <div class="{{ $sectionContainerClasses }}">
+        @php $headerWrapperClasses = content('__SLUG__', 'header_wrapper_classes', 'text-center mb-16'); @endphp
+        @php $accordionClasses = content('__SLUG__', 'accordion_classes', 'divide-y divide-zinc-200 dark:divide-zinc-700'); @endphp
+        @php $itemClasses = content('__SLUG__', 'item_classes', 'py-5'); @endphp
+        @php $questionButtonClasses = content('__SLUG__', 'question_button_classes', 'w-full flex items-center justify-between text-left'); @endphp
+        @php $questionTextClasses = content('__SLUG__', 'question_text_classes', 'text-base font-semibold text-zinc-900 dark:text-white'); @endphp
+        @php $chevronClasses = content('__SLUG__', 'chevron_classes', 'size-5 text-zinc-400 shrink-0 transition-transform duration-200'); @endphp
+        @php $answerClasses = content('__SLUG__', 'answer_classes', 'mt-3 text-zinc-500 dark:text-zinc-400 text-sm leading-relaxed'); @endphp
         <div class="{{ $headerWrapperClasses }}">
-            @php $showHeadline = content('__SLUG__', 'show_headline', '1', 'toggle', 'headline'); @endphp
-            @if($showHeadline)
-            @php $headlineText = content('__SLUG__', 'headline', 'Frequently Asked Questions', 'text', 'headline'); @endphp
-            @php $headlineClasses = content('__SLUG__', 'headline_classes', 'font-heading text-4xl font-bold text-zinc-900 dark:text-white', 'classes', 'headline'); @endphp
+            @php $toggleHeadline = content('__SLUG__', 'toggle_headline', '1'); @endphp
+            @if($toggleHeadline)
+            @php $headlineText = content('__SLUG__', 'headline', 'Frequently Asked Questions'); @endphp
+            @php $headlineClasses = content('__SLUG__', 'headline_classes', 'font-heading text-4xl font-bold text-zinc-900 dark:text-white'); @endphp
             <h2 class="{{ $headlineClasses }}">{{ $headlineText }}</h2>
             @endif
-            @php $showSubheadline = content('__SLUG__', 'show_subheadline', '1', 'toggle', 'subheadline'); @endphp
-            @if($showSubheadline)
-            @php $subheadlineText = content('__SLUG__', 'subheadline', 'Can\'t find what you\'re looking for?', 'text', 'subheadline'); @endphp
-            @php $subheadlineClasses = content('__SLUG__', 'subheadline_classes', 'mt-4 text-lg text-zinc-500 dark:text-zinc-400', 'classes', 'subheadline'); @endphp
-            <p class="{{ $subheadlineClasses }}">{{ $subheadlineText }} <a href="{{ content('__SLUG__', 'contact_url', '/contact', 'text', 'content') }}" class="text-primary underline">{{ content('__SLUG__', 'contact_cta', 'Contact us', 'text', 'content') }}</a>.</p>
+            @php $toggleSubheadline = content('__SLUG__', 'toggle_subheadline', '1'); @endphp
+            @if($toggleSubheadline)
+            @php $subheadlineText = content('__SLUG__', 'subheadline', 'Can\'t find what you\'re looking for?'); @endphp
+            @php $subheadlineClasses = content('__SLUG__', 'subheadline_classes', 'mt-4 text-lg text-zinc-500 dark:text-zinc-400'); @endphp
+            <p class="{{ $subheadlineClasses }}">{{ $subheadlineText }} <a href="{{ content('__SLUG__', 'contact_url', '/contact') }}" class="text-primary underline">{{ content('__SLUG__', 'contact_cta', 'Contact us') }}</a>.</p>
             @endif
         </div>
         <div class="{{ $accordionClasses }}" x-data="{ open: null }">
