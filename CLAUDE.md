@@ -301,7 +301,7 @@ Applies to: `resources/design-library/rows/footer/`, `resources/views/layouts/pu
 
 Three separate bundles — do NOT cross-contaminate sources:
 
-- `resources/css/app.css` — dashboard/admin UI; includes Flux CSS, sources all of `../views`, vendor Flux stubs
+- `resources/css/app.css` — dashboard/admin UI; includes Flux CSS, sources `views/components`, `views/flux`, `views/layouts/app*`, `views/layouts/auth*`, `views/partials`, `views/pages/auth`, `views/pages/dashboard`, `views/pages/settings`, vendor Flux stubs; does NOT source public pages, design library, or editor views
 - `resources/css/public.css` — public-facing site; sources page views and components only; no Flux, no design library
 - `resources/css/editor.css` — page editor; includes Flux CSS, sources design library (`../design-library/**/*.blade.php`) and vendor Flux stubs; design library belongs here because the editor is what inserts rows into pages
 
@@ -310,9 +310,15 @@ Three separate bundles — do NOT cross-contaminate sources:
 Tokens defined in `resources/css/app.css` `@theme {}`. When adding new tokens, also update `resources/js/tw-autocomplete.js`.
 Current tokens: `primary`, `font-heading`, `py-section`, `rounded-card`, `shadow-card`, `accent`.
 
+## Memories
+
+When the user asks to remember something, ask whether it should go in their **personal memory** (`~/.claude/projects/.../memory/MEMORY.md`, local only) or **CLAUDE.md** (shared with anyone who clones the repo).
+
 ## Design Library
 
 Location: `resources/design-library/rows/[category]/[name].blade.php`
+
+Full blade code patterns for standard groups (headline, subheadline, primary/secondary buttons, media, grid) are in `memory/design-library.md` in the Claude auto-memory directory for this project.
 
 ### Required metadata block
 
