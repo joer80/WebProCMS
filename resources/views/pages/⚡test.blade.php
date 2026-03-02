@@ -59,48 +59,53 @@ new #[Layout('layouts.public')] #[Title('Test Page')] class extends Component {}
 </section>
 {{-- ROW:end:hero-0PcmrC --}}
 
-{{-- ROW:start:features-P15otx --}}
-@php $sectionClasses = content('features-P15otx', 'section_classes', 'py-section px-6 bg-white dark:bg-zinc-900', 'classes', 'section'); @endphp
+{{-- ROW:start:features-Z7Jgur --}}
+@php $sectionClasses = content('features-Z7Jgur', 'section_classes', 'py-section px-6 bg-white dark:bg-zinc-900', 'classes', 'section'); @endphp
 <section class="{{ $sectionClasses }}">
-    @php $containerClasses = content('features-P15otx', 'container_classes', 'max-w-6xl mx-auto', 'classes', 'section'); @endphp
+    @php $containerClasses = content('features-Z7Jgur', 'container_classes', 'max-w-6xl mx-auto', 'classes', 'section'); @endphp
     <div class="{{ $containerClasses }}">
         <div class="text-center mb-16">
-            @php $showHeadline = content('features-P15otx', 'show_headline', '1', 'toggle', 'headline'); @endphp
+            @php $showHeadline = content('features-Z7Jgur', 'show_headline', '1', 'toggle', 'headline'); @endphp
             @if($showHeadline)
-            @php $headlineText = content('features-P15otx', 'headline', 'Everything You Need', 'text', 'headline'); @endphp
-            @php $headlineClasses = content('features-P15otx', 'headline_classes', 'font-heading text-4xl font-bold text-zinc-900 dark:text-white', 'classes', 'headline'); @endphp
+            @php $headlineText = content('features-Z7Jgur', 'headline', 'Everything You Need', 'text', 'headline'); @endphp
+            @php $headlineClasses = content('features-Z7Jgur', 'headline_classes', 'font-heading text-4xl font-bold text-zinc-900 dark:text-white', 'classes', 'headline'); @endphp
             <h2 class="{{ $headlineClasses }}">{{ $headlineText }}</h2>
             @endif
-            @php $showSubheadline = content('features-P15otx', 'show_subheadline', '1', 'toggle', 'subheadline'); @endphp
+            @php $showSubheadline = content('features-Z7Jgur', 'show_subheadline', '1', 'toggle', 'subheadline'); @endphp
             @if($showSubheadline)
-            @php $subheadlineText = content('features-P15otx', 'subheadline', 'Powerful features designed to help you succeed.', 'text', 'subheadline'); @endphp
-            @php $subheadlineClasses = content('features-P15otx', 'subheadline_classes', 'mt-4 text-lg text-zinc-500 dark:text-zinc-400', 'classes', 'subheadline'); @endphp
+            @php $subheadlineText = content('features-Z7Jgur', 'subheadline', 'Powerful features designed to help you succeed.', 'text', 'subheadline'); @endphp
+            @php $subheadlineClasses = content('features-Z7Jgur', 'subheadline_classes', 'mt-4 text-lg text-zinc-500 dark:text-zinc-400', 'classes', 'subheadline'); @endphp
             <p class="{{ $subheadlineClasses }}">{{ $subheadlineText }}</p>
             @endif
         </div>
-        @php $showFeatures = content('features-P15otx', 'show_features', '1', 'toggle', 'grid'); @endphp
+        @php $showFeatures = content('features-Z7Jgur', 'show_features', '1', 'toggle', 'grid'); @endphp
         @php
-            $featuresJson = content('features-P15otx', 'features', '[{"icon":"bolt","title":"Lightning Fast","desc":"Optimized for speed at every level of the stack."},{"icon":"shield-check","title":"Secure by Default","desc":"Enterprise-grade security built into every feature."},{"icon":"chart-bar","title":"Detailed Analytics","desc":"Gain insight into every aspect of your business."},{"icon":"adjustments-horizontal","title":"Easy to Customize","desc":"Tailor the platform to your exact requirements."},{"icon":"globe-alt","title":"Global Scale","desc":"Built to handle millions of users worldwide."},{"icon":"chat-bubble-left-right","title":"24/7 Support","desc":"Our team is always here when you need us."}]', 'grid', 'grid');
+            $featuresJson = content('features-Z7Jgur', 'features', '[{"icon":"bolt","title":"Lightning Fast","desc":"Optimized for speed at every level of the stack."},{"icon":"shield-check","title":"Secure by Default","desc":"Enterprise-grade security built into every feature."},{"icon":"chart-bar","title":"Detailed Analytics","desc":"Gain insight into every aspect of your business."},{"icon":"adjustments-horizontal","title":"Easy to Customize","desc":"Tailor the platform to your exact requirements."},{"icon":"globe-alt","title":"Global Scale","desc":"Built to handle millions of users worldwide."},{"icon":"chat-bubble-left-right","title":"24/7 Support","desc":"Our team is always here when you need us."}]', 'grid', 'grid');
             $features = json_decode($featuresJson, true) ?: [];
         @endphp
-        @php $featuresGridClasses = content('features-P15otx', 'features_grid_classes', 'grid md:grid-cols-3 gap-8', 'classes', 'grid'); @endphp
+        @php $featuresGridClasses = content('features-Z7Jgur', 'features_grid_classes', 'grid md:grid-cols-3 gap-8', 'classes', 'grid'); @endphp
+        @php $featureCardClasses = content('features-Z7Jgur', 'feature_card_classes', 'p-6 rounded-card border border-zinc-200 dark:border-zinc-700 hover:border-primary/40 transition-colors', 'classes', 'grid'); @endphp
+        @php $iconWrapperClasses = content('features-Z7Jgur', 'icon_wrapper_classes', 'mb-4 text-primary', 'classes', 'grid'); @endphp
+        @php $iconSizeClasses = content('features-Z7Jgur', 'icon_size_classes', 'size-8', 'classes', 'grid'); @endphp
+        @php $featureTitleClasses = content('features-Z7Jgur', 'feature_title_classes', 'text-lg font-semibold text-zinc-900 dark:text-white mb-2', 'classes', 'grid'); @endphp
+        @php $featureDescClasses = content('features-Z7Jgur', 'feature_desc_classes', 'text-zinc-500 dark:text-zinc-400 text-sm leading-relaxed', 'classes', 'grid'); @endphp
         @if($showFeatures)
         <div class="{{ $featuresGridClasses }}">
             @foreach ($features as $feature)
-                <div class="p-6 rounded-card border border-zinc-200 dark:border-zinc-700 hover:border-primary/40 transition-colors">
+                <div class="{{ $featureCardClasses }}">
                     @php [$iconName, $iconVariant] = array_pad(explode(':', $feature['icon'] ?? 'bolt', 2), 2, 'outline'); @endphp
-                    <div class="mb-4 text-primary">
-                        <x-heroicon name="{{ $iconName }}" variant="{{ $iconVariant }}" class="size-8" />
+                    <div class="{{ $iconWrapperClasses }}">
+                        <x-heroicon name="{{ $iconName }}" variant="{{ $iconVariant }}" class="{{ $iconSizeClasses }}" />
                     </div>
-                    <h3 class="text-lg font-semibold text-zinc-900 dark:text-white mb-2">{{ $feature['title'] }}</h3>
-                    <p class="text-zinc-500 dark:text-zinc-400 text-sm leading-relaxed">{{ $feature['desc'] }}</p>
+                    <h3 class="{{ $featureTitleClasses }}">{{ $feature['title'] }}</h3>
+                    <p class="{{ $featureDescClasses }}">{{ $feature['desc'] }}</p>
                 </div>
             @endforeach
         </div>
         @endif
     </div>
 </section>
-{{-- ROW:end:features-P15otx --}}
+{{-- ROW:end:features-Z7Jgur --}}
 
 {{-- ROW:start:cta-8pPODC --}}
 @php $sectionClasses = content('cta-8pPODC', 'section_classes', 'bg-primary py-section px-6 text-center', 'classes', 'section'); @endphp

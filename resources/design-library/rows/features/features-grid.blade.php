@@ -27,16 +27,21 @@
             $features = json_decode($featuresJson, true) ?: [];
         @endphp
         @php $featuresGridClasses = content('__SLUG__', 'features_grid_classes', 'grid md:grid-cols-3 gap-8', 'classes', 'grid'); @endphp
+        @php $featureCardClasses = content('__SLUG__', 'feature_card_classes', 'p-6 rounded-card border border-zinc-200 dark:border-zinc-700 hover:border-primary/40 transition-colors', 'classes', 'grid'); @endphp
+        @php $iconWrapperClasses = content('__SLUG__', 'icon_wrapper_classes', 'mb-4 text-primary', 'classes', 'grid'); @endphp
+        @php $iconSizeClasses = content('__SLUG__', 'icon_size_classes', 'size-8', 'classes', 'grid'); @endphp
+        @php $featureTitleClasses = content('__SLUG__', 'feature_title_classes', 'text-lg font-semibold text-zinc-900 dark:text-white mb-2', 'classes', 'grid'); @endphp
+        @php $featureDescClasses = content('__SLUG__', 'feature_desc_classes', 'text-zinc-500 dark:text-zinc-400 text-sm leading-relaxed', 'classes', 'grid'); @endphp
         @if($showFeatures)
         <div class="{{ $featuresGridClasses }}">
             @foreach ($features as $feature)
-                <div class="p-6 rounded-card border border-zinc-200 dark:border-zinc-700 hover:border-primary/40 transition-colors">
+                <div class="{{ $featureCardClasses }}">
                     @php [$iconName, $iconVariant] = array_pad(explode(':', $feature['icon'] ?? 'bolt', 2), 2, 'outline'); @endphp
-                    <div class="mb-4 text-primary">
-                        <x-heroicon name="{{ $iconName }}" variant="{{ $iconVariant }}" class="size-8" />
+                    <div class="{{ $iconWrapperClasses }}">
+                        <x-heroicon name="{{ $iconName }}" variant="{{ $iconVariant }}" class="{{ $iconSizeClasses }}" />
                     </div>
-                    <h3 class="text-lg font-semibold text-zinc-900 dark:text-white mb-2">{{ $feature['title'] }}</h3>
-                    <p class="text-zinc-500 dark:text-zinc-400 text-sm leading-relaxed">{{ $feature['desc'] }}</p>
+                    <h3 class="{{ $featureTitleClasses }}">{{ $feature['title'] }}</h3>
+                    <p class="{{ $featureDescClasses }}">{{ $feature['desc'] }}</p>
                 </div>
             @endforeach
         </div>
