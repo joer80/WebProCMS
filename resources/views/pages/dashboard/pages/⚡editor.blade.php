@@ -173,7 +173,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
         } else {
             ContentOverride::updateOrCreate(
                 ['row_slug' => $slug, 'key' => $fieldKey],
-                ['type' => 'classes', 'value' => $storeValue]
+                ['type' => 'classes', 'value' => $storeValue, 'page_slug' => $this->pageSlug ?: null]
             );
         }
 
@@ -486,7 +486,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
             } else {
                 ContentOverride::updateOrCreate(
                     ['row_slug' => $slug, 'key' => $key],
-                    ['type' => $type, 'value' => $value]
+                    ['type' => $type, 'value' => $value, 'page_slug' => $this->pageSlug ?: null]
                 );
             }
 
@@ -595,6 +595,16 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
         $this->persistAllDraftOverrides();
 
         $this->resetEmptyClassesFields();
+
+        // Delete overrides for rows that are no longer on this page.
+        if ($this->pageSlug) {
+            $currentSlugs = collect($this->rows)->pluck('slug')->filter()->values()->toArray();
+
+            ContentOverride::query()
+                ->where('page_slug', $this->pageSlug)
+                ->when(! empty($currentSlugs), fn ($q) => $q->whereNotIn('row_slug', $currentSlugs))
+                ->delete();
+        }
 
         $service = new VoltFileService;
         $fullPath = resource_path('views/'.$this->file);

@@ -320,11 +320,11 @@ Location: `resources/design-library/rows/[category]/[name].blade.php`
 
 ### Slug format
 
-Row slugs use the format `{templateName}:{randomId}` — e.g. `features-grid:Z7Jgur`. The template name (filename without `.blade.php`) is embedded so the runtime can look up schema fields without a separate mapping.
+Row slugs use the format `{templateName}:{randomId}` — e.g. `features-grid:Z7Jgur`. The template name (filename without `.blade.php`) is embedded so the runtime can look up field definitions without a separate mapping.
 
-### Required metadata block (no @schema)
+### Required metadata block
 
-Every row file must have a frontmatter comment with `@name`, `@description`, and `@sort`. There is **no** `@schema` block — field type and group are inferred from the key name:
+Every row file must have a frontmatter comment with `@name`, `@description`, and `@sort`. Field type and group are inferred from the key name:
 
 ```blade
 {{--
@@ -389,9 +389,64 @@ content(string $slug, string $key, ?string $default = null): string
 <section class="{{ $sectionClasses }}">
     @php $sectionContainerClasses = content('__SLUG__', 'section_container_classes', 'max-w-6xl mx-auto'); @endphp
     <div class="{{ $sectionContainerClasses }}">
+        {{-- ... row content ... --}}
+    </div>
+</section>
 ```
 
 `section_classes` and `section_container_classes` also appear in the inline design panel on the row card (paintbrush button). The key `section_container_classes` infers type `classes`, group `section_container`.
+
+### Complete row skeleton
+
+Full example assembling all standard patterns (copy and adapt):
+
+```blade
+{{--
+@name Category - Name
+@description One-line description.
+@sort 10
+--}}
+@php $sectionClasses = content('__SLUG__', 'section_classes', 'py-section px-6 bg-white dark:bg-zinc-900'); @endphp
+<section class="{{ $sectionClasses }}">
+    @php $sectionContainerClasses = content('__SLUG__', 'section_container_classes', 'max-w-6xl mx-auto'); @endphp
+    <div class="{{ $sectionContainerClasses }}">
+        @php $toggleHeadline = content('__SLUG__', 'toggle_headline', '1'); @endphp
+        @if($toggleHeadline)
+        @php $headlineText = content('__SLUG__', 'headline', 'Your Headline'); @endphp
+        @php $headlineClasses = content('__SLUG__', 'headline_classes', 'font-heading text-4xl font-bold text-zinc-900 dark:text-white'); @endphp
+        <h2 class="{{ $headlineClasses }}">{{ $headlineText }}</h2>
+        @endif
+        @php $toggleSubheadline = content('__SLUG__', 'toggle_subheadline', '1'); @endphp
+        @if($toggleSubheadline)
+        @php $subheadlineText = content('__SLUG__', 'subheadline', 'Your supporting text.'); @endphp
+        @php $subheadlineClasses = content('__SLUG__', 'subheadline_classes', 'mt-4 text-lg text-zinc-500 dark:text-zinc-400'); @endphp
+        <p class="{{ $subheadlineClasses }}">{{ $subheadlineText }}</p>
+        @endif
+        @php $buttonsWrapperClasses = content('__SLUG__', 'buttons_wrapper_classes', 'mt-8 flex flex-wrap items-center justify-center gap-4'); @endphp
+        <div class="{{ $buttonsWrapperClasses }}">
+            @php $togglePrimaryCta = content('__SLUG__', 'toggle_primary_cta', '1'); @endphp
+            @php $primaryCtaLabel = content('__SLUG__', 'primary_cta', 'Get Started'); @endphp
+            @php $primaryCtaClasses = content('__SLUG__', 'primary_cta_classes', 'px-8 py-3 bg-primary text-white font-semibold rounded-lg hover:bg-primary/90 transition-colors'); @endphp
+            @if($togglePrimaryCta)
+            <a
+                href="{{ content('__SLUG__', 'primary_cta_url', '#') }}"
+                @if(content('__SLUG__', 'primary_cta_new_tab', '')) target="_blank" rel="noopener noreferrer" @endif
+                class="{{ $primaryCtaClasses }}"
+            >{{ $primaryCtaLabel }}</a>
+            @endif
+            @if(content('__SLUG__', 'toggle_secondary_cta', '1'))
+            @php $secondaryCtaLabel = content('__SLUG__', 'secondary_cta', 'Learn More'); @endphp
+            @php $secondaryCtaClasses = content('__SLUG__', 'secondary_cta_classes', 'px-8 py-3 border border-zinc-300 dark:border-zinc-600 text-zinc-700 dark:text-zinc-200 font-semibold rounded-lg hover:bg-zinc-50 transition-colors'); @endphp
+            <a
+                href="{{ content('__SLUG__', 'secondary_cta_url', '#') }}"
+                @if(content('__SLUG__', 'secondary_cta_new_tab', '')) target="_blank" rel="noopener noreferrer" @endif
+                class="{{ $secondaryCtaClasses }}"
+            >{{ $secondaryCtaLabel }}</a>
+            @endif
+        </div>
+    </div>
+</section>
+```
 
 ### ALL classes must use content()
 
@@ -474,9 +529,15 @@ The editor auto-promotes a `toggle_X` field to the group header switch when ever
     $featuresJson = content('__SLUG__', 'grid_features', '[{"icon":"bolt","title":"Fast","desc":"Speed."}]');
     $features = json_decode($featuresJson, true) ?: [];
 @endphp
+@php $featuresGridClasses = content('__SLUG__', 'features_grid_classes', 'grid md:grid-cols-3 gap-8'); @endphp
+@php $featureCardClasses = content('__SLUG__', 'feature_card_classes', 'p-6 rounded-card border border-zinc-200 dark:border-zinc-700'); @endphp
 @if($toggleFeatures)
 <div class="{{ $featuresGridClasses }}">
-    @foreach ($features as $feature) ... @endforeach
+    @foreach ($features as $feature)
+        <div class="{{ $featureCardClasses }}">
+            {{-- ... render $feature fields ... --}}
+        </div>
+    @endforeach
 </div>
 @endif
 ```
@@ -496,7 +557,7 @@ Render with `<x-heroicon name="{{ $iconName }}" variant="{{ $iconVariant }}" cla
 ### Adding a new row to the design library
 
 1. Create a new `.blade.php` file in the appropriate category folder
-2. Add the metadata comment with `@name`, `@description`, and `@sort` (no `@schema` block)
+2. Add the metadata comment with `@name`, `@description`, and `@sort`
 3. Use `content('__SLUG__', 'key', 'default')` with keys that follow the naming conventions above
 4. Run `php artisan design-library:index` to register it in the database
 

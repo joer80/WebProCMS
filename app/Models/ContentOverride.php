@@ -9,6 +9,7 @@ class ContentOverride extends Model
 {
     protected $fillable = [
         'row_slug',
+        'page_slug',
         'key',
         'type',
         'value',

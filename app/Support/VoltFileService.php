@@ -2,6 +2,7 @@
 
 namespace App\Support;
 
+use App\Models\ContentOverride;
 use Illuminate\Support\Str;
 
 class VoltFileService
@@ -456,12 +457,13 @@ JS;
 
     /**
      * Clone an existing page to a new slug, copying its content and registering a new route.
-     * Also adds the new page to the current website type's nav and footer as inactive.
+     * Regenerates all row slugs and copies content overrides to the new page.
      */
     public function clonePage(string $newSlug, string $newName, string $sourceRelativePath): void
     {
         $sourcePath = resource_path('views/'.$sourceRelativePath);
         $destPath = resource_path('views/pages/⚡'.$newSlug.'.blade.php');
+        $sourcePageSlug = preg_match('#^pages/⚡([^/]+)\.blade\.php$#u', $sourceRelativePath, $m) ? $m[1] : null;
 
         $contents = file_get_contents($sourcePath);
 
@@ -471,8 +473,42 @@ JS;
             $contents
         );
 
+        // Build a mapping of old row slug → new row slug, then replace in content.
+        $parsed = $this->parseFile($sourcePath);
+        $slugMap = [];
+
+        foreach ($parsed['rows'] as $row) {
+            $oldSlug = $row['slug'];
+
+            if (str_starts_with($oldSlug, 'legacy-')) {
+                continue;
+            }
+
+            $templateName = explode(':', $oldSlug, 2)[0];
+            $slugMap[$oldSlug] = $templateName.':'.Str::random(6);
+        }
+
+        foreach ($slugMap as $oldSlug => $newRowSlug) {
+            $contents = str_replace($oldSlug, $newRowSlug, $contents);
+        }
+
         $this->writeFile($destPath, $contents);
         $this->addPublicRoute($newSlug);
+
+        // Copy content overrides from source rows to the new page's rows.
+        foreach ($slugMap as $oldSlug => $newRowSlug) {
+            ContentOverride::query()
+                ->where('row_slug', $oldSlug)
+                ->each(function (ContentOverride $override) use ($newRowSlug, $newSlug): void {
+                    ContentOverride::create([
+                        'row_slug' => $newRowSlug,
+                        'page_slug' => $newSlug,
+                        'key' => $override->key,
+                        'type' => $override->getRawOriginal('type'),
+                        'value' => $override->value,
+                    ]);
+                });
+        }
     }
 
     /**
@@ -492,10 +528,31 @@ JS;
 
     /**
      * Delete a page file and remove its route from routes/web.php.
+     * Also deletes all content overrides belonging to the page.
      */
     public function deletePage(string $relativePath): void
     {
         $fullPath = resource_path('views/'.$relativePath);
+        $pageSlug = preg_match('#^pages/⚡([^/]+)\.blade\.php$#u', $relativePath, $m) ? $m[1] : null;
+
+        // Delete overrides before removing the file.
+        if ($pageSlug) {
+            // New-format overrides tagged with page_slug.
+            ContentOverride::query()->where('page_slug', $pageSlug)->delete();
+
+            // Legacy overrides (no page_slug): delete by row slugs parsed from the file.
+            if (file_exists($fullPath)) {
+                $slugs = collect($this->parseFile($fullPath)['rows'])
+                    ->pluck('slug')
+                    ->filter(fn (string $s) => ! str_starts_with($s, 'legacy-'))
+                    ->values()
+                    ->toArray();
+
+                if (! empty($slugs)) {
+                    ContentOverride::query()->whereIn('row_slug', $slugs)->delete();
+                }
+            }
+        }
 
         if (file_exists($fullPath)) {
             unlink($fullPath);
