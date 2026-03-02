@@ -5,7 +5,10 @@
             <button wire:click="resetClassesField('{{ $field['key'] }}')" type="button" class="text-xs text-zinc-400 dark:text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 transition-colors">Reset</button>
         </div>
     @elseif ($field['type'] !== 'toggle')
-        <flux:label class="mb-1.5 text-zinc-500 dark:text-zinc-400">{{ $field['label'] }}</flux:label>
+        <div class="flex items-center justify-between mb-1.5">
+            <flux:label class="text-zinc-500 dark:text-zinc-400">{{ $field['label'] }}</flux:label>
+            <button wire:click="resetContentField('{{ $field['key'] }}')" type="button" class="text-xs text-zinc-400 dark:text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 transition-colors">Reset</button>
+        </div>
     @endif
 
     @if ($field['type'] === 'image')
@@ -170,6 +173,11 @@
                     this.sync();
                 }
             }"
+            x-on:content-grid-reset.window="if ($event.detail.key === '{{ $field['key'] }}') {
+                const parsed = JSON.parse($event.detail.value || '[]');
+                items = parsed;
+                keys = parsed.length > 0 ? Object.keys(parsed[0]) : keys;
+            }"
             class="space-y-2"
         >
             <template x-for="(item, idx) in items" :key="idx">
@@ -307,6 +315,7 @@
         <div class="flex items-center gap-2">
             <flux:switch wire:model.live="contentValues.{{ $field['key'] }}" />
             <span class="text-sm text-zinc-500 dark:text-zinc-400">{{ $field['label'] }}</span>
+            <button wire:click="resetContentField('{{ $field['key'] }}')" type="button" class="ml-auto text-xs text-zinc-400 dark:text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 transition-colors">Reset</button>
         </div>
     @elseif (str_ends_with($field['key'], '_url'))
         <flux:input

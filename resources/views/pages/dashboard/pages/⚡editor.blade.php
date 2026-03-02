@@ -614,6 +614,26 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
         }
     }
 
+    public function resetContentField(string $key): void
+    {
+        $field = collect($this->contentFields)->firstWhere('key', $key);
+
+        if (! $field) {
+            return;
+        }
+
+        $original = $this->originalContentValues[$key] ?? ($field['type'] === 'toggle' ? false : '');
+        $this->contentValues[$key] = $original;
+        session()->forget('editor_draft_overrides.'.$field['slug'].':'.$key);
+
+        if ($field['type'] === 'grid') {
+            $gridJson = is_string($original) ? $original : json_encode($original);
+            $this->dispatch('content-grid-reset', key: $key, value: $gridJson);
+        }
+
+        $this->refreshPreview();
+    }
+
     public function resetEmptyClassesFields(): void
     {
         foreach ($this->contentFields as $field) {
