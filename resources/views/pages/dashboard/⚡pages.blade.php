@@ -52,7 +52,7 @@ new #[Layout('layouts.app')] #[Title('Pages')] #[Lazy] class extends Component {
         unset($files['Other'], $files['Dashboard']);
 
         if (! $this->showAll) {
-            $currentType = config('features.website_type', 'saas');
+            $currentType = config('features.website_type');
             $typeMap = $service->buildPageTypeMap();
 
             $files['Public Pages'] = array_filter(

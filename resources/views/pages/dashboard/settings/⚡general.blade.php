@@ -42,22 +42,22 @@ new #[Layout('layouts.app')] #[Title('General Settings')] class extends Componen
     {
         $this->locationsMode = Setting::get('locations_mode', 'single');
 
-        $this->businessUrl = config('business.url', '');
-        $this->businessPhone = config('business.phone', '');
-        $this->businessEmail = config('business.email', '');
-        $this->businessAddressStreet = config('business.address_street', '');
-        $this->businessAddressCityStateZip = config('business.address_city_state_zip', '');
-        $this->businessHours = config('business.hours', '');
+        $this->businessUrl = config('business.url');
+        $this->businessPhone = config('business.phone');
+        $this->businessEmail = config('business.email');
+        $this->businessAddressStreet = config('business.address_street');
+        $this->businessAddressCityStateZip = config('business.address_city_state_zip');
+        $this->businessHours = config('business.hours');
 
-        $this->seoSchemaType = config('seo.schema.type', 'Organization');
-        $this->seoSchemaLogo = config('seo.schema.logo', '');
-        $this->seoSchemaDescription = config('seo.schema.description', '');
-        $this->seoAddressCity = config('seo.schema.address.city', '');
-        $this->seoAddressRegion = config('seo.schema.address.region', '');
-        $this->seoAddressPostalCode = config('seo.schema.address.postal_code', '');
-        $this->seoAddressCountry = config('seo.schema.address.country', 'US');
-        $this->seoOgDefaultImage = config('seo.og.default_image', '');
-        $this->seoTwitterHandle = config('seo.twitter.handle', '');
+        $this->seoSchemaType = config('seo.schema.type');
+        $this->seoSchemaLogo = config('seo.schema.logo');
+        $this->seoSchemaDescription = config('seo.schema.description');
+        $this->seoAddressCity = config('seo.schema.address.city');
+        $this->seoAddressRegion = config('seo.schema.address.region');
+        $this->seoAddressPostalCode = config('seo.schema.address.postal_code');
+        $this->seoAddressCountry = config('seo.schema.address.country');
+        $this->seoOgDefaultImage = config('seo.og.default_image');
+        $this->seoTwitterHandle = config('seo.twitter.handle');
     }
 
     public function saveBusinessInfo(): void

@@ -13,7 +13,7 @@ new #[Layout('layouts.public', ['description' => 'WebProCMS is a clean, powerful
 
     public function mount(): void
     {
-        $this->websiteType = config('features.website_type', 'saas');
+        $this->websiteType = config('features.website_type');
         $this->recentPosts = Post::query()
             ->published()
             ->with('category')

@@ -64,7 +64,7 @@ new #[Layout('layouts.public', ['description' => 'Find a GetRows office near you
                 'addressLocality' => $loc->city,
                 'addressRegion' => $loc->state,
                 'postalCode' => $loc->zip,
-                'addressCountry' => config('seo.schema.address.country', 'US'),
+                'addressCountry' => config('seo.schema.address.country'),
             ],
         ])->values()->all();
     @endphp

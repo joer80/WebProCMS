@@ -19,16 +19,16 @@ return [
         'url' => env('APP_URL', ''),
         'logo' => '',
         'description' => 'Business Name helps you manage your web content efficiently.',
-        'phone' => config('business.phone', ''),
-        'email' => config('business.email', ''),
+        'phone' => config('business.phone'),
+        'email' => config('business.email'),
         'address' => [
-            'street' => config('business.address_street', ''),
+            'street' => config('business.address_street'),
             'city' => 'Austin',
             'region' => 'TX',
             'postal_code' => '78701',
             'country' => 'US',
         ],
-        'hours' => config('business.hours', ''),
+        'hours' => config('business.hours'),
     ],
 
     /*

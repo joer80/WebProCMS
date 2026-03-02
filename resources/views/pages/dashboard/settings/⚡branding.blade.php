@@ -18,7 +18,7 @@ new #[Layout('layouts.app')] #[Title('Branding')] class extends Component {
 
     public function mount(): void
     {
-        $this->logoUrl = config('branding.logo_url', '');
+        $this->logoUrl = config('branding.logo_url');
         $this->loadThemeColors();
         $this->loadTypography();
     }
@@ -95,8 +95,8 @@ new #[Layout('layouts.app')] #[Title('Branding')] class extends Component {
 
     protected function loadTypography(): void
     {
-        $this->bodyFont = config('branding.body_font', 'instrument-sans');
-        $this->headingFont = config('branding.heading_font', 'instrument-sans');
+        $this->bodyFont = config('branding.body_font');
+        $this->headingFont = config('branding.heading_font');
 
         $css = file_get_contents(resource_path('css/app.css'));
 
