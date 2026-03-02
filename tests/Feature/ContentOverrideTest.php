@@ -2,6 +2,7 @@
 
 use App\Enums\ContentType;
 use App\Models\ContentOverride;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 
 it('returns the default when no override exists', function (): void {
@@ -121,6 +122,37 @@ it('deletes all overrides for a row slug without affecting other rows', function
 
     expect(ContentOverride::where('row_slug', 'hero-abc123')->count())->toBe(0)
         ->and(ContentOverride::where('row_slug', 'cta-xyz789')->count())->toBe(1);
+});
+
+it('issues only one query per slug regardless of how many fields are fetched', function (): void {
+    ContentOverride::create(['row_slug' => 'perf-test123', 'key' => 'headline', 'type' => 'text', 'value' => 'Hello']);
+    ContentOverride::create(['row_slug' => 'perf-test123', 'key' => 'subheadline', 'type' => 'text', 'value' => 'World']);
+    ContentOverride::create(['row_slug' => 'perf-test123', 'key' => 'primary_cta', 'type' => 'text', 'value' => 'Click']);
+
+    DB::flushQueryLog();
+    DB::enableQueryLog();
+
+    content('perf-test123', 'headline', 'Default');
+    content('perf-test123', 'subheadline', 'Default');
+    content('perf-test123', 'primary_cta', 'Default');
+    content('perf-test123', 'missing_field', 'Default');
+
+    expect(DB::getQueryLog())->toHaveCount(1);
+});
+
+it('issues one query per unique slug', function (): void {
+    ContentOverride::create(['row_slug' => 'slug-aaa111', 'key' => 'headline', 'type' => 'text', 'value' => 'Row A']);
+    ContentOverride::create(['row_slug' => 'slug-bbb222', 'key' => 'headline', 'type' => 'text', 'value' => 'Row B']);
+
+    DB::flushQueryLog();
+    DB::enableQueryLog();
+
+    content('slug-aaa111', 'headline', 'Default');
+    content('slug-aaa111', 'subheadline', 'Default');
+    content('slug-bbb222', 'headline', 'Default');
+    content('slug-bbb222', 'subheadline', 'Default');
+
+    expect(DB::getQueryLog())->toHaveCount(2);
 });
 
 describe('session draft overrides', function (): void {

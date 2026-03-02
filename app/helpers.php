@@ -1,6 +1,6 @@
 <?php
 
-use App\Models\ContentOverride;
+use App\Support\ContentCache;
 use Illuminate\Support\Facades\Storage;
 
 if (! function_exists('content')) {
@@ -29,9 +29,7 @@ if (! function_exists('content')) {
             }
         }
 
-        $value = ContentOverride::where('row_slug', $slug)
-            ->where('key', $key)
-            ->value('value');
+        $value = app(ContentCache::class)->get($slug, $key);
 
         if ($value === null) {
             return $default;
