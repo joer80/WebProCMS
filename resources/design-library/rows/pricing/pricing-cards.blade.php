@@ -7,7 +7,9 @@
 <section class="{{ $sectionClasses }}">
     @php $containerClasses = content('__SLUG__', 'container_classes', 'max-w-5xl mx-auto', 'classes', 'section'); @endphp
     <div class="{{ $containerClasses }}">
-        <div class="text-center mb-16">
+        @php $headerWrapperClasses = content('__SLUG__', 'header_wrapper_classes', 'text-center mb-16', 'classes', 'content'); @endphp
+        @php $pricingGridClasses = content('__SLUG__', 'pricing_grid_classes', 'grid md:grid-cols-3 gap-8', 'classes', 'content'); @endphp
+        <div class="{{ $headerWrapperClasses }}">
             @php $showHeadline = content('__SLUG__', 'show_headline', '1', 'toggle', 'headline'); @endphp
             @if($showHeadline)
             @php $headlineText = content('__SLUG__', 'headline', 'Simple, Transparent Pricing', 'text', 'headline'); @endphp
@@ -21,7 +23,7 @@
             <p class="{{ $subheadlineClasses }}">{{ $subheadlineText }}</p>
             @endif
         </div>
-        <div class="grid md:grid-cols-3 gap-8">
+        <div class="{{ $pricingGridClasses }}">
             @foreach ([['name' => 'Starter', 'price' => '$9', 'desc' => 'Perfect for individuals', 'features' => ['5 projects', '10GB storage', 'Email support'], 'featured' => false], ['name' => 'Pro', 'price' => '$29', 'desc' => 'Great for small teams', 'features' => ['Unlimited projects', '100GB storage', 'Priority support', 'Analytics'], 'featured' => true], ['name' => 'Enterprise', 'price' => '$99', 'desc' => 'For large organizations', 'features' => ['Unlimited everything', 'Dedicated support', 'Custom integrations', 'SLA guarantee'], 'featured' => false]] as $plan)
                 <div class="rounded-card p-8 {{ $plan['featured'] ? 'bg-primary text-white ring-2 ring-primary' : 'bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700' }}">
                     <h3 class="text-lg font-semibold {{ $plan['featured'] ? 'text-white' : 'text-zinc-900 dark:text-white' }}">{{ $plan['name'] }}</h3>

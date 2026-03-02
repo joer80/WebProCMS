@@ -7,7 +7,14 @@
 <section class="{{ $sectionClasses }}">
     @php $containerClasses = content('__SLUG__', 'container_classes', 'max-w-3xl mx-auto', 'classes', 'section'); @endphp
     <div class="{{ $containerClasses }}">
-        <div class="text-center mb-16">
+        @php $headerWrapperClasses = content('__SLUG__', 'header_wrapper_classes', 'text-center mb-16', 'classes', 'content'); @endphp
+        @php $accordionClasses = content('__SLUG__', 'accordion_classes', 'divide-y divide-zinc-200 dark:divide-zinc-700', 'classes', 'content'); @endphp
+        @php $itemClasses = content('__SLUG__', 'item_classes', 'py-5', 'classes', 'content'); @endphp
+        @php $questionButtonClasses = content('__SLUG__', 'question_button_classes', 'w-full flex items-center justify-between text-left', 'classes', 'content'); @endphp
+        @php $questionTextClasses = content('__SLUG__', 'question_text_classes', 'text-base font-semibold text-zinc-900 dark:text-white', 'classes', 'content'); @endphp
+        @php $chevronClasses = content('__SLUG__', 'chevron_classes', 'size-5 text-zinc-400 shrink-0 transition-transform duration-200', 'classes', 'content'); @endphp
+        @php $answerClasses = content('__SLUG__', 'answer_classes', 'mt-3 text-zinc-500 dark:text-zinc-400 text-sm leading-relaxed', 'classes', 'content'); @endphp
+        <div class="{{ $headerWrapperClasses }}">
             @php $showHeadline = content('__SLUG__', 'show_headline', '1', 'toggle', 'headline'); @endphp
             @if($showHeadline)
             @php $headlineText = content('__SLUG__', 'headline', 'Frequently Asked Questions', 'text', 'headline'); @endphp
@@ -21,23 +28,23 @@
             <p class="{{ $subheadlineClasses }}">{{ $subheadlineText }} <a href="{{ content('__SLUG__', 'contact_url', '/contact', 'text', 'content') }}" class="text-primary underline">{{ content('__SLUG__', 'contact_cta', 'Contact us', 'text', 'content') }}</a>.</p>
             @endif
         </div>
-        <div class="divide-y divide-zinc-200 dark:divide-zinc-700" x-data="{ open: null }">
+        <div class="{{ $accordionClasses }}" x-data="{ open: null }">
             @foreach ([['q' => 'How do I get started?', 'a' => 'Simply sign up for a free account and follow the onboarding wizard. You can be up and running in under 5 minutes.'], ['q' => 'Is there a free trial?', 'a' => 'Yes! All plans come with a 14-day free trial. No credit card required.'], ['q' => 'Can I cancel at any time?', 'a' => 'Absolutely. You can cancel your subscription at any time from your account settings. No questions asked.'], ['q' => 'Do you offer customer support?', 'a' => 'We offer email support on all plans, with priority support and live chat available on Pro and Enterprise plans.']] as $i => $faq)
-                <div x-data class="py-5">
+                <div x-data class="{{ $itemClasses }}">
                     <button
                         @click="open === {{ $i }} ? open = null : open = {{ $i }}"
-                        class="w-full flex items-center justify-between text-left"
+                        class="{{ $questionButtonClasses }}"
                     >
-                        <span class="text-base font-semibold text-zinc-900 dark:text-white">{{ $faq['q'] }}</span>
+                        <span class="{{ $questionTextClasses }}">{{ $faq['q'] }}</span>
                         <svg
                             :class="open === {{ $i }} ? 'rotate-180' : ''"
-                            class="size-5 text-zinc-400 shrink-0 transition-transform duration-200"
+                            class="{{ $chevronClasses }}"
                             fill="none" viewBox="0 0 24 24" stroke="currentColor"
                         >
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
                         </svg>
                     </button>
-                    <div x-show="open === {{ $i }}" x-collapse class="mt-3 text-zinc-500 dark:text-zinc-400 text-sm leading-relaxed">
+                    <div x-show="open === {{ $i }}" x-collapse class="{{ $answerClasses }}">
                         {{ $faq['a'] }}
                     </div>
                 </div>

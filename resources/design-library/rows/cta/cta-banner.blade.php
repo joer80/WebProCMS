@@ -19,7 +19,8 @@
         @php $subheadlineClasses = content('__SLUG__', 'subheadline_classes', 'mt-4 text-lg text-white/80', 'classes', 'subheadline'); @endphp
         <p class="{{ $subheadlineClasses }}">{{ $subheadlineText }}</p>
         @endif
-        <div class="mt-8 flex flex-wrap items-center justify-center gap-4">
+        @php $buttonsWrapperClasses = content('__SLUG__', 'buttons_wrapper_classes', 'mt-8 flex flex-wrap items-center justify-center gap-4', 'classes', 'content'); @endphp
+        <div class="{{ $buttonsWrapperClasses }}">
             @php $showPrimaryCta = content('__SLUG__', 'show_primary_cta', '1', 'toggle', 'primary button'); @endphp
             @php $primaryCtaLabel = content('__SLUG__', 'primary_cta', 'Start Free Trial', 'text', 'primary button'); @endphp
             @php $primaryCtaClasses = content('__SLUG__', 'primary_cta_classes', 'px-8 py-3 bg-white text-primary font-semibold rounded-lg hover:bg-zinc-100 transition-colors', 'classes', 'primary button'); @endphp

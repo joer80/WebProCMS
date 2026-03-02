@@ -7,21 +7,36 @@
 <section class="{{ $sectionClasses }}">
     @php $containerClasses = content('__SLUG__', 'container_classes', 'max-w-6xl mx-auto', 'classes', 'section'); @endphp
     <div class="{{ $containerClasses }}">
-        <div class="flex items-center justify-between mb-12">
-            <h2 class="font-heading text-4xl font-bold text-zinc-900 dark:text-white">{{ content('__SLUG__', 'headline', 'Featured Products', 'text', 'content') }}</h2>
-            <a href="/products" class="text-primary font-semibold hover:text-primary/80 transition-colors text-sm">View all →</a>
+        @php $headerWrapperClasses = content('__SLUG__', 'header_wrapper_classes', 'flex items-center justify-between mb-12', 'classes', 'content'); @endphp
+        @php $viewAllClasses = content('__SLUG__', 'view_all_classes', 'text-primary font-semibold hover:text-primary/80 transition-colors text-sm', 'classes', 'content'); @endphp
+        @php $productsGridClasses = content('__SLUG__', 'products_grid_classes', 'grid grid-cols-2 md:grid-cols-4 gap-6', 'classes', 'content'); @endphp
+        @php $productCardClasses = content('__SLUG__', 'product_card_classes', 'group', 'classes', 'content'); @endphp
+        @php $imageWrapperClasses = content('__SLUG__', 'image_wrapper_classes', 'rounded-card bg-zinc-100 dark:bg-zinc-800 aspect-square mb-4 overflow-hidden', 'classes', 'content'); @endphp
+        @php $productNameClasses = content('__SLUG__', 'product_name_classes', 'font-semibold text-zinc-900 dark:text-white', 'classes', 'content'); @endphp
+        @php $productDescClasses = content('__SLUG__', 'product_desc_classes', 'text-sm text-zinc-500 dark:text-zinc-400 mt-1', 'classes', 'content'); @endphp
+        @php $priceRowClasses = content('__SLUG__', 'price_row_classes', 'mt-3 flex items-center justify-between', 'classes', 'content'); @endphp
+        @php $priceClasses = content('__SLUG__', 'price_classes', 'font-bold text-zinc-900 dark:text-white', 'classes', 'content'); @endphp
+        @php $buttonClasses = content('__SLUG__', 'button_classes', 'px-3 py-1.5 bg-primary text-white text-xs font-semibold rounded-lg hover:bg-primary/90 transition-colors', 'classes', 'content'); @endphp
+        <div class="{{ $headerWrapperClasses }}">
+            @php $showHeadline = content('__SLUG__', 'show_headline', '1', 'toggle', 'headline'); @endphp
+            @if($showHeadline)
+            @php $headlineText = content('__SLUG__', 'headline', 'Featured Products', 'text', 'headline'); @endphp
+            @php $headlineClasses = content('__SLUG__', 'headline_classes', 'font-heading text-4xl font-bold text-zinc-900 dark:text-white', 'classes', 'headline'); @endphp
+            <h2 class="{{ $headlineClasses }}">{{ $headlineText }}</h2>
+            @endif
+            <a href="/products" class="{{ $viewAllClasses }}">View all →</a>
         </div>
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
+        <div class="{{ $productsGridClasses }}">
             @foreach (['Product Alpha', 'Product Beta', 'Product Gamma', 'Product Delta'] as $product)
-                <div class="group">
-                    <div class="rounded-card bg-zinc-100 dark:bg-zinc-800 aspect-square mb-4 overflow-hidden">
+                <div class="{{ $productCardClasses }}">
+                    <div class="{{ $imageWrapperClasses }}">
                         <div class="w-full h-full flex items-center justify-center text-zinc-400 dark:text-zinc-500 text-sm">Image</div>
                     </div>
-                    <h3 class="font-semibold text-zinc-900 dark:text-white">{{ $product }}</h3>
-                    <p class="text-sm text-zinc-500 dark:text-zinc-400 mt-1">Short product description here.</p>
-                    <div class="mt-3 flex items-center justify-between">
-                        <span class="font-bold text-zinc-900 dark:text-white">$49.99</span>
-                        <button class="px-3 py-1.5 bg-primary text-white text-xs font-semibold rounded-lg hover:bg-primary/90 transition-colors">
+                    <h3 class="{{ $productNameClasses }}">{{ $product }}</h3>
+                    <p class="{{ $productDescClasses }}">Short product description here.</p>
+                    <div class="{{ $priceRowClasses }}">
+                        <span class="{{ $priceClasses }}">$49.99</span>
+                        <button class="{{ $buttonClasses }}">
                             Add to Cart
                         </button>
                     </div>

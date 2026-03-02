@@ -7,7 +7,13 @@
 <section class="{{ $sectionClasses }}">
     @php $containerClasses = content('__SLUG__', 'container_classes', 'text-center', 'classes', 'section'); @endphp
     <div class="{{ $containerClasses }}">
-        <div class="text-8xl font-black text-zinc-200 dark:text-zinc-700">404</div>
+        @php $errorCodeClasses = content('__SLUG__', 'error_code_classes', 'text-8xl font-black text-zinc-200 dark:text-zinc-700', 'classes', 'content'); @endphp
+        @php $buttonsWrapperClasses = content('__SLUG__', 'buttons_wrapper_classes', 'mt-8 flex flex-wrap items-center justify-center gap-4', 'classes', 'content'); @endphp
+        @php $primaryCtaClasses = content('__SLUG__', 'primary_cta_classes', 'px-6 py-3 bg-primary text-white font-semibold rounded-lg hover:bg-primary/90 transition-colors', 'classes', 'primary button'); @endphp
+        @php $showSecondaryCta = content('__SLUG__', 'show_secondary_cta', '1', 'toggle', 'secondary button'); @endphp
+        @php $secondaryCtaLabel = content('__SLUG__', 'secondary_cta', 'Contact Support', 'text', 'secondary button'); @endphp
+        @php $secondaryCtaClasses = content('__SLUG__', 'secondary_cta_classes', 'px-6 py-3 border border-zinc-300 dark:border-zinc-600 text-zinc-700 dark:text-zinc-200 font-semibold rounded-lg hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors', 'classes', 'secondary button'); @endphp
+        <div class="{{ $errorCodeClasses }}">404</div>
         @php $showHeadline = content('__SLUG__', 'show_headline', '1', 'toggle', 'headline'); @endphp
         @if($showHeadline)
         @php $headlineText = content('__SLUG__', 'headline', 'Page Not Found', 'text', 'headline'); @endphp
@@ -20,17 +26,16 @@
         @php $subheadlineClasses = content('__SLUG__', 'subheadline_classes', 'mt-4 text-zinc-500 dark:text-zinc-400 max-w-sm mx-auto', 'classes', 'subheadline'); @endphp
         <p class="{{ $subheadlineClasses }}">{{ $subheadlineText }}</p>
         @endif
-        <div class="mt-8 flex flex-wrap items-center justify-center gap-4">
+        <div class="{{ $buttonsWrapperClasses }}">
             @php $showPrimaryCta = content('__SLUG__', 'show_primary_cta', '1', 'toggle', 'primary button'); @endphp
             @php $primaryCtaLabel = content('__SLUG__', 'primary_cta', 'Go Home', 'text', 'primary button'); @endphp
             @if($showPrimaryCta)
-            <a href="{{ content('__SLUG__', 'primary_cta_url', '/', 'text', 'primary button') }}" class="px-6 py-3 bg-primary text-white font-semibold rounded-lg hover:bg-primary/90 transition-colors">
+            <a href="{{ content('__SLUG__', 'primary_cta_url', '/', 'text', 'primary button') }}" class="{{ $primaryCtaClasses }}">
                 {{ $primaryCtaLabel }}
             </a>
             @endif
-            @if(content('__SLUG__', 'show_secondary_cta', '1', 'toggle', 'secondary button'))
-            @php $secondaryCtaLabel = content('__SLUG__', 'secondary_cta', 'Contact Support', 'text', 'secondary button'); @endphp
-            <a href="{{ content('__SLUG__', 'secondary_cta_url', '/contact', 'text', 'secondary button') }}" class="px-6 py-3 border border-zinc-300 dark:border-zinc-600 text-zinc-700 dark:text-zinc-200 font-semibold rounded-lg hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors">
+            @if($showSecondaryCta)
+            <a href="{{ content('__SLUG__', 'secondary_cta_url', '/contact', 'text', 'secondary button') }}" class="{{ $secondaryCtaClasses }}">
                 {{ $secondaryCtaLabel }}
             </a>
             @endif

@@ -8,7 +8,10 @@
     @php $containerClasses = content('__SLUG__', 'container_classes', 'max-w-6xl mx-auto grid md:grid-cols-2 gap-12 items-center', 'classes', 'section'); @endphp
     <div class="{{ $containerClasses }}">
         <div>
-            <span class="text-sm font-semibold text-primary uppercase tracking-wider">{{ content('__SLUG__', 'badge', 'Our Story', 'text', 'content') }}</span>
+            @php $badgeClasses = content('__SLUG__', 'badge_classes', 'text-sm font-semibold text-primary uppercase tracking-wider', 'classes', 'content'); @endphp
+            @php $imageWrapperClasses = content('__SLUG__', 'image_wrapper_classes', 'rounded-card overflow-hidden bg-zinc-100 dark:bg-zinc-800 aspect-square flex items-center justify-center', 'classes', 'media'); @endphp
+            @php $imageClasses = content('__SLUG__', 'image_classes', 'w-full h-full object-cover', 'classes', 'media'); @endphp
+            <span class="{{ $badgeClasses }}">{{ content('__SLUG__', 'badge', 'Our Story', 'text', 'content') }}</span>
             @php $showHeadline = content('__SLUG__', 'show_headline', '1', 'toggle', 'headline'); @endphp
             @if($showHeadline)
             @php $headlineText = content('__SLUG__', 'headline', 'We Are Building the Future of Work', 'text', 'headline'); @endphp
@@ -37,10 +40,10 @@
             @endif
         </div>
         @if(content('__SLUG__', 'show_image', '1', 'toggle', 'media'))
-        <div class="rounded-card overflow-hidden bg-zinc-100 dark:bg-zinc-800 aspect-square flex items-center justify-center">
+        <div class="{{ $imageWrapperClasses }}">
             @php $sectionImage = content('__SLUG__', 'image', '', 'image', 'media'); @endphp
             @if ($sectionImage)
-                <img src="{{ $sectionImage }}" alt="{{ content('__SLUG__', 'image_alt', '', 'text', 'media') }}" class="w-full h-full object-cover">
+                <img src="{{ $sectionImage }}" alt="{{ content('__SLUG__', 'image_alt', '', 'text', 'media') }}" class="{{ $imageClasses }}">
             @else
                 <span class="text-zinc-400 dark:text-zinc-500 text-sm">Image Placeholder</span>
             @endif

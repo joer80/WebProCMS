@@ -16,26 +16,38 @@
 >
     @php $containerClasses = content('__SLUG__', 'container_classes', 'max-w-3xl mx-auto text-center', 'classes', 'section'); @endphp
     <div class="{{ $containerClasses }}">
-        <h2 class="font-heading text-4xl font-bold text-zinc-900 dark:text-white mb-12">{{ content('__SLUG__', 'headline', 'What Our Customers Say', 'text', 'content') }}</h2>
+        @php $showHeadline = content('__SLUG__', 'show_headline', '1', 'toggle', 'headline'); @endphp
+        @if($showHeadline)
+        @php $headlineText = content('__SLUG__', 'headline', 'What Our Customers Say', 'text', 'headline'); @endphp
+        @php $headlineClasses = content('__SLUG__', 'headline_classes', 'font-heading text-4xl font-bold text-zinc-900 dark:text-white mb-12', 'classes', 'headline'); @endphp
+        <h2 class="{{ $headlineClasses }}">{{ $headlineText }}</h2>
+        @endif
+
+        @php $quoteClasses = content('__SLUG__', 'quote_classes', 'text-xl text-zinc-700 dark:text-zinc-300 italic leading-relaxed', 'classes', 'content'); @endphp
+        @php $authorWrapperClasses = content('__SLUG__', 'author_wrapper_classes', 'mt-6', 'classes', 'content'); @endphp
+        @php $authorNameClasses = content('__SLUG__', 'author_name_classes', 'font-semibold text-zinc-900 dark:text-white', 'classes', 'content'); @endphp
+        @php $authorRoleClasses = content('__SLUG__', 'author_role_classes', 'text-sm text-zinc-500 dark:text-zinc-400', 'classes', 'content'); @endphp
+        @php $dotsWrapperClasses = content('__SLUG__', 'dots_wrapper_classes', 'flex items-center justify-center gap-2 mt-8', 'classes', 'content'); @endphp
+        @php $dotBaseClasses = content('__SLUG__', 'dot_base_classes', 'h-2 rounded-full transition-all duration-300', 'classes', 'content'); @endphp
 
         <div class="relative">
             @foreach ([['quote' => 'This is honestly the best tool I\'ve used in years. It transformed how we work.', 'name' => 'Alex Thompson', 'role' => 'Founder at StartupXYZ'], ['quote' => 'The onboarding was seamless and the results were immediate. I highly recommend it.', 'name' => 'Jamie Rivera', 'role' => 'VP of Engineering'], ['quote' => 'Customer support is incredible. They went above and beyond to help our team.', 'name' => 'Morgan Lee', 'role' => 'Director of Operations']] as $i => $t)
                 <div x-show="current === {{ $i }}" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-x-4" x-transition:enter-end="opacity-100 translate-x-0">
-                    <p class="text-xl text-zinc-700 dark:text-zinc-300 italic leading-relaxed">"{{ $t['quote'] }}"</p>
-                    <div class="mt-6">
-                        <div class="font-semibold text-zinc-900 dark:text-white">{{ $t['name'] }}</div>
-                        <div class="text-sm text-zinc-500 dark:text-zinc-400">{{ $t['role'] }}</div>
+                    <p class="{{ $quoteClasses }}">"{{ $t['quote'] }}"</p>
+                    <div class="{{ $authorWrapperClasses }}">
+                        <div class="{{ $authorNameClasses }}">{{ $t['name'] }}</div>
+                        <div class="{{ $authorRoleClasses }}">{{ $t['role'] }}</div>
                     </div>
                 </div>
             @endforeach
         </div>
 
-        <div class="flex items-center justify-center gap-2 mt-8">
+        <div class="{{ $dotsWrapperClasses }}">
             @for ($i = 0; $i < 3; $i++)
                 <button
                     @click="current = {{ $i }}"
                     :class="current === {{ $i }} ? 'bg-primary w-6' : 'bg-zinc-300 dark:bg-zinc-600 w-2'"
-                    class="h-2 rounded-full transition-all duration-300"
+                    class="{{ $dotBaseClasses }}"
                 ></button>
             @endfor
         </div>

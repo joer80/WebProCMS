@@ -7,8 +7,10 @@
 <section class="{{ $sectionClasses }}">
     @php $containerClasses = content('__SLUG__', 'container_classes', 'max-w-3xl mx-auto', 'classes', 'section'); @endphp
     <div class="{{ $containerClasses }}">
-        @if(content('__SLUG__', 'show_badge', '1', 'toggle', 'content'))
-        <span class="inline-block px-3 py-1 text-xs font-semibold tracking-widest uppercase bg-primary/10 text-primary rounded-full mb-6">{{ content('__SLUG__', 'badge', 'Welcome', 'text', 'content') }}</span>
+        @php $showBadge = content('__SLUG__', 'show_badge', '1', 'toggle', 'content'); @endphp
+        @php $badgeClasses = content('__SLUG__', 'badge_classes', 'inline-block px-3 py-1 text-xs font-semibold tracking-widest uppercase bg-primary/10 text-primary rounded-full mb-6', 'classes', 'content'); @endphp
+        @if($showBadge)
+        <span class="{{ $badgeClasses }}">{{ content('__SLUG__', 'badge', 'Welcome', 'text', 'content') }}</span>
         @endif
         @php $showHeadline = content('__SLUG__', 'show_headline', '1', 'toggle', 'headline'); @endphp
         @if($showHeadline)
@@ -22,7 +24,8 @@
         @php $subheadlineClasses = content('__SLUG__', 'subheadline_classes', 'mt-6 text-xl text-zinc-500 dark:text-zinc-400 leading-relaxed', 'classes', 'subheadline'); @endphp
         <p class="{{ $subheadlineClasses }}">{{ $subheadlineText }}</p>
         @endif
-        <div class="mt-10 flex flex-wrap items-center justify-center gap-4">
+        @php $buttonsWrapperClasses = content('__SLUG__', 'buttons_wrapper_classes', 'mt-10 flex flex-wrap items-center justify-center gap-4', 'classes', 'content'); @endphp
+        <div class="{{ $buttonsWrapperClasses }}">
             @php $showPrimaryCta = content('__SLUG__', 'show_primary_cta', '1', 'toggle', 'primary button'); @endphp
             @php $primaryCtaLabel = content('__SLUG__', 'primary_cta', 'Get Started', 'text', 'primary button'); @endphp
             @php $primaryCtaClasses = content('__SLUG__', 'primary_cta_classes', 'px-6 py-3 bg-primary text-white font-semibold rounded-lg hover:bg-primary/90 transition-colors', 'classes', 'primary button'); @endphp

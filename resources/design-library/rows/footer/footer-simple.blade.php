@@ -7,17 +7,22 @@
 <footer class="{{ $sectionClasses }}">
     @php $containerClasses = content('__SLUG__', 'container_classes', 'max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6', 'classes', 'section'); @endphp
     <div class="{{ $containerClasses }}">
+        @php $brandClasses = content('__SLUG__', 'brand_classes', 'text-xl font-bold text-white', 'classes', 'content'); @endphp
+        @php $taglineClasses = content('__SLUG__', 'tagline_classes', 'mt-2 text-sm', 'classes', 'content'); @endphp
+        @php $navClasses = content('__SLUG__', 'nav_classes', 'flex flex-wrap gap-6 text-sm', 'classes', 'content'); @endphp
+        @php $navLinkClasses = content('__SLUG__', 'nav_link_classes', 'hover:text-white transition-colors', 'classes', 'content'); @endphp
+        @php $copyrightClasses = content('__SLUG__', 'copyright_classes', 'text-sm text-right', 'classes', 'content'); @endphp
         <div>
-            <a href="/" class="text-xl font-bold text-white">{{ content('__SLUG__', 'brand_name', 'Brand', 'text', 'content') }}</a>
-            <p class="mt-2 text-sm">{{ content('__SLUG__', 'tagline', 'Helping you build better things.', 'text', 'content') }}</p>
+            <a href="/" class="{{ $brandClasses }}">{{ content('__SLUG__', 'brand_name', 'Brand', 'text', 'content') }}</a>
+            <p class="{{ $taglineClasses }}">{{ content('__SLUG__', 'tagline', 'Helping you build better things.', 'text', 'content') }}</p>
         </div>
-        <nav class="flex flex-wrap gap-6 text-sm">
-            <a href="#" class="hover:text-white transition-colors">About</a>
-            <a href="#" class="hover:text-white transition-colors">Blog</a>
-            <a href="#" class="hover:text-white transition-colors">Contact</a>
-            <a href="#" class="hover:text-white transition-colors">Privacy</a>
+        <nav class="{{ $navClasses }}">
+            <a href="#" class="{{ $navLinkClasses }}">About</a>
+            <a href="#" class="{{ $navLinkClasses }}">Blog</a>
+            <a href="#" class="{{ $navLinkClasses }}">Contact</a>
+            <a href="#" class="{{ $navLinkClasses }}">Privacy</a>
         </nav>
-        <div class="text-sm text-right">
+        <div class="{{ $copyrightClasses }}">
             <p>&copy; {{ date('Y') }} {{ content('__SLUG__', 'brand_name', 'Brand', 'text', 'content') }}. All rights reserved.</p>
             <p>Powered by <a href="https://www.webprocms.com" class="hover:text-white transition-colors">WebProCMS</a></p>
         </div>
