@@ -165,18 +165,11 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
         $default = $this->rowDesignDefaults[$slug][$fieldKey] ?? '';
         $storeValue = (string) $value === $default ? '' : (string) $value;
 
-        if ($storeValue === '') {
-            ContentOverride::query()
-                ->where('row_slug', $slug)
-                ->where('key', $fieldKey)
-                ->delete();
-        } else {
-            ContentOverride::updateOrCreate(
-                ['row_slug' => $slug, 'key' => $fieldKey],
-                ['type' => 'classes', 'value' => $storeValue, 'page_slug' => $this->pageSlug ?: null]
-            );
-        }
+        $drafts = session('editor_draft_overrides', []);
+        $drafts[$slug.':'.$fieldKey] = ['type' => 'classes', 'value' => $storeValue];
+        session(['editor_draft_overrides' => $drafts]);
 
+        $this->isDirty = true;
         $this->refreshPreview();
     }
 
@@ -185,11 +178,11 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
         $default = $this->rowDesignDefaults[$slug][$fieldKey] ?? '';
         $this->rowDesignValues[$slug][$fieldKey] = $default;
 
-        ContentOverride::query()
-            ->where('row_slug', $slug)
-            ->where('key', $fieldKey)
-            ->delete();
+        $drafts = session('editor_draft_overrides', []);
+        $drafts[$slug.':'.$fieldKey] = ['type' => 'classes', 'value' => ''];
+        session(['editor_draft_overrides' => $drafts]);
 
+        $this->isDirty = true;
         $this->refreshPreview();
     }
 
@@ -659,6 +652,8 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
 
     public function discardChanges(): void
     {
+        session()->forget('editor_draft_overrides');
+
         if ($this->file) {
             $this->loadFile($this->file);
         }
