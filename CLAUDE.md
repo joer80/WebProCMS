@@ -478,12 +478,29 @@ Pass `tag="footer"` / `tag="header"` / `tag="article"` when the semantic element
     default-secondary-classes="px-6 py-3 border border-zinc-300 dark:border-zinc-600 text-zinc-700 dark:text-zinc-200 font-semibold rounded-lg hover:bg-zinc-50 transition-colors" />
 ```
 
-**`x-dl.media`** — toggle + image upload + alt + wrapper/image classes (5 fields, always uses `image`, `toggle_image`, `image_alt`, `image_wrapper_classes`, `image_classes` keys):
+**`x-dl.media`** — toggle + image upload + alt + wrapper/image classes (5 fields, always uses `image`, `toggle_image`, `image_alt`, `image_wrapper_classes`, `image_classes` keys). Fixed keys — only one per row. Use `x-dl.image` when you need multiple images or prefix-based keys:
 ```blade
 <x-dl.media slug="__SLUG__"
     default-wrapper-classes="rounded-card overflow-hidden aspect-video"
     default-image-classes="w-full h-full object-cover" />
 ```
+
+**`x-dl.image`** — prefix-based image (5 fields). Unlike `x-dl.media`, supports a `prefix` so you can have multiple images in one row without key collisions:
+```blade
+<x-dl.image slug="__SLUG__" prefix="hero_image"
+    default-wrapper-classes="rounded-card overflow-hidden aspect-video"
+    default-image-classes="w-full h-full object-cover" />
+```
+Fields registered: `toggle_{prefix}`, `{prefix}_image`, `{prefix}_image_alt`, `{prefix}_wrapper_classes`, `{prefix}_image_classes`.
+
+**`x-dl.video`** — YouTube/Vimeo embed (4 fields). Parses `youtube.com/watch?v=ID`, `youtu.be/ID`, and `vimeo.com/ID` URLs into embed format automatically:
+```blade
+<x-dl.video slug="__SLUG__" prefix="demo_video"
+    default-wrapper-classes="rounded-card overflow-hidden aspect-video"
+    default-video-classes="w-full h-full"
+    default-video-url="https://www.youtube.com/watch?v=..." />
+```
+Fields registered: `toggle_{prefix}`, `{prefix}_video_url`, `{prefix}_wrapper_classes`, `{prefix}_video_classes`.
 
 **`x-dl.link`** — toggle + label text + URL + new_tab toggle + classes (5 fields). Use for "View all →" style inline links alongside headings:
 ```blade
