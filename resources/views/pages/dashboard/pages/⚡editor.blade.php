@@ -5,6 +5,7 @@ use App\Jobs\IndexDesignLibraryJob;
 use App\Models\ContentOverride;
 use App\Models\DesignRow;
 use App\Models\MediaItem;
+use App\Models\SharedRow;
 use App\Support\VoltFileService;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -209,6 +210,13 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
             ->get();
     }
 
+    /** @return \Illuminate\Database\Eloquent\Collection<int, SharedRow> */
+    #[Computed]
+    public function sharedLibraryRows(): \Illuminate\Database\Eloquent\Collection
+    {
+        return SharedRow::query()->orderBy('name')->get();
+    }
+
     /** @return array<string, string> */
     #[Computed]
     public function rowCategories(): array
@@ -319,13 +327,16 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
     public function removeRow(int $index): void
     {
         $slug = $this->rows[$index]['slug'] ?? null;
+        $isShared = ! empty($this->rows[$index]['shared']);
 
         if ($slug) {
             if ($this->phpSection) {
                 $this->phpSection = (new VoltFileService)->removePhpCode($this->phpSection, $slug);
             }
 
-            ContentOverride::query()->where('row_slug', $slug)->delete();
+            if (! $isShared) {
+                ContentOverride::query()->where('row_slug', $slug)->delete();
+            }
         }
 
         array_splice($this->rows, $index, 1);
@@ -374,6 +385,50 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                 $slug
             );
         }
+
+        array_splice($this->rows, $atIndex, 0, [$newRow]);
+        $this->rows = array_values($this->rows);
+        $this->loadRowDesignValues();
+        $this->isDirty = true;
+        $this->showLibraryDrawer = false;
+
+        $this->refreshPreview();
+    }
+
+    public function makeRowShared(int $index): void
+    {
+        $row = $this->rows[$index];
+        $slug = $row['slug'];
+        $service = new VoltFileService;
+
+        $service->makeRowShared($slug, $row['name'], $row['blade']);
+
+        ContentOverride::query()->where('row_slug', $slug)->update(['page_slug' => null]);
+
+        $filename = str_replace(':', '-', $slug);
+        $this->rows[$index]['blade'] = "@include('shared-rows.{$filename}')";
+        $this->rows[$index]['shared'] = true;
+
+        $this->isDirty = true;
+        $this->refreshPreview();
+        $this->dispatch('notify', message: 'Row is now shared.');
+    }
+
+    public function insertSharedRow(string $slug, int $atIndex): void
+    {
+        $sharedRow = SharedRow::query()->where('slug', $slug)->first();
+
+        if (! $sharedRow) {
+            return;
+        }
+
+        $filename = str_replace(':', '-', $slug);
+        $newRow = [
+            'slug' => $slug,
+            'name' => $sharedRow->name,
+            'blade' => "@include('shared-rows.{$filename}')",
+            'shared' => true,
+        ];
 
         array_splice($this->rows, $atIndex, 0, [$newRow]);
         $this->rows = array_values($this->rows);
@@ -458,6 +513,12 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
         /** @var array<string, array{type: string, value: string}> $drafts */
         $drafts = session('editor_draft_overrides', []);
 
+        $sharedSlugs = collect($this->rows)
+            ->filter(fn (array $r) => ! empty($r['shared']))
+            ->pluck('slug')
+            ->flip()
+            ->all();
+
         foreach ($drafts as $draftKey => $draft) {
             $lastColon = strrpos($draftKey, ':');
             $slug = substr($draftKey, 0, $lastColon);
@@ -479,7 +540,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
             } else {
                 ContentOverride::updateOrCreate(
                     ['row_slug' => $slug, 'key' => $key],
-                    ['type' => $type, 'value' => $value, 'page_slug' => $this->pageSlug ?: null]
+                    ['type' => $type, 'value' => $value, 'page_slug' => isset($sharedSlugs[$slug]) ? null : ($this->pageSlug ?: null)]
                 );
             }
 
@@ -912,10 +973,37 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                 @foreach ($this->rowCategories as $value => $label)
                     <flux:select.option value="{{ $value }}">{{ $label }}</flux:select.option>
                 @endforeach
+                <flux:select.option value="shared">{{ __('Shared Rows') }}</flux:select.option>
             </flux:select>
         </div>
 
-        @if ($this->libraryRows->isEmpty())
+        @if ($libraryCategory === 'shared')
+            @if ($this->sharedLibraryRows->isEmpty())
+                <div class="text-center py-12 text-zinc-500 dark:text-zinc-400">
+                    <flux:icon name="share" class="size-10 mx-auto mb-3 opacity-40" />
+                    <p class="text-sm">No shared rows yet.</p>
+                    <p class="text-xs mt-1">Use the "Make Shared" action on any row to share it.</p>
+                </div>
+            @else
+                <div class="space-y-2 max-h-96 overflow-y-auto">
+                    @foreach ($this->sharedLibraryRows as $sharedRow)
+                        <div wire:key="shared-{{ $sharedRow->slug }}" class="flex items-center gap-3 p-3 rounded-lg border border-zinc-200 dark:border-zinc-700 hover:border-primary/40 transition-colors">
+                            <div class="flex-1 min-w-0">
+                                <div class="font-medium text-zinc-900 dark:text-white text-sm truncate">{{ $sharedRow->name }}</div>
+                                <div class="text-[10px] font-mono text-zinc-400 dark:text-zinc-500 truncate mt-0.5">{{ $sharedRow->slug }}</div>
+                            </div>
+                            <flux:button
+                                wire:click="insertSharedRow('{{ $sharedRow->slug }}', {{ $insertAtIndex ?? count($rows) }})"
+                                variant="primary"
+                                size="sm"
+                            >
+                                {{ __('Insert') }}
+                            </flux:button>
+                        </div>
+                    @endforeach
+                </div>
+            @endif
+        @elseif ($this->libraryRows->isEmpty())
             <div class="text-center py-12 text-zinc-500 dark:text-zinc-400">
                 <flux:icon name="squares-2x2" class="size-10 mx-auto mb-3 opacity-40" />
                 <p class="text-sm">No rows found.</p>
@@ -1175,6 +1263,12 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                         </div>
 
                         <div class="flex-1 overflow-y-auto p-4">
+                            @if (! empty($rows[$editingRowIndex]['shared'] ?? false))
+                                <div class="mb-3 flex items-start gap-2 px-3 py-2 rounded-lg bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 text-xs text-blue-700 dark:text-blue-300">
+                                    <flux:icon name="share" class="size-3.5 mt-0.5 shrink-0" />
+                                    <span>Shared row — changes affect all pages using it.</span>
+                                </div>
+                            @endif
                             @if (empty($contentFields))
                                 <div class="text-center py-8 text-zinc-400 dark:text-zinc-500">
                                     <flux:icon name="pencil" class="size-10 mx-auto mb-2 opacity-40" />
@@ -1343,7 +1437,12 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                                             wire:click="openContentEditor({{ $index }})"
                                             class="flex-1 min-w-0 text-left hover:opacity-75 transition-opacity"
                                         >
-                                            <div class="text-sm font-medium text-zinc-800 dark:text-zinc-200 truncate">{{ $row['name'] }}</div>
+                                            <div class="flex items-center gap-1.5">
+                                                <div class="text-sm font-medium text-zinc-800 dark:text-zinc-200 truncate">{{ $row['name'] }}</div>
+                                                @if (! empty($row['shared']))
+                                                    <flux:badge size="sm" color="blue" class="shrink-0">Shared</flux:badge>
+                                                @endif
+                                            </div>
                                             <div class="text-[10px] font-mono text-zinc-400 dark:text-zinc-500 truncate mt-0.5">{{ $row['slug'] }}</div>
                                         </button>
                                         @if (isset($rowDesignDefaults[$row['slug']]))
@@ -1464,6 +1563,16 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                                                     <flux:icon name="arrow-down" class="size-3" />
                                                 </span>
                                             </flux:button>
+                                            @if (empty($row['shared']))
+                                                <flux:button
+                                                    wire:click="makeRowShared({{ $index }})"
+                                                    wire:confirm="Make this row shared? It will be available to insert on other pages and changes will affect all pages using it."
+                                                    variant="ghost"
+                                                    size="sm"
+                                                    icon="share"
+                                                    title="Make shared"
+                                                />
+                                            @endif
                                             <flux:button
                                                 wire:click="removeRow({{ $index }})"
                                                 wire:confirm="Remove this row from the page?"

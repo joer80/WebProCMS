@@ -29,6 +29,9 @@ export default defineConfig({
 
                 //Top level Blade files are written at runtime by the editor. The editor handles its own preview refresh, so Vite watching these causes a full page reload that wipes toast notifications. Subdirectories like dashboard still hot reload in vite.
                 '**/resources/views/pages/⚡*.blade.php',
+
+                //Shared row files are written at runtime when a row is made shared. No need to trigger HMR.
+                '**/resources/views/shared-rows/**',
             ],
         },
     },

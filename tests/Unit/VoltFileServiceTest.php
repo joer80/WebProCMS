@@ -169,3 +169,65 @@ VOLT);
 
     unlink($file);
 });
+
+it('parses a shared row and sets shared flag to true', function (): void {
+    $file = tempnam(sys_get_temp_dir(), 'volttest_').'.blade.php';
+    file_put_contents($file, <<<'VOLT'
+<?php
+new class extends Component { }; ?>
+
+{{-- ROW:start:simple-cta:ABC123:shared=1 --}}
+@include('shared-rows.simple-cta-ABC123')
+{{-- ROW:end:simple-cta:ABC123 --}}
+VOLT);
+
+    $result = $this->service->parseFile($file);
+
+    expect($result['rows'])->toHaveCount(1)
+        ->and($result['rows'][0]['slug'])->toBe('simple-cta:ABC123')
+        ->and($result['rows'][0]['shared'])->toBeTrue()
+        ->and($result['rows'][0]['blade'])->toContain("@include('shared-rows.simple-cta-ABC123')");
+
+    unlink($file);
+});
+
+it('sets shared to false for regular rows', function (): void {
+    $file = tempnam(sys_get_temp_dir(), 'volttest_').'.blade.php';
+    file_put_contents($file, <<<'VOLT'
+<?php
+new class extends Component { }; ?>
+
+{{-- ROW:start:features-grid:Z7Jgur --}}
+<section>Features</section>
+{{-- ROW:end:features-grid:Z7Jgur --}}
+VOLT);
+
+    $result = $this->service->parseFile($file);
+
+    expect($result['rows'][0]['shared'])->toBeFalse();
+
+    unlink($file);
+});
+
+it('writes :shared=1 flag in marker when building shared row content', function (): void {
+    $phpSection = "<?php\nnew class extends Component { }; ?>";
+    $rows = [
+        ['slug' => 'simple-cta:ABC123', 'name' => 'CTA', 'blade' => "@include('shared-rows.simple-cta-ABC123')", 'shared' => true],
+    ];
+
+    $content = $this->service->buildFileContent($phpSection, $rows);
+
+    expect($content)->toContain('ROW:start:simple-cta:ABC123:shared=1')
+        ->and($content)->not->toContain('ROW:start:simple-cta:ABC123 ');
+});
+
+it('does not write :shared=1 flag for regular rows', function (): void {
+    $phpSection = "<?php\nnew class extends Component { }; ?>";
+    $rows = [
+        ['slug' => 'hero:ABC123', 'name' => 'Hero', 'blade' => '<section>Hero</section>', 'shared' => false],
+    ];
+
+    $content = $this->service->buildFileContent($phpSection, $rows);
+
+    expect($content)->not->toContain(':shared=1');
+});

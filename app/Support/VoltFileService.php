@@ -3,6 +3,7 @@
 namespace App\Support;
 
 use App\Models\ContentOverride;
+use App\Models\SharedRow;
 use Illuminate\Support\Str;
 
 class VoltFileService
@@ -145,7 +146,8 @@ class VoltFileService
             $slug = $row['slug'];
             $hidden = ! empty($row['hidden']);
             $hiddenFlag = $hidden ? ':hidden=1' : '';
-            $blade .= "\n{{-- ROW:start:{$slug}{$hiddenFlag} --}}\n";
+            $sharedFlag = ! empty($row['shared']) ? ':shared=1' : '';
+            $blade .= "\n{{-- ROW:start:{$slug}{$hiddenFlag}{$sharedFlag} --}}\n";
 
             if ($hidden) {
                 $blade .= "@if(false)\n";
@@ -197,6 +199,35 @@ class VoltFileService
     public function writeFile(string $fullPath, string $content): void
     {
         file_put_contents($fullPath, $content);
+    }
+
+    /**
+     * Write a row's blade content to the shared-rows directory and register it in the DB.
+     */
+    public function makeRowShared(string $slug, string $name, string $bladeContent): void
+    {
+        $filename = str_replace(':', '-', $slug);
+        $filePath = resource_path('views/shared-rows/'.$filename.'.blade.php');
+        file_put_contents($filePath, $bladeContent);
+
+        SharedRow::create(['slug' => $slug, 'name' => $name]);
+    }
+
+    /**
+     * Delete a shared row: removes its file, DB record, and content overrides.
+     * Removing the row from individual pages is the caller's responsibility.
+     */
+    public function deleteSharedRow(string $slug): void
+    {
+        $filename = str_replace(':', '-', $slug);
+        $filePath = resource_path('views/shared-rows/'.$filename.'.blade.php');
+
+        if (file_exists($filePath)) {
+            unlink($filePath);
+        }
+
+        SharedRow::query()->where('slug', $slug)->delete();
+        ContentOverride::query()->where('row_slug', $slug)->whereNull('page_slug')->delete();
     }
 
     /**
@@ -299,7 +330,7 @@ JS;
         $rows = [];
         $startTag = 'ROW:start:';
         $endTag = 'ROW:end:';
-        $pattern = '/\{\{--\s*'.$startTag.'([\w-]+(?::[A-Za-z0-9]+)?)(:hidden=1)?\s*--\}\}(.*?)\{\{--\s*'.$endTag.'\1\s*--\}\}/s';
+        $pattern = '/\{\{--\s*'.$startTag.'([\w-]+(?::[A-Za-z0-9]+)?)(:hidden=1)?(:shared=1)?\s*--\}\}(.*?)\{\{--\s*'.$endTag.'\1\s*--\}\}/s';
 
         preg_match_all($pattern, $bladeSection, $matches, PREG_SET_ORDER | PREG_OFFSET_CAPTURE);
 
@@ -323,7 +354,8 @@ JS;
             $fullMatchLen = strlen($match[0][0]);
             $slug = $match[1][0];
             $hidden = $match[2][0] === ':hidden=1';
-            $blade = trim($match[3][0]);
+            $shared = $match[3][0] === ':shared=1';
+            $blade = trim($match[4][0]);
 
             // Strip the @if(false)...@endif wrapper written by buildFileContent for hidden rows.
             if ($hidden && str_starts_with($blade, '@if(false)') && str_ends_with($blade, '@endif')) {
@@ -346,6 +378,7 @@ JS;
                 'name' => $this->labelFromSlug($slug),
                 'blade' => $blade,
                 'hidden' => $hidden,
+                'shared' => $shared,
             ];
 
             $lastEnd = $fullMatchStart + $fullMatchLen;
@@ -474,13 +507,15 @@ JS;
         );
 
         // Build a mapping of old row slug → new row slug, then replace in content.
+        // Shared rows keep their existing slug so all pages continue referencing the same content.
         $parsed = $this->parseFile($sourcePath);
+        $sharedSlugs = SharedRow::query()->pluck('slug')->all();
         $slugMap = [];
 
         foreach ($parsed['rows'] as $row) {
             $oldSlug = $row['slug'];
 
-            if (str_starts_with($oldSlug, 'legacy-')) {
+            if (str_starts_with($oldSlug, 'legacy-') || in_array($oldSlug, $sharedSlugs, true)) {
                 continue;
             }
 
@@ -496,6 +531,7 @@ JS;
         $this->addPublicRoute($newSlug);
 
         // Copy content overrides from source rows to the new page's rows.
+        // Shared rows are excluded — their overrides already belong to the shared slug.
         foreach ($slugMap as $oldSlug => $newRowSlug) {
             ContentOverride::query()
                 ->where('row_slug', $oldSlug)
@@ -549,7 +585,12 @@ JS;
                     ->toArray();
 
                 if (! empty($slugs)) {
-                    ContentOverride::query()->whereIn('row_slug', $slugs)->delete();
+                    $sharedSlugs = SharedRow::query()->whereIn('slug', $slugs)->pluck('slug')->all();
+                    $slugsToDelete = array_values(array_diff($slugs, $sharedSlugs));
+
+                    if (! empty($slugsToDelete)) {
+                        ContentOverride::query()->whereIn('row_slug', $slugsToDelete)->delete();
+                    }
                 }
             }
         }

@@ -5,6 +5,7 @@
 @source '../views/pages/blog/**/*.blade.php';
 @source '../views/pages/services/**/*.blade.php';
 @source '../views/components/**/*.blade.php';
+@source '../views/shared-rows/**/*.blade.php';
 
 @custom-variant dark (&:where(.dark, .dark *));
 

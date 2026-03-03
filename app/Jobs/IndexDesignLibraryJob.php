@@ -52,6 +52,7 @@ class IndexDesignLibraryJob implements ShouldQueue
                             'blade_code' => $data['blade_code'],
                             'php_code' => $data['php_code'] ?: null,
                             'sort_order' => $data['sort_order'],
+                            'schema_fields' => $data['schema_fields'],
                         ]
                     );
                 } else {

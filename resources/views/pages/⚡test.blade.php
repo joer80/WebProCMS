@@ -109,4 +109,8 @@ new #[Layout('layouts.public')] #[Title('Test Page')] class extends Component {}
     </div>
 </section>
 {{-- ROW:end:features-grid:yBNWwy --}}
+
+{{-- ROW:start:cta-banner:S3575K:shared=1 --}}
+@include('shared-rows.cta-banner-S3575K')
+{{-- ROW:end:cta-banner:S3575K --}}
 </div>
