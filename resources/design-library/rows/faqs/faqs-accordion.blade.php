@@ -14,6 +14,7 @@
         @php $questionTextClasses = content('__SLUG__', 'question_text_classes', 'text-base font-semibold text-zinc-900 dark:text-white'); @endphp
         @php $chevronClasses = content('__SLUG__', 'chevron_classes', 'size-5 text-zinc-400 shrink-0 transition-transform duration-200'); @endphp
         @php $answerClasses = content('__SLUG__', 'answer_classes', 'mt-3 text-zinc-500 dark:text-zinc-400 text-sm leading-relaxed'); @endphp
+        @php $contactLinkClasses = content('__SLUG__', 'contact_link_classes', 'text-primary underline'); @endphp
         <div class="{{ $headerWrapperClasses }}">
             @php $toggleHeadline = content('__SLUG__', 'toggle_headline', '1'); @endphp
             @if($toggleHeadline)
@@ -25,7 +26,7 @@
             @if($toggleSubheadline)
             @php $subheadlineText = content('__SLUG__', 'subheadline', 'Can\'t find what you\'re looking for?'); @endphp
             @php $subheadlineClasses = content('__SLUG__', 'subheadline_classes', 'mt-4 text-lg text-zinc-500 dark:text-zinc-400'); @endphp
-            <p class="{{ $subheadlineClasses }}">{{ $subheadlineText }} <a href="{{ content('__SLUG__', 'contact_url', '/contact') }}" class="text-primary underline">{{ content('__SLUG__', 'contact_cta', 'Contact us') }}</a>.</p>
+            <p class="{{ $subheadlineClasses }}">{{ $subheadlineText }} <a href="{{ content('__SLUG__', 'contact_url', '/contact') }}" class="{{ $contactLinkClasses }}">{{ content('__SLUG__', 'contact_cta', 'Contact us') }}</a>.</p>
             @endif
         </div>
         <div class="{{ $accordionClasses }}" x-data="{ open: null }">

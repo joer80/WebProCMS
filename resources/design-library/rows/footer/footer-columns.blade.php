@@ -14,8 +14,9 @@
         @php $columnListClasses = content('__SLUG__', 'column_list_classes', 'space-y-2 text-sm text-zinc-400'); @endphp
         @php $columnLinkClasses = content('__SLUG__', 'column_link_classes', 'hover:text-white transition-colors'); @endphp
         @php $bottomBarClasses = content('__SLUG__', 'bottom_bar_classes', 'border-t border-zinc-800 pt-8 flex flex-col sm:flex-row items-center justify-between gap-2 text-sm text-zinc-500'); @endphp
+        @php $brandColClasses = content('__SLUG__', 'brand_col_classes', 'col-span-2 md:col-span-1'); @endphp
         <div class="{{ $columnsGridClasses }}">
-            <div class="col-span-2 md:col-span-1">
+            <div class="{{ $brandColClasses }}">
                 <a href="/" class="{{ $brandClasses }}">{{ content('__SLUG__', 'brand_name', 'Brand') }}</a>
                 <p class="{{ $descriptionClasses }}">
                     {{ content('__SLUG__', 'description', 'A short description of your company and what makes you unique.') }}

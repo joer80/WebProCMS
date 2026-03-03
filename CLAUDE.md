@@ -450,7 +450,33 @@ Full example assembling all standard patterns (copy and adapt):
 
 ### ALL classes must use content()
 
-**Never use hardcoded class strings directly on elements.** Every element's classes must be editable via `content()` with a `*_classes` key. This applies to cards, wrappers, icons, headings, paragraphs, grids, buttons, etc.
+**Never use hardcoded class strings directly on elements.** Every element's classes must be editable via `content()` with a `*_classes` key. This applies to cards, wrappers, icons, headings, paragraphs, grids, buttons, forms, layout divs — **every single element with a `class` attribute**, no exceptions.
+
+**This is a hard rule. Before finishing any row, scan every line for `class="` and verify each one routes through a `$variable` set by `content()`. If you find a hardcoded `class="..."` that isn't an Alpine `:class` binding or a placeholder-only element (e.g. an image fallback inside `@else`), it must be fixed.**
+
+The only acceptable hardcoded classes are:
+- Alpine `:class` dynamic bindings (e.g. `:class="open ? 'rotate-180' : ''"`) — these are runtime expressions, not design values
+- Text/icon placeholders shown only inside `@else` when no image/content is set — these are developer fallbacks, not user-facing design
+
+### Conditional (state-variant) classes
+
+When an element has two visual states driven by per-item data (e.g. a featured card vs. a default card), use **paired `content()` fields** — one for each state — and resolve with a ternary at render time.
+
+**Pattern:**
+```blade
+@php $cardClasses = content('__SLUG__', 'card_classes', 'rounded-card p-8 bg-white border border-zinc-200'); @endphp
+@php $cardFeaturedClasses = content('__SLUG__', 'card_featured_classes', 'rounded-card p-8 bg-primary text-white ring-2 ring-primary'); @endphp
+```
+```blade
+@php $isFeatured = !empty($plan['toggle_featured']); @endphp
+<div class="{{ $isFeatured ? $cardFeaturedClasses : $cardClasses }}">
+```
+
+Name pairs as `{element}_classes` (default) and `{element}_featured_classes` (highlighted state). Apply this to every element inside the loop that has different classes per state.
+
+If the per-item data itself (names, prices, feature lists, etc.) is hardcoded in PHP, convert it to a `grid_*` field so it becomes editable. Store sub-lists (e.g. bullet features per card) as a pipe-separated string (`5 projects|10GB storage`) and split on render with `explode('|', ...)`. Use `toggle_featured` as the key within grid items so the editor infers it as a toggle switch.
+
+See `resources/design-library/rows/pricing/pricing-cards.blade.php` for the reference implementation.
 
 ### Standard Group Patterns
 

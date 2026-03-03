@@ -1317,7 +1317,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                                                 $groupHasClassesFields = $bodyFields->contains(fn ($f) => $f['type'] === 'classes');
                                                 $groupAllClasses = $bodyFields->every(fn ($f) => $f['type'] === 'classes');
                                             @endphp
-                                            <div x-data="{ open: true, groupDesignMode: {{ $groupAllClasses ? 'true' : 'false' }}, groupContentMode: false, groupHasClasses: {{ $groupHasClassesFields ? 'true' : 'false' }} }" @set-group-design-mode.window="groupDesignMode = $event.detail.value; groupContentMode = false" @set-group-open.window="open = $event.detail.value" x-show="designMode ? {{ $groupHasClassesFields ? 'true' : 'false' }} : true" class="rounded-lg border border-zinc-200 dark:border-zinc-700 overflow-hidden">
+                                            <div x-data="{ open: true, groupDesignMode: false, groupContentMode: false, groupHasClasses: {{ $groupHasClassesFields ? 'true' : 'false' }} }" @set-group-design-mode.window="groupDesignMode = $event.detail.value; groupContentMode = false" @set-group-open.window="open = $event.detail.value" x-show="designMode ? {{ $groupHasClassesFields ? 'true' : 'false' }} : {{ $groupAllClasses ? 'false' : 'true' }}" class="rounded-lg border border-zinc-200 dark:border-zinc-700 overflow-hidden">
                                                 <div class="flex items-center gap-2 px-3 py-2 bg-zinc-100 dark:bg-zinc-700/50">
                                                     <button
                                                         type="button"

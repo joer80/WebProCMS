@@ -17,6 +17,7 @@
         @php $postTitleClasses = content('__SLUG__', 'post_title_classes', 'mt-2 text-lg font-semibold text-zinc-900 dark:text-white group-hover:text-primary transition-colors line-clamp-2'); @endphp
         @php $postExcerptClasses = content('__SLUG__', 'post_excerpt_classes', 'mt-2 text-sm text-zinc-500 dark:text-zinc-400 line-clamp-2'); @endphp
         @php $postDateClasses = content('__SLUG__', 'post_date_classes', 'mt-3 text-xs text-zinc-400 dark:text-zinc-500'); @endphp
+        @php $postLinkClasses = content('__SLUG__', 'post_link_classes', 'block'); @endphp
         <div class="{{ $headerWrapperClasses }}">
             <div>
                 @php $toggleHeadline = content('__SLUG__', 'toggle_headline', '1'); @endphp
@@ -39,7 +40,7 @@
         <div class="{{ $postsGridClasses }}">
             @foreach ($this->recentPosts ?? [] as $post)
                 <article class="{{ $articleClasses }}">
-                    <a href="{{ route('blog.show', $post->slug) }}" class="block">
+                    <a href="{{ route('blog.show', $post->slug) }}" class="{{ $postLinkClasses }}">
                         <div class="{{ $imageWrapperClasses }}">
                             @if ($post->featured_image)
                                 <img src="{{ Storage::url($post->featured_image) }}" alt="{{ $post->featured_image_alt }}" class="{{ $imageClasses }}" />

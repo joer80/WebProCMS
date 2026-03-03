@@ -7,7 +7,8 @@
 <section class="{{ $sectionClasses }}">
     @php $sectionContainerClasses = content('__SLUG__', 'section_container_classes', 'max-w-6xl mx-auto'); @endphp
     <div class="{{ $sectionContainerClasses }}">
-        <div class="text-center mb-16">
+        @php $headerWrapperClasses = content('__SLUG__', 'header_wrapper_classes', 'text-center mb-16'); @endphp
+        <div class="{{ $headerWrapperClasses }}">
             @php $toggleHeadline = content('__SLUG__', 'toggle_headline', '1'); @endphp
             @if($toggleHeadline)
             @php $headlineText = content('__SLUG__', 'headline', 'Everything You Need'); @endphp

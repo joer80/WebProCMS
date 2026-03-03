@@ -29,8 +29,9 @@
         @php $authorRoleClasses = content('__SLUG__', 'author_role_classes', 'text-sm text-zinc-500 dark:text-zinc-400'); @endphp
         @php $dotsWrapperClasses = content('__SLUG__', 'dots_wrapper_classes', 'flex items-center justify-center gap-2 mt-8'); @endphp
         @php $dotBaseClasses = content('__SLUG__', 'dot_base_classes', 'h-2 rounded-full transition-all duration-300'); @endphp
+        @php $slidesWrapperClasses = content('__SLUG__', 'slides_wrapper_classes', 'relative'); @endphp
 
-        <div class="relative">
+        <div class="{{ $slidesWrapperClasses }}">
             @foreach ([['quote' => 'This is honestly the best tool I\'ve used in years. It transformed how we work.', 'name' => 'Alex Thompson', 'role' => 'Founder at StartupXYZ'], ['quote' => 'The onboarding was seamless and the results were immediate. I highly recommend it.', 'name' => 'Jamie Rivera', 'role' => 'VP of Engineering'], ['quote' => 'Customer support is incredible. They went above and beyond to help our team.', 'name' => 'Morgan Lee', 'role' => 'Director of Operations']] as $i => $t)
                 <div x-show="current === {{ $i }}" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-x-4" x-transition:enter-end="opacity-100 translate-x-0">
                     <p class="{{ $quoteClasses }}">"{{ $t['quote'] }}"</p>

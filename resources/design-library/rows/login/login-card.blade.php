@@ -16,6 +16,8 @@
         @php $submitButtonClasses = content('__SLUG__', 'submit_button_classes', 'w-full py-3 bg-primary text-white font-semibold rounded-lg hover:bg-primary/90 transition-colors'); @endphp
         @php $signupTextClasses = content('__SLUG__', 'signup_text_classes', 'mt-6 text-center text-sm text-zinc-500 dark:text-zinc-400'); @endphp
         @php $signupLinkClasses = content('__SLUG__', 'signup_link_classes', 'text-primary font-medium hover:text-primary/80'); @endphp
+        @php $formClasses = content('__SLUG__', 'form_classes', 'space-y-5'); @endphp
+        @php $passwordRowClasses = content('__SLUG__', 'password_row_classes', 'flex items-center justify-between mb-1'); @endphp
         <div class="{{ $headerWrapperClasses }}">
             <a href="/" class="{{ $brandClasses }}">{{ content('__SLUG__', 'brand_name', 'Brand') }}</a>
             @php $toggleHeadline = content('__SLUG__', 'toggle_headline', '1'); @endphp
@@ -32,13 +34,13 @@
             @endif
         </div>
         <div class="{{ $cardClasses }}">
-            <form class="space-y-5">
+            <form class="{{ $formClasses }}">
                 <div>
                     <label class="{{ $labelClasses }}">Email</label>
                     <input type="email" class="{{ $inputClasses }}" />
                 </div>
                 <div>
-                    <div class="flex items-center justify-between mb-1">
+                    <div class="{{ $passwordRowClasses }}">
                         <label class="{{ $labelClasses }}">Password</label>
                         <a href="#" class="{{ $forgotPasswordClasses }}">Forgot password?</a>
                     </div>
