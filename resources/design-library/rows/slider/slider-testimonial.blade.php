@@ -3,6 +3,7 @@
 @description Alpine.js testimonial slider with navigation dots and auto-advance.
 @sort 10
 --}}
+{{-- TODO: Convert hardcoded testimonial array to grid_testimonials JSON field for editability. Cannot use x-dl-grid (this is an Alpine slider, not a CSS grid layout). --}}
 <x-dl-section slug="__SLUG__"
     default-section-classes="py-section px-6 bg-zinc-50 dark:bg-zinc-950 overflow-hidden"
     default-container-classes="max-w-3xl mx-auto text-center"

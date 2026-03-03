@@ -501,7 +501,21 @@ Pass `tag="footer"` / `tag="header"` / `tag="article"` when the semantic element
     default-image-classes="w-full h-full object-cover" />
 ```
 
-**When to use components vs raw `content()`:** Use components for heading, subheadline, buttons, and media. Use raw `content()` for grid fields, badge text, section/container classes, and anything row-specific that doesn't fit a component. Both are permanent, first-class tools — the parser intentionally scans for both. Raw `content()` is not a legacy fallback; it's the right choice for fields that are unique to a single row.
+**`x-dl-grid`** — toggle + JSON repeater + grid wrapper classes (3 fields: `toggle_{prefix}`, `grid_{prefix}`, `{prefix}_grid_classes`). Wrapping component — slot contains the per-item loop:
+```blade
+<x-dl-grid slug="__SLUG__" prefix="features"
+    default-grid-classes="grid md:grid-cols-3 gap-8"
+    default-items='[{"icon":"bolt","title":"Fast","desc":"Speed."}]'>
+    @php $features = json_decode(content('__SLUG__', 'grid_features', ''), true) ?: []; @endphp
+    @php $featureCardClasses = content('__SLUG__', 'feature_card_classes', 'p-6 rounded-card border border-zinc-200'); @endphp
+    @foreach ($features as $feature)
+        <div class="{{ $featureCardClasses }}">...</div>
+    @endforeach
+</x-dl-grid>
+```
+Note: `default-items` uses **single quotes** in the template because its value is JSON (which contains double quotes). The attr parser supports both quote styles. The `content()` call for `grid_{prefix}` inside the slot uses `''` as the default — the component tag owns the default value; this call is a runtime data fetch only.
+
+**When to use components vs raw `content()`:** Use components for section, heading, subheadline, buttons, media, and grid wrappers. Use raw `content()` for badge text, per-card classes inside a grid, and anything row-specific that doesn't fit a component. Both are permanent, first-class tools — the parser intentionally scans for both. Raw `content()` is not a legacy fallback; it's the right choice for fields that are unique to a single row.
 
 **Adding a new `x-dl-*` component:** Create `app/View/Components/Dl/Name.php` with a `schemaFields(array $attrs): array` static method and a `render()` method. Create `resources/views/components/dl/name.blade.php` starting with `@blaze`. The parser auto-discovers it by class name via `Str::studly($componentSlug)`. The PHP class file is already scanned by `public.css` and `editor.css` via `@source '../../app/View/Components/Dl/*.php'` — no CSS config change needed when adding new components to this directory.
 

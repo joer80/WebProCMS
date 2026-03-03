@@ -3,6 +3,7 @@
 @description Masonry-style photo gallery grid with hover overlay.
 @sort 10
 --}}
+{{-- TODO: Convert @for placeholder loop to grid_images (items: image, alt, caption) and use x-dl-grid. Verify editor supports image-type keys within grid item sub-fields first. --}}
 <x-dl-section slug="__SLUG__"
     default-section-classes="py-section px-6 bg-white dark:bg-zinc-900"
     default-container-classes="max-w-6xl mx-auto">

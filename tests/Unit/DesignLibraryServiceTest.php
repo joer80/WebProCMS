@@ -252,6 +252,38 @@ BLADE);
     unlink($file);
 });
 
+it('infers schema_fields from x-dl-grid component with single-quoted JSON default-items', function (): void {
+    $file = tempnam(sys_get_temp_dir(), 'dltest_').'.blade.php';
+    file_put_contents($file, <<<'BLADE'
+{{--
+@name Features - Grid
+@sort 10
+--}}
+<x-dl-section slug="__SLUG__"
+    default-section-classes="py-section px-6 bg-white dark:bg-zinc-900"
+    default-container-classes="max-w-6xl mx-auto">
+    <x-dl-grid slug="__SLUG__" prefix="features"
+        default-grid-classes="grid md:grid-cols-3 gap-8"
+        default-items='[{"icon":"bolt","title":"Fast","desc":"Speed."}]'>
+    </x-dl-grid>
+</x-dl-section>
+BLADE);
+
+    $data = $this->service->parseTemplateFile($file);
+
+    $keys = array_column($data['schema_fields'], 'key');
+
+    expect(in_array('toggle_features', $keys))->toBeTrue()
+        ->and(in_array('grid_features', $keys))->toBeTrue()
+        ->and(in_array('features_grid_classes', $keys))->toBeTrue();
+
+    $gridField = array_values(array_filter($data['schema_fields'], fn ($f) => $f['key'] === 'grid_features'))[0];
+    expect($gridField['type'])->toBe('grid')
+        ->and($gridField['default'])->toBe('[{"icon":"bolt","title":"Fast","desc":"Speed."}]');
+
+    unlink($file);
+});
+
 it('infers schema_fields from x-dl-section wrapping component tag', function (): void {
     $file = tempnam(sys_get_temp_dir(), 'dltest_').'.blade.php';
     file_put_contents($file, <<<'BLADE'

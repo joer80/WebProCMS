@@ -133,10 +133,10 @@ class DesignLibraryService
             }
 
             $attrs = [];
-            preg_match_all('/(\w[\w-]*)="([^"]*)"/', $attrsString, $attrMatches, PREG_SET_ORDER);
+            preg_match_all('/(\w[\w-]*)=(["\'])(.*?)\2/s', $attrsString, $attrMatches, PREG_SET_ORDER);
 
             foreach ($attrMatches as $attrMatch) {
-                $attrs[$attrMatch[1]] = $attrMatch[2];
+                $attrs[$attrMatch[1]] = $attrMatch[3];
             }
 
             $newFields = [];
