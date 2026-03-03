@@ -8,6 +8,7 @@ use Livewire\Livewire;
 beforeEach(function (): void {
     $this->tempRelativePath = 'pages/test-editor-'.uniqid().'.blade.php';
     $this->tempFullPath = resource_path('views/'.$this->tempRelativePath);
+    $this->extraTempPaths = [];
 
     file_put_contents($this->tempFullPath, <<<'BLADE'
 <?php
@@ -32,6 +33,12 @@ afterEach(function (): void {
 
     if (isset($this->libraryTempPath) && file_exists($this->libraryTempPath)) {
         unlink($this->libraryTempPath);
+    }
+
+    foreach ($this->extraTempPaths ?? [] as $path) {
+        if (file_exists($path)) {
+            unlink($path);
+        }
     }
 
     $previewDir = resource_path('views/pages/_editor-previews');
@@ -76,6 +83,7 @@ it('loads and parses a volt file into rows', function (): void {
 it('wraps legacy content without row markers in a legacy row', function (): void {
     $legacyRelativePath = 'pages/test-legacy-'.uniqid().'.blade.php';
     $legacyFullPath = resource_path('views/'.$legacyRelativePath);
+    $this->extraTempPaths[] = $legacyFullPath;
 
     file_put_contents($legacyFullPath, "<?php\nnew class extends \\Livewire\\Component {}; ?>\n\n<div>Legacy content here</div>");
 
@@ -87,8 +95,6 @@ it('wraps legacy content without row markers in a legacy row', function (): void
 
     expect($component->get('rows'))->toHaveCount(1);
     expect($component->get('rows')[0]['name'])->toBe('Existing Content');
-
-    unlink($legacyFullPath);
 });
 
 it('can move a row up', function (): void {
@@ -227,6 +233,7 @@ it('parses content fields from @schema block', function (): void {
 
     $path = 'pages/test-schema-fields-'.uniqid().'.blade.php';
     $fullPath = resource_path('views/'.$path);
+    $this->extraTempPaths[] = $fullPath;
 
     file_put_contents($fullPath, <<<BLADE
         <?php use Livewire\Component; new class extends Component {}; ?>
@@ -250,13 +257,12 @@ it('parses content fields from @schema block', function (): void {
     expect($fields[0])->toMatchArray(['key' => 'headline', 'group' => 'content']);
     expect($fields[1])->toMatchArray(['key' => 'image', 'group' => 'media']);
     expect($fields[2])->toMatchArray(['key' => 'primary_cta', 'group' => 'call to action']);
-
-    unlink($fullPath);
 });
 
 it('returns empty fields for a row with no matching design row', function (): void {
     $path = 'pages/test-noschema-'.uniqid().'.blade.php';
     $fullPath = resource_path('views/'.$path);
+    $this->extraTempPaths[] = $fullPath;
 
     // Slug with no colon: no template name can be extracted, SchemaCache returns []
     file_put_contents($fullPath, <<<'BLADE'
@@ -274,8 +280,6 @@ it('returns empty fields for a row with no matching design row', function (): vo
     $fields = $component->get('contentFields');
 
     expect($fields)->toBeEmpty();
-
-    unlink($fullPath);
 });
 
 it('discards changes by reloading from disk', function (): void {

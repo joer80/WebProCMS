@@ -38,8 +38,6 @@ Route::middleware([
     // Route::get('blog2', \App\Livewire\Blog2::class)->name('blog2.index');
 
     // new cached pages are inserted here
-        Route::livewire('test-2', 'pages::test-2')->name('test-2');
-    Route::livewire('test-clone-dest-69a64478d1ff6', 'pages::test-clone-dest-69a64478d1ff6')->name('test-clone-dest-69a64478d1ff6');
     Route::livewire('test', 'pages::test')->name('test');
     Route::livewire('contact', 'pages::contact')->name('contact');
 });

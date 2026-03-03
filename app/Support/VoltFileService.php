@@ -18,8 +18,8 @@ class VoltFileService
         $pagesDir = resource_path('views/pages');
         $groups = ['Public Pages' => [], 'Dashboard' => [], 'Other' => []];
 
-        $topLevel = glob($pagesDir.'/*.blade.php') ?: [];
-        $nested = glob($pagesDir.'/**/*.blade.php') ?: [];
+        $topLevel = glob($pagesDir.'/⚡*.blade.php') ?: [];
+        $nested = glob($pagesDir.'/**/⚡*.blade.php') ?: [];
         $files = array_merge($topLevel, $nested);
 
         foreach ($files as $fullPath) {
