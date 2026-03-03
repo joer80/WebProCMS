@@ -6,11 +6,8 @@
 <x-dl-section slug="__SLUG__"
     default-section-classes="py-section px-6 bg-white dark:bg-zinc-900 text-center"
     default-container-classes="max-w-3xl mx-auto">
-        @php $toggleBadge = content('__SLUG__', 'toggle_badge', '1'); @endphp
-        @php $badgeClasses = content('__SLUG__', 'badge_classes', 'inline-block px-3 py-1 text-xs font-semibold tracking-widest uppercase bg-primary/10 text-primary rounded-full mb-6'); @endphp
-        @if($toggleBadge)
-        <span class="{{ $badgeClasses }}">{{ content('__SLUG__', 'badge', 'Welcome') }}</span>
-        @endif
+        <x-dl-subheadline slug="__SLUG__" prefix="badge" tag="span" default="Welcome"
+            default-classes="inline-block px-3 py-1 text-xs font-semibold tracking-widest uppercase bg-primary/10 text-primary rounded-full mb-6" />
         <x-dl-heading slug="__SLUG__" prefix="headline" default="Your Headline Goes Here"
             default-tag="h1"
             default-classes="font-heading text-5xl sm:text-6xl font-bold text-zinc-900 dark:text-white leading-tight" />

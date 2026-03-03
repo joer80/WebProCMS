@@ -1,9 +1,9 @@
 @blaze
 @php
 $toggle = content($slug, "toggle_{$prefix}", '1');
-$text = content($slug, $prefix, $default);
+$label = content($slug, $prefix, $default);
 $cls = content($slug, "{$prefix}_classes", $defaultClasses);
 @endphp
 @if($toggle)
-{!! "<{$tag} " . $attributes->merge(['class' => $cls])->toHtml() . ">" . e($text) . "</{$tag}>" !!}
+<button {{ $attributes->merge(['class' => $cls]) }}>{{ $label }}</button>
 @endif

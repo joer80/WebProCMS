@@ -12,6 +12,7 @@ class Subheadline extends Component
         public string $prefix = 'subheadline',
         public string $default = '',
         public string $defaultClasses = 'mt-4 text-lg text-zinc-500 dark:text-zinc-400',
+        public string $tag = 'p',
     ) {}
 
     /**

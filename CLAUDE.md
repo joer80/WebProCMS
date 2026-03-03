@@ -510,21 +510,71 @@ Pass `tag="footer"` / `tag="header"` / `tag="article"` when the semantic element
 ```
 Fields registered: `toggle_{prefix}`, `{prefix}` (label text), `{prefix}_url`, `{prefix}_new_tab`, `{prefix}_classes`.
 
-**`x-dl-grid`** — toggle + JSON repeater + grid wrapper classes (3 fields: `toggle_{prefix}`, `grid_{prefix}`, `{prefix}_grid_classes`). Wrapping component — slot contains the per-item loop:
+**`x-dl-wrapper`** — generic element wrapper (classes only, no toggle). Use for every `<div>`, `<span>`, `<a>`, `<h3>`, `<li>`, `<form>`, `<input>`, `<img>`, `<button>`, `<svg>` — any element whose classes need to be editable. Supports optional featured/default class switching. Forwards all non-prop attributes (href, type, wire:model, src, alt, etc.) to the rendered element. Void elements (input, img, br, etc.) self-close without a slot.
+```blade
+{{-- Simple div --}}
+<x-dl-wrapper slug="__SLUG__" prefix="card" default-classes="p-6 rounded-card border border-zinc-200">
+    <!-- slot -->
+</x-dl-wrapper>
+
+{{-- With featured state --}}
+<x-dl-wrapper slug="__SLUG__" prefix="card" :featured="$isFeatured"
+    default-classes="rounded-card p-8 bg-white border border-zinc-200"
+    default-featured-classes="rounded-card p-8 bg-primary text-white ring-2 ring-primary">
+    <!-- slot -->
+</x-dl-wrapper>
+
+{{-- Void element (no slot) --}}
+<x-dl-wrapper slug="__SLUG__" prefix="input" tag="input"
+    type="email" name="email" wire:model="email"
+    default-classes="block w-full rounded-lg border border-zinc-300 px-4 py-3" />
+
+{{-- Text element in loop --}}
+<x-dl-wrapper slug="__SLUG__" prefix="feature_title" tag="h3"
+    default-classes="text-lg font-semibold text-zinc-900 dark:text-white mb-2">
+    {{ $feature['title'] }}
+</x-dl-wrapper>
+```
+Fields registered: `{prefix}_classes` (+ `{prefix}_featured_classes` if `default-featured-classes` attr is provided).
+
+**`x-dl-icon`** — heroicon with optional wrapper div. Handles `name:variant` parsing (e.g. `"bolt:solid"`). Supports featured class switching. Wrapper is only rendered when `default-wrapper-classes` is non-empty.
+```blade
+{{-- With wrapper (features grid) --}}
+<x-dl-icon slug="__SLUG__" prefix="icon" name="{{ $feature['icon'] }}"
+    default-wrapper-classes="mb-4 text-primary"
+    default-classes="size-8" />
+
+{{-- Without wrapper, with featured state (pricing checkmark) --}}
+<x-dl-icon slug="__SLUG__" prefix="card_feature_icon" name="check"
+    :featured="$isFeatured"
+    default-classes="size-4 shrink-0 text-primary"
+    default-featured-classes="size-4 shrink-0 text-white" />
+```
+Fields registered: `{prefix}_wrapper_classes` (only if wrapper provided), `{prefix}_classes`, `{prefix}_featured_classes` (if `default-featured-classes` attr present).
+
+**`x-dl-grid`** — toggle + JSON repeater + grid wrapper classes (3 fields: `toggle_{prefix}`, `grid_{prefix}`, `{prefix}_grid_classes`). Wrapping component — slot contains the per-item loop using `@dlItems`:
 ```blade
 <x-dl-grid slug="__SLUG__" prefix="features"
     default-grid-classes="grid md:grid-cols-3 gap-8"
     default-items='[{"icon":"bolt","title":"Fast","desc":"Speed."}]'>
-    @php $features = json_decode(content('__SLUG__', 'grid_features', ''), true) ?: []; @endphp
-    @php $featureCardClasses = content('__SLUG__', 'feature_card_classes', 'p-6 rounded-card border border-zinc-200'); @endphp
+    @dlItems('__SLUG__', 'features', $features)
     @foreach ($features as $feature)
-        <div class="{{ $featureCardClasses }}">...</div>
+        <x-dl-wrapper slug="__SLUG__" prefix="feature_card" default-classes="p-6 rounded-card border border-zinc-200">
+            ...
+        </x-dl-wrapper>
     @endforeach
 </x-dl-grid>
 ```
-Note: `default-items` uses **single quotes** in the template because its value is JSON (which contains double quotes). The attr parser supports both quote styles. The `content()` call for `grid_{prefix}` inside the slot uses `''` as the default — the component tag owns the default value; this call is a runtime data fetch only.
+Note: `default-items` uses **single quotes** in the template because its value is JSON (which contains double quotes). The attr parser supports both quote styles.
 
-**When to use components vs raw `content()`:** Use components for section, heading, subheadline, buttons, media, and grid wrappers. Use raw `content()` for badge text, per-card classes inside a grid, and anything row-specific that doesn't fit a component. Both are permanent, first-class tools — the parser intentionally scans for both. Raw `content()` is not a legacy fallback; it's the right choice for fields that are unique to a single row.
+**`@dlItems` directive** — fetches and decodes grid item data inside `<x-dl-grid>` slots. Always use this instead of a raw `content()` call inside grid slots.
+```blade
+@dlItems('__SLUG__', 'features', $features)
+{{-- Compiles to: $features = json_decode(content('__SLUG__', 'grid_features', ''), true) ?: []; --}}
+```
+The field is registered by the `<x-dl-grid>` component tag — `@dlItems` is a runtime data fetch only.
+
+**One pattern only:** Row templates use exclusively `<x-dl-*>` component tags and `@dlItems`. There are no raw `content()` calls in row files.
 
 **Adding a new `x-dl-*` component:** Create `app/View/Components/Dl/Name.php` with a `schemaFields(array $attrs): array` static method and a `render()` method. Create `resources/views/components/dl/name.blade.php` starting with `@blaze`. The parser auto-discovers it by class name via `Str::studly($componentSlug)`. The PHP class file is already scanned by `public.css` and `editor.css` via `@source '../../app/View/Components/Dl/*.php'` — no CSS config change needed when adding new components to this directory.
 
@@ -533,45 +583,41 @@ The editor auto-promotes a `toggle_X` field to the group header switch when ever
 ### Grid rows
 
 - Use the `grid_` prefix for the grid field key: `grid_features`, `grid_items`, etc.
-- The inline `content()` default must be a valid single-line JSON array (double quotes only)
+- The `default-items` value is a single-line JSON array (use single quotes around the attr because JSON uses double quotes)
 - Item keys are inferred from the keys of the first item; new items use those same keys
+- Always use `@dlItems` inside the slot to fetch the decoded array
 
-```php
-@php $toggleFeatures = content('__SLUG__', 'toggle_features', '1'); @endphp
-@php
-    $featuresJson = content('__SLUG__', 'grid_features', '[{"icon":"bolt","title":"Fast","desc":"Speed."}]');
-    $features = json_decode($featuresJson, true) ?: [];
-@endphp
-@php $featuresGridClasses = content('__SLUG__', 'features_grid_classes', 'grid md:grid-cols-3 gap-8'); @endphp
-@php $featureCardClasses = content('__SLUG__', 'feature_card_classes', 'p-6 rounded-card border border-zinc-200 dark:border-zinc-700'); @endphp
-@if($toggleFeatures)
-<div class="{{ $featuresGridClasses }}">
+```blade
+<x-dl-grid slug="__SLUG__" prefix="features"
+    default-grid-classes="grid md:grid-cols-3 gap-8"
+    default-items='[{"icon":"bolt","title":"Fast","desc":"Speed."}]'>
+    @dlItems('__SLUG__', 'features', $features)
     @foreach ($features as $feature)
-        <div class="{{ $featureCardClasses }}">
-            {{-- ... render $feature fields ... --}}
-        </div>
+        <x-dl-wrapper slug="__SLUG__" prefix="feature_card"
+            default-classes="p-6 rounded-card border border-zinc-200 dark:border-zinc-700">
+            {{-- ... render $feature fields using x-dl-wrapper, x-dl-icon, etc. ... --}}
+        </x-dl-wrapper>
     @endforeach
-</div>
-@endif
+</x-dl-grid>
 ```
 
 ### Heroicons in grid rows
 
-Icons stored as `"bolt"` (outline) or `"bolt:solid"` (solid). Always parse with:
+Icons stored as `"bolt"` (outline) or `"bolt:solid"` (solid). Use `x-dl-icon` — it handles the `name:variant` parsing internally:
 
-```php
-[$iconName, $iconVariant] = array_pad(explode(':', $item['icon'] ?? 'bolt', 2), 2, 'outline');
+```blade
+<x-dl-icon slug="__SLUG__" prefix="icon" name="{{ $feature['icon'] }}"
+    default-wrapper-classes="mb-4 text-primary"
+    default-classes="size-8" />
 ```
 
-Render with `<x-heroicon name="{{ $iconName }}" variant="{{ $iconVariant }}" class="size-8" />`.
-
-`<x-heroicon>` is **public side only** — it is NOT available via `<flux:icon>` on the public layout (Flux only works on the dashboard side). Use `<x-heroicon>` in all design library row files.
+`<x-heroicon>` is **public side only** — it is NOT available via `<flux:icon>` on the public layout (Flux only works on the dashboard side). `x-dl-icon` uses `<x-heroicon>` internally.
 
 ### Adding a new row to the design library
 
 1. Create a new `.blade.php` file in the appropriate category folder
 2. Add the metadata comment with `@name`, `@description`, and `@sort`
-3. Use `<x-dl-*>` components for heading, subheadline, buttons, and media; use `content('__SLUG__', 'key', 'default')` for grid fields and row-specific custom fields
+3. Use only `<x-dl-*>` component tags — no raw `content()` calls in row files
 4. Run `php artisan design-library:index` to register it in the database
 
 No manual DB insert is required — the index command handles it.

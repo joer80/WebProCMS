@@ -6,8 +6,10 @@
 <x-dl-section slug="__SLUG__"
     default-section-classes="min-h-screen bg-white dark:bg-zinc-900 flex items-center justify-center px-6"
     default-container-classes="text-center">
-        @php $errorCodeClasses = content('__SLUG__', 'error_code_classes', 'text-8xl font-black text-zinc-200 dark:text-zinc-700'); @endphp
-        <div class="{{ $errorCodeClasses }}">404</div>
+        <x-dl-wrapper slug="__SLUG__" prefix="error_code"
+            default-classes="text-8xl font-black text-zinc-200 dark:text-zinc-700">
+            404
+        </x-dl-wrapper>
         <x-dl-heading slug="__SLUG__" prefix="headline" default="Page Not Found"
             default-tag="h1"
             default-classes="font-heading mt-4 text-3xl font-bold text-zinc-900 dark:text-white" />

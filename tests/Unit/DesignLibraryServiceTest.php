@@ -347,6 +347,112 @@ BLADE);
     unlink($file);
 });
 
+it('infers schema_fields from x-dl-wrapper component tag', function (): void {
+    $file = tempnam(sys_get_temp_dir(), 'dltest_').'.blade.php';
+    file_put_contents($file, <<<'BLADE'
+{{--
+@name Pricing - Cards
+@sort 10
+--}}
+<x-dl-section slug="__SLUG__" default-section-classes="py-section" default-container-classes="max-w-6xl mx-auto">
+    <x-dl-wrapper slug="__SLUG__" prefix="card"
+        default-classes="rounded-card p-8 bg-white border border-zinc-200"
+        default-featured-classes="rounded-card p-8 bg-primary text-white ring-2 ring-primary">
+        <x-dl-wrapper slug="__SLUG__" prefix="card_name" tag="h3"
+            default-classes="text-lg font-semibold text-zinc-900"
+            default-featured-classes="text-lg font-semibold text-white">
+        </x-dl-wrapper>
+    </x-dl-wrapper>
+</x-dl-section>
+BLADE);
+
+    $data = $this->service->parseTemplateFile($file);
+
+    $keys = array_column($data['schema_fields'], 'key');
+
+    expect(in_array('card_classes', $keys))->toBeTrue()
+        ->and(in_array('card_featured_classes', $keys))->toBeTrue()
+        ->and(in_array('card_name_classes', $keys))->toBeTrue()
+        ->and(in_array('card_name_featured_classes', $keys))->toBeTrue();
+
+    $cardField = array_values(array_filter($data['schema_fields'], fn ($f) => $f['key'] === 'card_classes'))[0];
+    expect($cardField['type'])->toBe('classes')
+        ->and($cardField['default'])->toBe('rounded-card p-8 bg-white border border-zinc-200');
+
+    $cardFeaturedField = array_values(array_filter($data['schema_fields'], fn ($f) => $f['key'] === 'card_featured_classes'))[0];
+    expect($cardFeaturedField['default'])->toBe('rounded-card p-8 bg-primary text-white ring-2 ring-primary');
+
+    unlink($file);
+});
+
+it('infers schema_fields from x-dl-icon component tag', function (): void {
+    $file = tempnam(sys_get_temp_dir(), 'dltest_').'.blade.php';
+    file_put_contents($file, <<<'BLADE'
+{{--
+@name Features - Grid
+@sort 10
+--}}
+<x-dl-section slug="__SLUG__" default-section-classes="py-section" default-container-classes="max-w-6xl mx-auto">
+    <x-dl-icon slug="__SLUG__" prefix="icon"
+        default-wrapper-classes="mb-4 text-primary"
+        default-classes="size-8" />
+    <x-dl-icon slug="__SLUG__" prefix="card_feature_icon" name="check"
+        default-classes="size-4 shrink-0 text-primary"
+        default-featured-classes="size-4 shrink-0 text-white" />
+</x-dl-section>
+BLADE);
+
+    $data = $this->service->parseTemplateFile($file);
+
+    $keys = array_column($data['schema_fields'], 'key');
+
+    // Icon with wrapper: registers wrapper_classes + classes
+    expect(in_array('icon_wrapper_classes', $keys))->toBeTrue()
+        ->and(in_array('icon_classes', $keys))->toBeTrue()
+        // Icon without wrapper, with featured: no wrapper_classes, has featured
+        ->and(in_array('card_feature_icon_wrapper_classes', $keys))->toBeFalse()
+        ->and(in_array('card_feature_icon_classes', $keys))->toBeTrue()
+        ->and(in_array('card_feature_icon_featured_classes', $keys))->toBeTrue();
+
+    $iconWrapperField = array_values(array_filter($data['schema_fields'], fn ($f) => $f['key'] === 'icon_wrapper_classes'))[0];
+    expect($iconWrapperField['type'])->toBe('classes')
+        ->and($iconWrapperField['default'])->toBe('mb-4 text-primary');
+
+    unlink($file);
+});
+
+it('infers schema_fields from x-dl-button component tag', function (): void {
+    $file = tempnam(sys_get_temp_dir(), 'dltest_').'.blade.php';
+    file_put_contents($file, <<<'BLADE'
+{{--
+@name Contact - Form
+@sort 10
+--}}
+<x-dl-section slug="__SLUG__" default-section-classes="py-section" default-container-classes="max-w-5xl mx-auto">
+    <x-dl-button slug="__SLUG__" prefix="submit" type="submit" default="Send Message"
+        default-classes="w-full px-6 py-3 bg-primary text-white font-semibold rounded-lg" />
+</x-dl-section>
+BLADE);
+
+    $data = $this->service->parseTemplateFile($file);
+
+    $keys = array_column($data['schema_fields'], 'key');
+
+    expect(in_array('toggle_submit', $keys))->toBeTrue()
+        ->and(in_array('submit', $keys))->toBeTrue()
+        ->and(in_array('submit_classes', $keys))->toBeTrue();
+
+    $labelField = array_values(array_filter($data['schema_fields'], fn ($f) => $f['key'] === 'submit'))[0];
+    expect($labelField['default'])->toBe('Send Message')
+        ->and($labelField['type'])->toBe('text');
+
+    $classField = array_values(array_filter($data['schema_fields'], fn ($f) => $f['key'] === 'submit_classes'))[0];
+    expect($classField['default'])->toBe('w-full px-6 py-3 bg-primary text-white font-semibold rounded-lg')
+        ->and($classField['type'])->toBe('classes');
+
+    unlink($file);
+});
+
 it('deduplicates keys shared between content() calls and component tags', function (): void {
     $file = tempnam(sys_get_temp_dir(), 'dltest_').'.blade.php';
     file_put_contents($file, <<<'BLADE'
