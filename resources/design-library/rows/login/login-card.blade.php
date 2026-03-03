@@ -3,10 +3,9 @@
 @description Centered login card with email and password fields.
 @sort 10
 --}}
-@php $sectionClasses = content('__SLUG__', 'section_classes', 'min-h-screen bg-zinc-50 dark:bg-zinc-950 flex items-center justify-center px-6 py-12'); @endphp
-<section class="{{ $sectionClasses }}">
-    @php $sectionContainerClasses = content('__SLUG__', 'section_container_classes', 'w-full max-w-sm'); @endphp
-    <div class="{{ $sectionContainerClasses }}">
+<x-dl-section slug="__SLUG__"
+    default-section-classes="min-h-screen bg-zinc-50 dark:bg-zinc-950 flex items-center justify-center px-6 py-12"
+    default-container-classes="w-full max-w-sm">
         @php $headerWrapperClasses = content('__SLUG__', 'header_wrapper_classes', 'text-center mb-8'); @endphp
         @php $brandClasses = content('__SLUG__', 'brand_classes', 'text-2xl font-bold text-zinc-900 dark:text-white'); @endphp
         @php $cardClasses = content('__SLUG__', 'card_classes', 'bg-white dark:bg-zinc-900 rounded-card shadow-card border border-zinc-200 dark:border-zinc-700 p-8'); @endphp
@@ -47,5 +46,4 @@
         <p class="{{ $signupTextClasses }}">
             Don't have an account? <a href="#" class="{{ $signupLinkClasses }}">Sign up</a>
         </p>
-    </div>
-</section>
+</x-dl-section>

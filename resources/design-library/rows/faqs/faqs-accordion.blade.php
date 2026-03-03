@@ -4,10 +4,9 @@
 @sort 10
 --}}
 {{-- TODO: review for x-dl-* component adoption (subheadline has inline link, needs custom handling) --}}
-@php $sectionClasses = content('__SLUG__', 'section_classes', 'py-section px-6 bg-white dark:bg-zinc-900'); @endphp
-<section class="{{ $sectionClasses }}">
-    @php $sectionContainerClasses = content('__SLUG__', 'section_container_classes', 'max-w-3xl mx-auto'); @endphp
-    <div class="{{ $sectionContainerClasses }}">
+<x-dl-section slug="__SLUG__"
+    default-section-classes="py-section px-6 bg-white dark:bg-zinc-900"
+    default-container-classes="max-w-3xl mx-auto">
         @php $headerWrapperClasses = content('__SLUG__', 'header_wrapper_classes', 'text-center mb-16'); @endphp
         @php $accordionClasses = content('__SLUG__', 'accordion_classes', 'divide-y divide-zinc-200 dark:divide-zinc-700'); @endphp
         @php $itemClasses = content('__SLUG__', 'item_classes', 'py-5'); @endphp
@@ -49,5 +48,4 @@
                 </div>
             @endforeach
         </div>
-    </div>
-</section>
+</x-dl-section>

@@ -3,10 +3,9 @@
 @description Full-width centered hero with headline, subheadline, and dual CTA buttons.
 @sort 10
 --}}
-@php $sectionClasses = content('__SLUG__', 'section_classes', 'py-section px-6 bg-white dark:bg-zinc-900 text-center'); @endphp
-<section class="{{ $sectionClasses }}">
-    @php $sectionContainerClasses = content('__SLUG__', 'section_container_classes', 'max-w-3xl mx-auto'); @endphp
-    <div class="{{ $sectionContainerClasses }}">
+<x-dl-section slug="__SLUG__"
+    default-section-classes="py-section px-6 bg-white dark:bg-zinc-900 text-center"
+    default-container-classes="max-w-3xl mx-auto">
         @php $toggleBadge = content('__SLUG__', 'toggle_badge', '1'); @endphp
         @php $badgeClasses = content('__SLUG__', 'badge_classes', 'inline-block px-3 py-1 text-xs font-semibold tracking-widest uppercase bg-primary/10 text-primary rounded-full mb-6'); @endphp
         @if($toggleBadge)
@@ -23,5 +22,4 @@
             default-primary-classes="px-6 py-3 bg-primary text-white font-semibold rounded-lg hover:bg-primary/90 transition-colors"
             default-secondary-label="Learn More"
             default-secondary-classes="px-6 py-3 border border-zinc-300 dark:border-zinc-600 text-zinc-700 dark:text-zinc-200 font-semibold rounded-lg hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors" />
-    </div>
-</section>
+</x-dl-section>

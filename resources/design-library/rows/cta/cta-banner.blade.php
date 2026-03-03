@@ -3,10 +3,9 @@
 @description Full-width call-to-action banner with headline and button.
 @sort 10
 --}}
-@php $sectionClasses = content('__SLUG__', 'section_classes', 'bg-primary py-section px-6 text-center'); @endphp
-<section class="{{ $sectionClasses }}">
-    @php $sectionContainerClasses = content('__SLUG__', 'section_container_classes', 'max-w-3xl mx-auto'); @endphp
-    <div class="{{ $sectionContainerClasses }}">
+<x-dl-section slug="__SLUG__"
+    default-section-classes="bg-primary py-section px-6 text-center"
+    default-container-classes="max-w-3xl mx-auto">
         <x-dl-heading slug="__SLUG__" prefix="headline" default="Ready to Get Started?"
             default-tag="h2"
             default-classes="font-heading text-4xl font-bold text-white" />
@@ -18,5 +17,4 @@
             default-primary-classes="px-8 py-3 bg-white text-primary font-semibold rounded-lg hover:bg-zinc-100 transition-colors"
             default-secondary-label="Talk to Sales"
             default-secondary-classes="px-8 py-3 border border-white/30 text-white font-semibold rounded-lg hover:bg-white/10 transition-colors" />
-    </div>
-</section>
+</x-dl-section>

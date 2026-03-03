@@ -3,10 +3,9 @@
 @description Two-column content section with text and image placeholder.
 @sort 10
 --}}
-@php $sectionClasses = content('__SLUG__', 'section_classes', 'py-section px-6 bg-white dark:bg-zinc-900'); @endphp
-<section class="{{ $sectionClasses }}">
-    @php $sectionContainerClasses = content('__SLUG__', 'section_container_classes', 'max-w-6xl mx-auto grid md:grid-cols-2 gap-12 items-center'); @endphp
-    <div class="{{ $sectionContainerClasses }}">
+<x-dl-section slug="__SLUG__"
+    default-section-classes="py-section px-6 bg-white dark:bg-zinc-900"
+    default-container-classes="max-w-6xl mx-auto grid md:grid-cols-2 gap-12 items-center">
         <div>
             @php $badgeClasses = content('__SLUG__', 'badge_classes', 'text-sm font-semibold text-primary uppercase tracking-wider'); @endphp
             <span class="{{ $badgeClasses }}">{{ content('__SLUG__', 'badge', 'Our Story') }}</span>
@@ -37,5 +36,4 @@
         <x-dl-media slug="__SLUG__"
             default-wrapper-classes="rounded-card overflow-hidden bg-zinc-100 dark:bg-zinc-800 aspect-square flex items-center justify-center"
             default-image-classes="w-full h-full object-cover" />
-    </div>
-</section>
+</x-dl-section>

@@ -252,6 +252,37 @@ BLADE);
     unlink($file);
 });
 
+it('infers schema_fields from x-dl-section wrapping component tag', function (): void {
+    $file = tempnam(sys_get_temp_dir(), 'dltest_').'.blade.php';
+    file_put_contents($file, <<<'BLADE'
+{{--
+@name Hero - Section Wrapper
+@sort 5
+--}}
+<x-dl-section slug="__SLUG__"
+    default-section-classes="py-section px-6 bg-white dark:bg-zinc-900 text-center"
+    default-container-classes="max-w-3xl mx-auto">
+    <x-dl-heading slug="__SLUG__" prefix="headline" default="Your Headline" />
+</x-dl-section>
+BLADE);
+
+    $data = $this->service->parseTemplateFile($file);
+
+    $keys = array_column($data['schema_fields'], 'key');
+
+    // section_classes and section_container_classes come first (section tag appears first)
+    expect($keys[0])->toBe('section_classes')
+        ->and($data['schema_fields'][0]['type'])->toBe('classes')
+        ->and($data['schema_fields'][0]['default'])->toBe('py-section px-6 bg-white dark:bg-zinc-900 text-center')
+        ->and($keys[1])->toBe('section_container_classes')
+        ->and($data['schema_fields'][1]['default'])->toBe('max-w-3xl mx-auto')
+        // heading fields follow in document order
+        ->and(in_array('toggle_headline', $keys))->toBeTrue()
+        ->and(in_array('headline', $keys))->toBeTrue();
+
+    unlink($file);
+});
+
 it('deduplicates keys shared between content() calls and component tags', function (): void {
     $file = tempnam(sys_get_temp_dir(), 'dltest_').'.blade.php';
     file_put_contents($file, <<<'BLADE'

@@ -3,10 +3,9 @@
 @description Four-column product card grid with image, name, price, and add-to-cart button.
 @sort 10
 --}}
-@php $sectionClasses = content('__SLUG__', 'section_classes', 'py-section px-6 bg-white dark:bg-zinc-900'); @endphp
-<section class="{{ $sectionClasses }}">
-    @php $sectionContainerClasses = content('__SLUG__', 'section_container_classes', 'max-w-6xl mx-auto'); @endphp
-    <div class="{{ $sectionContainerClasses }}">
+<x-dl-section slug="__SLUG__"
+    default-section-classes="py-section px-6 bg-white dark:bg-zinc-900"
+    default-container-classes="max-w-6xl mx-auto">
         @php $headerWrapperClasses = content('__SLUG__', 'header_wrapper_classes', 'flex items-center justify-between mb-12'); @endphp
         @php $viewAllClasses = content('__SLUG__', 'view_all_classes', 'text-primary font-semibold hover:text-primary/80 transition-colors text-sm'); @endphp
         @php $productsGridClasses = content('__SLUG__', 'products_grid_classes', 'grid grid-cols-2 md:grid-cols-4 gap-6'); @endphp
@@ -40,5 +39,4 @@
                 </div>
             @endforeach
         </div>
-    </div>
-</section>
+</x-dl-section>

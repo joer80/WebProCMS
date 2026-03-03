@@ -3,8 +3,9 @@
 @description Alpine.js testimonial slider with navigation dots and auto-advance.
 @sort 10
 --}}
-@php $sectionClasses = content('__SLUG__', 'section_classes', 'py-section px-6 bg-zinc-50 dark:bg-zinc-950 overflow-hidden'); @endphp
-<section class="{{ $sectionClasses }}"
+<x-dl-section slug="__SLUG__"
+    default-section-classes="py-section px-6 bg-zinc-50 dark:bg-zinc-950 overflow-hidden"
+    default-container-classes="max-w-3xl mx-auto text-center"
     x-data="{
         current: 0,
         total: 3,
@@ -12,10 +13,7 @@
             setInterval(() => { this.current = (this.current + 1) % this.total; }, 4000);
         }
     }"
-    x-init="autoPlay()"
->
-    @php $sectionContainerClasses = content('__SLUG__', 'section_container_classes', 'max-w-3xl mx-auto text-center'); @endphp
-    <div class="{{ $sectionContainerClasses }}">
+    x-init="autoPlay()">
         <x-dl-heading slug="__SLUG__" prefix="headline" default="What Our Customers Say"
             default-tag="h2"
             default-classes="font-heading text-4xl font-bold text-zinc-900 dark:text-white mb-12" />
@@ -49,5 +47,4 @@
                 ></button>
             @endfor
         </div>
-    </div>
-</section>
+</x-dl-section>

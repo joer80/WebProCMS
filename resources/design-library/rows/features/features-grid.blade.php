@@ -3,10 +3,9 @@
 @description Three-column feature grid with icons, headings, and descriptions.
 @sort 10
 --}}
-@php $sectionClasses = content('__SLUG__', 'section_classes', 'py-section px-6 bg-white dark:bg-zinc-900'); @endphp
-<section class="{{ $sectionClasses }}">
-    @php $sectionContainerClasses = content('__SLUG__', 'section_container_classes', 'max-w-6xl mx-auto'); @endphp
-    <div class="{{ $sectionContainerClasses }}">
+<x-dl-section slug="__SLUG__"
+    default-section-classes="py-section px-6 bg-white dark:bg-zinc-900"
+    default-container-classes="max-w-6xl mx-auto">
         @php $headerWrapperClasses = content('__SLUG__', 'header_wrapper_classes', 'text-center mb-16'); @endphp
         <div class="{{ $headerWrapperClasses }}">
             <x-dl-heading slug="__SLUG__" prefix="headline" default="Everything You Need"
@@ -40,5 +39,4 @@
             @endforeach
         </div>
         @endif
-    </div>
-</section>
+</x-dl-section>

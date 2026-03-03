@@ -332,10 +332,9 @@ Every row file must have a frontmatter comment with `@name`, `@description`, and
 @description One-line description.
 @sort 10
 --}}
-@php $sectionClasses = content('__SLUG__', 'section_classes', 'py-section px-6 bg-white dark:bg-zinc-900'); @endphp
-<section class="{{ $sectionClasses }}">
-    @php $sectionContainerClasses = content('__SLUG__', 'section_container_classes', 'max-w-6xl mx-auto'); @endphp
-    <div class="{{ $sectionContainerClasses }}">
+<x-dl-section slug="__SLUG__"
+    default-section-classes="py-section px-6 bg-white dark:bg-zinc-900"
+    default-container-classes="max-w-6xl mx-auto">
 ```
 
 ### Key naming conventions (type + group inference)
@@ -357,7 +356,7 @@ Type and group are derived entirely from the key name — no metadata columns ne
 - `label` is auto-derived: `ucwords(str_replace('_', ' ', $key))`
 - Field order in the editor sidebar = document order of `content()` calls and `<x-dl-*>` component tags (first occurrence wins)
 
-**Sidebar ordering rule:** Hoist `*_classes` variables to the top of the template (they are hidden in content mode anyway). Place all non-classes `content()` calls and `<x-dl-*>` component tags inline where they render in the HTML, in natural top-to-bottom order. Never hoist a `grid_*` or text `content()` call above the section it belongs to. `x-dl-*` components register their fields in the order declared in `schemaFields()` — toggle first, then text fields, then classes.
+**Sidebar ordering rule:** Place `<x-dl-*>` component tags and `content()` calls inline where they render in the HTML, in natural top-to-bottom order. Never hoist a `grid_*` or text `content()` call above the section it belongs to. `x-dl-*` components register their fields in the order declared in `schemaFields()` — toggle first, then text fields, then classes. `section_classes` and `section_container_classes` are registered first because `<x-dl-section>` is always the outermost element.
 
 ### content() helper
 
@@ -387,17 +386,19 @@ content(string $slug, string $key, ?string $default = null): string
 
 ### Section / Container Pattern (required on every row)
 
+Use `x-dl-section` to wrap every row. It renders the outer HTML element + inner container div, and registers `section_classes` and `section_container_classes` fields:
+
 ```blade
-@php $sectionClasses = content('__SLUG__', 'section_classes', 'py-section px-6 bg-white dark:bg-zinc-900'); @endphp
-<section class="{{ $sectionClasses }}">
-    @php $sectionContainerClasses = content('__SLUG__', 'section_container_classes', 'max-w-6xl mx-auto'); @endphp
-    <div class="{{ $sectionContainerClasses }}">
-        {{-- ... row content ... --}}
-    </div>
-</section>
+<x-dl-section slug="__SLUG__"
+    default-section-classes="py-section px-6 bg-white dark:bg-zinc-900"
+    default-container-classes="max-w-6xl mx-auto">
+    {{-- ... row content ... --}}
+</x-dl-section>
 ```
 
-`section_classes` and `section_container_classes` also appear in the inline design panel on the row card (paintbrush button). The key `section_container_classes` infers type `classes`, group `section_container`.
+- Default tag is `section`. Pass `tag="footer"`, `tag="header"`, or `tag="article"` when the semantic element differs.
+- Extra attributes (e.g. `x-data`, `x-init`) are forwarded to the rendered outer element via `$attributes->merge()`.
+- `section_classes` and `section_container_classes` also appear in the inline design panel on the row card (paintbrush button).
 
 ### Complete row skeleton
 
@@ -409,23 +410,21 @@ Full example assembling all standard patterns (copy and adapt):
 @description One-line description.
 @sort 10
 --}}
-@php $sectionClasses = content('__SLUG__', 'section_classes', 'py-section px-6 bg-white dark:bg-zinc-900'); @endphp
-<section class="{{ $sectionClasses }}">
-    @php $sectionContainerClasses = content('__SLUG__', 'section_container_classes', 'max-w-6xl mx-auto'); @endphp
-    <div class="{{ $sectionContainerClasses }}">
-        <x-dl-heading slug="__SLUG__" prefix="headline" default="Your Headline"
-            default-tag="h2"
-            default-classes="font-heading text-4xl font-bold text-zinc-900 dark:text-white" />
-        <x-dl-subheadline slug="__SLUG__" prefix="subheadline" default="Your supporting text."
-            default-classes="mt-4 text-lg text-zinc-500 dark:text-zinc-400" />
-        <x-dl-buttons slug="__SLUG__"
-            default-wrapper-classes="mt-8 flex flex-wrap items-center justify-center gap-4"
-            default-primary-label="Get Started"
-            default-primary-classes="px-8 py-3 bg-primary text-white font-semibold rounded-lg hover:bg-primary/90 transition-colors"
-            default-secondary-label="Learn More"
-            default-secondary-classes="px-8 py-3 border border-zinc-300 dark:border-zinc-600 text-zinc-700 dark:text-zinc-200 font-semibold rounded-lg hover:bg-zinc-50 transition-colors" />
-    </div>
-</section>
+<x-dl-section slug="__SLUG__"
+    default-section-classes="py-section px-6 bg-white dark:bg-zinc-900"
+    default-container-classes="max-w-6xl mx-auto">
+    <x-dl-heading slug="__SLUG__" prefix="headline" default="Your Headline"
+        default-tag="h2"
+        default-classes="font-heading text-4xl font-bold text-zinc-900 dark:text-white" />
+    <x-dl-subheadline slug="__SLUG__" prefix="subheadline" default="Your supporting text."
+        default-classes="mt-4 text-lg text-zinc-500 dark:text-zinc-400" />
+    <x-dl-buttons slug="__SLUG__"
+        default-wrapper-classes="mt-8 flex flex-wrap items-center justify-center gap-4"
+        default-primary-label="Get Started"
+        default-primary-classes="px-8 py-3 bg-primary text-white font-semibold rounded-lg hover:bg-primary/90 transition-colors"
+        default-secondary-label="Learn More"
+        default-secondary-classes="px-8 py-3 border border-zinc-300 dark:border-zinc-600 text-zinc-700 dark:text-zinc-200 font-semibold rounded-lg hover:bg-zinc-50 transition-colors" />
+</x-dl-section>
 ```
 
 ### ALL classes must use content()
@@ -461,6 +460,16 @@ See `resources/design-library/rows/pricing/pricing-cards.blade.php` for the refe
 ### Design Library Components (`x-dl-*`)
 
 Four Blade components handle the repeating standard patterns. Each lives in `app/View/Components/Dl/` (PHP class) and `resources/views/components/dl/` (blade view starting with `@blaze`). Each class has a `public static function schemaFields(array $attrs): array` that the parser calls to register fields — so the component tag in the template IS the field declaration.
+
+**`x-dl-section`** — section/container wrapper (2 fields: `section_classes`, `section_container_classes`). Wrapping component — use it as the outermost element of every row:
+```blade
+<x-dl-section slug="__SLUG__"
+    default-section-classes="py-section px-6 bg-white dark:bg-zinc-900"
+    default-container-classes="max-w-6xl mx-auto">
+    {{-- slot content --}}
+</x-dl-section>
+```
+Pass `tag="footer"` / `tag="header"` / `tag="article"` when the semantic element differs from `section`. Extra attributes (`x-data`, etc.) are forwarded to the rendered element.
 
 **`x-dl-heading`** — toggle + htag dropdown + text + classes (4 fields):
 ```blade

@@ -3,10 +3,9 @@
 @description Three-column testimonial cards with quotes and author details.
 @sort 10
 --}}
-@php $sectionClasses = content('__SLUG__', 'section_classes', 'py-section px-6 bg-white dark:bg-zinc-900'); @endphp
-<section class="{{ $sectionClasses }}">
-    @php $sectionContainerClasses = content('__SLUG__', 'section_container_classes', 'max-w-6xl mx-auto'); @endphp
-    <div class="{{ $sectionContainerClasses }}">
+<x-dl-section slug="__SLUG__"
+    default-section-classes="py-section px-6 bg-white dark:bg-zinc-900"
+    default-container-classes="max-w-6xl mx-auto">
         @php $headerWrapperClasses = content('__SLUG__', 'header_wrapper_classes', 'text-center mb-16'); @endphp
         @php $testimonialsGridClasses = content('__SLUG__', 'testimonials_grid_classes', 'grid md:grid-cols-3 gap-6'); @endphp
         @php $cardClasses = content('__SLUG__', 'card_classes', 'p-6 rounded-card bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700'); @endphp
@@ -42,5 +41,4 @@
                 </div>
             @endforeach
         </div>
-    </div>
-</section>
+</x-dl-section>

@@ -4,10 +4,10 @@
 @sort 20
 --}}
 {{-- TODO: review for x-dl-* component adoption --}}
-@php $sectionClasses = content('__SLUG__', 'section_classes', 'bg-zinc-900 pt-16 pb-8 px-6'); @endphp
-<footer class="{{ $sectionClasses }}">
-    @php $sectionContainerClasses = content('__SLUG__', 'section_container_classes', 'max-w-6xl mx-auto'); @endphp
-    <div class="{{ $sectionContainerClasses }}">
+<x-dl-section slug="__SLUG__"
+    tag="footer"
+    default-section-classes="bg-zinc-900 pt-16 pb-8 px-6"
+    default-container-classes="max-w-6xl mx-auto">
         @php $columnsGridClasses = content('__SLUG__', 'columns_grid_classes', 'grid grid-cols-2 md:grid-cols-4 gap-10 mb-12'); @endphp
         @php $brandClasses = content('__SLUG__', 'brand_classes', 'text-xl font-bold text-white'); @endphp
         @php $descriptionClasses = content('__SLUG__', 'description_classes', 'mt-3 text-sm text-zinc-400 leading-relaxed'); @endphp
@@ -51,5 +51,4 @@
             <span>&copy; {{ date('Y') }} {{ content('__SLUG__', 'brand_name', 'Brand') }}, Inc. All rights reserved.</span>
             <span>Powered by <a href="https://www.webprocms.com" class="hover:text-white transition-colors">WebProCMS</a></span>
         </div>
-    </div>
-</footer>
+</x-dl-section>

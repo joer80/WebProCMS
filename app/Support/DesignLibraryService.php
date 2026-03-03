@@ -115,7 +115,7 @@ class DesignLibraryService
 
         // 2. Collect <x-dl-*> component tag matches with their document offsets.
         preg_match_all(
-            '/<x-dl-([\w-]+)(.*?)\s*\/>/s',
+            '/<x-dl-([\w-]+)(.*?)\s*\/?>/s',
             $bladeCode,
             $tagMatches,
             PREG_SET_ORDER | PREG_OFFSET_CAPTURE

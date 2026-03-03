@@ -4,10 +4,10 @@
 @sort 10
 --}}
 {{-- TODO: review for x-dl-* component adoption --}}
-@php $sectionClasses = content('__SLUG__', 'section_classes', 'pt-20 pb-12 px-6 bg-white dark:bg-zinc-900'); @endphp
-<article class="{{ $sectionClasses }}">
-    @php $sectionContainerClasses = content('__SLUG__', 'section_container_classes', 'max-w-3xl mx-auto'); @endphp
-    <div class="{{ $sectionContainerClasses }}">
+<x-dl-section slug="__SLUG__"
+    tag="article"
+    default-section-classes="pt-20 pb-12 px-6 bg-white dark:bg-zinc-900"
+    default-container-classes="max-w-3xl mx-auto">
         @php $categoryLinkClasses = content('__SLUG__', 'category_link_classes', 'text-sm font-semibold text-primary uppercase tracking-wider hover:text-primary/80'); @endphp
         @php $titleClasses = content('__SLUG__', 'title_classes', 'mt-3 text-4xl md:text-5xl font-bold text-zinc-900 dark:text-white leading-tight'); @endphp
         @php $metaClasses = content('__SLUG__', 'meta_classes', 'mt-6 flex items-center gap-4 text-sm text-zinc-500 dark:text-zinc-400'); @endphp
@@ -36,5 +36,4 @@
                 <span class="text-zinc-400 dark:text-zinc-500 text-sm">Featured Image</span>
             </div>
         @endif
-    </div>
-</article>
+</x-dl-section>

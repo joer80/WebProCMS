@@ -3,10 +3,9 @@
 @description Three-tier pricing cards with features list and CTA buttons.
 @sort 10
 --}}
-@php $sectionClasses = content('__SLUG__', 'section_classes', 'py-section px-6 bg-zinc-50 dark:bg-zinc-950'); @endphp
-<section class="{{ $sectionClasses }}">
-    @php $sectionContainerClasses = content('__SLUG__', 'section_container_classes', 'max-w-5xl mx-auto'); @endphp
-    <div class="{{ $sectionContainerClasses }}">
+<x-dl-section slug="__SLUG__"
+    default-section-classes="py-section px-6 bg-zinc-50 dark:bg-zinc-950"
+    default-container-classes="max-w-5xl mx-auto">
         @php $headerWrapperClasses = content('__SLUG__', 'header_wrapper_classes', 'text-center mb-16'); @endphp
         @php $pricingGridClasses = content('__SLUG__', 'pricing_grid_classes', 'grid md:grid-cols-3 gap-8'); @endphp
         @php $cardClasses = content('__SLUG__', 'card_classes', 'rounded-card p-8 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700'); @endphp
@@ -60,5 +59,4 @@
                 </div>
             @endforeach
         </div>
-    </div>
-</section>
+</x-dl-section>
