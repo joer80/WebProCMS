@@ -6,14 +6,13 @@
 <x-dl-section slug="__SLUG__"
     default-section-classes="py-section px-6 bg-white dark:bg-zinc-900"
     default-container-classes="max-w-6xl mx-auto">
-    @php $headerWrapperClasses = content('__SLUG__', 'header_wrapper_classes', 'text-center mb-16'); @endphp
-    <div class="{{ $headerWrapperClasses }}">
-        <x-dl-heading slug="__SLUG__" prefix="headline" default="Everything You Need"
-            default-tag="h2"
-            default-classes="font-heading text-4xl font-bold text-zinc-900 dark:text-white" />
-        <x-dl-subheadline slug="__SLUG__" prefix="subheadline" default="Powerful features designed to help you succeed."
-            default-classes="mt-4 text-lg text-zinc-500 dark:text-zinc-400" />
-    </div>
+    <x-dl-content-header slug="__SLUG__"
+        default-wrapper-classes="text-center mb-16"
+        default-heading="Everything You Need"
+        default-heading-tag="h2"
+        default-heading-classes="font-heading text-4xl font-bold text-zinc-900 dark:text-white"
+        default-subheadline="Powerful features designed to help you succeed."
+        default-subheadline-classes="mt-4 text-lg text-zinc-500 dark:text-zinc-400" />
     <x-dl-grid slug="__SLUG__" prefix="features"
         default-grid-classes="grid md:grid-cols-3 gap-8"
         default-items='[{"icon":"bolt","title":"Lightning Fast","desc":"Optimized for speed at every level of the stack."},{"icon":"shield-check","title":"Secure by Default","desc":"Enterprise-grade security built into every feature."},{"icon":"chart-bar","title":"Detailed Analytics","desc":"Gain insight into every aspect of your business."},{"icon":"adjustments-horizontal","title":"Easy to Customize","desc":"Tailor the platform to your exact requirements."},{"icon":"globe-alt","title":"Global Scale","desc":"Built to handle millions of users worldwide."},{"icon":"chat-bubble-left-right","title":"24/7 Support","desc":"Our team is always here when you need us."}]'>

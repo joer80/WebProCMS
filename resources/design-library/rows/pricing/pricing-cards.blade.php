@@ -6,7 +6,6 @@
 <x-dl-section slug="__SLUG__"
     default-section-classes="py-section px-6 bg-zinc-50 dark:bg-zinc-950"
     default-container-classes="max-w-5xl mx-auto">
-        @php $headerWrapperClasses = content('__SLUG__', 'header_wrapper_classes', 'text-center mb-16'); @endphp
         @php $cardClasses = content('__SLUG__', 'card_classes', 'rounded-card p-8 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700'); @endphp
         @php $cardFeaturedClasses = content('__SLUG__', 'card_featured_classes', 'rounded-card p-8 bg-primary text-white ring-2 ring-primary'); @endphp
         @php $cardNameClasses = content('__SLUG__', 'card_name_classes', 'text-lg font-semibold text-zinc-900 dark:text-white'); @endphp
@@ -24,13 +23,13 @@
         @php $cardFeatureIconFeaturedClasses = content('__SLUG__', 'card_feature_icon_featured_classes', 'size-4 shrink-0 text-white'); @endphp
         @php $cardCtaClasses = content('__SLUG__', 'card_cta_classes', 'mt-8 block text-center px-4 py-3 rounded-lg font-semibold text-sm transition-colors bg-primary text-white hover:bg-primary/90'); @endphp
         @php $cardCtaFeaturedClasses = content('__SLUG__', 'card_cta_featured_classes', 'mt-8 block text-center px-4 py-3 rounded-lg font-semibold text-sm transition-colors bg-white text-primary hover:bg-zinc-100'); @endphp
-        <div class="{{ $headerWrapperClasses }}">
-            <x-dl-heading slug="__SLUG__" prefix="headline" default="Simple, Transparent Pricing"
-                default-tag="h2"
-                default-classes="font-heading text-4xl font-bold text-zinc-900 dark:text-white" />
-            <x-dl-subheadline slug="__SLUG__" prefix="subheadline" default="No hidden fees. Cancel anytime."
-                default-classes="mt-4 text-lg text-zinc-500 dark:text-zinc-400" />
-        </div>
+        <x-dl-content-header slug="__SLUG__"
+            default-wrapper-classes="text-center mb-16"
+            default-heading="Simple, Transparent Pricing"
+            default-heading-tag="h2"
+            default-heading-classes="font-heading text-4xl font-bold text-zinc-900 dark:text-white"
+            default-subheadline="No hidden fees. Cancel anytime."
+            default-subheadline-classes="mt-4 text-lg text-zinc-500 dark:text-zinc-400" />
         <x-dl-grid slug="__SLUG__" prefix="plans"
             default-grid-classes="grid md:grid-cols-3 gap-8"
             default-items='[{"name":"Starter","price":"$9","desc":"Perfect for individuals","features":"5 projects|10GB storage|Email support","cta":"Get Started","cta_url":"#","toggle_featured":""},{"name":"Pro","price":"$29","desc":"Great for small teams","features":"Unlimited projects|100GB storage|Priority support|Analytics","cta":"Get Started","cta_url":"#","toggle_featured":"1"},{"name":"Enterprise","price":"$99","desc":"For large organizations","features":"Unlimited everything|Dedicated support|Custom integrations|SLA guarantee","cta":"Get Started","cta_url":"#","toggle_featured":""}]'>

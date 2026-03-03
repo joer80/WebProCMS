@@ -7,14 +7,13 @@
 <x-dl-section slug="__SLUG__"
     default-section-classes="py-section px-6 bg-white dark:bg-zinc-900"
     default-container-classes="max-w-6xl mx-auto">
-        @php $headerWrapperClasses = content('__SLUG__', 'header_wrapper_classes', 'text-center mb-12'); @endphp
-        <div class="{{ $headerWrapperClasses }}">
-            <x-dl-heading slug="__SLUG__" prefix="headline" default="Our Gallery"
-                default-tag="h2"
-                default-classes="font-heading text-4xl font-bold text-zinc-900 dark:text-white" />
-            <x-dl-subheadline slug="__SLUG__" prefix="subheadline" default="A glimpse into our work and culture."
-                default-classes="mt-4 text-zinc-500 dark:text-zinc-400" />
-        </div>
+        <x-dl-content-header slug="__SLUG__"
+            default-wrapper-classes="text-center mb-12"
+            default-heading="Our Gallery"
+            default-heading-tag="h2"
+            default-heading-classes="font-heading text-4xl font-bold text-zinc-900 dark:text-white"
+            default-subheadline="A glimpse into our work and culture."
+            default-subheadline-classes="mt-4 text-zinc-500 dark:text-zinc-400" />
         @php $galleryGridClasses = content('__SLUG__', 'gallery_grid_classes', 'grid grid-cols-2 md:grid-cols-3 gap-4'); @endphp
         @php $itemClasses = content('__SLUG__', 'item_classes', 'group relative rounded-card overflow-hidden bg-zinc-100 dark:bg-zinc-800 aspect-square'); @endphp
         @php $overlayClasses = content('__SLUG__', 'overlay_classes', 'absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center'); @endphp
