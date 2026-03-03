@@ -7,7 +7,6 @@
     default-section-classes="py-section px-6 bg-white dark:bg-zinc-900"
     default-container-classes="max-w-6xl mx-auto">
         @php $headerWrapperClasses = content('__SLUG__', 'header_wrapper_classes', 'flex items-center justify-between mb-12'); @endphp
-        @php $viewAllClasses = content('__SLUG__', 'view_all_classes', 'text-primary font-semibold hover:text-primary/80 transition-colors text-sm'); @endphp
         @php $productCardClasses = content('__SLUG__', 'product_card_classes', 'group'); @endphp
         @php $imageWrapperClasses = content('__SLUG__', 'image_wrapper_classes', 'rounded-card bg-zinc-100 dark:bg-zinc-800 aspect-square mb-4 overflow-hidden'); @endphp
         @php $productNameClasses = content('__SLUG__', 'product_name_classes', 'font-semibold text-zinc-900 dark:text-white'); @endphp
@@ -19,7 +18,10 @@
             <x-dl-heading slug="__SLUG__" prefix="headline" default="Featured Products"
                 default-tag="h2"
                 default-classes="font-heading text-4xl font-bold text-zinc-900 dark:text-white" />
-            <a href="/products" class="{{ $viewAllClasses }}">View all →</a>
+            <x-dl-link slug="__SLUG__" prefix="view_all"
+                default-label="View all →"
+                default-url="/products"
+                default-classes="text-primary font-semibold hover:text-primary/80 transition-colors text-sm" />
         </div>
         <x-dl-grid slug="__SLUG__" prefix="products"
             default-grid-classes="grid grid-cols-2 md:grid-cols-4 gap-6"

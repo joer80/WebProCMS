@@ -8,7 +8,6 @@
     default-section-classes="py-section px-6 bg-white dark:bg-zinc-900"
     default-container-classes="max-w-6xl mx-auto">
         @php $headerWrapperClasses = content('__SLUG__', 'header_wrapper_classes', 'flex items-center justify-between mb-12'); @endphp
-        @php $viewAllClasses = content('__SLUG__', 'view_all_classes', 'text-primary font-semibold hover:text-primary/80 transition-colors text-sm'); @endphp
         @php $postsGridClasses = content('__SLUG__', 'posts_grid_classes', 'grid md:grid-cols-3 gap-8'); @endphp
         @php $articleClasses = content('__SLUG__', 'article_classes', 'group'); @endphp
         @php $imageWrapperClasses = content('__SLUG__', 'image_wrapper_classes', 'rounded-card overflow-hidden bg-zinc-100 dark:bg-zinc-800 aspect-video mb-4'); @endphp
@@ -26,9 +25,10 @@
                 <x-dl-subheadline slug="__SLUG__" prefix="subheadline" default="Insights, tutorials, and company news."
                     default-classes="mt-2 text-zinc-500 dark:text-zinc-400" />
             </div>
-            <a href="/blog" class="{{ $viewAllClasses }}">
-                View all →
-            </a>
+            <x-dl-link slug="__SLUG__" prefix="view_all"
+                default-label="View all →"
+                default-url="/blog"
+                default-classes="text-primary font-semibold hover:text-primary/80 transition-colors text-sm" />
         </div>
         <div class="{{ $postsGridClasses }}">
             @foreach ($this->recentPosts ?? [] as $post)

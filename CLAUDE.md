@@ -501,6 +501,15 @@ Pass `tag="footer"` / `tag="header"` / `tag="article"` when the semantic element
     default-image-classes="w-full h-full object-cover" />
 ```
 
+**`x-dl-link`** — toggle + label text + URL + new_tab toggle + classes (5 fields). Use for "View all →" style inline links alongside headings:
+```blade
+<x-dl-link slug="__SLUG__" prefix="view_all"
+    default-label="View all →"
+    default-url="/blog"
+    default-classes="text-primary font-semibold hover:text-primary/80 transition-colors text-sm" />
+```
+Fields registered: `toggle_{prefix}`, `{prefix}` (label text), `{prefix}_url`, `{prefix}_new_tab`, `{prefix}_classes`.
+
 **`x-dl-grid`** — toggle + JSON repeater + grid wrapper classes (3 fields: `toggle_{prefix}`, `grid_{prefix}`, `{prefix}_grid_classes`). Wrapping component — slot contains the per-item loop:
 ```blade
 <x-dl-grid slug="__SLUG__" prefix="features"

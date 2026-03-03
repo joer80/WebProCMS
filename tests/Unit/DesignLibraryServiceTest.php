@@ -315,6 +315,38 @@ BLADE);
     unlink($file);
 });
 
+it('infers schema_fields from x-dl-link component tag', function (): void {
+    $file = tempnam(sys_get_temp_dir(), 'dltest_').'.blade.php';
+    file_put_contents($file, <<<'BLADE'
+{{--
+@name Blog - Grid
+@sort 10
+--}}
+<x-dl-section slug="__SLUG__" default-section-classes="py-section" default-container-classes="max-w-6xl mx-auto">
+    <x-dl-link slug="__SLUG__" prefix="view_all"
+        default-label="View all →"
+        default-url="/blog"
+        default-classes="text-primary font-semibold text-sm" />
+</x-dl-section>
+BLADE);
+
+    $data = $this->service->parseTemplateFile($file);
+
+    $keys = array_column($data['schema_fields'], 'key');
+
+    expect(in_array('toggle_view_all', $keys))->toBeTrue()
+        ->and(in_array('view_all', $keys))->toBeTrue()
+        ->and(in_array('view_all_url', $keys))->toBeTrue()
+        ->and(in_array('view_all_new_tab', $keys))->toBeTrue()
+        ->and(in_array('view_all_classes', $keys))->toBeTrue();
+
+    $urlField = array_values(array_filter($data['schema_fields'], fn ($f) => $f['key'] === 'view_all_url'))[0];
+    expect($urlField['default'])->toBe('/blog')
+        ->and($urlField['type'])->toBe('text');
+
+    unlink($file);
+});
+
 it('deduplicates keys shared between content() calls and component tags', function (): void {
     $file = tempnam(sys_get_temp_dir(), 'dltest_').'.blade.php';
     file_put_contents($file, <<<'BLADE'
