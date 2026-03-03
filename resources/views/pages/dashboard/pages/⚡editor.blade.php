@@ -1037,6 +1037,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
         x-data="{
             previewWidth: null,
             showAllBreakpoints: false,
+            activePreview: 'a',
             setWidth(w) { this.previewWidth = this.previewWidth === w ? null : w; },
             selectRowBySlug(slug) {
                 const rows = $wire.rows;
@@ -1050,15 +1051,20 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                 }
             },
             refreshPreview(url) {
-                const iframe = document.getElementById('page-preview');
+                const nextKey = this.activePreview === 'a' ? 'b' : 'a';
+                const active = document.getElementById('page-preview-' + this.activePreview);
+                const next = document.getElementById('page-preview-' + nextKey);
                 let savedScroll = 0;
-                try { savedScroll = iframe.contentWindow.scrollY || 0; } catch (e) {}
-                const restore = () => {
-                    try { iframe.contentWindow.scrollTo(0, savedScroll); } catch (e) {}
-                    iframe.removeEventListener('load', restore);
+                try { savedScroll = active.contentWindow.scrollY || 0; } catch (e) {}
+                next.onload = () => {
+                    try { next.contentWindow.scrollTo(0, savedScroll); } catch (e) {}
+                    next.style.zIndex = '2';
+                    next.style.opacity = '1';
+                    active.style.zIndex = '1';
+                    active.style.opacity = '0';
+                    this.activePreview = nextKey;
                 };
-                iframe.addEventListener('load', restore);
-                iframe.src = url + '?_=' + Date.now();
+                next.src = url + '?_=' + Date.now();
             }
         }"
         @keydown.ctrl.s.window.prevent="if ($wire.file) $wire.saveFile()"
@@ -1623,13 +1629,14 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                             class="flex-1 flex flex-col mx-auto w-full transition-all duration-300"
                             :style="previewWidth ? 'max-width: ' + previewWidth : 'max-width: 100%'"
                         >
-                            <iframe
-                                wire:ignore
-                                id="page-preview"
-                                class="flex-1 w-full border-0"
-                                x-init="$el.src = {{ Js::from($previewUrl) }}"
+                            <div
+                                class="flex-1 relative"
+                                x-init="document.getElementById('page-preview-a').src = {{ Js::from($previewUrl) }}"
                                 x-on:refresh-preview.window="refreshPreview($event.detail.url)"
-                            ></iframe>
+                            >
+                                <iframe wire:ignore id="page-preview-a" class="absolute inset-0 w-full h-full border-0" style="opacity:1;z-index:2;transition:opacity 0.15s ease"></iframe>
+                                <iframe wire:ignore id="page-preview-b" class="absolute inset-0 w-full h-full border-0" style="opacity:0;z-index:1;transition:opacity 0.15s ease"></iframe>
+                            </div>
                         </div>
                     @else
                         <div class="flex-1 flex items-center justify-center text-zinc-400 dark:text-zinc-600">
