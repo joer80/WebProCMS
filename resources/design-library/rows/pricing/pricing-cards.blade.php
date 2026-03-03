@@ -27,19 +27,11 @@
         @php $cardCtaClasses = content('__SLUG__', 'card_cta_classes', 'mt-8 block text-center px-4 py-3 rounded-lg font-semibold text-sm transition-colors bg-primary text-white hover:bg-primary/90'); @endphp
         @php $cardCtaFeaturedClasses = content('__SLUG__', 'card_cta_featured_classes', 'mt-8 block text-center px-4 py-3 rounded-lg font-semibold text-sm transition-colors bg-white text-primary hover:bg-zinc-100'); @endphp
         <div class="{{ $headerWrapperClasses }}">
-            @php $toggleHeadline = content('__SLUG__', 'toggle_headline', '1'); @endphp
-            @if($toggleHeadline)
-            @php $headlineTag = content('__SLUG__', 'headline_htag', 'h2'); @endphp
-            @php $headlineText = content('__SLUG__', 'headline', 'Simple, Transparent Pricing'); @endphp
-            @php $headlineClasses = content('__SLUG__', 'headline_classes', 'font-heading text-4xl font-bold text-zinc-900 dark:text-white'); @endphp
-            {!! "<{$headlineTag} class=\"" . e($headlineClasses) . "\">" . e($headlineText) . "</{$headlineTag}>" !!}
-            @endif
-            @php $toggleSubheadline = content('__SLUG__', 'toggle_subheadline', '1'); @endphp
-            @if($toggleSubheadline)
-            @php $subheadlineText = content('__SLUG__', 'subheadline', 'No hidden fees. Cancel anytime.'); @endphp
-            @php $subheadlineClasses = content('__SLUG__', 'subheadline_classes', 'mt-4 text-lg text-zinc-500 dark:text-zinc-400'); @endphp
-            <p class="{{ $subheadlineClasses }}">{{ $subheadlineText }}</p>
-            @endif
+            <x-dl-heading slug="__SLUG__" prefix="headline" default="Simple, Transparent Pricing"
+                default-tag="h2"
+                default-classes="font-heading text-4xl font-bold text-zinc-900 dark:text-white" />
+            <x-dl-subheadline slug="__SLUG__" prefix="subheadline" default="No hidden fees. Cancel anytime."
+                default-classes="mt-4 text-lg text-zinc-500 dark:text-zinc-400" />
         </div>
         @php
             $plansJson = content('__SLUG__', 'grid_plans', '[{"name":"Starter","price":"$9","desc":"Perfect for individuals","features":"5 projects|10GB storage|Email support","cta":"Get Started","cta_url":"#","toggle_featured":""},{"name":"Pro","price":"$29","desc":"Great for small teams","features":"Unlimited projects|100GB storage|Priority support|Analytics","cta":"Get Started","cta_url":"#","toggle_featured":"1"},{"name":"Enterprise","price":"$99","desc":"For large organizations","features":"Unlimited everything|Dedicated support|Custom integrations|SLA guarantee","cta":"Get Started","cta_url":"#","toggle_featured":""}]');

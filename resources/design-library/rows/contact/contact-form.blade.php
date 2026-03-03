@@ -19,19 +19,11 @@
         @php $contactDetailsClasses = content('__SLUG__', 'contact_details_classes', 'mt-4 space-y-4 text-zinc-500 dark:text-zinc-400 text-sm'); @endphp
         @php $hoursClasses = content('__SLUG__', 'hours_classes', 'mt-4 space-y-1 text-zinc-500 dark:text-zinc-400 text-sm'); @endphp
         <div class="{{ $headerWrapperClasses }}">
-            @php $toggleHeadline = content('__SLUG__', 'toggle_headline', '1'); @endphp
-            @if($toggleHeadline)
-            @php $headlineTag = content('__SLUG__', 'headline_htag', 'h2'); @endphp
-            @php $headlineText = content('__SLUG__', 'headline', 'Get in Touch'); @endphp
-            @php $headlineClasses = content('__SLUG__', 'headline_classes', 'font-heading text-4xl font-bold text-zinc-900 dark:text-white'); @endphp
-            {!! "<{$headlineTag} class=\"" . e($headlineClasses) . "\">" . e($headlineText) . "</{$headlineTag}>" !!}
-            @endif
-            @php $toggleSubheadline = content('__SLUG__', 'toggle_subheadline', '1'); @endphp
-            @if($toggleSubheadline)
-            @php $subheadlineText = content('__SLUG__', 'subheadline', 'We\'d love to hear from you. Send us a message and we\'ll respond as soon as possible.'); @endphp
-            @php $subheadlineClasses = content('__SLUG__', 'subheadline_classes', 'mt-4 text-lg text-zinc-500 dark:text-zinc-400'); @endphp
-            <p class="{{ $subheadlineClasses }}">{{ $subheadlineText }}</p>
-            @endif
+            <x-dl-heading slug="__SLUG__" prefix="headline" default="Get in Touch"
+                default-tag="h2"
+                default-classes="font-heading text-4xl font-bold text-zinc-900 dark:text-white" />
+            <x-dl-subheadline slug="__SLUG__" prefix="subheadline" default="We'd love to hear from you. Send us a message and we'll respond as soon as possible."
+                default-classes="mt-4 text-lg text-zinc-500 dark:text-zinc-400" />
         </div>
         <div class="{{ $layoutClasses }}">
             <form class="{{ $formClasses }}">

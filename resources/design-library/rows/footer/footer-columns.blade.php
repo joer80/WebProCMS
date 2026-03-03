@@ -3,6 +3,7 @@
 @description Multi-column footer with logo, link groups, and newsletter signup.
 @sort 20
 --}}
+{{-- TODO: review for x-dl-* component adoption --}}
 @php $sectionClasses = content('__SLUG__', 'section_classes', 'bg-zinc-900 pt-16 pb-8 px-6'); @endphp
 <footer class="{{ $sectionClasses }}">
     @php $sectionContainerClasses = content('__SLUG__', 'section_container_classes', 'max-w-6xl mx-auto'); @endphp

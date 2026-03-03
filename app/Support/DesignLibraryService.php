@@ -2,6 +2,8 @@
 
 namespace App\Support;
 
+use Illuminate\Support\Str;
+
 class DesignLibraryService
 {
     /**
@@ -60,7 +62,7 @@ class DesignLibraryService
     }
 
     /**
-     * Parse editable field definitions from content() calls in blade code.
+     * Parse editable field definitions from content() calls and <x-dl-*> component tags in blade code.
      * Infers type and group from key naming conventions:
      *  - toggle_*  → toggle
      *  - grid_*    → grid
@@ -70,23 +72,27 @@ class DesignLibraryService
      *  - *_url, *_alt → text (group strips suffix)
      *  - anything else → text
      *
+     * Fields from both sources are merged in document order (by byte offset).
+     *
      * @return list<array{key: string, type: string, group: string, default: string, label: string}>
      */
     public function parseContentCallFields(string $bladeCode): array
     {
-        $fields = [];
         $seen = [];
+        $items = []; // [['offset' => int, 'fields' => [...]]]
 
+        // 1. Collect content() call matches with their document offsets.
         preg_match_all(
             "/content\('__SLUG__',\s*'([^']+)',\s*'((?:[^'\\\\]|\\\\.)*)'\)/",
             $bladeCode,
-            $matches,
-            PREG_SET_ORDER
+            $contentMatches,
+            PREG_SET_ORDER | PREG_OFFSET_CAPTURE
         );
 
-        foreach ($matches as $match) {
-            $key = $match[1];
-            $default = stripslashes($match[2]);
+        foreach ($contentMatches as $match) {
+            $key = $match[1][0];
+            $default = stripslashes($match[2][0]);
+            $offset = $match[0][1];
 
             if (isset($seen[$key])) {
                 continue;
@@ -95,13 +101,80 @@ class DesignLibraryService
             $seen[$key] = true;
             [$type, $group] = $this->inferTypeAndGroup($key);
 
-            $fields[] = [
-                'key' => $key,
-                'type' => $type,
-                'group' => $group,
-                'default' => $default,
-                'label' => ucwords(str_replace('_', ' ', $key)),
+            $items[] = [
+                'offset' => $offset,
+                'fields' => [[
+                    'key' => $key,
+                    'type' => $type,
+                    'group' => $group,
+                    'default' => $default,
+                    'label' => ucwords(str_replace('_', ' ', $key)),
+                ]],
             ];
+        }
+
+        // 2. Collect <x-dl-*> component tag matches with their document offsets.
+        preg_match_all(
+            '/<x-dl-([\w-]+)(.*?)\s*\/>/s',
+            $bladeCode,
+            $tagMatches,
+            PREG_SET_ORDER | PREG_OFFSET_CAPTURE
+        );
+
+        foreach ($tagMatches as $tagMatch) {
+            $componentSlug = $tagMatch[1][0];
+            $attrsString = $tagMatch[2][0];
+            $offset = $tagMatch[0][1];
+
+            $className = 'App\\View\\Components\\Dl\\'.Str::studly($componentSlug);
+
+            if (! class_exists($className) || ! method_exists($className, 'schemaFields')) {
+                continue;
+            }
+
+            $attrs = [];
+            preg_match_all('/(\w[\w-]*)="([^"]*)"/', $attrsString, $attrMatches, PREG_SET_ORDER);
+
+            foreach ($attrMatches as $attrMatch) {
+                $attrs[$attrMatch[1]] = $attrMatch[2];
+            }
+
+            $newFields = [];
+
+            foreach ($className::schemaFields($attrs) as $field) {
+                if (isset($seen[$field['key']])) {
+                    continue;
+                }
+
+                $seen[$field['key']] = true;
+                [$type, $group] = $this->inferTypeAndGroup($field['key']);
+
+                $newFields[] = [
+                    'key' => $field['key'],
+                    'type' => $type,
+                    'group' => $group,
+                    'default' => $field['default'],
+                    'label' => ucwords(str_replace('_', ' ', $field['key'])),
+                ];
+            }
+
+            if ($newFields) {
+                $items[] = [
+                    'offset' => $offset,
+                    'fields' => $newFields,
+                ];
+            }
+        }
+
+        // Sort by document offset to preserve natural reading order.
+        usort($items, fn ($a, $b) => $a['offset'] <=> $b['offset']);
+
+        $fields = [];
+
+        foreach ($items as $item) {
+            foreach ($item['fields'] as $field) {
+                $fields[] = $field;
+            }
         }
 
         return $fields;

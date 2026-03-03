@@ -3,6 +3,7 @@
 @description Blog post header with category, title, author, date, and featured image.
 @sort 10
 --}}
+{{-- TODO: review for x-dl-* component adoption --}}
 @php $sectionClasses = content('__SLUG__', 'section_classes', 'pt-20 pb-12 px-6 bg-white dark:bg-zinc-900'); @endphp
 <article class="{{ $sectionClasses }}">
     @php $sectionContainerClasses = content('__SLUG__', 'section_container_classes', 'max-w-3xl mx-auto'); @endphp

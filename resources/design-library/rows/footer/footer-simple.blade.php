@@ -3,6 +3,7 @@
 @description Clean footer with logo, nav links, and copyright.
 @sort 10
 --}}
+{{-- TODO: review for x-dl-* component adoption --}}
 @php $sectionClasses = content('__SLUG__', 'section_classes', 'bg-zinc-900 text-zinc-400 py-12 px-6'); @endphp
 <footer class="{{ $sectionClasses }}">
     @php $sectionContainerClasses = content('__SLUG__', 'section_container_classes', 'max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6'); @endphp

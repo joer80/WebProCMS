@@ -3,6 +3,7 @@
 @description Alpine.js-powered accordion FAQ section with expand/collapse.
 @sort 10
 --}}
+{{-- TODO: review for x-dl-* component adoption (subheadline has inline link, needs custom handling) --}}
 @php $sectionClasses = content('__SLUG__', 'section_classes', 'py-section px-6 bg-white dark:bg-zinc-900'); @endphp
 <section class="{{ $sectionClasses }}">
     @php $sectionContainerClasses = content('__SLUG__', 'section_container_classes', 'max-w-3xl mx-auto'); @endphp
@@ -16,13 +17,9 @@
         @php $answerClasses = content('__SLUG__', 'answer_classes', 'mt-3 text-zinc-500 dark:text-zinc-400 text-sm leading-relaxed'); @endphp
         @php $contactLinkClasses = content('__SLUG__', 'contact_link_classes', 'text-primary underline'); @endphp
         <div class="{{ $headerWrapperClasses }}">
-            @php $toggleHeadline = content('__SLUG__', 'toggle_headline', '1'); @endphp
-            @if($toggleHeadline)
-            @php $headlineTag = content('__SLUG__', 'headline_htag', 'h2'); @endphp
-            @php $headlineText = content('__SLUG__', 'headline', 'Frequently Asked Questions'); @endphp
-            @php $headlineClasses = content('__SLUG__', 'headline_classes', 'font-heading text-4xl font-bold text-zinc-900 dark:text-white'); @endphp
-            {!! "<{$headlineTag} class=\"" . e($headlineClasses) . "\">" . e($headlineText) . "</{$headlineTag}>" !!}
-            @endif
+            <x-dl-heading slug="__SLUG__" prefix="headline" default="Frequently Asked Questions"
+                default-tag="h2"
+                default-classes="font-heading text-4xl font-bold text-zinc-900 dark:text-white" />
             @php $toggleSubheadline = content('__SLUG__', 'toggle_subheadline', '1'); @endphp
             @if($toggleSubheadline)
             @php $subheadlineText = content('__SLUG__', 'subheadline', 'Can\'t find what you\'re looking for?'); @endphp

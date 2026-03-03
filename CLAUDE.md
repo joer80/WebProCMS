@@ -355,9 +355,9 @@ Type and group are derived entirely from the key name — no metadata columns ne
 | anything else | `text` | key itself |
 
 - `label` is auto-derived: `ucwords(str_replace('_', ' ', $key))`
-- Field order in the editor sidebar = order of `content()` calls in the blade (first occurrence wins)
+- Field order in the editor sidebar = document order of `content()` calls and `<x-dl-*>` component tags (first occurrence wins)
 
-**Sidebar ordering rule:** Hoist `*_classes` variables to the top of the template (they are hidden in content mode anyway). Place all non-classes `content()` calls — `toggle_*`, text fields, `grid_*` — inline where they are used in the HTML, in the natural top-to-bottom order a user would expect. Never hoist a `grid_*` or text `content()` call above the section it belongs to just to pre-declare a variable — move the decode/variable assignment to just before the loop instead. This keeps the content mode sidebar in a logical reading order (e.g. Headline → Subheadline → Plans, not Plans → Headline → Subheadline).
+**Sidebar ordering rule:** Hoist `*_classes` variables to the top of the template (they are hidden in content mode anyway). Place all non-classes `content()` calls and `<x-dl-*>` component tags inline where they render in the HTML, in natural top-to-bottom order. Never hoist a `grid_*` or text `content()` call above the section it belongs to. `x-dl-*` components register their fields in the order declared in `schemaFields()` — toggle first, then text fields, then classes.
 
 ### content() helper
 
@@ -413,41 +413,17 @@ Full example assembling all standard patterns (copy and adapt):
 <section class="{{ $sectionClasses }}">
     @php $sectionContainerClasses = content('__SLUG__', 'section_container_classes', 'max-w-6xl mx-auto'); @endphp
     <div class="{{ $sectionContainerClasses }}">
-        @php $toggleHeadline = content('__SLUG__', 'toggle_headline', '1'); @endphp
-        @if($toggleHeadline)
-        @php $headlineTag = content('__SLUG__', 'headline_htag', 'h2'); @endphp
-        @php $headlineText = content('__SLUG__', 'headline', 'Your Headline'); @endphp
-        @php $headlineClasses = content('__SLUG__', 'headline_classes', 'font-heading text-4xl font-bold text-zinc-900 dark:text-white'); @endphp
-        {!! "<{$headlineTag} class=\"" . e($headlineClasses) . "\">" . e($headlineText) . "</{$headlineTag}>" !!}
-        @endif
-        @php $toggleSubheadline = content('__SLUG__', 'toggle_subheadline', '1'); @endphp
-        @if($toggleSubheadline)
-        @php $subheadlineText = content('__SLUG__', 'subheadline', 'Your supporting text.'); @endphp
-        @php $subheadlineClasses = content('__SLUG__', 'subheadline_classes', 'mt-4 text-lg text-zinc-500 dark:text-zinc-400'); @endphp
-        <p class="{{ $subheadlineClasses }}">{{ $subheadlineText }}</p>
-        @endif
-        @php $buttonsWrapperClasses = content('__SLUG__', 'buttons_wrapper_classes', 'mt-8 flex flex-wrap items-center justify-center gap-4'); @endphp
-        <div class="{{ $buttonsWrapperClasses }}">
-            @php $togglePrimaryButton = content('__SLUG__', 'toggle_primary_button', '1'); @endphp
-            @php $primaryButtonLabel = content('__SLUG__', 'primary_button', 'Get Started'); @endphp
-            @php $primaryButtonClasses = content('__SLUG__', 'primary_button_classes', 'px-8 py-3 bg-primary text-white font-semibold rounded-lg hover:bg-primary/90 transition-colors'); @endphp
-            @if($togglePrimaryButton)
-            <a
-                href="{{ content('__SLUG__', 'primary_button_url', '#') }}"
-                @if(content('__SLUG__', 'primary_button_new_tab', '')) target="_blank" rel="noopener noreferrer" @endif
-                class="{{ $primaryButtonClasses }}"
-            >{{ $primaryButtonLabel }}</a>
-            @endif
-            @if(content('__SLUG__', 'toggle_secondary_button', '1'))
-            @php $secondaryButtonLabel = content('__SLUG__', 'secondary_button', 'Learn More'); @endphp
-            @php $secondaryButtonClasses = content('__SLUG__', 'secondary_button_classes', 'px-8 py-3 border border-zinc-300 dark:border-zinc-600 text-zinc-700 dark:text-zinc-200 font-semibold rounded-lg hover:bg-zinc-50 transition-colors'); @endphp
-            <a
-                href="{{ content('__SLUG__', 'secondary_button_url', '#') }}"
-                @if(content('__SLUG__', 'secondary_button_new_tab', '')) target="_blank" rel="noopener noreferrer" @endif
-                class="{{ $secondaryButtonClasses }}"
-            >{{ $secondaryButtonLabel }}</a>
-            @endif
-        </div>
+        <x-dl-heading slug="__SLUG__" prefix="headline" default="Your Headline"
+            default-tag="h2"
+            default-classes="font-heading text-4xl font-bold text-zinc-900 dark:text-white" />
+        <x-dl-subheadline slug="__SLUG__" prefix="subheadline" default="Your supporting text."
+            default-classes="mt-4 text-lg text-zinc-500 dark:text-zinc-400" />
+        <x-dl-buttons slug="__SLUG__"
+            default-wrapper-classes="mt-8 flex flex-wrap items-center justify-center gap-4"
+            default-primary-label="Get Started"
+            default-primary-classes="px-8 py-3 bg-primary text-white font-semibold rounded-lg hover:bg-primary/90 transition-colors"
+            default-secondary-label="Learn More"
+            default-secondary-classes="px-8 py-3 border border-zinc-300 dark:border-zinc-600 text-zinc-700 dark:text-zinc-200 font-semibold rounded-lg hover:bg-zinc-50 transition-colors" />
     </div>
 </section>
 ```
@@ -482,69 +458,43 @@ If the per-item data itself (names, prices, feature lists, etc.) is hardcoded in
 
 See `resources/design-library/rows/pricing/pricing-cards.blade.php` for the reference implementation.
 
-### Standard Group Patterns
+### Design Library Components (`x-dl-*`)
 
-**Headline:**
+Four Blade components handle the repeating standard patterns. Each lives in `app/View/Components/Dl/` (PHP class) and `resources/views/components/dl/` (blade view starting with `@blaze`). Each class has a `public static function schemaFields(array $attrs): array` that the parser calls to register fields — so the component tag in the template IS the field declaration.
+
+**`x-dl-heading`** — toggle + htag dropdown + text + classes (4 fields):
 ```blade
-@php $toggleHeadline = content('__SLUG__', 'toggle_headline', '1'); @endphp
-@if($toggleHeadline)
-@php $headlineTag = content('__SLUG__', 'headline_htag', 'h2'); @endphp
-@php $headlineText = content('__SLUG__', 'headline', 'Your Headline'); @endphp
-@php $headlineClasses = content('__SLUG__', 'headline_classes', 'font-heading text-4xl font-bold text-zinc-900 dark:text-white'); @endphp
-{!! "<{$headlineTag} class=\"" . e($headlineClasses) . "\">" . e($headlineText) . "</{$headlineTag}>" !!}
-@endif
+<x-dl-heading slug="__SLUG__" prefix="headline" default="Your Headline"
+    default-tag="h2"
+    default-classes="font-heading text-4xl font-bold text-zinc-900 dark:text-white" />
 ```
 
-**Subheadline:**
+**`x-dl-subheadline`** — toggle + text + classes (3 fields):
 ```blade
-@php $toggleSubheadline = content('__SLUG__', 'toggle_subheadline', '1'); @endphp
-@if($toggleSubheadline)
-@php $subheadlineText = content('__SLUG__', 'subheadline', 'Your subheadline.'); @endphp
-@php $subheadlineClasses = content('__SLUG__', 'subheadline_classes', 'mt-4 text-lg text-zinc-500 dark:text-zinc-400'); @endphp
-<p class="{{ $subheadlineClasses }}">{{ $subheadlineText }}</p>
-@endif
+<x-dl-subheadline slug="__SLUG__" prefix="subheadline" default="Your subheadline."
+    default-classes="mt-4 text-lg text-zinc-500 dark:text-zinc-400" />
 ```
 
-**Primary button:**
+**`x-dl-buttons`** — wrapper div + primary button + secondary button (11 fields, renders the wrapper `<div>` itself):
 ```blade
-@php $togglePrimaryButton = content('__SLUG__', 'toggle_primary_button', '1'); @endphp
-@php $primaryButtonLabel = content('__SLUG__', 'primary_button', 'Get Started'); @endphp
-@php $primaryButtonClasses = content('__SLUG__', 'primary_button_classes', 'px-6 py-3 bg-primary text-white font-semibold rounded-lg hover:bg-primary/90 transition-colors'); @endphp
-@if($togglePrimaryButton)
-<a href="{{ content('__SLUG__', 'primary_button_url', '#') }}"
-   @if(content('__SLUG__', 'primary_button_new_tab', '')) target="_blank" rel="noopener noreferrer" @endif
-   class="{{ $primaryButtonClasses }}"
->{{ $primaryButtonLabel }}</a>
-@endif
+<x-dl-buttons slug="__SLUG__"
+    default-wrapper-classes="mt-8 flex flex-wrap items-center gap-4"
+    default-primary-label="Get Started"
+    default-primary-classes="px-6 py-3 bg-primary text-white font-semibold rounded-lg hover:bg-primary/90 transition-colors"
+    default-secondary-label="Learn More"
+    default-secondary-classes="px-6 py-3 border border-zinc-300 dark:border-zinc-600 text-zinc-700 dark:text-zinc-200 font-semibold rounded-lg hover:bg-zinc-50 transition-colors" />
 ```
 
-**Secondary button:**
+**`x-dl-media`** — toggle + image upload + alt + wrapper/image classes (5 fields, always uses `image`, `toggle_image`, `image_alt`, `image_wrapper_classes`, `image_classes` keys):
 ```blade
-@if(content('__SLUG__', 'toggle_secondary_button', '1'))
-@php $secondaryButtonLabel = content('__SLUG__', 'secondary_button', 'Learn More'); @endphp
-@php $secondaryButtonClasses = content('__SLUG__', 'secondary_button_classes', 'px-6 py-3 border border-zinc-300 dark:border-zinc-600 text-zinc-700 dark:text-zinc-200 font-semibold rounded-lg hover:bg-zinc-50 transition-colors'); @endphp
-<a href="{{ content('__SLUG__', 'secondary_button_url', '#') }}"
-   @if(content('__SLUG__', 'secondary_button_new_tab', '')) target="_blank" rel="noopener noreferrer" @endif
-   class="{{ $secondaryButtonClasses }}"
->{{ $secondaryButtonLabel }}</a>
-@endif
+<x-dl-media slug="__SLUG__"
+    default-wrapper-classes="rounded-card overflow-hidden aspect-video"
+    default-image-classes="w-full h-full object-cover" />
 ```
 
-**Media (image with toggle):**
-```blade
-@php $imageWrapperClasses = content('__SLUG__', 'image_wrapper_classes', 'rounded-card overflow-hidden aspect-video'); @endphp
-@php $imageClasses = content('__SLUG__', 'image_classes', 'w-full h-full object-cover'); @endphp
-@if(content('__SLUG__', 'toggle_image', '1'))
-<div class="{{ $imageWrapperClasses }}">
-    @php $heroImage = content('__SLUG__', 'image', ''); @endphp
-    @if($heroImage)
-        <img src="{{ $heroImage }}" alt="{{ content('__SLUG__', 'image_alt', '') }}" class="{{ $imageClasses }}">
-    @else
-        <span class="text-zinc-400 dark:text-zinc-500 text-sm">Image Placeholder</span>
-    @endif
-</div>
-@endif
-```
+**When to use components vs raw `content()`:** Use components for heading, subheadline, buttons, and media. Use raw `content()` for grid fields, badge text, section/container classes, and anything row-specific that doesn't fit a component. Both are permanent, first-class tools — the parser intentionally scans for both. Raw `content()` is not a legacy fallback; it's the right choice for fields that are unique to a single row.
+
+**Adding a new `x-dl-*` component:** Create `app/View/Components/Dl/Name.php` with a `schemaFields(array $attrs): array` static method and a `render()` method. Create `resources/views/components/dl/name.blade.php` starting with `@blaze`. The parser auto-discovers it by class name via `Str::studly($componentSlug)`. The PHP class file is already scanned by `public.css` and `editor.css` via `@source '../../app/View/Components/Dl/*.php'` — no CSS config change needed when adding new components to this directory.
 
 The editor auto-promotes a `toggle_X` field to the group header switch when every other field in the group has a key containing `X` or ending with `_new_tab`.
 
@@ -589,7 +539,7 @@ Render with `<x-heroicon name="{{ $iconName }}" variant="{{ $iconVariant }}" cla
 
 1. Create a new `.blade.php` file in the appropriate category folder
 2. Add the metadata comment with `@name`, `@description`, and `@sort`
-3. Use `content('__SLUG__', 'key', 'default')` with keys that follow the naming conventions above
+3. Use `<x-dl-*>` components for heading, subheadline, buttons, and media; use `content('__SLUG__', 'key', 'default')` for grid fields and row-specific custom fields
 4. Run `php artisan design-library:index` to register it in the database
 
 No manual DB insert is required — the index command handles it.
@@ -597,7 +547,6 @@ No manual DB insert is required — the index command handles it.
 ### Other notes
 
 - Template files only affect newly inserted rows. Existing page blade files have row code copied inline at insert time — update them separately if needed.
-- Hoist any value used inside an `@if` or HTML attribute with `@php $var = content(...)` to control editor sidebar order.
 
 ## Key Lessons
 

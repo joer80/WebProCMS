@@ -9,16 +9,10 @@
     <div class="{{ $sectionContainerClasses }}">
         <div>
             @php $badgeClasses = content('__SLUG__', 'badge_classes', 'text-sm font-semibold text-primary uppercase tracking-wider'); @endphp
-            @php $imageWrapperClasses = content('__SLUG__', 'image_wrapper_classes', 'rounded-card overflow-hidden bg-zinc-100 dark:bg-zinc-800 aspect-square flex items-center justify-center'); @endphp
-            @php $imageClasses = content('__SLUG__', 'image_classes', 'w-full h-full object-cover'); @endphp
             <span class="{{ $badgeClasses }}">{{ content('__SLUG__', 'badge', 'Our Story') }}</span>
-            @php $toggleHeadline = content('__SLUG__', 'toggle_headline', '1'); @endphp
-            @if($toggleHeadline)
-            @php $headlineTag = content('__SLUG__', 'headline_htag', 'h2'); @endphp
-            @php $headlineText = content('__SLUG__', 'headline', 'We Are Building the Future of Work'); @endphp
-            @php $headlineClasses = content('__SLUG__', 'headline_classes', 'font-heading mt-3 text-4xl font-bold text-zinc-900 dark:text-white leading-tight'); @endphp
-            {!! "<{$headlineTag} class=\"" . e($headlineClasses) . "\">" . e($headlineText) . "</{$headlineTag}>" !!}
-            @endif
+            <x-dl-heading slug="__SLUG__" prefix="headline" default="We Are Building the Future of Work"
+                default-tag="h2"
+                default-classes="font-heading mt-3 text-4xl font-bold text-zinc-900 dark:text-white leading-tight" />
             @php $bodyClasses = content('__SLUG__', 'body_classes', 'mt-6 text-zinc-500 dark:text-zinc-400 leading-relaxed'); @endphp
             <p class="{{ $bodyClasses }}">
                 {{ content('__SLUG__', 'body', 'Founded in 2020, we have been on a mission to help teams collaborate more effectively. Our platform combines the best of communication, project management, and automation into one seamless experience.') }}
@@ -40,15 +34,8 @@
             </a>
             @endif
         </div>
-        @if(content('__SLUG__', 'toggle_image', '1'))
-        <div class="{{ $imageWrapperClasses }}">
-            @php $sectionImage = content('__SLUG__', 'image', ''); @endphp
-            @if ($sectionImage)
-                <img src="{{ $sectionImage }}" alt="{{ content('__SLUG__', 'image_alt', '') }}" class="{{ $imageClasses }}">
-            @else
-                <span class="text-zinc-400 dark:text-zinc-500 text-sm">Image Placeholder</span>
-            @endif
-        </div>
-        @endif
+        <x-dl-media slug="__SLUG__"
+            default-wrapper-classes="rounded-card overflow-hidden bg-zinc-100 dark:bg-zinc-800 aspect-square flex items-center justify-center"
+            default-image-classes="w-full h-full object-cover" />
     </div>
 </section>

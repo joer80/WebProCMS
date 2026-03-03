@@ -3,6 +3,7 @@
 @description Horizontal row of icon + label pairs, great for trust signals or features.
 @sort 10
 --}}
+{{-- TODO: review for x-dl-* component adoption --}}
 @php $sectionClasses = content('__SLUG__', 'section_classes', 'py-12 px-6 bg-zinc-50 dark:bg-zinc-800/50 border-y border-zinc-200 dark:border-zinc-700'); @endphp
 <section class="{{ $sectionClasses }}">
     @php $sectionContainerClasses = content('__SLUG__', 'section_container_classes', 'max-w-5xl mx-auto'); @endphp

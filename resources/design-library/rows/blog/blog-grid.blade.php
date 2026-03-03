@@ -20,19 +20,11 @@
         @php $postLinkClasses = content('__SLUG__', 'post_link_classes', 'block'); @endphp
         <div class="{{ $headerWrapperClasses }}">
             <div>
-                @php $toggleHeadline = content('__SLUG__', 'toggle_headline', '1'); @endphp
-                @if($toggleHeadline)
-                @php $headlineTag = content('__SLUG__', 'headline_htag', 'h2'); @endphp
-                @php $headlineText = content('__SLUG__', 'headline', 'Latest Articles'); @endphp
-                @php $headlineClasses = content('__SLUG__', 'headline_classes', 'font-heading text-4xl font-bold text-zinc-900 dark:text-white'); @endphp
-                {!! "<{$headlineTag} class=\"" . e($headlineClasses) . "\">" . e($headlineText) . "</{$headlineTag}>" !!}
-                @endif
-                @php $toggleSubheadline = content('__SLUG__', 'toggle_subheadline', '1'); @endphp
-                @if($toggleSubheadline)
-                @php $subheadlineText = content('__SLUG__', 'subheadline', 'Insights, tutorials, and company news.'); @endphp
-                @php $subheadlineClasses = content('__SLUG__', 'subheadline_classes', 'mt-2 text-zinc-500 dark:text-zinc-400'); @endphp
-                <p class="{{ $subheadlineClasses }}">{{ $subheadlineText }}</p>
-                @endif
+                <x-dl-heading slug="__SLUG__" prefix="headline" default="Latest Articles"
+                    default-tag="h2"
+                    default-classes="font-heading text-4xl font-bold text-zinc-900 dark:text-white" />
+                <x-dl-subheadline slug="__SLUG__" prefix="subheadline" default="Insights, tutorials, and company news."
+                    default-classes="mt-2 text-zinc-500 dark:text-zinc-400" />
             </div>
             <a href="/blog" class="{{ $viewAllClasses }}">
                 View all →

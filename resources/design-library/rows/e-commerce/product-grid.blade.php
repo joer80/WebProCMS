@@ -18,13 +18,9 @@
         @php $priceClasses = content('__SLUG__', 'price_classes', 'font-bold text-zinc-900 dark:text-white'); @endphp
         @php $buttonClasses = content('__SLUG__', 'button_classes', 'px-3 py-1.5 bg-primary text-white text-xs font-semibold rounded-lg hover:bg-primary/90 transition-colors'); @endphp
         <div class="{{ $headerWrapperClasses }}">
-            @php $toggleHeadline = content('__SLUG__', 'toggle_headline', '1'); @endphp
-            @if($toggleHeadline)
-            @php $headlineTag = content('__SLUG__', 'headline_htag', 'h2'); @endphp
-            @php $headlineText = content('__SLUG__', 'headline', 'Featured Products'); @endphp
-            @php $headlineClasses = content('__SLUG__', 'headline_classes', 'font-heading text-4xl font-bold text-zinc-900 dark:text-white'); @endphp
-            {!! "<{$headlineTag} class=\"" . e($headlineClasses) . "\">" . e($headlineText) . "</{$headlineTag}>" !!}
-            @endif
+            <x-dl-heading slug="__SLUG__" prefix="headline" default="Featured Products"
+                default-tag="h2"
+                default-classes="font-heading text-4xl font-bold text-zinc-900 dark:text-white" />
             <a href="/products" class="{{ $viewAllClasses }}">View all →</a>
         </div>
         <div class="{{ $productsGridClasses }}">

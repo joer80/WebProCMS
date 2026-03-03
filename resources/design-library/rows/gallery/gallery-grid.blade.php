@@ -9,19 +9,11 @@
     <div class="{{ $sectionContainerClasses }}">
         @php $headerWrapperClasses = content('__SLUG__', 'header_wrapper_classes', 'text-center mb-12'); @endphp
         <div class="{{ $headerWrapperClasses }}">
-            @php $toggleHeadline = content('__SLUG__', 'toggle_headline', '1'); @endphp
-            @if($toggleHeadline)
-            @php $headlineTag = content('__SLUG__', 'headline_htag', 'h2'); @endphp
-            @php $headlineText = content('__SLUG__', 'headline', 'Our Gallery'); @endphp
-            @php $headlineClasses = content('__SLUG__', 'headline_classes', 'font-heading text-4xl font-bold text-zinc-900 dark:text-white'); @endphp
-            {!! "<{$headlineTag} class=\"" . e($headlineClasses) . "\">" . e($headlineText) . "</{$headlineTag}>" !!}
-            @endif
-            @php $toggleSubheadline = content('__SLUG__', 'toggle_subheadline', '1'); @endphp
-            @if($toggleSubheadline)
-            @php $subheadlineText = content('__SLUG__', 'subheadline', 'A glimpse into our work and culture.'); @endphp
-            @php $subheadlineClasses = content('__SLUG__', 'subheadline_classes', 'mt-4 text-zinc-500 dark:text-zinc-400'); @endphp
-            <p class="{{ $subheadlineClasses }}">{{ $subheadlineText }}</p>
-            @endif
+            <x-dl-heading slug="__SLUG__" prefix="headline" default="Our Gallery"
+                default-tag="h2"
+                default-classes="font-heading text-4xl font-bold text-zinc-900 dark:text-white" />
+            <x-dl-subheadline slug="__SLUG__" prefix="subheadline" default="A glimpse into our work and culture."
+                default-classes="mt-4 text-zinc-500 dark:text-zinc-400" />
         </div>
         @php $galleryGridClasses = content('__SLUG__', 'gallery_grid_classes', 'grid grid-cols-2 md:grid-cols-3 gap-4'); @endphp
         @php $itemClasses = content('__SLUG__', 'item_classes', 'group relative rounded-card overflow-hidden bg-zinc-100 dark:bg-zinc-800 aspect-square'); @endphp

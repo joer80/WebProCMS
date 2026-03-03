@@ -12,40 +12,16 @@
         @if($toggleBadge)
         <span class="{{ $badgeClasses }}">{{ content('__SLUG__', 'badge', 'Welcome') }}</span>
         @endif
-        @php $toggleHeadline = content('__SLUG__', 'toggle_headline', '1'); @endphp
-        @if($toggleHeadline)
-        @php $headlineTag = content('__SLUG__', 'headline_htag', 'h1'); @endphp
-        @php $headlineText = content('__SLUG__', 'headline', 'Your Headline Goes Here'); @endphp
-        @php $headlineClasses = content('__SLUG__', 'headline_classes', 'font-heading text-5xl sm:text-6xl font-bold text-zinc-900 dark:text-white leading-tight'); @endphp
-        {!! "<{$headlineTag} class=\"" . e($headlineClasses) . "\">" . e($headlineText) . "</{$headlineTag}>" !!}
-        @endif
-        @php $toggleSubheadline = content('__SLUG__', 'toggle_subheadline', '1'); @endphp
-        @if($toggleSubheadline)
-        @php $subheadlineText = content('__SLUG__', 'subheadline', 'A compelling subheadline that explains what you do and why it matters to your audience.'); @endphp
-        @php $subheadlineClasses = content('__SLUG__', 'subheadline_classes', 'mt-6 text-xl text-zinc-500 dark:text-zinc-400 leading-relaxed'); @endphp
-        <p class="{{ $subheadlineClasses }}">{{ $subheadlineText }}</p>
-        @endif
-        @php $buttonsWrapperClasses = content('__SLUG__', 'buttons_wrapper_classes', 'mt-10 flex flex-wrap items-center justify-center gap-4'); @endphp
-        <div class="{{ $buttonsWrapperClasses }}">
-            @php $togglePrimaryButton = content('__SLUG__', 'toggle_primary_button', '1'); @endphp
-            @php $primaryButtonLabel = content('__SLUG__', 'primary_button', 'Get Started'); @endphp
-            @php $primaryButtonClasses = content('__SLUG__', 'primary_button_classes', 'px-6 py-3 bg-primary text-white font-semibold rounded-lg hover:bg-primary/90 transition-colors'); @endphp
-            @if($togglePrimaryButton)
-            <a
-                href="{{ content('__SLUG__', 'primary_button_url', '#') }}"
-                @if(content('__SLUG__', 'primary_button_new_tab', '')) target="_blank" rel="noopener noreferrer" @endif
-                class="{{ $primaryButtonClasses }}"
-            >{{ $primaryButtonLabel }}</a>
-            @endif
-            @if(content('__SLUG__', 'toggle_secondary_button', '1'))
-            @php $secondaryButtonLabel = content('__SLUG__', 'secondary_button', 'Learn More'); @endphp
-            @php $secondaryButtonClasses = content('__SLUG__', 'secondary_button_classes', 'px-6 py-3 border border-zinc-300 dark:border-zinc-600 text-zinc-700 dark:text-zinc-200 font-semibold rounded-lg hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors'); @endphp
-            <a
-                href="{{ content('__SLUG__', 'secondary_button_url', '#') }}"
-                @if(content('__SLUG__', 'secondary_button_new_tab', '')) target="_blank" rel="noopener noreferrer" @endif
-                class="{{ $secondaryButtonClasses }}"
-            >{{ $secondaryButtonLabel }}</a>
-            @endif
-        </div>
+        <x-dl-heading slug="__SLUG__" prefix="headline" default="Your Headline Goes Here"
+            default-tag="h1"
+            default-classes="font-heading text-5xl sm:text-6xl font-bold text-zinc-900 dark:text-white leading-tight" />
+        <x-dl-subheadline slug="__SLUG__" prefix="subheadline" default="A compelling subheadline that explains what you do and why it matters to your audience."
+            default-classes="mt-6 text-xl text-zinc-500 dark:text-zinc-400 leading-relaxed" />
+        <x-dl-buttons slug="__SLUG__"
+            default-wrapper-classes="mt-10 flex flex-wrap items-center justify-center gap-4"
+            default-primary-label="Get Started"
+            default-primary-classes="px-6 py-3 bg-primary text-white font-semibold rounded-lg hover:bg-primary/90 transition-colors"
+            default-secondary-label="Learn More"
+            default-secondary-classes="px-6 py-3 border border-zinc-300 dark:border-zinc-600 text-zinc-700 dark:text-zinc-200 font-semibold rounded-lg hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors" />
     </div>
 </section>

@@ -16,13 +16,9 @@
 >
     @php $sectionContainerClasses = content('__SLUG__', 'section_container_classes', 'max-w-3xl mx-auto text-center'); @endphp
     <div class="{{ $sectionContainerClasses }}">
-        @php $toggleHeadline = content('__SLUG__', 'toggle_headline', '1'); @endphp
-        @if($toggleHeadline)
-        @php $headlineTag = content('__SLUG__', 'headline_htag', 'h2'); @endphp
-        @php $headlineText = content('__SLUG__', 'headline', 'What Our Customers Say'); @endphp
-        @php $headlineClasses = content('__SLUG__', 'headline_classes', 'font-heading text-4xl font-bold text-zinc-900 dark:text-white mb-12'); @endphp
-        {!! "<{$headlineTag} class=\"" . e($headlineClasses) . "\">" . e($headlineText) . "</{$headlineTag}>" !!}
-        @endif
+        <x-dl-heading slug="__SLUG__" prefix="headline" default="What Our Customers Say"
+            default-tag="h2"
+            default-classes="font-heading text-4xl font-bold text-zinc-900 dark:text-white mb-12" />
 
         @php $quoteClasses = content('__SLUG__', 'quote_classes', 'text-xl text-zinc-700 dark:text-zinc-300 italic leading-relaxed'); @endphp
         @php $authorWrapperClasses = content('__SLUG__', 'author_wrapper_classes', 'mt-6'); @endphp

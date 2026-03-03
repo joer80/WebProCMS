@@ -20,19 +20,11 @@
         @php $passwordRowClasses = content('__SLUG__', 'password_row_classes', 'flex items-center justify-between mb-1'); @endphp
         <div class="{{ $headerWrapperClasses }}">
             <a href="/" class="{{ $brandClasses }}">{{ content('__SLUG__', 'brand_name', 'Brand') }}</a>
-            @php $toggleHeadline = content('__SLUG__', 'toggle_headline', '1'); @endphp
-            @if($toggleHeadline)
-            @php $headlineTag = content('__SLUG__', 'headline_htag', 'h1'); @endphp
-            @php $headlineText = content('__SLUG__', 'headline', 'Welcome back'); @endphp
-            @php $headlineClasses = content('__SLUG__', 'headline_classes', 'font-heading mt-4 text-xl font-semibold text-zinc-800 dark:text-zinc-100'); @endphp
-            {!! "<{$headlineTag} class=\"" . e($headlineClasses) . "\">" . e($headlineText) . "</{$headlineTag}>" !!}
-            @endif
-            @php $toggleSubheadline = content('__SLUG__', 'toggle_subheadline', '1'); @endphp
-            @if($toggleSubheadline)
-            @php $subheadlineText = content('__SLUG__', 'subheadline', 'Sign in to your account'); @endphp
-            @php $subheadlineClasses = content('__SLUG__', 'subheadline_classes', 'mt-1 text-sm text-zinc-500 dark:text-zinc-400'); @endphp
-            <p class="{{ $subheadlineClasses }}">{{ $subheadlineText }}</p>
-            @endif
+            <x-dl-heading slug="__SLUG__" prefix="headline" default="Welcome back"
+                default-tag="h1"
+                default-classes="font-heading mt-4 text-xl font-semibold text-zinc-800 dark:text-zinc-100" />
+            <x-dl-subheadline slug="__SLUG__" prefix="subheadline" default="Sign in to your account"
+                default-classes="mt-1 text-sm text-zinc-500 dark:text-zinc-400" />
         </div>
         <div class="{{ $cardClasses }}">
             <form class="{{ $formClasses }}">

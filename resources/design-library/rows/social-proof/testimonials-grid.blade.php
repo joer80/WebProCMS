@@ -17,19 +17,11 @@
         @php $authorNameClasses = content('__SLUG__', 'author_name_classes', 'text-sm font-semibold text-zinc-900 dark:text-white'); @endphp
         @php $authorRoleClasses = content('__SLUG__', 'author_role_classes', 'text-xs text-zinc-500 dark:text-zinc-400'); @endphp
         <div class="{{ $headerWrapperClasses }}">
-            @php $toggleHeadline = content('__SLUG__', 'toggle_headline', '1'); @endphp
-            @if($toggleHeadline)
-            @php $headlineTag = content('__SLUG__', 'headline_htag', 'h2'); @endphp
-            @php $headlineText = content('__SLUG__', 'headline', 'Loved by Thousands'); @endphp
-            @php $headlineClasses = content('__SLUG__', 'headline_classes', 'font-heading text-4xl font-bold text-zinc-900 dark:text-white'); @endphp
-            {!! "<{$headlineTag} class=\"" . e($headlineClasses) . "\">" . e($headlineText) . "</{$headlineTag}>" !!}
-            @endif
-            @php $toggleSubheadline = content('__SLUG__', 'toggle_subheadline', '1'); @endphp
-            @if($toggleSubheadline)
-            @php $subheadlineText = content('__SLUG__', 'subheadline', 'Here\'s what our customers have to say.'); @endphp
-            @php $subheadlineClasses = content('__SLUG__', 'subheadline_classes', 'mt-4 text-lg text-zinc-500 dark:text-zinc-400'); @endphp
-            <p class="{{ $subheadlineClasses }}">{{ $subheadlineText }}</p>
-            @endif
+            <x-dl-heading slug="__SLUG__" prefix="headline" default="Loved by Thousands"
+                default-tag="h2"
+                default-classes="font-heading text-4xl font-bold text-zinc-900 dark:text-white" />
+            <x-dl-subheadline slug="__SLUG__" prefix="subheadline" default="Here's what our customers have to say."
+                default-classes="mt-4 text-lg text-zinc-500 dark:text-zinc-400" />
         </div>
         <div class="{{ $testimonialsGridClasses }}">
             @foreach ([['quote' => 'This product completely transformed how our team works. I can\'t imagine going back.', 'name' => 'Sarah Johnson', 'role' => 'CEO at Acme Co'], ['quote' => 'The best investment we\'ve made this year. Setup was a breeze and support is incredible.', 'name' => 'Mark Davis', 'role' => 'CTO at BuildIt'], ['quote' => 'Our productivity has doubled since we started using this. Highly recommended.', 'name' => 'Lisa Chen', 'role' => 'Product Manager at TechCorp']] as $testimonial)
