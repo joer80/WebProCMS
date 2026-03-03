@@ -1048,6 +1048,17 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                         if (el) { el.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); }
                     });
                 }
+            },
+            refreshPreview(url) {
+                const iframe = document.getElementById('page-preview');
+                let savedScroll = 0;
+                try { savedScroll = iframe.contentWindow.scrollY || 0; } catch (e) {}
+                const restore = () => {
+                    try { iframe.contentWindow.scrollTo(0, savedScroll); } catch (e) {}
+                    iframe.removeEventListener('load', restore);
+                };
+                iframe.addEventListener('load', restore);
+                iframe.src = url + '?_=' + Date.now();
             }
         }"
         @keydown.ctrl.s.window.prevent="if ($wire.file) $wire.saveFile()"
@@ -1617,7 +1628,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                                 id="page-preview"
                                 class="flex-1 w-full border-0"
                                 x-init="$el.src = {{ Js::from($previewUrl) }}"
-                                x-on:refresh-preview.window="$el.src = $event.detail.url + '?_=' + Date.now()"
+                                x-on:refresh-preview.window="refreshPreview($event.detail.url)"
                             ></iframe>
                         </div>
                     @else
