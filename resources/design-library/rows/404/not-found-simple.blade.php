@@ -16,9 +16,10 @@
         <div class="{{ $errorCodeClasses }}">404</div>
         @php $toggleHeadline = content('__SLUG__', 'toggle_headline', '1'); @endphp
         @if($toggleHeadline)
+        @php $headlineTag = content('__SLUG__', 'headline_htag', 'h1'); @endphp
         @php $headlineText = content('__SLUG__', 'headline', 'Page Not Found'); @endphp
         @php $headlineClasses = content('__SLUG__', 'headline_classes', 'font-heading mt-4 text-3xl font-bold text-zinc-900 dark:text-white'); @endphp
-        <h1 class="{{ $headlineClasses }}">{{ $headlineText }}</h1>
+        {!! "<{$headlineTag} class=\"" . e($headlineClasses) . "\">" . e($headlineText) . "</{$headlineTag}>" !!}
         @endif
         @php $toggleSubheadline = content('__SLUG__', 'toggle_subheadline', '1'); @endphp
         @if($toggleSubheadline)

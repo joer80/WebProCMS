@@ -22,9 +22,10 @@
             <a href="/" class="{{ $brandClasses }}">{{ content('__SLUG__', 'brand_name', 'Brand') }}</a>
             @php $toggleHeadline = content('__SLUG__', 'toggle_headline', '1'); @endphp
             @if($toggleHeadline)
+            @php $headlineTag = content('__SLUG__', 'headline_htag', 'h1'); @endphp
             @php $headlineText = content('__SLUG__', 'headline', 'Welcome back'); @endphp
             @php $headlineClasses = content('__SLUG__', 'headline_classes', 'font-heading mt-4 text-xl font-semibold text-zinc-800 dark:text-zinc-100'); @endphp
-            <h1 class="{{ $headlineClasses }}">{{ $headlineText }}</h1>
+            {!! "<{$headlineTag} class=\"" . e($headlineClasses) . "\">" . e($headlineText) . "</{$headlineTag}>" !!}
             @endif
             @php $toggleSubheadline = content('__SLUG__', 'toggle_subheadline', '1'); @endphp
             @if($toggleSubheadline)

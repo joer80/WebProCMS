@@ -18,9 +18,10 @@
         <div class="{{ $headerWrapperClasses }}">
             @php $toggleHeadline = content('__SLUG__', 'toggle_headline', '1'); @endphp
             @if($toggleHeadline)
+            @php $headlineTag = content('__SLUG__', 'headline_htag', 'h2'); @endphp
             @php $headlineText = content('__SLUG__', 'headline', 'Frequently Asked Questions'); @endphp
             @php $headlineClasses = content('__SLUG__', 'headline_classes', 'font-heading text-4xl font-bold text-zinc-900 dark:text-white'); @endphp
-            <h2 class="{{ $headlineClasses }}">{{ $headlineText }}</h2>
+            {!! "<{$headlineTag} class=\"" . e($headlineClasses) . "\">" . e($headlineText) . "</{$headlineTag}>" !!}
             @endif
             @php $toggleSubheadline = content('__SLUG__', 'toggle_subheadline', '1'); @endphp
             @if($toggleSubheadline)

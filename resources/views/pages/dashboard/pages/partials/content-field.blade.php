@@ -317,6 +317,13 @@
             <span class="text-sm text-zinc-500 dark:text-zinc-400">{{ $field['label'] }}</span>
             <button wire:click="resetContentField('{{ $field['key'] }}')" type="button" class="ml-auto text-xs text-zinc-400 dark:text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 transition-colors">Reset</button>
         </div>
+    @elseif (str_ends_with($field['key'], '_htag'))
+        <flux:select wire:model.live="contentValues.{{ $field['key'] }}">
+            <flux:select.option value="h1">h1</flux:select.option>
+            <flux:select.option value="h2">h2</flux:select.option>
+            <flux:select.option value="h3">h3</flux:select.option>
+            <flux:select.option value="h4">h4</flux:select.option>
+        </flux:select>
     @elseif (str_ends_with($field['key'], '_url'))
         <flux:input
             wire:model.live.debounce.400ms="contentValues.{{ $field['key'] }}"

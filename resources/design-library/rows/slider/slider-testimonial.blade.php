@@ -18,9 +18,10 @@
     <div class="{{ $sectionContainerClasses }}">
         @php $toggleHeadline = content('__SLUG__', 'toggle_headline', '1'); @endphp
         @if($toggleHeadline)
+        @php $headlineTag = content('__SLUG__', 'headline_htag', 'h2'); @endphp
         @php $headlineText = content('__SLUG__', 'headline', 'What Our Customers Say'); @endphp
         @php $headlineClasses = content('__SLUG__', 'headline_classes', 'font-heading text-4xl font-bold text-zinc-900 dark:text-white mb-12'); @endphp
-        <h2 class="{{ $headlineClasses }}">{{ $headlineText }}</h2>
+        {!! "<{$headlineTag} class=\"" . e($headlineClasses) . "\">" . e($headlineText) . "</{$headlineTag}>" !!}
         @endif
 
         @php $quoteClasses = content('__SLUG__', 'quote_classes', 'text-xl text-zinc-700 dark:text-zinc-300 italic leading-relaxed'); @endphp

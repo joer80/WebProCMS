@@ -14,9 +14,10 @@
             <span class="{{ $badgeClasses }}">{{ content('__SLUG__', 'badge', 'Our Story') }}</span>
             @php $toggleHeadline = content('__SLUG__', 'toggle_headline', '1'); @endphp
             @if($toggleHeadline)
+            @php $headlineTag = content('__SLUG__', 'headline_htag', 'h2'); @endphp
             @php $headlineText = content('__SLUG__', 'headline', 'We Are Building the Future of Work'); @endphp
             @php $headlineClasses = content('__SLUG__', 'headline_classes', 'font-heading mt-3 text-4xl font-bold text-zinc-900 dark:text-white leading-tight'); @endphp
-            <h2 class="{{ $headlineClasses }}">{{ $headlineText }}</h2>
+            {!! "<{$headlineTag} class=\"" . e($headlineClasses) . "\">" . e($headlineText) . "</{$headlineTag}>" !!}
             @endif
             @php $bodyClasses = content('__SLUG__', 'body_classes', 'mt-6 text-zinc-500 dark:text-zinc-400 leading-relaxed'); @endphp
             <p class="{{ $bodyClasses }}">

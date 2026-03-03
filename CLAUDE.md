@@ -349,6 +349,7 @@ Type and group are derived entirely from the key name — no metadata columns ne
 | `*_new_tab` | `toggle` | key with `_new_tab` stripped |
 | `*_classes` | `classes` | key with `_classes` stripped |
 | `*_image` or `image` | `image` | key with `_image` stripped (or `media`) |
+| `*_htag` | `text` | key with `_htag` stripped — renders as h1–h4 dropdown in editor |
 | `*_url` | `text` | key with `_url` stripped |
 | `*_alt` | `text` | key with `_alt` stripped |
 | anything else | `text` | key itself |
@@ -414,9 +415,10 @@ Full example assembling all standard patterns (copy and adapt):
     <div class="{{ $sectionContainerClasses }}">
         @php $toggleHeadline = content('__SLUG__', 'toggle_headline', '1'); @endphp
         @if($toggleHeadline)
+        @php $headlineTag = content('__SLUG__', 'headline_htag', 'h2'); @endphp
         @php $headlineText = content('__SLUG__', 'headline', 'Your Headline'); @endphp
         @php $headlineClasses = content('__SLUG__', 'headline_classes', 'font-heading text-4xl font-bold text-zinc-900 dark:text-white'); @endphp
-        <h2 class="{{ $headlineClasses }}">{{ $headlineText }}</h2>
+        {!! "<{$headlineTag} class=\"" . e($headlineClasses) . "\">" . e($headlineText) . "</{$headlineTag}>" !!}
         @endif
         @php $toggleSubheadline = content('__SLUG__', 'toggle_subheadline', '1'); @endphp
         @if($toggleSubheadline)
@@ -486,9 +488,10 @@ See `resources/design-library/rows/pricing/pricing-cards.blade.php` for the refe
 ```blade
 @php $toggleHeadline = content('__SLUG__', 'toggle_headline', '1'); @endphp
 @if($toggleHeadline)
+@php $headlineTag = content('__SLUG__', 'headline_htag', 'h2'); @endphp
 @php $headlineText = content('__SLUG__', 'headline', 'Your Headline'); @endphp
 @php $headlineClasses = content('__SLUG__', 'headline_classes', 'font-heading text-4xl font-bold text-zinc-900 dark:text-white'); @endphp
-<h2 class="{{ $headlineClasses }}">{{ $headlineText }}</h2>
+{!! "<{$headlineTag} class=\"" . e($headlineClasses) . "\">" . e($headlineText) . "</{$headlineTag}>" !!}
 @endif
 ```
 
