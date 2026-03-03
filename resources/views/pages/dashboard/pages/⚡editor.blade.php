@@ -1077,17 +1077,23 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
     >
         {{-- Editor toolbar --}}
         <div class="sticky top-0 z-30 bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-700 px-6 py-3 flex items-center gap-3">
-            <flux:button href="{{ route('dashboard.pages') }}" variant="outline" size="sm" icon="list-bullet" wire:navigate>
-                {{ __('Pages') }}
-            </flux:button>
+            <div class="flex-1 flex items-center gap-3">
+                <flux:button href="{{ route('dashboard.pages') }}" variant="outline" size="sm" icon="arrow-left" wire:navigate>
+                    {{ __('Back to Pages') }}
+                </flux:button>
 
-            <div class="w-48 shrink-0">
-                <flux:select wire:model.live="file" placeholder="Select a page to edit…" size="sm">
-                    <flux:select.option value="">{{ __('Select a page…') }}</flux:select.option>
-                    @foreach ($this->voltFiles as $label => $path)
-                        <flux:select.option value="{{ $path }}">{{ $label }}</flux:select.option>
-                    @endforeach
-                </flux:select>
+                @if ($file)
+                    <flux:button variant="outline" size="sm" wire:click="$set('showSeoModal', true)" :loading="false">{{ __('Page Settings') }}</flux:button>
+                @endif
+
+                <flux:tooltip content="Selected Page">
+                    <flux:select wire:model.live="file" placeholder="Select a page to edit…" size="sm" class="w-48">
+                        <flux:select.option value="">{{ __('Select a page…') }}</flux:select.option>
+                        @foreach ($this->voltFiles as $label => $path)
+                            <flux:select.option value="{{ $path }}">{{ $label }}</flux:select.option>
+                        @endforeach
+                    </flux:select>
+                </flux:tooltip>
             </div>
 
             {{-- Center: preview width controls --}}
@@ -1198,16 +1204,12 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                 @endif
             </div>
 
-            <div class="flex items-center gap-2">
+            <div class="flex-1 flex items-center justify-end gap-2">
                 @if ($isDirty)
                     <span class="text-xs text-amber-600 dark:text-amber-400 font-medium">Unsaved changes</span>
                 @endif
 
                 @if ($file)
-                    <flux:tooltip content="Page settings">
-                        <flux:button variant="ghost" size="sm" icon="adjustments-horizontal" wire:click="$set('showSeoModal', true)" :loading="false" />
-                    </flux:tooltip>
-
                     @if ($liveUrl)
                         <a href="{{ $liveUrl }}" target="_blank">
                             <flux:button variant="outline" size="sm" icon="arrow-top-right-on-square">{{ __('View Live') }}</flux:button>
