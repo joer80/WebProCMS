@@ -37,13 +37,14 @@ class AppServiceProvider extends ServiceProvider
     protected function registerBladeDirectives(): void
     {
         Blade::directive('dlItems', function (string $expression): string {
-            $parts = array_map('trim', explode(',', $expression, 3));
+            $parts = array_map('trim', explode(',', $expression, 4));
             $slug = $parts[0];
             $prefixClean = trim($parts[1] ?? "''", " '\"");
             $var = trim($parts[2] ?? '$items');
+            $default = $parts[3] ?? "''";
             $gridKey = "'grid_{$prefixClean}'";
 
-            return "<?php {$var} = json_decode(content({$slug}, {$gridKey}, ''), true) ?: []; ?>";
+            return "<?php {$var} = json_decode(content({$slug}, {$gridKey}, {$default}), true) ?: []; ?>";
         });
     }
 

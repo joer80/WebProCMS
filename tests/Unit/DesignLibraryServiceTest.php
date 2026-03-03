@@ -111,65 +111,7 @@ it('defaults name to filename when @name is missing', function (): void {
     unlink($file);
 });
 
-it('infers schema_fields from content() calls in blade code', function (): void {
-    $file = tempnam(sys_get_temp_dir(), 'dltest_').'.blade.php';
-    file_put_contents($file, <<<'BLADE'
-{{--
-@name Hero - Split
-@description Split hero.
-@sort 5
---}}
-@php $sectionClasses = content('__SLUG__', 'section_classes', 'py-section px-6 bg-white'); @endphp
-@php $sectionContainerClasses = content('__SLUG__', 'section_container_classes', 'max-w-6xl mx-auto'); @endphp
-@php $toggleHeadline = content('__SLUG__', 'toggle_headline', '1'); @endphp
-@php $headlineText = content('__SLUG__', 'headline', 'Build Something Amazing'); @endphp
-BLADE);
-
-    $data = $this->service->parseTemplateFile($file);
-
-    expect($data['schema_fields'])->toHaveCount(4)
-        ->and($data['schema_fields'][0]['key'])->toBe('section_classes')
-        ->and($data['schema_fields'][0]['type'])->toBe('classes')
-        ->and($data['schema_fields'][0]['group'])->toBe('section')
-        ->and($data['schema_fields'][0]['default'])->toBe('py-section px-6 bg-white')
-        ->and($data['schema_fields'][1]['key'])->toBe('section_container_classes')
-        ->and($data['schema_fields'][1]['type'])->toBe('classes')
-        ->and($data['schema_fields'][1]['group'])->toBe('section_container')
-        ->and($data['schema_fields'][2]['key'])->toBe('toggle_headline')
-        ->and($data['schema_fields'][2]['type'])->toBe('toggle')
-        ->and($data['schema_fields'][2]['group'])->toBe('headline')
-        ->and($data['schema_fields'][2]['default'])->toBe('1')
-        ->and($data['schema_fields'][3]['key'])->toBe('headline')
-        ->and($data['schema_fields'][3]['label'])->toBe('Headline');
-
-    unlink($file);
-});
-
-it('infers grid type from grid_ prefix', function (): void {
-    $file = tempnam(sys_get_temp_dir(), 'dltest_').'.blade.php';
-    file_put_contents($file, <<<'BLADE'
-{{--
-@name Features
-@sort 10
---}}
-@php $featuresJson = content('__SLUG__', 'grid_features', '[{"icon":"bolt","title":"Fast","desc":"Speed."},{"icon":"shield-check","title":"Secure","desc":"Safety."}]'); @endphp
-BLADE);
-
-    $data = $this->service->parseTemplateFile($file);
-
-    expect($data['schema_fields'])->toHaveCount(1)
-        ->and($data['schema_fields'][0]['key'])->toBe('grid_features')
-        ->and($data['schema_fields'][0]['type'])->toBe('grid')
-        ->and($data['schema_fields'][0]['group'])->toBe('features');
-
-    $decoded = json_decode($data['schema_fields'][0]['default'], true);
-    expect($decoded)->toHaveCount(2)
-        ->and($decoded[0]['icon'])->toBe('bolt');
-
-    unlink($file);
-});
-
-it('returns empty schema_fields when no content() calls present', function (): void {
+it('returns empty schema_fields when no component tags present', function (): void {
     $file = tempnam(sys_get_temp_dir(), 'dltest_').'.blade.php';
     file_put_contents($file, <<<'BLADE'
 {{--
@@ -193,55 +135,52 @@ it('infers schema_fields from x-dl-heading component tag', function (): void {
 @name Hero - Component
 @sort 5
 --}}
-@php $sectionClasses = content('__SLUG__', 'section_classes', 'py-section px-6 bg-white'); @endphp
-<section class="{{ $sectionClasses }}">
+<x-dl-section slug="__SLUG__" default-section-classes="py-section px-6 bg-white" default-container-classes="max-w-6xl mx-auto">
     <x-dl-heading slug="__SLUG__" prefix="headline" default="Your Headline" default-tag="h1" default-classes="font-heading text-5xl font-bold text-zinc-900" />
-</section>
+</x-dl-section>
 BLADE);
 
     $data = $this->service->parseTemplateFile($file);
 
     $keys = array_column($data['schema_fields'], 'key');
 
-    expect($data['schema_fields'])->toHaveCount(5)
-        ->and($keys[0])->toBe('section_classes')
-        ->and($keys[1])->toBe('toggle_headline')
-        ->and($keys[1])->toBe('toggle_headline')
-        ->and($data['schema_fields'][1]['type'])->toBe('toggle')
-        ->and($keys[2])->toBe('headline_htag')
-        ->and($data['schema_fields'][2]['default'])->toBe('h1')
-        ->and($keys[3])->toBe('headline')
-        ->and($data['schema_fields'][3]['default'])->toBe('Your Headline')
-        ->and($keys[4])->toBe('headline_classes')
-        ->and($data['schema_fields'][4]['type'])->toBe('classes')
-        ->and($data['schema_fields'][4]['default'])->toBe('font-heading text-5xl font-bold text-zinc-900');
+    expect($keys[0])->toBe('section_classes')
+        ->and($keys[1])->toBe('section_container_classes')
+        ->and($keys[2])->toBe('toggle_headline')
+        ->and($data['schema_fields'][2]['type'])->toBe('toggle')
+        ->and($keys[3])->toBe('headline_htag')
+        ->and($data['schema_fields'][3]['default'])->toBe('h1')
+        ->and($keys[4])->toBe('headline')
+        ->and($data['schema_fields'][4]['default'])->toBe('Your Headline')
+        ->and($keys[5])->toBe('headline_classes')
+        ->and($data['schema_fields'][5]['type'])->toBe('classes')
+        ->and($data['schema_fields'][5]['default'])->toBe('font-heading text-5xl font-bold text-zinc-900');
 
     unlink($file);
 });
 
-it('merges content() fields and x-dl-* component fields in document order', function (): void {
+it('registers x-dl-* component fields in document order', function (): void {
     $file = tempnam(sys_get_temp_dir(), 'dltest_').'.blade.php';
     file_put_contents($file, <<<'BLADE'
 {{--
 @name Hero - Ordered
 @sort 5
 --}}
-@php $sectionClasses = content('__SLUG__', 'section_classes', 'py-section'); @endphp
-<section class="{{ $sectionClasses }}">
+<x-dl-section slug="__SLUG__" default-section-classes="py-section" default-container-classes="max-w-6xl mx-auto">
     <x-dl-heading slug="__SLUG__" prefix="headline" default="Headline" />
     <x-dl-subheadline slug="__SLUG__" prefix="subheadline" default="Sub" />
-    @php $badgeText = content('__SLUG__', 'badge', 'New'); @endphp
-</section>
+    <x-dl-subheadline slug="__SLUG__" prefix="badge" default="New" />
+</x-dl-section>
 BLADE);
 
     $data = $this->service->parseTemplateFile($file);
 
     $keys = array_column($data['schema_fields'], 'key');
 
-    // section_classes comes first (before the components)
+    // section_classes comes first
     expect($keys[0])->toBe('section_classes');
 
-    // heading fields come before subheadline fields
+    // heading fields come before subheadline, subheadline before badge
     $headlineIdx = array_search('headline', $keys);
     $subheadlineIdx = array_search('subheadline', $keys);
     $badgeIdx = array_search('badge', $keys);
@@ -453,24 +392,50 @@ BLADE);
     unlink($file);
 });
 
-it('deduplicates keys shared between content() calls and component tags', function (): void {
+it('registers grid field from standalone @dlItems directive with default', function (): void {
+    $file = tempnam(sys_get_temp_dir(), 'dltest_').'.blade.php';
+    file_put_contents($file, <<<'BLADE'
+{{--
+@name Slider - Testimonial
+@sort 10
+--}}
+@dlItems('__SLUG__', 'testimonials', $testimonials, '[{"quote":"Test quote","name":"Test Name","role":"Test Role"}]')
+<x-dl-section slug="__SLUG__" default-section-classes="py-section" default-container-classes="max-w-3xl mx-auto">
+</x-dl-section>
+BLADE);
+
+    $data = $this->service->parseTemplateFile($file);
+
+    $keys = array_column($data['schema_fields'], 'key');
+
+    expect(in_array('grid_testimonials', $keys))->toBeTrue();
+
+    $gridField = array_values(array_filter($data['schema_fields'], fn ($f) => $f['key'] === 'grid_testimonials'))[0];
+    expect($gridField['type'])->toBe('grid')
+        ->and($gridField['group'])->toBe('testimonials')
+        ->and($gridField['default'])->toBe('[{"quote":"Test quote","name":"Test Name","role":"Test Role"}]');
+
+    unlink($file);
+});
+
+it('deduplicates repeated x-dl-* component prefix registrations', function (): void {
     $file = tempnam(sys_get_temp_dir(), 'dltest_').'.blade.php';
     file_put_contents($file, <<<'BLADE'
 {{--
 @name Dupe Test
 @sort 1
 --}}
-@php $headlineText = content('__SLUG__', 'headline', 'Override'); @endphp
-<x-dl-heading slug="__SLUG__" prefix="headline" default="Component Default" />
+<x-dl-heading slug="__SLUG__" prefix="headline" default="First" />
+<x-dl-heading slug="__SLUG__" prefix="headline" default="Second" />
 BLADE);
 
     $data = $this->service->parseTemplateFile($file);
 
     $headlineFields = array_filter($data['schema_fields'], fn ($f) => $f['key'] === 'headline');
 
-    // Only one 'headline' field; the content() call wins (it appears first)
+    // Only one 'headline' field; first occurrence wins
     expect($headlineFields)->toHaveCount(1)
-        ->and(array_values($headlineFields)[0]['default'])->toBe('Override');
+        ->and(array_values($headlineFields)[0]['default'])->toBe('First');
 
     unlink($file);
 });

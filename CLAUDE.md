@@ -354,24 +354,9 @@ Type and group are derived entirely from the key name — no metadata columns ne
 | anything else | `text` | key itself |
 
 - `label` is auto-derived: `ucwords(str_replace('_', ' ', $key))`
-- Field order in the editor sidebar = document order of `content()` calls and `<x-dl-*>` component tags (first occurrence wins)
+- Field order in the editor sidebar = document order of `<x-dl-*>` component tags and `@dlItems` directives (first occurrence wins)
 
-**Sidebar ordering rule:** Place `<x-dl-*>` component tags and `content()` calls inline where they render in the HTML, in natural top-to-bottom order. Never hoist a `grid_*` or text `content()` call above the section it belongs to. `x-dl-*` components register their fields in the order declared in `schemaFields()` — toggle first, then text fields, then classes. `section_classes` and `section_container_classes` are registered first because `<x-dl-section>` is always the outermost element.
-
-### content() helper
-
-```php
-content(string $slug, string $key, ?string $default = null): string
-```
-
-- `__SLUG__` is replaced at insert time with the row's unique slug
-- Type and group are resolved from `SchemaCache` (populated by `design-library:index` from parsing the blade)
-- The inline default is a PHP runtime fallback; use `''` only if the value is optional
-
-**Standard call (3 args only):**
-```php
-@php $headlineText = content('__SLUG__', 'headline', 'My Headline'); @endphp
-```
+**Sidebar ordering rule:** Place `<x-dl-*>` component tags inline where they render in the HTML, in natural top-to-bottom order. `x-dl-*` components register their fields in the order declared in `schemaFields()` — toggle first, then text fields, then classes. `section_classes` and `section_container_classes` are registered first because `<x-dl-section>` is always the outermost element.
 
 ### Content Types
 
@@ -427,11 +412,11 @@ Full example assembling all standard patterns (copy and adapt):
 </x-dl-section>
 ```
 
-### ALL classes must use content()
+### ALL classes must go through x-dl-* components
 
-**Never use hardcoded class strings directly on elements.** Every element's classes must be editable via `content()` with a `*_classes` key. This applies to cards, wrappers, icons, headings, paragraphs, grids, buttons, forms, layout divs — **every single element with a `class` attribute**, no exceptions.
+**Never use hardcoded class strings directly on elements.** Every element's classes must be editable — wrap it in the appropriate `<x-dl-*>` component. This applies to cards, wrappers, icons, headings, paragraphs, grids, buttons, forms, layout divs — **every single element with a `class` attribute**, no exceptions.
 
-**This is a hard rule. Before finishing any row, scan every line for `class="` and verify each one routes through a `$variable` set by `content()`. If you find a hardcoded `class="..."` that isn't an Alpine `:class` binding or a placeholder-only element (e.g. an image fallback inside `@else`), it must be fixed.**
+**This is a hard rule. Before finishing any row, scan every line for `class="` and verify each one is inside an `<x-dl-*>` component. If you find a hardcoded `class="..."` that isn't an Alpine `:class` binding or a placeholder-only element (e.g. an image fallback inside `@else`), it must be fixed.**
 
 The only acceptable hardcoded classes are:
 - Alpine `:class` dynamic bindings (e.g. `:class="open ? 'rotate-180' : ''"`) — these are runtime expressions, not design values
@@ -439,16 +424,15 @@ The only acceptable hardcoded classes are:
 
 ### Conditional (state-variant) classes
 
-When an element has two visual states driven by per-item data (e.g. a featured card vs. a default card), use **paired `content()` fields** — one for each state — and resolve with a ternary at render time.
+When an element has two visual states driven by per-item data (e.g. a featured card vs. a default card), use `x-dl-wrapper` with `default-featured-classes` and `:featured`:
 
-**Pattern:**
-```blade
-@php $cardClasses = content('__SLUG__', 'card_classes', 'rounded-card p-8 bg-white border border-zinc-200'); @endphp
-@php $cardFeaturedClasses = content('__SLUG__', 'card_featured_classes', 'rounded-card p-8 bg-primary text-white ring-2 ring-primary'); @endphp
-```
 ```blade
 @php $isFeatured = !empty($plan['toggle_featured']); @endphp
-<div class="{{ $isFeatured ? $cardFeaturedClasses : $cardClasses }}">
+<x-dl-wrapper slug="__SLUG__" prefix="card" :featured="$isFeatured"
+    default-classes="rounded-card p-8 bg-white border border-zinc-200"
+    default-featured-classes="rounded-card p-8 bg-primary text-white ring-2 ring-primary">
+    ...
+</x-dl-wrapper>
 ```
 
 Name pairs as `{element}_classes` (default) and `{element}_featured_classes` (highlighted state). Apply this to every element inside the loop that has different classes per state.
@@ -567,12 +551,14 @@ Fields registered: `{prefix}_wrapper_classes` (only if wrapper provided), `{pref
 ```
 Note: `default-items` uses **single quotes** in the template because its value is JSON (which contains double quotes). The attr parser supports both quote styles.
 
-**`@dlItems` directive** — fetches and decodes grid item data inside `<x-dl-grid>` slots. Always use this instead of a raw `content()` call inside grid slots.
+**`@dlItems` directive** — fetches and decodes grid item data. Use inside `<x-dl-grid>` slots (field registered by the component tag), or standalone with a 4th default JSON argument when used without `x-dl-grid` (e.g. Alpine sliders — the parser scans standalone `@dlItems` to register the field):
 ```blade
+{{-- Inside x-dl-grid (field registered by the component) --}}
 @dlItems('__SLUG__', 'features', $features)
-{{-- Compiles to: $features = json_decode(content('__SLUG__', 'grid_features', ''), true) ?: []; --}}
+
+{{-- Standalone with default (parser registers grid_testimonials) --}}
+@dlItems('__SLUG__', 'testimonials', $testimonials, '[{"quote":"...","name":"...","role":"..."}]')
 ```
-The field is registered by the `<x-dl-grid>` component tag — `@dlItems` is a runtime data fetch only.
 
 **One pattern only:** Row templates use exclusively `<x-dl-*>` component tags and `@dlItems`. There are no raw `content()` calls in row files.
 
@@ -617,7 +603,7 @@ Icons stored as `"bolt"` (outline) or `"bolt:solid"` (solid). Use `x-dl-icon` �
 
 1. Create a new `.blade.php` file in the appropriate category folder
 2. Add the metadata comment with `@name`, `@description`, and `@sort`
-3. Use only `<x-dl-*>` component tags — no raw `content()` calls in row files
+3. Use only `<x-dl-*>` component tags and `@dlItems` — the parser only scans these, not raw PHP
 4. Run `php artisan design-library:index` to register it in the database
 
 No manual DB insert is required — the index command handles it.

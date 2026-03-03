@@ -48,7 +48,7 @@ class DesignLibraryService
         }
 
         $bladeCode = trim($contents);
-        $schemaFields = $this->parseContentCallFields($bladeCode);
+        $schemaFields = $this->parseSchemaFields($bladeCode);
 
         return [
             'name' => $name ?: basename($fullPath, '.blade.php'),
@@ -62,7 +62,7 @@ class DesignLibraryService
     }
 
     /**
-     * Parse editable field definitions from content() calls and <x-dl-*> component tags in blade code.
+     * Parse editable field definitions from <x-dl-*> component tags and @dlItems directives in blade code.
      * Infers type and group from key naming conventions:
      *  - toggle_*  → toggle
      *  - grid_*    → grid
@@ -72,26 +72,27 @@ class DesignLibraryService
      *  - *_url, *_alt → text (group strips suffix)
      *  - anything else → text
      *
-     * Fields from both sources are merged in document order (by byte offset).
+     * Fields are merged in document order (by byte offset).
      *
      * @return list<array{key: string, type: string, group: string, default: string, label: string}>
      */
-    public function parseContentCallFields(string $bladeCode): array
+    public function parseSchemaFields(string $bladeCode): array
     {
         $seen = [];
         $items = []; // [['offset' => int, 'fields' => [...]]]
 
-        // 1. Collect content() call matches with their document offsets.
+        // 1. Collect standalone @dlItems directive matches (used without x-dl-grid, e.g. Alpine sliders).
         preg_match_all(
-            "/content\('__SLUG__',\s*'([^']+)',\s*'((?:[^'\\\\]|\\\\.)*)'\)/",
+            "/@dlItems\('__SLUG__',\s*'([^']+)',\s*\\\$[\w]+(?:,\s*'((?:[^'\\\\]|\\\\.)*)')?\)/",
             $bladeCode,
-            $contentMatches,
+            $dlItemsMatches,
             PREG_SET_ORDER | PREG_OFFSET_CAPTURE
         );
 
-        foreach ($contentMatches as $match) {
-            $key = $match[1][0];
-            $default = stripslashes($match[2][0]);
+        foreach ($dlItemsMatches as $match) {
+            $prefix = $match[1][0];
+            $key = "grid_{$prefix}";
+            $default = isset($match[2]) ? stripslashes($match[2][0]) : '';
             $offset = $match[0][1];
 
             if (isset($seen[$key])) {

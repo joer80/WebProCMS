@@ -3,13 +3,13 @@
 @description Alpine.js testimonial slider with navigation dots and auto-advance.
 @sort 10
 --}}
-{{-- TODO: Convert hardcoded testimonial array to grid_testimonials JSON field for editability. Cannot use x-dl-grid (this is an Alpine slider, not a CSS grid layout). --}}
+@dlItems('__SLUG__', 'testimonials', $testimonials, '[{"quote":"This is honestly the best tool I\'ve used in years. It transformed how we work.","name":"Alex Thompson","role":"Founder at StartupXYZ"},{"quote":"The onboarding was seamless and the results were immediate. I highly recommend it.","name":"Jamie Rivera","role":"VP of Engineering"},{"quote":"Customer support is incredible. They went above and beyond to help our team.","name":"Morgan Lee","role":"Director of Operations"}]')
 <x-dl-section slug="__SLUG__"
     default-section-classes="py-section px-6 bg-zinc-50 dark:bg-zinc-950 overflow-hidden"
     default-container-classes="max-w-3xl mx-auto text-center"
     x-data="{
         current: 0,
-        total: 3,
+        total: {{ count($testimonials) }},
         autoPlay() {
             setInterval(() => { this.current = (this.current + 1) % this.total; }, 4000);
         }
@@ -21,7 +21,7 @@
 
         <x-dl-wrapper slug="__SLUG__" prefix="slides_wrapper"
             default-classes="relative">
-            @foreach ([['quote' => 'This is honestly the best tool I\'ve used in years. It transformed how we work.', 'name' => 'Alex Thompson', 'role' => 'Founder at StartupXYZ'], ['quote' => 'The onboarding was seamless and the results were immediate. I highly recommend it.', 'name' => 'Jamie Rivera', 'role' => 'VP of Engineering'], ['quote' => 'Customer support is incredible. They went above and beyond to help our team.', 'name' => 'Morgan Lee', 'role' => 'Director of Operations']] as $i => $t)
+            @foreach ($testimonials as $i => $t)
                 <div x-show="current === {{ $i }}" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-x-4" x-transition:enter-end="opacity-100 translate-x-0">
                     <x-dl-wrapper slug="__SLUG__" prefix="quote" tag="p"
                         default-classes="text-xl text-zinc-700 dark:text-zinc-300 italic leading-relaxed">
@@ -44,12 +44,12 @@
 
         <x-dl-wrapper slug="__SLUG__" prefix="dots_wrapper"
             default-classes="flex items-center justify-center gap-2 mt-8">
-            @for ($i = 0; $i < 3; $i++)
+            @foreach ($testimonials as $i => $t)
                 <x-dl-wrapper slug="__SLUG__" prefix="dot_base" tag="button"
                     default-classes="h-2 rounded-full transition-all duration-300"
                     @click="current = {{ $i }}"
                     :class="current === {{ $i }} ? 'bg-primary w-6' : 'bg-zinc-300 dark:bg-zinc-600 w-2'">
                 </x-dl-wrapper>
-            @endfor
+            @endforeach
         </x-dl-wrapper>
 </x-dl-section>

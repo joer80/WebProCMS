@@ -3,7 +3,6 @@
 @description Three-column blog post grid with featured image, category, title, and date.
 @sort 10
 --}}
-{{-- TODO: Data comes from Livewire computed ($this->recentPosts) — not a JSON grid field. x-dl-grid does not apply. --}}
 <x-dl-section slug="__SLUG__"
     default-section-classes="py-section px-6 bg-white dark:bg-zinc-900"
     default-container-classes="max-w-6xl mx-auto">
