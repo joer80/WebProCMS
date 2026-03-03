@@ -356,6 +356,8 @@ Type and group are derived entirely from the key name — no metadata columns ne
 - `label` is auto-derived: `ucwords(str_replace('_', ' ', $key))`
 - Field order in the editor sidebar = order of `content()` calls in the blade (first occurrence wins)
 
+**Sidebar ordering rule:** Hoist `*_classes` variables to the top of the template (they are hidden in content mode anyway). Place all non-classes `content()` calls — `toggle_*`, text fields, `grid_*` — inline where they are used in the HTML, in the natural top-to-bottom order a user would expect. Never hoist a `grid_*` or text `content()` call above the section it belongs to just to pre-declare a variable — move the decode/variable assignment to just before the loop instead. This keeps the content mode sidebar in a logical reading order (e.g. Headline → Subheadline → Plans, not Plans → Headline → Subheadline).
+
 ### content() helper
 
 ```php

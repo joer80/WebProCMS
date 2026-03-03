@@ -26,10 +26,6 @@
         @php $cardFeatureIconFeaturedClasses = content('__SLUG__', 'card_feature_icon_featured_classes', 'size-4 shrink-0 text-white'); @endphp
         @php $cardCtaClasses = content('__SLUG__', 'card_cta_classes', 'mt-8 block text-center px-4 py-3 rounded-lg font-semibold text-sm transition-colors bg-primary text-white hover:bg-primary/90'); @endphp
         @php $cardCtaFeaturedClasses = content('__SLUG__', 'card_cta_featured_classes', 'mt-8 block text-center px-4 py-3 rounded-lg font-semibold text-sm transition-colors bg-white text-primary hover:bg-zinc-100'); @endphp
-        @php
-            $plansJson = content('__SLUG__', 'grid_plans', '[{"name":"Starter","price":"$9","desc":"Perfect for individuals","features":"5 projects|10GB storage|Email support","cta":"Get Started","cta_url":"#","toggle_featured":""},{"name":"Pro","price":"$29","desc":"Great for small teams","features":"Unlimited projects|100GB storage|Priority support|Analytics","cta":"Get Started","cta_url":"#","toggle_featured":"1"},{"name":"Enterprise","price":"$99","desc":"For large organizations","features":"Unlimited everything|Dedicated support|Custom integrations|SLA guarantee","cta":"Get Started","cta_url":"#","toggle_featured":""}]');
-            $plans = json_decode($plansJson, true) ?: [];
-        @endphp
         <div class="{{ $headerWrapperClasses }}">
             @php $toggleHeadline = content('__SLUG__', 'toggle_headline', '1'); @endphp
             @if($toggleHeadline)
@@ -44,6 +40,10 @@
             <p class="{{ $subheadlineClasses }}">{{ $subheadlineText }}</p>
             @endif
         </div>
+        @php
+            $plansJson = content('__SLUG__', 'grid_plans', '[{"name":"Starter","price":"$9","desc":"Perfect for individuals","features":"5 projects|10GB storage|Email support","cta":"Get Started","cta_url":"#","toggle_featured":""},{"name":"Pro","price":"$29","desc":"Great for small teams","features":"Unlimited projects|100GB storage|Priority support|Analytics","cta":"Get Started","cta_url":"#","toggle_featured":"1"},{"name":"Enterprise","price":"$99","desc":"For large organizations","features":"Unlimited everything|Dedicated support|Custom integrations|SLA guarantee","cta":"Get Started","cta_url":"#","toggle_featured":""}]');
+            $plans = json_decode($plansJson, true) ?: [];
+        @endphp
         <div class="{{ $pricingGridClasses }}">
             @foreach ($plans as $plan)
                 @php $isFeatured = !empty($plan['toggle_featured']); @endphp
