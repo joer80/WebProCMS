@@ -3,55 +3,53 @@
 @description Alpine.js testimonial slider with navigation dots and auto-advance.
 @sort 10
 --}}
-@php $sectionClasses = content('__SLUG__', 'section_classes', 'py-section px-6 bg-zinc-50 dark:bg-zinc-950 overflow-hidden'); @endphp
-<section class="{{ $sectionClasses }}"
+@dlItems('__SLUG__', 'testimonials', $testimonials, '[{"quote":"This is honestly the best tool I\'ve used in years. It transformed how we work.","name":"Alex Thompson","role":"Founder at StartupXYZ"},{"quote":"The onboarding was seamless and the results were immediate. I highly recommend it.","name":"Jamie Rivera","role":"VP of Engineering"},{"quote":"Customer support is incredible. They went above and beyond to help our team.","name":"Morgan Lee","role":"Director of Operations"}]')
+<x-dl.section slug="__SLUG__"
+    default-section-classes="py-section px-6 bg-zinc-50 dark:bg-zinc-950 overflow-hidden"
+    default-container-classes="max-w-3xl mx-auto text-center"
     x-data="{
         current: 0,
-        total: 3,
+        total: {{ count($testimonials) }},
         autoPlay() {
             setInterval(() => { this.current = (this.current + 1) % this.total; }, 4000);
         }
     }"
-    x-init="autoPlay()"
->
-    @php $sectionContainerClasses = content('__SLUG__', 'section_container_classes', 'max-w-3xl mx-auto text-center'); @endphp
-    <div class="{{ $sectionContainerClasses }}">
-        @php $toggleHeadline = content('__SLUG__', 'toggle_headline', '1'); @endphp
-        @if($toggleHeadline)
-        @php $headlineTag = content('__SLUG__', 'headline_htag', 'h2'); @endphp
-        @php $headlineText = content('__SLUG__', 'headline', 'What Our Customers Say'); @endphp
-        @php $headlineClasses = content('__SLUG__', 'headline_classes', 'font-heading text-4xl font-bold text-zinc-900 dark:text-white mb-12'); @endphp
-        {!! "<{$headlineTag} class=\"" . e($headlineClasses) . "\">" . e($headlineText) . "</{$headlineTag}>" !!}
-        @endif
+    x-init="autoPlay()">
+        <x-dl.heading slug="__SLUG__" prefix="headline" default="What Our Customers Say"
+            default-tag="h2"
+            default-classes="font-heading text-4xl font-bold text-zinc-900 dark:text-white mb-12" />
 
-        @php $quoteClasses = content('__SLUG__', 'quote_classes', 'text-xl text-zinc-700 dark:text-zinc-300 italic leading-relaxed'); @endphp
-        @php $authorWrapperClasses = content('__SLUG__', 'author_wrapper_classes', 'mt-6'); @endphp
-        @php $authorNameClasses = content('__SLUG__', 'author_name_classes', 'font-semibold text-zinc-900 dark:text-white'); @endphp
-        @php $authorRoleClasses = content('__SLUG__', 'author_role_classes', 'text-sm text-zinc-500 dark:text-zinc-400'); @endphp
-        @php $dotsWrapperClasses = content('__SLUG__', 'dots_wrapper_classes', 'flex items-center justify-center gap-2 mt-8'); @endphp
-        @php $dotBaseClasses = content('__SLUG__', 'dot_base_classes', 'h-2 rounded-full transition-all duration-300'); @endphp
-        @php $slidesWrapperClasses = content('__SLUG__', 'slides_wrapper_classes', 'relative'); @endphp
-
-        <div class="{{ $slidesWrapperClasses }}">
-            @foreach ([['quote' => 'This is honestly the best tool I\'ve used in years. It transformed how we work.', 'name' => 'Alex Thompson', 'role' => 'Founder at StartupXYZ'], ['quote' => 'The onboarding was seamless and the results were immediate. I highly recommend it.', 'name' => 'Jamie Rivera', 'role' => 'VP of Engineering'], ['quote' => 'Customer support is incredible. They went above and beyond to help our team.', 'name' => 'Morgan Lee', 'role' => 'Director of Operations']] as $i => $t)
+        <x-dl.wrapper slug="__SLUG__" prefix="slides_wrapper"
+            default-classes="relative">
+            @foreach ($testimonials as $i => $t)
                 <div x-show="current === {{ $i }}" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-x-4" x-transition:enter-end="opacity-100 translate-x-0">
-                    <p class="{{ $quoteClasses }}">"{{ $t['quote'] }}"</p>
-                    <div class="{{ $authorWrapperClasses }}">
-                        <div class="{{ $authorNameClasses }}">{{ $t['name'] }}</div>
-                        <div class="{{ $authorRoleClasses }}">{{ $t['role'] }}</div>
-                    </div>
+                    <x-dl.wrapper slug="__SLUG__" prefix="quote" tag="p"
+                        default-classes="text-xl text-zinc-700 dark:text-zinc-300 italic leading-relaxed">
+                        "{{ $t['quote'] }}"
+                    </x-dl.wrapper>
+                    <x-dl.wrapper slug="__SLUG__" prefix="author_wrapper"
+                        default-classes="mt-6">
+                        <x-dl.wrapper slug="__SLUG__" prefix="author_name"
+                            default-classes="font-semibold text-zinc-900 dark:text-white">
+                            {{ $t['name'] }}
+                        </x-dl.wrapper>
+                        <x-dl.wrapper slug="__SLUG__" prefix="author_role"
+                            default-classes="text-sm text-zinc-500 dark:text-zinc-400">
+                            {{ $t['role'] }}
+                        </x-dl.wrapper>
+                    </x-dl.wrapper>
                 </div>
             @endforeach
-        </div>
+        </x-dl.wrapper>
 
-        <div class="{{ $dotsWrapperClasses }}">
-            @for ($i = 0; $i < 3; $i++)
-                <button
+        <x-dl.wrapper slug="__SLUG__" prefix="dots_wrapper"
+            default-classes="flex items-center justify-center gap-2 mt-8">
+            @foreach ($testimonials as $i => $t)
+                <x-dl.wrapper slug="__SLUG__" prefix="dot_base" tag="button"
+                    default-classes="h-2 rounded-full transition-all duration-300"
                     @click="current = {{ $i }}"
-                    :class="current === {{ $i }} ? 'bg-primary w-6' : 'bg-zinc-300 dark:bg-zinc-600 w-2'"
-                    class="{{ $dotBaseClasses }}"
-                ></button>
-            @endfor
-        </div>
-    </div>
-</section>
+                    :class="current === {{ $i }} ? 'bg-primary w-6' : 'bg-zinc-300 dark:bg-zinc-600 w-2'">
+                </x-dl.wrapper>
+            @endforeach
+        </x-dl.wrapper>
+</x-dl.section>

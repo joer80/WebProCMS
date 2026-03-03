@@ -34,7 +34,9 @@
       "Bash(for icon in rocket-launch shield-check lock-closed key chart-bar chart-pie arrow-trending-up chat-bubble-left-right envelope bell cog-6-tooth adjustments-horizontal wrench-screwdriver globe-alt server cloud light-bulb sparkles star puzzle-piece link user-group device-phone-mobile)",
       "Bash(do)",
       "Bash(echo \"=== $icon ===\")",
-      "Bash(done)"
+      "Bash(done)",
+      "Bash(curl -s -k https://webprocms.test/test)",
+      "Bash(curl -s http://webprocms.test/test)"
     ]
   },
   "defaultMode": "acceptEdits"

@@ -5,6 +5,7 @@ namespace App\Providers;
 use App\Support\ContentCache;
 use App\Support\SchemaCache;
 use Carbon\CarbonImmutable;
+use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\ServiceProvider;
@@ -27,6 +28,24 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->configureDefaults();
+        $this->registerBladeDirectives();
+    }
+
+    /**
+     * Register custom Blade directives for the design library.
+     */
+    protected function registerBladeDirectives(): void
+    {
+        Blade::directive('dlItems', function (string $expression): string {
+            $parts = array_map('trim', explode(',', $expression, 4));
+            $slug = $parts[0];
+            $prefixClean = trim($parts[1] ?? "''", " '\"");
+            $var = trim($parts[2] ?? '$items');
+            $default = $parts[3] ?? "''";
+            $gridKey = "'grid_{$prefixClean}'";
+
+            return "<?php {$var} = json_decode(content({$slug}, {$gridKey}, {$default}), true) ?: []; ?>";
+        });
     }
 
     /**

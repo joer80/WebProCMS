@@ -3,52 +3,63 @@
 @description Multi-column footer with logo, link groups, and newsletter signup.
 @sort 20
 --}}
-@php $sectionClasses = content('__SLUG__', 'section_classes', 'bg-zinc-900 pt-16 pb-8 px-6'); @endphp
-<footer class="{{ $sectionClasses }}">
-    @php $sectionContainerClasses = content('__SLUG__', 'section_container_classes', 'max-w-6xl mx-auto'); @endphp
-    <div class="{{ $sectionContainerClasses }}">
-        @php $columnsGridClasses = content('__SLUG__', 'columns_grid_classes', 'grid grid-cols-2 md:grid-cols-4 gap-10 mb-12'); @endphp
-        @php $brandClasses = content('__SLUG__', 'brand_classes', 'text-xl font-bold text-white'); @endphp
-        @php $descriptionClasses = content('__SLUG__', 'description_classes', 'mt-3 text-sm text-zinc-400 leading-relaxed'); @endphp
-        @php $columnHeadingClasses = content('__SLUG__', 'column_heading_classes', 'text-sm font-semibold text-white uppercase tracking-wider mb-4'); @endphp
-        @php $columnListClasses = content('__SLUG__', 'column_list_classes', 'space-y-2 text-sm text-zinc-400'); @endphp
-        @php $columnLinkClasses = content('__SLUG__', 'column_link_classes', 'hover:text-white transition-colors'); @endphp
-        @php $bottomBarClasses = content('__SLUG__', 'bottom_bar_classes', 'border-t border-zinc-800 pt-8 flex flex-col sm:flex-row items-center justify-between gap-2 text-sm text-zinc-500'); @endphp
-        @php $brandColClasses = content('__SLUG__', 'brand_col_classes', 'col-span-2 md:col-span-1'); @endphp
-        <div class="{{ $columnsGridClasses }}">
-            <div class="{{ $brandColClasses }}">
-                <a href="/" class="{{ $brandClasses }}">{{ content('__SLUG__', 'brand_name', 'Brand') }}</a>
-                <p class="{{ $descriptionClasses }}">
-                    {{ content('__SLUG__', 'description', 'A short description of your company and what makes you unique.') }}
-                </p>
+<x-dl.section slug="__SLUG__"
+    tag="footer"
+    default-section-classes="bg-zinc-900 pt-16 pb-8 px-6"
+    default-container-classes="max-w-6xl mx-auto">
+        <x-dl.wrapper slug="__SLUG__" prefix="columns_grid"
+            default-classes="grid grid-cols-2 md:grid-cols-4 gap-10 mb-12">
+            <x-dl.wrapper slug="__SLUG__" prefix="brand_col"
+                default-classes="col-span-2 md:col-span-1">
+                <x-dl.wrapper slug="__SLUG__" prefix="brand" tag="a"
+                    href="/"
+                    default-classes="text-xl font-bold text-white">
+                    <x-dl.subheadline slug="__SLUG__" prefix="brand_name" tag="span" default="Brand"
+                        default-classes="" />
+                </x-dl.wrapper>
+                <x-dl.subheadline slug="__SLUG__" prefix="description" tag="p" default="A short description of your company and what makes you unique."
+                    default-classes="mt-3 text-sm text-zinc-400 leading-relaxed" />
+            </x-dl.wrapper>
+            <div>
+                <x-dl.wrapper slug="__SLUG__" prefix="column_heading" tag="h4"
+                    default-classes="text-sm font-semibold text-white uppercase tracking-wider mb-4">
+                    Company
+                </x-dl.wrapper>
+                <x-dl.wrapper slug="__SLUG__" prefix="column_list" tag="ul"
+                    default-classes="space-y-2 text-sm text-zinc-400">
+                    <li><x-dl.wrapper slug="__SLUG__" prefix="column_link" tag="a" href="#" default-classes="hover:text-white transition-colors">About</x-dl.wrapper></li>
+                    <li><x-dl.wrapper slug="__SLUG__" prefix="column_link" tag="a" href="#" default-classes="hover:text-white transition-colors">Blog</x-dl.wrapper></li>
+                    <li><x-dl.wrapper slug="__SLUG__" prefix="column_link" tag="a" href="#" default-classes="hover:text-white transition-colors">Careers</x-dl.wrapper></li>
+                </x-dl.wrapper>
             </div>
             <div>
-                <h4 class="{{ $columnHeadingClasses }}">Company</h4>
-                <ul class="{{ $columnListClasses }}">
-                    <li><a href="#" class="{{ $columnLinkClasses }}">About</a></li>
-                    <li><a href="#" class="{{ $columnLinkClasses }}">Blog</a></li>
-                    <li><a href="#" class="{{ $columnLinkClasses }}">Careers</a></li>
-                </ul>
+                <x-dl.wrapper slug="__SLUG__" prefix="column_heading" tag="h4"
+                    default-classes="text-sm font-semibold text-white uppercase tracking-wider mb-4">
+                    Product
+                </x-dl.wrapper>
+                <x-dl.wrapper slug="__SLUG__" prefix="column_list" tag="ul"
+                    default-classes="space-y-2 text-sm text-zinc-400">
+                    <li><x-dl.wrapper slug="__SLUG__" prefix="column_link" tag="a" href="#" default-classes="hover:text-white transition-colors">Features</x-dl.wrapper></li>
+                    <li><x-dl.wrapper slug="__SLUG__" prefix="column_link" tag="a" href="#" default-classes="hover:text-white transition-colors">Pricing</x-dl.wrapper></li>
+                    <li><x-dl.wrapper slug="__SLUG__" prefix="column_link" tag="a" href="#" default-classes="hover:text-white transition-colors">Docs</x-dl.wrapper></li>
+                </x-dl.wrapper>
             </div>
             <div>
-                <h4 class="{{ $columnHeadingClasses }}">Product</h4>
-                <ul class="{{ $columnListClasses }}">
-                    <li><a href="#" class="{{ $columnLinkClasses }}">Features</a></li>
-                    <li><a href="#" class="{{ $columnLinkClasses }}">Pricing</a></li>
-                    <li><a href="#" class="{{ $columnLinkClasses }}">Docs</a></li>
-                </ul>
+                <x-dl.wrapper slug="__SLUG__" prefix="column_heading" tag="h4"
+                    default-classes="text-sm font-semibold text-white uppercase tracking-wider mb-4">
+                    Legal
+                </x-dl.wrapper>
+                <x-dl.wrapper slug="__SLUG__" prefix="column_list" tag="ul"
+                    default-classes="space-y-2 text-sm text-zinc-400">
+                    <li><x-dl.wrapper slug="__SLUG__" prefix="column_link" tag="a" href="#" default-classes="hover:text-white transition-colors">Privacy</x-dl.wrapper></li>
+                    <li><x-dl.wrapper slug="__SLUG__" prefix="column_link" tag="a" href="#" default-classes="hover:text-white transition-colors">Terms</x-dl.wrapper></li>
+                </x-dl.wrapper>
             </div>
-            <div>
-                <h4 class="{{ $columnHeadingClasses }}">Legal</h4>
-                <ul class="{{ $columnListClasses }}">
-                    <li><a href="#" class="{{ $columnLinkClasses }}">Privacy</a></li>
-                    <li><a href="#" class="{{ $columnLinkClasses }}">Terms</a></li>
-                </ul>
-            </div>
-        </div>
-        <div class="{{ $bottomBarClasses }}">
-            <span>&copy; {{ date('Y') }} {{ content('__SLUG__', 'brand_name', 'Brand') }}, Inc. All rights reserved.</span>
+        </x-dl.wrapper>
+        <x-dl.wrapper slug="__SLUG__" prefix="bottom_bar"
+            default-classes="border-t border-zinc-800 pt-8 flex flex-col sm:flex-row items-center justify-between gap-2 text-sm text-zinc-500">
+            <span>&copy; {{ date('Y') }} <x-dl.subheadline slug="__SLUG__" prefix="brand_name" tag="span" default="Brand"
+                default-classes="" />, Inc. All rights reserved.</span>
             <span>Powered by <a href="https://www.webprocms.com" class="hover:text-white transition-colors">WebProCMS</a></span>
-        </div>
-    </div>
-</footer>
+        </x-dl.wrapper>
+</x-dl.section>

@@ -3,37 +3,39 @@
 @description Blog post header with category, title, author, date, and featured image.
 @sort 10
 --}}
-@php $sectionClasses = content('__SLUG__', 'section_classes', 'pt-20 pb-12 px-6 bg-white dark:bg-zinc-900'); @endphp
-<article class="{{ $sectionClasses }}">
-    @php $sectionContainerClasses = content('__SLUG__', 'section_container_classes', 'max-w-3xl mx-auto'); @endphp
-    <div class="{{ $sectionContainerClasses }}">
-        @php $categoryLinkClasses = content('__SLUG__', 'category_link_classes', 'text-sm font-semibold text-primary uppercase tracking-wider hover:text-primary/80'); @endphp
-        @php $titleClasses = content('__SLUG__', 'title_classes', 'mt-3 text-4xl md:text-5xl font-bold text-zinc-900 dark:text-white leading-tight'); @endphp
-        @php $metaClasses = content('__SLUG__', 'meta_classes', 'mt-6 flex items-center gap-4 text-sm text-zinc-500 dark:text-zinc-400'); @endphp
-        @php $imageWrapperClasses = content('__SLUG__', 'image_wrapper_classes', 'mt-8 rounded-2xl overflow-hidden aspect-video'); @endphp
-        @php $imageClasses = content('__SLUG__', 'image_classes', 'w-full h-full object-cover'); @endphp
-        @php $imagePlaceholderClasses = content('__SLUG__', 'image_placeholder_classes', 'mt-8 rounded-2xl bg-zinc-100 dark:bg-zinc-800 aspect-video flex items-center justify-center'); @endphp
+<x-dl.section slug="__SLUG__"
+    tag="article"
+    default-section-classes="pt-20 pb-12 px-6 bg-white dark:bg-zinc-900"
+    default-container-classes="max-w-3xl mx-auto">
         @if ($post->category ?? null)
-            <a href="/blog" class="{{ $categoryLinkClasses }}">
+            <x-dl.wrapper slug="__SLUG__" prefix="category_link" tag="a"
+                href="/blog"
+                default-classes="text-sm font-semibold text-primary uppercase tracking-wider hover:text-primary/80">
                 {{ $post->category->name }}
-            </a>
+            </x-dl.wrapper>
         @endif
-        <h1 class="{{ $titleClasses }}">
+        <x-dl.wrapper slug="__SLUG__" prefix="title" tag="h1"
+            default-classes="mt-3 text-4xl md:text-5xl font-bold text-zinc-900 dark:text-white leading-tight">
             {{ $post->title ?? 'Post Title' }}
-        </h1>
-        <div class="{{ $metaClasses }}">
+        </x-dl.wrapper>
+        <x-dl.wrapper slug="__SLUG__" prefix="meta"
+            default-classes="mt-6 flex items-center gap-4 text-sm text-zinc-500 dark:text-zinc-400">
             <span>{{ ($post->published_at ?? now())->format('F j, Y') }}</span>
             <span>·</span>
             <span>5 min read</span>
-        </div>
+        </x-dl.wrapper>
         @if ($post->featured_image ?? null)
-            <div class="{{ $imageWrapperClasses }}">
-                <img src="{{ Storage::url($post->featured_image) }}" alt="{{ $post->featured_image_alt ?? '' }}" class="{{ $imageClasses }}" />
-            </div>
+            <x-dl.wrapper slug="__SLUG__" prefix="image_wrapper"
+                default-classes="mt-8 rounded-2xl overflow-hidden aspect-video">
+                <x-dl.wrapper slug="__SLUG__" prefix="image" tag="img"
+                    src="{{ Storage::url($post->featured_image) }}"
+                    alt="{{ $post->featured_image_alt ?? '' }}"
+                    default-classes="w-full h-full object-cover" />
+            </x-dl.wrapper>
         @else
-            <div class="{{ $imagePlaceholderClasses }}">
+            <x-dl.wrapper slug="__SLUG__" prefix="image_placeholder"
+                default-classes="mt-8 rounded-2xl bg-zinc-100 dark:bg-zinc-800 aspect-video flex items-center justify-center">
                 <span class="text-zinc-400 dark:text-zinc-500 text-sm">Featured Image</span>
-            </div>
+            </x-dl.wrapper>
         @endif
-    </div>
-</article>
+</x-dl.section>
