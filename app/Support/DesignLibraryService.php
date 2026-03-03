@@ -142,6 +142,10 @@ class DesignLibraryService
             return ['text', substr($key, 0, -4)];
         }
 
+        if (str_ends_with($key, '_htag')) {
+            return ['text', substr($key, 0, -5)];
+        }
+
         return ['text', $key];
     }
 
