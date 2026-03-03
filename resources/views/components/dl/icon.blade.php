@@ -1,4 +1,5 @@
 @blaze
+@props(['slug', 'prefix' => 'icon', 'name' => 'bolt', 'defaultWrapperClasses' => '', 'defaultClasses' => 'size-8', 'defaultFeaturedClasses' => null, 'featured' => false])
 @php
 $wrapperCls = $defaultWrapperClasses !== '' ? content($slug, "{$prefix}_wrapper_classes", $defaultWrapperClasses) : null;
 $cls = content($slug, "{$prefix}_classes", $defaultClasses);

@@ -332,7 +332,7 @@ Every row file must have a frontmatter comment with `@name`, `@description`, and
 @description One-line description.
 @sort 10
 --}}
-<x-dl-section slug="__SLUG__"
+<x-dl.section slug="__SLUG__"
     default-section-classes="py-section px-6 bg-white dark:bg-zinc-900"
     default-container-classes="max-w-6xl mx-auto">
 ```
@@ -354,9 +354,9 @@ Type and group are derived entirely from the key name — no metadata columns ne
 | anything else | `text` | key itself |
 
 - `label` is auto-derived: `ucwords(str_replace('_', ' ', $key))`
-- Field order in the editor sidebar = document order of `<x-dl-*>` component tags and `@dlItems` directives (first occurrence wins)
+- Field order in the editor sidebar = document order of `<x-dl.*>` component tags and `@dlItems` directives (first occurrence wins)
 
-**Sidebar ordering rule:** Place `<x-dl-*>` component tags inline where they render in the HTML, in natural top-to-bottom order. `x-dl-*` components register their fields in the order declared in `schemaFields()` — toggle first, then text fields, then classes. `section_classes` and `section_container_classes` are registered first because `<x-dl-section>` is always the outermost element.
+**Sidebar ordering rule:** Place `<x-dl.*>` component tags inline where they render in the HTML, in natural top-to-bottom order. `x-dl.*` components register their fields in the order declared in `schemaFields()` — toggle first, then text fields, then classes. `section_classes` and `section_container_classes` are registered first because `<x-dl.section>` is always the outermost element.
 
 ### Content Types
 
@@ -371,14 +371,14 @@ Type and group are derived entirely from the key name — no metadata columns ne
 
 ### Section / Container Pattern (required on every row)
 
-Use `x-dl-section` to wrap every row. It renders the outer HTML element + inner container div, and registers `section_classes` and `section_container_classes` fields:
+Use `x-dl.section` to wrap every row. It renders the outer HTML element + inner container div, and registers `section_classes` and `section_container_classes` fields:
 
 ```blade
-<x-dl-section slug="__SLUG__"
+<x-dl.section slug="__SLUG__"
     default-section-classes="py-section px-6 bg-white dark:bg-zinc-900"
     default-container-classes="max-w-6xl mx-auto">
     {{-- ... row content ... --}}
-</x-dl-section>
+</x-dl.section>
 ```
 
 - Default tag is `section`. Pass `tag="footer"`, `tag="header"`, or `tag="article"` when the semantic element differs.
@@ -395,28 +395,28 @@ Full example assembling all standard patterns (copy and adapt):
 @description One-line description.
 @sort 10
 --}}
-<x-dl-section slug="__SLUG__"
+<x-dl.section slug="__SLUG__"
     default-section-classes="py-section px-6 bg-white dark:bg-zinc-900"
     default-container-classes="max-w-6xl mx-auto">
-    <x-dl-heading slug="__SLUG__" prefix="headline" default="Your Headline"
+    <x-dl.heading slug="__SLUG__" prefix="headline" default="Your Headline"
         default-tag="h2"
         default-classes="font-heading text-4xl font-bold text-zinc-900 dark:text-white" />
-    <x-dl-subheadline slug="__SLUG__" prefix="subheadline" default="Your supporting text."
+    <x-dl.subheadline slug="__SLUG__" prefix="subheadline" default="Your supporting text."
         default-classes="mt-4 text-lg text-zinc-500 dark:text-zinc-400" />
-    <x-dl-buttons slug="__SLUG__"
+    <x-dl.buttons slug="__SLUG__"
         default-wrapper-classes="mt-8 flex flex-wrap items-center justify-center gap-4"
         default-primary-label="Get Started"
         default-primary-classes="px-8 py-3 bg-primary text-white font-semibold rounded-lg hover:bg-primary/90 transition-colors"
         default-secondary-label="Learn More"
         default-secondary-classes="px-8 py-3 border border-zinc-300 dark:border-zinc-600 text-zinc-700 dark:text-zinc-200 font-semibold rounded-lg hover:bg-zinc-50 transition-colors" />
-</x-dl-section>
+</x-dl.section>
 ```
 
-### ALL classes must go through x-dl-* components
+### ALL classes must go through x-dl.* components
 
-**Never use hardcoded class strings directly on elements.** Every element's classes must be editable — wrap it in the appropriate `<x-dl-*>` component. This applies to cards, wrappers, icons, headings, paragraphs, grids, buttons, forms, layout divs — **every single element with a `class` attribute**, no exceptions.
+**Never use hardcoded class strings directly on elements.** Every element's classes must be editable — wrap it in the appropriate `<x-dl.*>` component. This applies to cards, wrappers, icons, headings, paragraphs, grids, buttons, forms, layout divs — **every single element with a `class` attribute**, no exceptions.
 
-**This is a hard rule. Before finishing any row, scan every line for `class="` and verify each one is inside an `<x-dl-*>` component. If you find a hardcoded `class="..."` that isn't an Alpine `:class` binding or a placeholder-only element (e.g. an image fallback inside `@else`), it must be fixed.**
+**This is a hard rule. Before finishing any row, scan every line for `class="` and verify each one is inside an `<x-dl.*>` component. If you find a hardcoded `class="..."` that isn't an Alpine `:class` binding or a placeholder-only element (e.g. an image fallback inside `@else`), it must be fixed.**
 
 The only acceptable hardcoded classes are:
 - Alpine `:class` dynamic bindings (e.g. `:class="open ? 'rotate-180' : ''"`) — these are runtime expressions, not design values
@@ -424,15 +424,15 @@ The only acceptable hardcoded classes are:
 
 ### Conditional (state-variant) classes
 
-When an element has two visual states driven by per-item data (e.g. a featured card vs. a default card), use `x-dl-wrapper` with `default-featured-classes` and `:featured`:
+When an element has two visual states driven by per-item data (e.g. a featured card vs. a default card), use `x-dl.card` with `default-featured-classes` and `:featured`:
 
 ```blade
 @php $isFeatured = !empty($plan['toggle_featured']); @endphp
-<x-dl-wrapper slug="__SLUG__" prefix="card" :featured="$isFeatured"
+<x-dl.card slug="__SLUG__" prefix="card" :featured="$isFeatured"
     default-classes="rounded-card p-8 bg-white border border-zinc-200"
     default-featured-classes="rounded-card p-8 bg-primary text-white ring-2 ring-primary">
     ...
-</x-dl-wrapper>
+</x-dl.card>
 ```
 
 Name pairs as `{element}_classes` (default) and `{element}_featured_classes` (highlighted state). Apply this to every element inside the loop that has different classes per state.
@@ -441,36 +441,36 @@ If the per-item data itself (names, prices, feature lists, etc.) is hardcoded in
 
 See `resources/design-library/rows/pricing/pricing-cards.blade.php` for the reference implementation.
 
-### Design Library Components (`x-dl-*`)
+### Design Library Components (`x-dl.*`)
 
 Four Blade components handle the repeating standard patterns. Each lives in `app/View/Components/Dl/` (PHP class) and `resources/views/components/dl/` (blade view starting with `@blaze`). Each class has a `public static function schemaFields(array $attrs): array` that the parser calls to register fields — so the component tag in the template IS the field declaration.
 
-**`x-dl-section`** — section/container wrapper (2 fields: `section_classes`, `section_container_classes`). Wrapping component — use it as the outermost element of every row:
+**`x-dl.section`** — section/container wrapper (2 fields: `section_classes`, `section_container_classes`). Wrapping component — use it as the outermost element of every row:
 ```blade
-<x-dl-section slug="__SLUG__"
+<x-dl.section slug="__SLUG__"
     default-section-classes="py-section px-6 bg-white dark:bg-zinc-900"
     default-container-classes="max-w-6xl mx-auto">
     {{-- slot content --}}
-</x-dl-section>
+</x-dl.section>
 ```
 Pass `tag="footer"` / `tag="header"` / `tag="article"` when the semantic element differs from `section`. Extra attributes (`x-data`, etc.) are forwarded to the rendered element.
 
-**`x-dl-heading`** — toggle + htag dropdown + text + classes (4 fields):
+**`x-dl.heading`** — toggle + htag dropdown + text + classes (4 fields):
 ```blade
-<x-dl-heading slug="__SLUG__" prefix="headline" default="Your Headline"
+<x-dl.heading slug="__SLUG__" prefix="headline" default="Your Headline"
     default-tag="h2"
     default-classes="font-heading text-4xl font-bold text-zinc-900 dark:text-white" />
 ```
 
-**`x-dl-subheadline`** — toggle + text + classes (3 fields):
+**`x-dl.subheadline`** — toggle + text + classes (3 fields):
 ```blade
-<x-dl-subheadline slug="__SLUG__" prefix="subheadline" default="Your subheadline."
+<x-dl.subheadline slug="__SLUG__" prefix="subheadline" default="Your subheadline."
     default-classes="mt-4 text-lg text-zinc-500 dark:text-zinc-400" />
 ```
 
-**`x-dl-buttons`** — wrapper div + primary button + secondary button (11 fields, renders the wrapper `<div>` itself):
+**`x-dl.buttons`** — wrapper div + primary button + secondary button (11 fields, renders the wrapper `<div>` itself):
 ```blade
-<x-dl-buttons slug="__SLUG__"
+<x-dl.buttons slug="__SLUG__"
     default-wrapper-classes="mt-8 flex flex-wrap items-center gap-4"
     default-primary-label="Get Started"
     default-primary-classes="px-6 py-3 bg-primary text-white font-semibold rounded-lg hover:bg-primary/90 transition-colors"
@@ -478,91 +478,143 @@ Pass `tag="footer"` / `tag="header"` / `tag="article"` when the semantic element
     default-secondary-classes="px-6 py-3 border border-zinc-300 dark:border-zinc-600 text-zinc-700 dark:text-zinc-200 font-semibold rounded-lg hover:bg-zinc-50 transition-colors" />
 ```
 
-**`x-dl-media`** — toggle + image upload + alt + wrapper/image classes (5 fields, always uses `image`, `toggle_image`, `image_alt`, `image_wrapper_classes`, `image_classes` keys):
+**`x-dl.media`** — toggle + image upload + alt + wrapper/image classes (5 fields, always uses `image`, `toggle_image`, `image_alt`, `image_wrapper_classes`, `image_classes` keys):
 ```blade
-<x-dl-media slug="__SLUG__"
+<x-dl.media slug="__SLUG__"
     default-wrapper-classes="rounded-card overflow-hidden aspect-video"
     default-image-classes="w-full h-full object-cover" />
 ```
 
-**`x-dl-link`** — toggle + label text + URL + new_tab toggle + classes (5 fields). Use for "View all →" style inline links alongside headings:
+**`x-dl.link`** — toggle + label text + URL + new_tab toggle + classes (5 fields). Use for "View all →" style inline links alongside headings:
 ```blade
-<x-dl-link slug="__SLUG__" prefix="view_all"
+<x-dl.link slug="__SLUG__" prefix="view_all"
     default-label="View all →"
     default-url="/blog"
     default-classes="text-primary font-semibold hover:text-primary/80 transition-colors text-sm" />
 ```
 Fields registered: `toggle_{prefix}`, `{prefix}` (label text), `{prefix}_url`, `{prefix}_new_tab`, `{prefix}_classes`.
 
-**`x-dl-wrapper`** — generic element wrapper (classes only, no toggle). Use for every `<div>`, `<span>`, `<a>`, `<h3>`, `<li>`, `<form>`, `<input>`, `<img>`, `<button>`, `<svg>` — any element whose classes need to be editable. Supports optional featured/default class switching. Forwards all non-prop attributes (href, type, wire:model, src, alt, etc.) to the rendered element. Void elements (input, img, br, etc.) self-close without a slot.
+**`x-dl.wrapper`** — generic element wrapper (classes only, no toggle). Use for **leaf-level elements** — those whose children are only text, self-closing components (`x-dl.icon`, `x-dl.heading`, etc.), or plain HTML with no non-self-closing wrapper children. Forwards all non-prop attributes (href, type, wire:model, src, alt, etc.) to the rendered element. Void elements (input, img, br, etc.) self-close without a slot.
 ```blade
-{{-- Simple div --}}
-<x-dl-wrapper slug="__SLUG__" prefix="card" default-classes="p-6 rounded-card border border-zinc-200">
-    <!-- slot -->
-</x-dl-wrapper>
-
-{{-- With featured state --}}
-<x-dl-wrapper slug="__SLUG__" prefix="card" :featured="$isFeatured"
-    default-classes="rounded-card p-8 bg-white border border-zinc-200"
-    default-featured-classes="rounded-card p-8 bg-primary text-white ring-2 ring-primary">
-    <!-- slot -->
-</x-dl-wrapper>
+{{-- Simple div (leaf) --}}
+<x-dl.wrapper slug="__SLUG__" prefix="text_block" default-classes="p-6 rounded-card border border-zinc-200">
+    <!-- text or self-closing children only -->
+</x-dl.wrapper>
 
 {{-- Void element (no slot) --}}
-<x-dl-wrapper slug="__SLUG__" prefix="input" tag="input"
+<x-dl.wrapper slug="__SLUG__" prefix="input" tag="input"
     type="email" name="email" wire:model="email"
     default-classes="block w-full rounded-lg border border-zinc-300 px-4 py-3" />
 
 {{-- Text element in loop --}}
-<x-dl-wrapper slug="__SLUG__" prefix="feature_title" tag="h3"
+<x-dl.wrapper slug="__SLUG__" prefix="feature_title" tag="h3"
     default-classes="text-lg font-semibold text-zinc-900 dark:text-white mb-2">
     {{ $feature['title'] }}
-</x-dl-wrapper>
+</x-dl.wrapper>
 ```
 Fields registered: `{prefix}_classes` (+ `{prefix}_featured_classes` if `default-featured-classes` attr is provided).
 
-**`x-dl-icon`** — heroicon with optional wrapper div. Handles `name:variant` parsing (e.g. `"bolt:solid"`). Supports featured class switching. Wrapper is only rendered when `default-wrapper-classes` is non-empty.
+**`x-dl.card`** — outermost loop item wrapper. Use as the **direct child of `@foreach`** inside a grid or gallery. Identical API to `x-dl.wrapper` but uses a different Blaze-compiled hash, preventing variable collision when loop items contain nested wrappers.
+```blade
+{{-- Outermost loop item --}}
+<x-dl.card slug="__SLUG__" prefix="feature_card"
+    default-classes="p-6 rounded-card border border-zinc-200 dark:border-zinc-700">
+    <x-dl.wrapper slug="__SLUG__" prefix="feature_title" tag="h3" ...>{{ $feature['title'] }}</x-dl.wrapper>
+    <x-dl.wrapper slug="__SLUG__" prefix="feature_desc" tag="p" ...>{{ $feature['desc'] }}</x-dl.wrapper>
+</x-dl.card>
+
+{{-- With featured state --}}
+<x-dl.card slug="__SLUG__" prefix="card" :featured="$isFeatured"
+    default-classes="rounded-card p-8 bg-white border border-zinc-200"
+    default-featured-classes="rounded-card p-8 bg-primary text-white ring-2 ring-primary">
+    ...
+</x-dl.card>
+```
+Fields registered: same as `x-dl.wrapper`.
+
+**`x-dl.group`** — intermediate wrapper that **itself contains other non-self-closing wrappers** as children (e.g. a price row containing a period span, a features list containing item wrappers). Use when you need a container that is neither the outermost loop item (`x-dl.card`) nor a leaf element (`x-dl.wrapper`).
+```blade
+{{-- Intermediate container holding other non-self-closing wrappers --}}
+<x-dl.group slug="__SLUG__" prefix="author_row"
+    default-classes="mt-4 flex items-center gap-3">
+    <x-dl.wrapper slug="__SLUG__" prefix="author_name" tag="span" ...>{{ $item['name'] }}</x-dl.wrapper>
+    <x-dl.wrapper slug="__SLUG__" prefix="author_role" tag="span" ...>{{ $item['role'] }}</x-dl.wrapper>
+</x-dl.group>
+```
+Fields registered: same as `x-dl.wrapper`.
+
+**Nesting rule — which wrapper to use:**
+
+| Scenario | Use |
+|----------|-----|
+| Outermost element of a `@foreach` loop item | `x-dl.card` |
+| Container inside a loop item that itself wraps other non-self-closing components | `x-dl.group` |
+| Leaf element (children are text, self-closing tags, or plain HTML only) | `x-dl.wrapper` |
+| Outside of any loop | `x-dl.wrapper` |
+
+**Why this matters:** Blaze compiles non-self-closing `<x-dl.*>` tags using a `$__attrs{hash}` variable where the hash is derived from the component's file path. If two nested non-self-closing tags share the same component (same file path = same hash), the inner assignment overwrites the outer one, causing the outer element to render with the wrong tag/classes. `x-dl.card`, `x-dl.group`, and `x-dl.wrapper` each have unique file paths and therefore unique hashes — they can be safely nested.
+
+**`x-dl.icon`** — heroicon with optional wrapper div. Handles `name:variant` parsing (e.g. `"bolt:solid"`). Supports featured class switching. Wrapper is only rendered when `default-wrapper-classes` is non-empty.
 ```blade
 {{-- With wrapper (features grid) --}}
-<x-dl-icon slug="__SLUG__" prefix="icon" name="{{ $feature['icon'] }}"
+<x-dl.icon slug="__SLUG__" prefix="icon" name="{{ $feature['icon'] }}"
     default-wrapper-classes="mb-4 text-primary"
     default-classes="size-8" />
 
 {{-- Without wrapper, with featured state (pricing checkmark) --}}
-<x-dl-icon slug="__SLUG__" prefix="card_feature_icon" name="check"
+<x-dl.icon slug="__SLUG__" prefix="card_feature_icon" name="check"
     :featured="$isFeatured"
     default-classes="size-4 shrink-0 text-primary"
     default-featured-classes="size-4 shrink-0 text-white" />
 ```
 Fields registered: `{prefix}_wrapper_classes` (only if wrapper provided), `{prefix}_classes`, `{prefix}_featured_classes` (if `default-featured-classes` attr present).
 
-**`x-dl-grid`** — toggle + JSON repeater + grid wrapper classes (3 fields: `toggle_{prefix}`, `grid_{prefix}`, `{prefix}_grid_classes`). Wrapping component — slot contains the per-item loop using `@dlItems`:
+**`x-dl.grid`** — toggle + JSON repeater + grid wrapper classes (3 fields: `toggle_{prefix}`, `grid_{prefix}`, `{prefix}_grid_classes`). Wrapping component — slot contains the per-item loop using `@dlItems`. Use `x-dl.card` as the outermost loop item (see nesting rule below):
 ```blade
-<x-dl-grid slug="__SLUG__" prefix="features"
+<x-dl.grid slug="__SLUG__" prefix="features"
     default-grid-classes="grid md:grid-cols-3 gap-8"
     default-items='[{"icon":"bolt","title":"Fast","desc":"Speed."}]'>
-    @dlItems('__SLUG__', 'features', $features)
+    @dlItems('__SLUG__', 'features', $features, '[{"icon":"bolt","title":"Fast","desc":"Speed."}]')
     @foreach ($features as $feature)
-        <x-dl-wrapper slug="__SLUG__" prefix="feature_card" default-classes="p-6 rounded-card border border-zinc-200">
+        <x-dl.card slug="__SLUG__" prefix="feature_card" default-classes="p-6 rounded-card border border-zinc-200">
             ...
-        </x-dl-wrapper>
+        </x-dl.card>
     @endforeach
-</x-dl-grid>
+</x-dl.grid>
 ```
-Note: `default-items` uses **single quotes** in the template because its value is JSON (which contains double quotes). The attr parser supports both quote styles.
+Note: `default-items` uses **single quotes** in the template because its value is JSON (which contains double quotes). The attr parser supports both quote styles. **Always pass the same JSON as the 4th arg to `@dlItems`** — without it, fresh rows with no saved content render empty (the default only populates the schema, not the runtime output).
 
-**`@dlItems` directive** — fetches and decodes grid item data. Use inside `<x-dl-grid>` slots (field registered by the component tag), or standalone with a 4th default JSON argument when used without `x-dl-grid` (e.g. Alpine sliders — the parser scans standalone `@dlItems` to register the field):
+**`x-dl.gallery`** — same 3 fields as `x-dl.grid` (`toggle_{prefix}`, `grid_{prefix}`, `{prefix}_grid_classes`) but semantically for image galleries. The editor shows an **"Add images from library"** bulk-select button on any grid field whose items contain an `image` key. Individual image sub-fields within items render a thumbnail + "Pick from library…" button instead of a text input. Use with `@dlItems` the same way as `x-dl.grid`:
 ```blade
-{{-- Inside x-dl-grid (field registered by the component) --}}
-@dlItems('__SLUG__', 'features', $features)
+<x-dl.gallery slug="__SLUG__" prefix="images"
+    default-grid-classes="grid grid-cols-2 md:grid-cols-3 gap-4"
+    default-items='[{"image":"","alt":"Photo 1","caption":""}]'>
+    @dlItems('__SLUG__', 'images', $galleryImages, '[{"image":"","alt":"Photo 1","caption":""}]')
+    @foreach ($galleryImages as $img)
+        <x-dl.card slug="__SLUG__" prefix="gallery_item" default-classes="...">
+            @if ($img['image'])
+                <img src="{{ Storage::url($img['image']) }}" alt="{{ $img['alt'] }}" class="w-full h-full object-cover">
+            @else
+                <div class="...">{{ $img['alt'] ?: 'Placeholder' }}</div>
+            @endif
+        </x-dl.card>
+    @endforeach
+</x-dl.gallery>
+```
+The `@else` fallback div may use hardcoded classes — it's a developer placeholder shown only when no image is set (acceptable exception per CLAUDE.md rules). Include the same default JSON as the 4th arg to `@dlItems` so the design library preview renders placeholder items.
 
-{{-- Standalone with default (parser registers grid_testimonials) --}}
+**`@dlItems` directive** — fetches and decodes grid item data. **Always include the 4th default JSON argument** — without it, fresh rows render empty because `content()` returns `''` when nothing is saved yet. The 4th arg must match the `default-items` value on the wrapping component:
+```blade
+{{-- Inside x-dl.grid / x-dl.gallery — always include the default JSON --}}
+@dlItems('__SLUG__', 'features', $features, '[{"icon":"bolt","title":"Fast","desc":"Speed."}]')
+
+{{-- Standalone (parser registers grid_testimonials via this directive; field not registered by a component) --}}
 @dlItems('__SLUG__', 'testimonials', $testimonials, '[{"quote":"...","name":"...","role":"..."}]')
 ```
 
-**One pattern only:** Row templates use exclusively `<x-dl-*>` component tags and `@dlItems`. There are no raw `content()` calls in row files.
+**One pattern only:** Row templates use exclusively `<x-dl.*>` component tags and `@dlItems`. There are no raw `content()` calls in row files.
 
-**Adding a new `x-dl-*` component:** Create `app/View/Components/Dl/Name.php` with a `schemaFields(array $attrs): array` static method and a `render()` method. Create `resources/views/components/dl/name.blade.php` starting with `@blaze`. The parser auto-discovers it by class name via `Str::studly($componentSlug)`. The PHP class file is already scanned by `public.css` and `editor.css` via `@source '../../app/View/Components/Dl/*.php'` — no CSS config change needed when adding new components to this directory.
+**Adding a new `x-dl.*` component:** Create `app/View/Components/Dl/Name.php` with a `schemaFields(array $attrs): array` static method and a `render()` method. Create `resources/views/components/dl/name.blade.php` starting with `@blaze`. The parser auto-discovers it by class name via `Str::studly($componentSlug)`. The PHP class file is already scanned by `public.css` and `editor.css` via `@source '../../app/View/Components/Dl/*.php'` — no CSS config change needed when adding new components to this directory.
 
 The editor auto-promotes a `toggle_X` field to the group header switch when every other field in the group has a key containing `X` or ending with `_new_tab`.
 
@@ -571,39 +623,39 @@ The editor auto-promotes a `toggle_X` field to the group header switch when ever
 - Use the `grid_` prefix for the grid field key: `grid_features`, `grid_items`, etc.
 - The `default-items` value is a single-line JSON array (use single quotes around the attr because JSON uses double quotes)
 - Item keys are inferred from the keys of the first item; new items use those same keys
-- Always use `@dlItems` inside the slot to fetch the decoded array
+- Always use `@dlItems` inside the slot to fetch the decoded array, **with the same JSON as the 4th argument** (without it fresh rows render empty)
 
 ```blade
-<x-dl-grid slug="__SLUG__" prefix="features"
+<x-dl.grid slug="__SLUG__" prefix="features"
     default-grid-classes="grid md:grid-cols-3 gap-8"
     default-items='[{"icon":"bolt","title":"Fast","desc":"Speed."}]'>
-    @dlItems('__SLUG__', 'features', $features)
+    @dlItems('__SLUG__', 'features', $features, '[{"icon":"bolt","title":"Fast","desc":"Speed."}]')
     @foreach ($features as $feature)
-        <x-dl-wrapper slug="__SLUG__" prefix="feature_card"
+        <x-dl.card slug="__SLUG__" prefix="feature_card"
             default-classes="p-6 rounded-card border border-zinc-200 dark:border-zinc-700">
-            {{-- ... render $feature fields using x-dl-wrapper, x-dl-icon, etc. ... --}}
-        </x-dl-wrapper>
+            {{-- ... render $feature fields using x-dl.wrapper, x-dl.icon, etc. ... --}}
+        </x-dl.card>
     @endforeach
-</x-dl-grid>
+</x-dl.grid>
 ```
 
 ### Heroicons in grid rows
 
-Icons stored as `"bolt"` (outline) or `"bolt:solid"` (solid). Use `x-dl-icon` — it handles the `name:variant` parsing internally:
+Icons stored as `"bolt"` (outline) or `"bolt:solid"` (solid). Use `x-dl.icon` — it handles the `name:variant` parsing internally:
 
 ```blade
-<x-dl-icon slug="__SLUG__" prefix="icon" name="{{ $feature['icon'] }}"
+<x-dl.icon slug="__SLUG__" prefix="icon" name="{{ $feature['icon'] }}"
     default-wrapper-classes="mb-4 text-primary"
     default-classes="size-8" />
 ```
 
-`<x-heroicon>` is **public side only** — it is NOT available via `<flux:icon>` on the public layout (Flux only works on the dashboard side). `x-dl-icon` uses `<x-heroicon>` internally.
+`<x-heroicon>` is **public side only** — it is NOT available via `<flux:icon>` on the public layout (Flux only works on the dashboard side). `x-dl.icon` uses `<x-heroicon>` internally.
 
 ### Adding a new row to the design library
 
 1. Create a new `.blade.php` file in the appropriate category folder
 2. Add the metadata comment with `@name`, `@description`, and `@sort`
-3. Use only `<x-dl-*>` component tags and `@dlItems` — the parser only scans these, not raw PHP
+3. Use only `<x-dl.*>` component tags and `@dlItems` — the parser only scans these, not raw PHP
 4. Run `php artisan design-library:index` to register it in the database
 
 No manual DB insert is required — the index command handles it.
@@ -618,9 +670,11 @@ No manual DB insert is required — the index command handles it.
 
 `refresh: true` watches `config/**` by default. Runtime writes to config files trigger full page reload, wiping Alpine state. Fix: add to `watch.ignored` in `vite.config.js`. Already ignored: `config/navigation.php`, `routes/web.php`, `resources/views/pages/⚡*.blade.php`.
 
-### flux:button `:class` vs `x-bind:class`
+### `:class` vs `x-bind:class` on Blade components
 
-Flux components process `:class` as a PHP prop (evaluated server-side). Use `x-bind:class` to pass Alpine expressions through to the DOM.
+Any Blade component (including `x-dl.*` and Flux) PHP-evaluates `:class="expr"` when `expr` contains **no `{{ }}`**. If `expr` has Alpine vars (no `$` prefix), PHP treats them as undefined constants → error. Always use `x-bind:class="expr"` to pass pure Alpine expressions through to the DOM.
+
+Exception: `:class="something === {{ $phpVar }} ? ..."` works because the `{{ }}` echo tag makes Blade treat the value as a string with PHP interpolation, not full PHP evaluation — the resulting string is passed as-is to the DOM for Alpine to evaluate.
 
 ### Sidebar Nav (flux:sidebar)
 

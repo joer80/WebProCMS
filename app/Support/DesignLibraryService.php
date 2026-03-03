@@ -114,9 +114,9 @@ class DesignLibraryService
             ];
         }
 
-        // 2. Collect <x-dl-*> component tag matches with their document offsets.
+        // 2. Collect <x-dl.*> component tag matches with their document offsets.
         preg_match_all(
-            '/<x-dl-([\w-]+)(.*?)\s*\/?>/s',
+            '/<x-dl\.([\w-]+)(.*?)\s*\/?>/s',
             $bladeCode,
             $tagMatches,
             PREG_SET_ORDER | PREG_OFFSET_CAPTURE
@@ -153,9 +153,9 @@ class DesignLibraryService
                 $newFields[] = [
                     'key' => $field['key'],
                     'type' => $type,
-                    'group' => $group,
+                    'group' => $field['group'] ?? $group,
                     'default' => $field['default'],
-                    'label' => ucwords(str_replace('_', ' ', $field['key'])),
+                    'label' => $field['label'] ?? ucwords(str_replace('_', ' ', $field['key'])),
                 ];
             }
 

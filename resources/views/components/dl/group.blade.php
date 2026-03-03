@@ -1,5 +1,5 @@
 @blaze
-@props(['slug', 'prefix' => 'wrapper', 'tag' => 'div', 'defaultClasses' => '', 'defaultFeaturedClasses' => null, 'featured' => false])
+@props(['slug', 'prefix' => 'group', 'tag' => 'div', 'defaultClasses' => '', 'defaultFeaturedClasses' => null, 'featured' => false])
 @php
 $isVoid = in_array(strtolower($tag), ['area', 'base', 'br', 'col', 'embed', 'hr', 'img', 'input', 'link', 'meta', 'param', 'source', 'track', 'wbr']);
 $cls = content($slug, "{$prefix}_classes", $defaultClasses);

@@ -98,6 +98,16 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
 
     public string $mediaPickerKey = '';
 
+    public string $pendingGridItemFieldKey = '';
+
+    public int $pendingGridItemIndex = 0;
+
+    public string $pendingGridItemSubKey = '';
+
+    public bool $showGalleryPicker = false;
+
+    public string $pendingGalleryFieldKey = '';
+
     /** @var array<string, array<string, string>> */
     public array $rowDesignValues = [];
 
@@ -614,9 +624,72 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
         $this->showMediaPicker = true;
     }
 
+    public function openGridItemMediaPicker(string $fieldKey, int $idx, string $subKey): void
+    {
+        $this->pendingGridItemFieldKey = $fieldKey;
+        $this->pendingGridItemIndex = $idx;
+        $this->pendingGridItemSubKey = $subKey;
+        $this->mediaPickerKey = 'grid-item';
+        $this->showMediaPicker = true;
+    }
+
+    public function openGalleryPicker(string $fieldKey): void
+    {
+        $this->pendingGalleryFieldKey = $fieldKey;
+        $this->showGalleryPicker = true;
+    }
+
+    #[On('media-images-picked')]
+    public function handleMediaImagesPicked(string $key, array $images): void
+    {
+        $this->showGalleryPicker = false;
+        $current = json_decode($this->contentValues[$key] ?? '[]', true) ?: [];
+
+        foreach ($images as $img) {
+            $current[] = ['image' => $img['path'], 'alt' => $img['alt'], 'caption' => ''];
+        }
+
+        $this->contentValues[$key] = json_encode($current);
+
+        $field = collect($this->contentFields)->firstWhere('key', $key);
+        if ($field) {
+            session()->put('editor_draft_overrides.'.$field['slug'].':'.$key, ['type' => 'grid', 'value' => $this->contentValues[$key]]);
+        }
+
+        $this->dispatch('content-grid-reset', key: $key, value: $this->contentValues[$key]);
+        $this->refreshPreview();
+    }
+
     #[On('media-image-picked')]
     public function handleMediaImagePicked(string $key, string $path, string $alt = ''): void
     {
+        if ($key === 'grid-item' && $this->pendingGridItemFieldKey) {
+            $fieldKey = $this->pendingGridItemFieldKey;
+            $items = json_decode($this->contentValues[$fieldKey] ?? '[]', true) ?: [];
+
+            if (isset($items[$this->pendingGridItemIndex])) {
+                $items[$this->pendingGridItemIndex][$this->pendingGridItemSubKey] = $path;
+
+                if ($this->pendingGridItemSubKey === 'image' && empty($items[$this->pendingGridItemIndex]['alt'] ?? '')) {
+                    $items[$this->pendingGridItemIndex]['alt'] = $alt;
+                }
+            }
+
+            $this->contentValues[$fieldKey] = json_encode($items);
+
+            $field = collect($this->contentFields)->firstWhere('key', $fieldKey);
+            if ($field) {
+                session()->put('editor_draft_overrides.'.$field['slug'].':'.$fieldKey, ['type' => 'grid', 'value' => $this->contentValues[$fieldKey]]);
+            }
+
+            $this->pendingGridItemFieldKey = '';
+            $this->showMediaPicker = false;
+            $this->dispatch('content-grid-reset', key: $fieldKey, value: $this->contentValues[$fieldKey]);
+            $this->refreshPreview();
+
+            return;
+        }
+
         $this->contentValues[$key] = $path;
         $this->showMediaPicker = false;
 
@@ -699,6 +772,20 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
             $this->dispatch('content-grid-reset', key: $key, value: $gridJson);
         }
 
+        $this->refreshPreview();
+    }
+
+    public function clearGridItems(string $key): void
+    {
+        $field = collect($this->contentFields)->firstWhere('key', $key);
+
+        if (! $field) {
+            return;
+        }
+
+        $this->contentValues[$key] = '[]';
+        session()->put('editor_draft_overrides.'.$field['slug'].':'.$key, ['type' => 'grid', 'value' => '[]']);
+        $this->dispatch('content-grid-reset', key: $key, value: '[]');
         $this->refreshPreview();
     }
 
@@ -1308,7 +1395,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                                                 if ($groupShowField) {
                                                     $showPrefix = str_replace('toggle_', '', $groupShowField['key']);
                                                     $otherFields = $groupFields->reject(fn ($f) => $f['key'] === $groupShowField['key']);
-                                                    $isGroupToggle = $otherFields->every(fn ($f) => str_ends_with($f['key'], '_new_tab') || str_contains($f['key'], $showPrefix));
+                                                    $isGroupToggle = $otherFields->every(fn ($f) => $f['type'] === 'toggle' || str_ends_with($f['key'], '_new_tab') || str_contains($f['key'], $showPrefix));
                                                     if ($isGroupToggle) {
                                                         $headerToggleField = $groupShowField;
                                                     }
@@ -1317,7 +1404,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                                                     ? $groupFields->reject(fn ($f) => $f['key'] === $headerToggleField['key'])
                                                     : $groupFields;
                                                 $groupHasClassesFields = $bodyFields->contains(fn ($f) => $f['type'] === 'classes');
-                                                $groupAllClasses = $bodyFields->every(fn ($f) => $f['type'] === 'classes');
+                                                $groupAllClasses = $bodyFields->isNotEmpty() && $bodyFields->every(fn ($f) => $f['type'] === 'classes');
                                             @endphp
                                             <div x-show="designMode ? {{ $groupHasClassesFields ? 'true' : 'false' }} : {{ $groupAllClasses ? 'false' : 'true' }}">
                                             <div x-data="{ open: true, groupDesignMode: false, groupContentMode: false, groupHasClasses: {{ $groupHasClassesFields ? 'true' : 'false' }} }" @set-group-design-mode.window="groupDesignMode = $event.detail.value; groupContentMode = false" @set-group-open.window="open = $event.detail.value" class="rounded-lg border border-zinc-200 dark:border-zinc-700 overflow-hidden">
@@ -1844,6 +1931,17 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
             <livewire:pages::dashboard.media-library.picker
                 :field-key="$mediaPickerKey"
                 :key="'media-picker-'.$mediaPickerKey"
+            />
+        @endif
+    </flux:modal>
+
+    {{-- Gallery Picker (multi-select) --}}
+    <flux:modal wire:model="showGalleryPicker" name="gallery-picker" class="max-w-3xl! p-0!">
+        @if ($showGalleryPicker)
+            <livewire:pages::dashboard.media-library.picker
+                :field-key="$pendingGalleryFieldKey"
+                :multi-select="true"
+                :key="'gallery-picker-'.$pendingGalleryFieldKey"
             />
         @endif
     </flux:modal>

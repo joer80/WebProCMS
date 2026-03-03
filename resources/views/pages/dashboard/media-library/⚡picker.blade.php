@@ -10,9 +10,15 @@ new class extends Component {
     #[Prop]
     public string $fieldKey = '';
 
+    #[Prop]
+    public bool $multiSelect = false;
+
     public ?int $selectedCategoryId = null;
 
     public ?int $selectedImageId = null;
+
+    /** @var array<int> */
+    public array $selectedImageIds = [];
 
     /** @return \Illuminate\Database\Eloquent\Collection<int, MediaCategory> */
     #[Computed]
@@ -43,6 +49,7 @@ new class extends Component {
     {
         $this->selectedCategoryId = $id;
         $this->selectedImageId = null;
+        $this->selectedImageIds = [];
         unset($this->images);
     }
 
@@ -50,6 +57,26 @@ new class extends Component {
     {
         $item = $this->images->firstWhere('id', $id);
         $this->dispatch('media-image-picked', key: $this->fieldKey, path: $path, alt: $item?->alt ?? '');
+    }
+
+    public function toggleMultiImage(int $id): void
+    {
+        if (in_array($id, $this->selectedImageIds, true)) {
+            $this->selectedImageIds = array_values(array_filter($this->selectedImageIds, fn ($i) => $i !== $id));
+        } else {
+            $this->selectedImageIds[] = $id;
+        }
+    }
+
+    public function pickMultiImages(): void
+    {
+        $images = $this->images
+            ->whereIn('id', $this->selectedImageIds)
+            ->map(fn (MediaItem $item) => ['path' => $item->path, 'alt' => $item->alt ?? ''])
+            ->values()
+            ->all();
+
+        $this->dispatch('media-images-picked', key: $this->fieldKey, images: $images);
     }
 }; ?>
 
@@ -91,23 +118,48 @@ new class extends Component {
             @else
                 <div class="grid grid-cols-3 sm:grid-cols-4 gap-2">
                     @foreach ($this->images as $image)
-                        <button
-                            wire:key="picker-img-{{ $image->id }}"
-                            wire:click="$set('selectedImageId', {{ $image->id }})"
-                            class="group relative rounded-lg overflow-hidden border transition-all aspect-square {{ $selectedImageId === $image->id ? 'border-blue-500 ring-2 ring-blue-500' : 'border-zinc-200 dark:border-zinc-700 hover:border-zinc-400 dark:hover:border-zinc-500' }}"
-                        >
-                            <img
-                                src="{{ $image->url() }}"
-                                alt="{{ $image->alt }}"
-                                class="w-full h-full object-cover"
-                                loading="lazy"
+                        @if ($multiSelect)
+                            <button
+                                wire:key="picker-img-{{ $image->id }}"
+                                wire:click="toggleMultiImage({{ $image->id }})"
+                                class="group relative rounded-lg overflow-hidden border transition-all aspect-square {{ in_array($image->id, $selectedImageIds) ? 'border-blue-500 ring-2 ring-blue-500' : 'border-zinc-200 dark:border-zinc-700 hover:border-zinc-400 dark:hover:border-zinc-500' }}"
                             >
-                            @if ($image->alt)
-                                <div class="absolute bottom-0 inset-x-0 bg-zinc-900/60 px-1.5 py-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
-                                    <p class="text-xs text-white truncate">{{ $image->alt }}</p>
-                                </div>
-                            @endif
-                        </button>
+                                <img
+                                    src="{{ $image->url() }}"
+                                    alt="{{ $image->alt }}"
+                                    class="w-full h-full object-cover"
+                                    loading="lazy"
+                                >
+                                @if (in_array($image->id, $selectedImageIds))
+                                    <div class="absolute top-1 right-1 size-5 bg-blue-500 rounded-full flex items-center justify-center">
+                                        <flux:icon name="check" class="size-3 text-white" />
+                                    </div>
+                                @endif
+                                @if ($image->alt)
+                                    <div class="absolute bottom-0 inset-x-0 bg-zinc-900/60 px-1.5 py-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <p class="text-xs text-white truncate">{{ $image->alt }}</p>
+                                    </div>
+                                @endif
+                            </button>
+                        @else
+                            <button
+                                wire:key="picker-img-{{ $image->id }}"
+                                wire:click="$set('selectedImageId', {{ $image->id }})"
+                                class="group relative rounded-lg overflow-hidden border transition-all aspect-square {{ $selectedImageId === $image->id ? 'border-blue-500 ring-2 ring-blue-500' : 'border-zinc-200 dark:border-zinc-700 hover:border-zinc-400 dark:hover:border-zinc-500' }}"
+                            >
+                                <img
+                                    src="{{ $image->url() }}"
+                                    alt="{{ $image->alt }}"
+                                    class="w-full h-full object-cover"
+                                    loading="lazy"
+                                >
+                                @if ($image->alt)
+                                    <div class="absolute bottom-0 inset-x-0 bg-zinc-900/60 px-1.5 py-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <p class="text-xs text-white truncate">{{ $image->alt }}</p>
+                                    </div>
+                                @endif
+                            </button>
+                        @endif
                     @endforeach
                 </div>
             @endif
@@ -115,22 +167,36 @@ new class extends Component {
 
         {{-- Footer with action --}}
         <div class="border-t border-zinc-200 dark:border-zinc-700 px-4 py-3 flex items-center justify-between bg-zinc-50 dark:bg-zinc-900 shrink-0">
-            <span class="text-sm text-zinc-500 dark:text-zinc-400">
-                @if ($selectedImageId)
-                    @php $selectedImage = $this->images->firstWhere('id', $selectedImageId); @endphp
-                    {{ $selectedImage?->filename }}
-                @else
-                    Click an image to select it
-                @endif
-            </span>
-            <flux:button
-                wire:click="pickImage({{ $selectedImageId ?? 'null' }}, '{{ $selectedImageId ? $this->images->firstWhere('id', $selectedImageId)?->path : '' }}')"
-                variant="primary"
-                size="sm"
-                :disabled="! $selectedImageId"
-            >
-                Use This Image
-            </flux:button>
+            @if ($multiSelect)
+                <span class="text-sm text-zinc-500 dark:text-zinc-400">
+                    {{ count($selectedImageIds) > 0 ? count($selectedImageIds).' image'.( count($selectedImageIds) > 1 ? 's' : '').' selected' : 'Click images to select' }}
+                </span>
+                <flux:button
+                    wire:click="pickMultiImages"
+                    variant="primary"
+                    size="sm"
+                    :disabled="empty($selectedImageIds)"
+                >
+                    Add {{ count($selectedImageIds) > 0 ? count($selectedImageIds) : '' }} {{ count($selectedImageIds) === 1 ? 'Image' : 'Images' }}
+                </flux:button>
+            @else
+                <span class="text-sm text-zinc-500 dark:text-zinc-400">
+                    @if ($selectedImageId)
+                        @php $selectedImage = $this->images->firstWhere('id', $selectedImageId); @endphp
+                        {{ $selectedImage?->filename }}
+                    @else
+                        Click an image to select it
+                    @endif
+                </span>
+                <flux:button
+                    wire:click="pickImage({{ $selectedImageId ?? 'null' }}, '{{ $selectedImageId ? $this->images->firstWhere('id', $selectedImageId)?->path : '' }}')"
+                    variant="primary"
+                    size="sm"
+                    :disabled="! $selectedImageId"
+                >
+                    Use This Image
+                </flux:button>
+            @endif
         </div>
     </div>
 </div>

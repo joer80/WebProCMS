@@ -1,4 +1,5 @@
 @blaze
+@props(['slug', 'defaultWrapperClasses' => 'rounded-card overflow-hidden aspect-video', 'defaultImageClasses' => 'w-full h-full object-cover'])
 @php
 $wrapperCls = content($slug, 'image_wrapper_classes', $defaultWrapperClasses);
 $imageCls = content($slug, 'image_classes', $defaultImageClasses);

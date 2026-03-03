@@ -1,4 +1,5 @@
 @blaze
+@props(['slug', 'prefix' => 'link', 'defaultLabel' => 'View all →', 'defaultUrl' => '#', 'defaultClasses' => 'text-primary font-semibold hover:text-primary/80 transition-colors text-sm'])
 @php
 $toggle = content($slug, "toggle_{$prefix}", '1');
 $label = content($slug, $prefix, $defaultLabel);

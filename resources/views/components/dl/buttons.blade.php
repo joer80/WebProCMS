@@ -1,4 +1,5 @@
 @blaze
+@props(['slug', 'defaultWrapperClasses' => 'mt-8 flex flex-wrap items-center gap-4', 'defaultPrimaryLabel' => 'Get Started', 'defaultPrimaryClasses' => 'px-6 py-3 bg-primary text-white font-semibold rounded-lg hover:bg-primary/90 transition-colors', 'defaultSecondaryLabel' => 'Learn More', 'defaultSecondaryClasses' => 'px-6 py-3 border border-zinc-300 dark:border-zinc-600 text-zinc-700 dark:text-zinc-200 font-semibold rounded-lg hover:bg-zinc-50 transition-colors'])
 @php
 $wrapperCls = content($slug, 'buttons_wrapper_classes', $defaultWrapperClasses);
 $togglePrimary = content($slug, 'toggle_primary_button', '1');

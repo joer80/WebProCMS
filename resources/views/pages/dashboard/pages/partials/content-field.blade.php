@@ -1,4 +1,4 @@
-<div wire:key="field-{{ $field['key'] }}" x-show="{{ $field['type'] === 'classes' ? '(designMode || groupDesignMode) && !groupContentMode' : 'groupContentMode || !groupHasClasses || (!designMode && !groupDesignMode)' }}">
+<div wire:key="field-{{ str_replace(':', '-', $field['slug']) }}-{{ $field['key'] }}" x-show="{{ $field['type'] === 'classes' ? '(designMode || groupDesignMode) && !groupContentMode' : 'groupContentMode || !groupHasClasses || (!designMode && !groupDesignMode)' }}">
     @if ($field['type'] === 'classes')
         <div class="flex items-center justify-between mb-1.5">
             <flux:label class="text-zinc-500 dark:text-zinc-400">{{ $field['label'] }}</flux:label>
@@ -7,7 +7,12 @@
     @elseif ($field['type'] !== 'toggle')
         <div class="flex items-center justify-between mb-1.5">
             <flux:label class="text-zinc-500 dark:text-zinc-400">{{ $field['label'] }}</flux:label>
-            <button wire:click="resetContentField('{{ $field['key'] }}')" type="button" class="text-xs text-zinc-400 dark:text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 transition-colors">Reset</button>
+            <div class="flex items-center gap-2">
+                @if ($field['type'] === 'grid')
+                    <button wire:click="clearGridItems('{{ $field['key'] }}')" type="button" class="text-xs text-zinc-400 dark:text-zinc-500 hover:text-red-500 dark:hover:text-red-400 transition-colors">Remove All</button>
+                @endif
+                <button wire:click="resetContentField('{{ $field['key'] }}')" type="button" class="text-xs text-zinc-400 dark:text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 transition-colors">Reset</button>
+            </div>
         </div>
     @endif
 
@@ -151,7 +156,8 @@
         @php
             $gridRaw = $contentValues[$field['key']] ?? $field['default'];
             $gridItems = json_decode($gridRaw, true) ?: [];
-            $gridKeys = !empty($gridItems) ? array_keys($gridItems[0]) : [];
+            $gridDefaultItems = json_decode($field['default'], true) ?: [];
+            $gridKeys = !empty($gridItems) ? array_keys($gridItems[0]) : (!empty($gridDefaultItems) ? array_keys($gridDefaultItems[0]) : []);
         @endphp
         <div
             x-data="{
@@ -186,7 +192,7 @@
                     <div class="flex items-center gap-1.5 px-3 py-2">
                         <button type="button" @click="open = !open" class="flex items-center gap-1.5 flex-1 min-w-0 text-left">
                             <flux:icon name="chevron-right" class="size-4 text-zinc-400 shrink-0 transition-transform duration-150" :class="open ? 'rotate-90' : ''" />
-                            <span class="text-sm text-zinc-700 dark:text-zinc-200 font-medium truncate" x-text="item.title || item.name || item.label || item[keys[0]] || ('Item ' + (idx + 1))"></span>
+                            <span class="text-sm text-zinc-700 dark:text-zinc-200 font-medium truncate" x-text="item.alt || (item.image ? item.image.split('/').pop() : null) || item.title || item.name || item.label || ('Item ' + (idx + 1))"></span>
                         </button>
                         <button
                             type="button"
@@ -290,7 +296,23 @@
                                     class="w-full text-sm rounded-lg border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-900 text-zinc-900 dark:text-white px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition resize-none"
                                 ></textarea>
                             </template>
-                            <template x-if="fKey !== 'icon' && fKey !== 'desc' && fKey !== 'description'">
+                            <template x-if="fKey === 'image' || fKey.endsWith('_image')">
+                                <div>
+                                    <div x-show="item[fKey]" class="mb-2">
+                                        <img :src="item[fKey] ? '/storage/' + item[fKey] : ''"
+                                            class="h-16 w-24 rounded-lg object-cover border border-zinc-200 dark:border-zinc-700" />
+                                    </div>
+                                    <button
+                                        type="button"
+                                        @click="$wire.call('openGridItemMediaPicker', '{{ $field['key'] }}', idx, fKey)"
+                                        class="flex items-center gap-2 px-3 py-2 border-2 border-dashed border-zinc-300 dark:border-zinc-600 rounded-lg text-sm text-zinc-500 dark:text-zinc-400 hover:border-primary hover:text-primary transition-colors w-full"
+                                    >
+                                        <flux:icon name="photo" class="size-4 shrink-0" />
+                                        <span x-text="item[fKey] ? 'Change image…' : 'Pick from library…'"></span>
+                                    </button>
+                                </div>
+                            </template>
+                            <template x-if="fKey !== 'icon' && fKey !== 'desc' && fKey !== 'description' && fKey !== 'image' && !fKey.endsWith('_image')">
                                 <input
                                     :value="item[fKey]"
                                     @change="updateField(idx, fKey, $event.target.value)"
@@ -310,6 +332,15 @@
             >
                 + Add Item
             </button>
+            @if (in_array('image', $gridKeys))
+                <button
+                    type="button"
+                    wire:click="openGalleryPicker('{{ $field['key'] }}')"
+                    class="w-full py-2 border-2 border-dashed border-zinc-300 dark:border-zinc-600 rounded-lg text-sm text-zinc-500 dark:text-zinc-400 hover:border-primary hover:text-primary transition-colors"
+                >
+                    + Add images from library
+                </button>
+            @endif
         </div>
     @elseif ($field['type'] === 'toggle')
         <div class="flex items-center gap-2">

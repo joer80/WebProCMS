@@ -128,16 +128,16 @@ BLADE);
     unlink($file);
 });
 
-it('infers schema_fields from x-dl-heading component tag', function (): void {
+it('infers schema_fields from x-dl.heading component tag', function (): void {
     $file = tempnam(sys_get_temp_dir(), 'dltest_').'.blade.php';
     file_put_contents($file, <<<'BLADE'
 {{--
 @name Hero - Component
 @sort 5
 --}}
-<x-dl-section slug="__SLUG__" default-section-classes="py-section px-6 bg-white" default-container-classes="max-w-6xl mx-auto">
-    <x-dl-heading slug="__SLUG__" prefix="headline" default="Your Headline" default-tag="h1" default-classes="font-heading text-5xl font-bold text-zinc-900" />
-</x-dl-section>
+<x-dl.section slug="__SLUG__" default-section-classes="py-section px-6 bg-white" default-container-classes="max-w-6xl mx-auto">
+    <x-dl.heading slug="__SLUG__" prefix="headline" default="Your Headline" default-tag="h1" default-classes="font-heading text-5xl font-bold text-zinc-900" />
+</x-dl.section>
 BLADE);
 
     $data = $this->service->parseTemplateFile($file);
@@ -159,18 +159,18 @@ BLADE);
     unlink($file);
 });
 
-it('registers x-dl-* component fields in document order', function (): void {
+it('registers x-dl.* component fields in document order', function (): void {
     $file = tempnam(sys_get_temp_dir(), 'dltest_').'.blade.php';
     file_put_contents($file, <<<'BLADE'
 {{--
 @name Hero - Ordered
 @sort 5
 --}}
-<x-dl-section slug="__SLUG__" default-section-classes="py-section" default-container-classes="max-w-6xl mx-auto">
-    <x-dl-heading slug="__SLUG__" prefix="headline" default="Headline" />
-    <x-dl-subheadline slug="__SLUG__" prefix="subheadline" default="Sub" />
-    <x-dl-subheadline slug="__SLUG__" prefix="badge" default="New" />
-</x-dl-section>
+<x-dl.section slug="__SLUG__" default-section-classes="py-section" default-container-classes="max-w-6xl mx-auto">
+    <x-dl.heading slug="__SLUG__" prefix="headline" default="Headline" />
+    <x-dl.subheadline slug="__SLUG__" prefix="subheadline" default="Sub" />
+    <x-dl.subheadline slug="__SLUG__" prefix="badge" default="New" />
+</x-dl.section>
 BLADE);
 
     $data = $this->service->parseTemplateFile($file);
@@ -191,21 +191,21 @@ BLADE);
     unlink($file);
 });
 
-it('infers schema_fields from x-dl-grid component with single-quoted JSON default-items', function (): void {
+it('infers schema_fields from x-dl.grid component with single-quoted JSON default-items', function (): void {
     $file = tempnam(sys_get_temp_dir(), 'dltest_').'.blade.php';
     file_put_contents($file, <<<'BLADE'
 {{--
 @name Features - Grid
 @sort 10
 --}}
-<x-dl-section slug="__SLUG__"
+<x-dl.section slug="__SLUG__"
     default-section-classes="py-section px-6 bg-white dark:bg-zinc-900"
     default-container-classes="max-w-6xl mx-auto">
-    <x-dl-grid slug="__SLUG__" prefix="features"
+    <x-dl.grid slug="__SLUG__" prefix="features"
         default-grid-classes="grid md:grid-cols-3 gap-8"
         default-items='[{"icon":"bolt","title":"Fast","desc":"Speed."}]'>
-    </x-dl-grid>
-</x-dl-section>
+    </x-dl.grid>
+</x-dl.section>
 BLADE);
 
     $data = $this->service->parseTemplateFile($file);
@@ -223,18 +223,18 @@ BLADE);
     unlink($file);
 });
 
-it('infers schema_fields from x-dl-section wrapping component tag', function (): void {
+it('infers schema_fields from x-dl.section wrapping component tag', function (): void {
     $file = tempnam(sys_get_temp_dir(), 'dltest_').'.blade.php';
     file_put_contents($file, <<<'BLADE'
 {{--
 @name Hero - Section Wrapper
 @sort 5
 --}}
-<x-dl-section slug="__SLUG__"
+<x-dl.section slug="__SLUG__"
     default-section-classes="py-section px-6 bg-white dark:bg-zinc-900 text-center"
     default-container-classes="max-w-3xl mx-auto">
-    <x-dl-heading slug="__SLUG__" prefix="headline" default="Your Headline" />
-</x-dl-section>
+    <x-dl.heading slug="__SLUG__" prefix="headline" default="Your Headline" />
+</x-dl.section>
 BLADE);
 
     $data = $this->service->parseTemplateFile($file);
@@ -254,19 +254,19 @@ BLADE);
     unlink($file);
 });
 
-it('infers schema_fields from x-dl-link component tag', function (): void {
+it('infers schema_fields from x-dl.link component tag', function (): void {
     $file = tempnam(sys_get_temp_dir(), 'dltest_').'.blade.php';
     file_put_contents($file, <<<'BLADE'
 {{--
 @name Blog - Grid
 @sort 10
 --}}
-<x-dl-section slug="__SLUG__" default-section-classes="py-section" default-container-classes="max-w-6xl mx-auto">
-    <x-dl-link slug="__SLUG__" prefix="view_all"
+<x-dl.section slug="__SLUG__" default-section-classes="py-section" default-container-classes="max-w-6xl mx-auto">
+    <x-dl.link slug="__SLUG__" prefix="view_all"
         default-label="View all →"
         default-url="/blog"
         default-classes="text-primary font-semibold text-sm" />
-</x-dl-section>
+</x-dl.section>
 BLADE);
 
     $data = $this->service->parseTemplateFile($file);
@@ -286,23 +286,23 @@ BLADE);
     unlink($file);
 });
 
-it('infers schema_fields from x-dl-wrapper component tag', function (): void {
+it('infers schema_fields from x-dl.wrapper component tag', function (): void {
     $file = tempnam(sys_get_temp_dir(), 'dltest_').'.blade.php';
     file_put_contents($file, <<<'BLADE'
 {{--
 @name Pricing - Cards
 @sort 10
 --}}
-<x-dl-section slug="__SLUG__" default-section-classes="py-section" default-container-classes="max-w-6xl mx-auto">
-    <x-dl-wrapper slug="__SLUG__" prefix="card"
+<x-dl.section slug="__SLUG__" default-section-classes="py-section" default-container-classes="max-w-6xl mx-auto">
+    <x-dl.wrapper slug="__SLUG__" prefix="card"
         default-classes="rounded-card p-8 bg-white border border-zinc-200"
         default-featured-classes="rounded-card p-8 bg-primary text-white ring-2 ring-primary">
-        <x-dl-wrapper slug="__SLUG__" prefix="card_name" tag="h3"
+        <x-dl.wrapper slug="__SLUG__" prefix="card_name" tag="h3"
             default-classes="text-lg font-semibold text-zinc-900"
             default-featured-classes="text-lg font-semibold text-white">
-        </x-dl-wrapper>
-    </x-dl-wrapper>
-</x-dl-section>
+        </x-dl.wrapper>
+    </x-dl.wrapper>
+</x-dl.section>
 BLADE);
 
     $data = $this->service->parseTemplateFile($file);
@@ -324,21 +324,21 @@ BLADE);
     unlink($file);
 });
 
-it('infers schema_fields from x-dl-icon component tag', function (): void {
+it('infers schema_fields from x-dl.icon component tag', function (): void {
     $file = tempnam(sys_get_temp_dir(), 'dltest_').'.blade.php';
     file_put_contents($file, <<<'BLADE'
 {{--
 @name Features - Grid
 @sort 10
 --}}
-<x-dl-section slug="__SLUG__" default-section-classes="py-section" default-container-classes="max-w-6xl mx-auto">
-    <x-dl-icon slug="__SLUG__" prefix="icon"
+<x-dl.section slug="__SLUG__" default-section-classes="py-section" default-container-classes="max-w-6xl mx-auto">
+    <x-dl.icon slug="__SLUG__" prefix="icon"
         default-wrapper-classes="mb-4 text-primary"
         default-classes="size-8" />
-    <x-dl-icon slug="__SLUG__" prefix="card_feature_icon" name="check"
+    <x-dl.icon slug="__SLUG__" prefix="card_feature_icon" name="check"
         default-classes="size-4 shrink-0 text-primary"
         default-featured-classes="size-4 shrink-0 text-white" />
-</x-dl-section>
+</x-dl.section>
 BLADE);
 
     $data = $this->service->parseTemplateFile($file);
@@ -360,17 +360,17 @@ BLADE);
     unlink($file);
 });
 
-it('infers schema_fields from x-dl-button component tag', function (): void {
+it('infers schema_fields from x-dl.button component tag', function (): void {
     $file = tempnam(sys_get_temp_dir(), 'dltest_').'.blade.php';
     file_put_contents($file, <<<'BLADE'
 {{--
 @name Contact - Form
 @sort 10
 --}}
-<x-dl-section slug="__SLUG__" default-section-classes="py-section" default-container-classes="max-w-5xl mx-auto">
-    <x-dl-button slug="__SLUG__" prefix="submit" type="submit" default="Send Message"
+<x-dl.section slug="__SLUG__" default-section-classes="py-section" default-container-classes="max-w-5xl mx-auto">
+    <x-dl.button slug="__SLUG__" prefix="submit" type="submit" default="Send Message"
         default-classes="w-full px-6 py-3 bg-primary text-white font-semibold rounded-lg" />
-</x-dl-section>
+</x-dl.section>
 BLADE);
 
     $data = $this->service->parseTemplateFile($file);
@@ -400,8 +400,8 @@ it('registers grid field from standalone @dlItems directive with default', funct
 @sort 10
 --}}
 @dlItems('__SLUG__', 'testimonials', $testimonials, '[{"quote":"Test quote","name":"Test Name","role":"Test Role"}]')
-<x-dl-section slug="__SLUG__" default-section-classes="py-section" default-container-classes="max-w-3xl mx-auto">
-</x-dl-section>
+<x-dl.section slug="__SLUG__" default-section-classes="py-section" default-container-classes="max-w-3xl mx-auto">
+</x-dl.section>
 BLADE);
 
     $data = $this->service->parseTemplateFile($file);
@@ -418,15 +418,15 @@ BLADE);
     unlink($file);
 });
 
-it('deduplicates repeated x-dl-* component prefix registrations', function (): void {
+it('deduplicates repeated x-dl.* component prefix registrations', function (): void {
     $file = tempnam(sys_get_temp_dir(), 'dltest_').'.blade.php';
     file_put_contents($file, <<<'BLADE'
 {{--
 @name Dupe Test
 @sort 1
 --}}
-<x-dl-heading slug="__SLUG__" prefix="headline" default="First" />
-<x-dl-heading slug="__SLUG__" prefix="headline" default="Second" />
+<x-dl.heading slug="__SLUG__" prefix="headline" default="First" />
+<x-dl.heading slug="__SLUG__" prefix="headline" default="Second" />
 BLADE);
 
     $data = $this->service->parseTemplateFile($file);
@@ -436,6 +436,93 @@ BLADE);
     // Only one 'headline' field; first occurrence wins
     expect($headlineFields)->toHaveCount(1)
         ->and(array_values($headlineFields)[0]['default'])->toBe('First');
+
+    unlink($file);
+});
+
+it('infers schema_fields from x-dl.gallery component tag', function (): void {
+    $file = tempnam(sys_get_temp_dir(), 'dltest_').'.blade.php';
+    file_put_contents($file, <<<'BLADE'
+{{--
+@name Gallery - Grid
+@sort 10
+--}}
+<x-dl.section slug="__SLUG__" default-section-classes="py-section" default-container-classes="max-w-6xl mx-auto">
+    <x-dl.gallery slug="__SLUG__" prefix="images"
+        default-grid-classes="grid grid-cols-2 md:grid-cols-3 gap-4"
+        default-items='[{"image":"","alt":"Photo 1","caption":""}]'>
+    </x-dl.gallery>
+</x-dl.section>
+BLADE);
+
+    $data = $this->service->parseTemplateFile($file);
+
+    $keys = array_column($data['schema_fields'], 'key');
+
+    expect(in_array('toggle_images', $keys))->toBeTrue()
+        ->and(in_array('grid_images', $keys))->toBeTrue()
+        ->and(in_array('images_grid_classes', $keys))->toBeTrue();
+
+    $gridField = array_values(array_filter($data['schema_fields'], fn ($f) => $f['key'] === 'grid_images'))[0];
+    expect($gridField['type'])->toBe('grid')
+        ->and($gridField['default'])->toBe('[{"image":"","alt":"Photo 1","caption":""}]');
+
+    unlink($file);
+});
+
+it('infers schema_fields from x-dl.card component tag', function (): void {
+    $file = tempnam(sys_get_temp_dir(), 'dltest_').'.blade.php';
+    file_put_contents($file, <<<'BLADE'
+{{--
+@name Features - Grid
+@sort 10
+--}}
+<x-dl.section slug="__SLUG__" default-section-classes="py-section" default-container-classes="max-w-6xl mx-auto">
+    <x-dl.card slug="__SLUG__" prefix="feature_card"
+        default-classes="p-6 rounded-card border border-zinc-200"
+        default-featured-classes="p-6 rounded-card border border-primary">
+    </x-dl.card>
+</x-dl.section>
+BLADE);
+
+    $data = $this->service->parseTemplateFile($file);
+
+    $keys = array_column($data['schema_fields'], 'key');
+
+    expect(in_array('feature_card_classes', $keys))->toBeTrue()
+        ->and(in_array('feature_card_featured_classes', $keys))->toBeTrue();
+
+    $cardField = array_values(array_filter($data['schema_fields'], fn ($f) => $f['key'] === 'feature_card_classes'))[0];
+    expect($cardField['type'])->toBe('classes')
+        ->and($cardField['default'])->toBe('p-6 rounded-card border border-zinc-200');
+
+    unlink($file);
+});
+
+it('infers schema_fields from x-dl.group component tag', function (): void {
+    $file = tempnam(sys_get_temp_dir(), 'dltest_').'.blade.php';
+    file_put_contents($file, <<<'BLADE'
+{{--
+@name Gallery - Grid
+@sort 10
+--}}
+<x-dl.section slug="__SLUG__" default-section-classes="py-section" default-container-classes="max-w-6xl mx-auto">
+    <x-dl.group slug="__SLUG__" prefix="overlay"
+        default-classes="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity">
+    </x-dl.group>
+</x-dl.section>
+BLADE);
+
+    $data = $this->service->parseTemplateFile($file);
+
+    $keys = array_column($data['schema_fields'], 'key');
+
+    expect(in_array('overlay_classes', $keys))->toBeTrue()
+        ->and(in_array('overlay_featured_classes', $keys))->toBeFalse();
+
+    $groupField = array_values(array_filter($data['schema_fields'], fn ($f) => $f['key'] === 'overlay_classes'))[0];
+    expect($groupField['type'])->toBe('classes')
+        ->and($groupField['default'])->toBe('absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity');
 
     unlink($file);
 });
