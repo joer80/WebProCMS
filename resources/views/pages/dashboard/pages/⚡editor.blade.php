@@ -1317,13 +1317,14 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                                                 $groupHasClassesFields = $bodyFields->contains(fn ($f) => $f['type'] === 'classes');
                                                 $groupAllClasses = $bodyFields->every(fn ($f) => $f['type'] === 'classes');
                                             @endphp
-                                            <div x-data="{ open: true, groupDesignMode: false, groupContentMode: false, groupHasClasses: {{ $groupHasClassesFields ? 'true' : 'false' }} }" @set-group-design-mode.window="groupDesignMode = $event.detail.value; groupContentMode = false" @set-group-open.window="open = $event.detail.value" x-show="designMode ? {{ $groupHasClassesFields ? 'true' : 'false' }} : {{ $groupAllClasses ? 'false' : 'true' }}" class="rounded-lg border border-zinc-200 dark:border-zinc-700 overflow-hidden">
+                                            <div x-show="designMode ? {{ $groupHasClassesFields ? 'true' : 'false' }} : {{ $groupAllClasses ? 'false' : 'true' }}">
+                                            <div x-data="{ open: true, groupDesignMode: false, groupContentMode: false, groupHasClasses: {{ $groupHasClassesFields ? 'true' : 'false' }} }" @set-group-design-mode.window="groupDesignMode = $event.detail.value; groupContentMode = false" @set-group-open.window="open = $event.detail.value" class="rounded-lg border border-zinc-200 dark:border-zinc-700 overflow-hidden">
                                                 <div class="flex items-center gap-2 px-3 py-2 bg-zinc-100 dark:bg-zinc-700/50">
                                                     <button
                                                         type="button"
                                                         @click="open = !open"
                                                         class="flex-1 min-w-0 text-left text-xs uppercase tracking-wider font-semibold text-zinc-600 dark:text-zinc-300"
-                                                    >{{ ucwords($groupKey) }}</button>
+                                                    >{{ ucwords(str_replace('_', ' ', $groupKey)) }}</button>
                                                     @if ($groupHasClassesFields)
                                                         <button
                                                             type="button"
@@ -1356,6 +1357,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                                                         @include('pages.dashboard.pages.partials.content-field', ['field' => $field])
                                                     @endforeach
                                                 </div>
+                                            </div>
                                             </div>
                                         @else
                                             @foreach ($groupFields as $field)
@@ -1460,7 +1462,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                                                     <flux:badge size="sm" color="blue" class="shrink-0">Shared</flux:badge>
                                                 @endif
                                             </div>
-                                            <div class="text-[10px] font-mono text-zinc-400 dark:text-zinc-500 truncate mt-0.5">{{ $row['slug'] }}</div>
+                                            <!-- <div class="text-[10px] font-mono text-zinc-400 dark:text-zinc-500 truncate mt-0.5">{{ $row['slug'] }}</div> -->
                                         </button>
                                         @if (isset($rowDesignDefaults[$row['slug']]))
                                             <button
@@ -1527,7 +1529,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                                     @endif
 
                                     {{-- Row actions --}}
-                                    <div class="relative flex items-center px-2 pb-2">
+                                    <div class="relative flex items-center px-2 py-2">
                                         <div class="flex items-center gap-0.5">
                                             <flux:button
                                                 wire:click="moveRowUp({{ $index }})"
@@ -1549,10 +1551,13 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                                                 title="Move down"
                                                 :loading="false"
                                             />
+                                            
+                                            <flux:icon name="bars-2" class="size-4 text-zinc-400 dark:text-zinc-500 cursor-grab active:cursor-grabbing mx-2" title="Drag to reorder" />
+
                                         </div>
-                                        <div class="absolute left-1/2 -translate-x-1/2">
+                                        <!-- <div class="absolute left-1/2 -translate-x-1/2">
                                             <flux:icon name="bars-2" class="size-4 text-zinc-400 dark:text-zinc-500 cursor-grab active:cursor-grabbing" title="Drag to reorder" />
-                                        </div>
+                                        </div> -->
                                         <div class="flex items-center gap-0.5 ml-auto">
                                             <flux:button
                                                 wire:click="openLibraryDrawer({{ $index }})"

@@ -138,6 +138,14 @@ class DesignLibraryService
             return ['text', substr($key, 0, -4)];
         }
 
+        if ($key === 'image_alt') {
+            return ['text', 'media'];
+        }
+
+        if (str_ends_with($key, '_image_alt')) {
+            return ['text', substr($key, 0, -10)];
+        }
+
         if (str_ends_with($key, '_alt')) {
             return ['text', substr($key, 0, -4)];
         }

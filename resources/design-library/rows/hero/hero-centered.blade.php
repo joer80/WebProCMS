@@ -27,24 +27,24 @@
         @endif
         @php $buttonsWrapperClasses = content('__SLUG__', 'buttons_wrapper_classes', 'mt-10 flex flex-wrap items-center justify-center gap-4'); @endphp
         <div class="{{ $buttonsWrapperClasses }}">
-            @php $togglePrimaryCta = content('__SLUG__', 'toggle_primary_cta', '1'); @endphp
-            @php $primaryCtaLabel = content('__SLUG__', 'primary_cta', 'Get Started'); @endphp
-            @php $primaryCtaClasses = content('__SLUG__', 'primary_cta_classes', 'px-6 py-3 bg-primary text-white font-semibold rounded-lg hover:bg-primary/90 transition-colors'); @endphp
-            @if($togglePrimaryCta)
+            @php $togglePrimaryButton = content('__SLUG__', 'toggle_primary_button', '1'); @endphp
+            @php $primaryButtonLabel = content('__SLUG__', 'primary_button', 'Get Started'); @endphp
+            @php $primaryButtonClasses = content('__SLUG__', 'primary_button_classes', 'px-6 py-3 bg-primary text-white font-semibold rounded-lg hover:bg-primary/90 transition-colors'); @endphp
+            @if($togglePrimaryButton)
             <a
-                href="{{ content('__SLUG__', 'primary_cta_url', '#') }}"
-                @if(content('__SLUG__', 'primary_cta_new_tab', '')) target="_blank" rel="noopener noreferrer" @endif
-                class="{{ $primaryCtaClasses }}"
-            >{{ $primaryCtaLabel }}</a>
+                href="{{ content('__SLUG__', 'primary_button_url', '#') }}"
+                @if(content('__SLUG__', 'primary_button_new_tab', '')) target="_blank" rel="noopener noreferrer" @endif
+                class="{{ $primaryButtonClasses }}"
+            >{{ $primaryButtonLabel }}</a>
             @endif
-            @if(content('__SLUG__', 'toggle_secondary_cta', '1'))
-            @php $secondaryCtaLabel = content('__SLUG__', 'secondary_cta', 'Learn More'); @endphp
-            @php $secondaryCtaClasses = content('__SLUG__', 'secondary_cta_classes', 'px-6 py-3 border border-zinc-300 dark:border-zinc-600 text-zinc-700 dark:text-zinc-200 font-semibold rounded-lg hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors'); @endphp
+            @if(content('__SLUG__', 'toggle_secondary_button', '1'))
+            @php $secondaryButtonLabel = content('__SLUG__', 'secondary_button', 'Learn More'); @endphp
+            @php $secondaryButtonClasses = content('__SLUG__', 'secondary_button_classes', 'px-6 py-3 border border-zinc-300 dark:border-zinc-600 text-zinc-700 dark:text-zinc-200 font-semibold rounded-lg hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors'); @endphp
             <a
-                href="{{ content('__SLUG__', 'secondary_cta_url', '#') }}"
-                @if(content('__SLUG__', 'secondary_cta_new_tab', '')) target="_blank" rel="noopener noreferrer" @endif
-                class="{{ $secondaryCtaClasses }}"
-            >{{ $secondaryCtaLabel }}</a>
+                href="{{ content('__SLUG__', 'secondary_button_url', '#') }}"
+                @if(content('__SLUG__', 'secondary_button_new_tab', '')) target="_blank" rel="noopener noreferrer" @endif
+                class="{{ $secondaryButtonClasses }}"
+            >{{ $secondaryButtonLabel }}</a>
             @endif
         </div>
     </div>

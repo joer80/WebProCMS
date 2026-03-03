@@ -9,10 +9,10 @@
     <div class="{{ $sectionContainerClasses }}">
         @php $errorCodeClasses = content('__SLUG__', 'error_code_classes', 'text-8xl font-black text-zinc-200 dark:text-zinc-700'); @endphp
         @php $buttonsWrapperClasses = content('__SLUG__', 'buttons_wrapper_classes', 'mt-8 flex flex-wrap items-center justify-center gap-4'); @endphp
-        @php $primaryCtaClasses = content('__SLUG__', 'primary_cta_classes', 'px-6 py-3 bg-primary text-white font-semibold rounded-lg hover:bg-primary/90 transition-colors'); @endphp
-        @php $toggleSecondaryCta = content('__SLUG__', 'toggle_secondary_cta', '1'); @endphp
-        @php $secondaryCtaLabel = content('__SLUG__', 'secondary_cta', 'Contact Support'); @endphp
-        @php $secondaryCtaClasses = content('__SLUG__', 'secondary_cta_classes', 'px-6 py-3 border border-zinc-300 dark:border-zinc-600 text-zinc-700 dark:text-zinc-200 font-semibold rounded-lg hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors'); @endphp
+        @php $primaryButtonClasses = content('__SLUG__', 'primary_button_classes', 'px-6 py-3 bg-primary text-white font-semibold rounded-lg hover:bg-primary/90 transition-colors'); @endphp
+        @php $toggleSecondaryButton = content('__SLUG__', 'toggle_secondary_button', '1'); @endphp
+        @php $secondaryButtonLabel = content('__SLUG__', 'secondary_button', 'Contact Support'); @endphp
+        @php $secondaryButtonClasses = content('__SLUG__', 'secondary_button_classes', 'px-6 py-3 border border-zinc-300 dark:border-zinc-600 text-zinc-700 dark:text-zinc-200 font-semibold rounded-lg hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors'); @endphp
         <div class="{{ $errorCodeClasses }}">404</div>
         @php $toggleHeadline = content('__SLUG__', 'toggle_headline', '1'); @endphp
         @if($toggleHeadline)
@@ -28,16 +28,16 @@
         <p class="{{ $subheadlineClasses }}">{{ $subheadlineText }}</p>
         @endif
         <div class="{{ $buttonsWrapperClasses }}">
-            @php $togglePrimaryCta = content('__SLUG__', 'toggle_primary_cta', '1'); @endphp
-            @php $primaryCtaLabel = content('__SLUG__', 'primary_cta', 'Go Home'); @endphp
-            @if($togglePrimaryCta)
-            <a href="{{ content('__SLUG__', 'primary_cta_url', '/') }}" class="{{ $primaryCtaClasses }}">
-                {{ $primaryCtaLabel }}
+            @php $togglePrimaryButton = content('__SLUG__', 'toggle_primary_button', '1'); @endphp
+            @php $primaryButtonLabel = content('__SLUG__', 'primary_button', 'Go Home'); @endphp
+            @if($togglePrimaryButton)
+            <a href="{{ content('__SLUG__', 'primary_button_url', '/') }}" class="{{ $primaryButtonClasses }}">
+                {{ $primaryButtonLabel }}
             </a>
             @endif
-            @if($toggleSecondaryCta)
-            <a href="{{ content('__SLUG__', 'secondary_cta_url', '/contact') }}" class="{{ $secondaryCtaClasses }}">
-                {{ $secondaryCtaLabel }}
+            @if($toggleSecondaryButton)
+            <a href="{{ content('__SLUG__', 'secondary_button_url', '/contact') }}" class="{{ $secondaryButtonClasses }}">
+                {{ $secondaryButtonLabel }}
             </a>
             @endif
         </div>
