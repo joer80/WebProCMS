@@ -1220,6 +1220,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                 placeholder="Search rows…"
                 icon="magnifying-glass"
                 class="flex-1"
+                autofocus
             />
             <flux:select wire:model.live="libraryCategory" class="w-44">
                 <flux:select.option value="">{{ __('All categories') }}</flux:select.option>

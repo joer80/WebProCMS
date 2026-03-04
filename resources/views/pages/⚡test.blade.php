@@ -28,9 +28,9 @@ new #[Layout('layouts.public')] #[Title('Test Page')] class extends Component {}
 </x-dl.section>
 {{-- ROW:end:hero-split:4N5jN6 --}}
 
-{{-- ROW:start:gallery-grid:N2aANs --}}
-@php $galleryLightboxEnabled = content('gallery-grid:N2aANs', 'toggle_lightbox', '1') === '1'; @endphp
-<x-dl.section slug="gallery-grid:N2aANs"
+{{-- ROW:start:gallery-grid:uO6O2F --}}
+@php $galleryLightboxEnabled = content('gallery-grid:uO6O2F', 'toggle_lightbox', '1') === '1'; @endphp
+<x-dl.section slug="gallery-grid:uO6O2F"
     default-section-classes="py-section px-6 bg-white dark:bg-zinc-900"
     default-container-classes="max-w-6xl mx-auto"
     x-data="{
@@ -54,19 +54,19 @@ new #[Layout('layouts.public')] #[Title('Test Page')] class extends Component {}
         prev() { this.lightboxIndex = (this.lightboxIndex - 1 + this.images.length) % this.images.length; },
         next() { this.lightboxIndex = (this.lightboxIndex + 1) % this.images.length; }
     }">
-    <x-dl.wrapper slug="gallery-grid:N2aANs" prefix="header_wrapper" default-classes="text-center mb-12">
-        <x-dl.heading slug="gallery-grid:N2aANs" prefix="headline" default="Our Gallery"
+    <x-dl.wrapper slug="gallery-grid:uO6O2F" prefix="header_wrapper" default-classes="text-center mb-12">
+        <x-dl.heading slug="gallery-grid:uO6O2F" prefix="headline" default="Our Gallery"
             default-tag="h2"
             default-classes="font-heading text-4xl font-bold text-zinc-900 dark:text-white" />
-        <x-dl.subheadline slug="gallery-grid:N2aANs" prefix="subheadline" default="A glimpse into our work and culture."
+        <x-dl.subheadline slug="gallery-grid:uO6O2F" prefix="subheadline" default="A glimpse into our work and culture."
             default-classes="mt-4 text-zinc-500 dark:text-zinc-400" />
     </x-dl.wrapper>
-    @dlItems('gallery-grid:N2aANs', 'images', $galleryImages, '[{"image":"","alt":"Photo 1","caption":""},{"image":"","alt":"Photo 2","caption":""},{"image":"","alt":"Photo 3","caption":""},{"image":"","alt":"Photo 4","caption":""},{"image":"","alt":"Photo 5","caption":""},{"image":"","alt":"Photo 6","caption":""}]')
-    <x-dl.gallery slug="gallery-grid:N2aANs" prefix="images"
+    @dlItems('gallery-grid:uO6O2F', 'images', $galleryImages, '[{"image":"","alt":"Photo 1","caption":""},{"image":"","alt":"Photo 2","caption":""},{"image":"","alt":"Photo 3","caption":""},{"image":"","alt":"Photo 4","caption":""},{"image":"","alt":"Photo 5","caption":""},{"image":"","alt":"Photo 6","caption":""}]')
+    <x-dl.gallery slug="gallery-grid:uO6O2F" prefix="images"
         default-grid-classes="grid grid-cols-2 md:grid-cols-3 gap-4"
         default-items='[{"image":"","alt":"Photo 1","caption":""},{"image":"","alt":"Photo 2","caption":""},{"image":"","alt":"Photo 3","caption":""},{"image":"","alt":"Photo 4","caption":""},{"image":"","alt":"Photo 5","caption":""},{"image":"","alt":"Photo 6","caption":""}]'>
         @foreach ($galleryImages as $img)
-            <x-dl.card slug="gallery-grid:N2aANs" prefix="gallery_item"
+            <x-dl.card slug="gallery-grid:uO6O2F" prefix="gallery_item"
                 default-classes="rounded-card overflow-hidden bg-zinc-100 dark:bg-zinc-800 aspect-square"
                 @click="open($el.querySelector('img[data-lightbox-src]'))"
                 x-bind:class="lightboxEnabled && $el.querySelector('img[data-lightbox-src]') ? 'cursor-zoom-in' : ''">
@@ -140,34 +140,34 @@ new #[Layout('layouts.public')] #[Title('Test Page')] class extends Component {}
         </div>
     </template>
 </x-dl.section>
-{{-- ROW:end:gallery-grid:N2aANs --}}
+{{-- ROW:end:gallery-grid:uO6O2F --}}
 
-{{-- ROW:start:features-grid:t8cALD --}}
-<x-dl.section slug="features-grid:t8cALD"
+{{-- ROW:start:features-grid:XalQEW --}}
+<x-dl.section slug="features-grid:XalQEW"
     default-section-classes="py-section px-6 bg-white dark:bg-zinc-900"
     default-container-classes="max-w-6xl mx-auto">
-    <x-dl.wrapper slug="features-grid:t8cALD" prefix="header_wrapper" default-classes="text-center mb-16">
-        <x-dl.heading slug="features-grid:t8cALD" prefix="headline" default="Everything You Need"
+    <x-dl.wrapper slug="features-grid:XalQEW" prefix="header_wrapper" default-classes="text-center mb-16">
+        <x-dl.heading slug="features-grid:XalQEW" prefix="headline" default="Everything You Need"
             default-tag="h2"
             default-classes="font-heading text-4xl font-bold text-zinc-900 dark:text-white" />
-        <x-dl.subheadline slug="features-grid:t8cALD" prefix="subheadline" default="Powerful features designed to help you succeed."
+        <x-dl.subheadline slug="features-grid:XalQEW" prefix="subheadline" default="Powerful features designed to help you succeed."
             default-classes="mt-4 text-lg text-zinc-500 dark:text-zinc-400" />
     </x-dl.wrapper>
-    <x-dl.grid slug="features-grid:t8cALD" prefix="features"
+    <x-dl.grid slug="features-grid:XalQEW" prefix="features"
         default-grid-classes="grid md:grid-cols-3 gap-8"
         default-items='[{"icon":"bolt","title":"Lightning Fast","desc":"Optimized for speed at every level of the stack."},{"icon":"shield-check","title":"Secure by Default","desc":"Enterprise-grade security built into every feature."},{"icon":"chart-bar","title":"Detailed Analytics","desc":"Gain insight into every aspect of your business."},{"icon":"adjustments-horizontal","title":"Easy to Customize","desc":"Tailor the platform to your exact requirements."},{"icon":"globe-alt","title":"Global Scale","desc":"Built to handle millions of users worldwide."},{"icon":"chat-bubble-left-right","title":"24/7 Support","desc":"Our team is always here when you need us."}]'>
-        @dlItems('features-grid:t8cALD', 'features', $features, '[{"icon":"bolt","title":"Lightning Fast","desc":"Optimized for speed at every level of the stack."},{"icon":"shield-check","title":"Secure by Default","desc":"Enterprise-grade security built into every feature."},{"icon":"chart-bar","title":"Detailed Analytics","desc":"Gain insight into every aspect of your business."},{"icon":"adjustments-horizontal","title":"Easy to Customize","desc":"Tailor the platform to your exact requirements."},{"icon":"globe-alt","title":"Global Scale","desc":"Built to handle millions of users worldwide."},{"icon":"chat-bubble-left-right","title":"24/7 Support","desc":"Our team is always here when you need us."}]')
+        @dlItems('features-grid:XalQEW', 'features', $features, '[{"icon":"bolt","title":"Lightning Fast","desc":"Optimized for speed at every level of the stack."},{"icon":"shield-check","title":"Secure by Default","desc":"Enterprise-grade security built into every feature."},{"icon":"chart-bar","title":"Detailed Analytics","desc":"Gain insight into every aspect of your business."},{"icon":"adjustments-horizontal","title":"Easy to Customize","desc":"Tailor the platform to your exact requirements."},{"icon":"globe-alt","title":"Global Scale","desc":"Built to handle millions of users worldwide."},{"icon":"chat-bubble-left-right","title":"24/7 Support","desc":"Our team is always here when you need us."}]')
         @foreach ($features as $feature)
-            <x-dl.card slug="features-grid:t8cALD" prefix="feature_card"
+            <x-dl.card slug="features-grid:XalQEW" prefix="feature_card"
                 default-classes="p-6 rounded-card border border-zinc-200 dark:border-zinc-700 hover:border-primary/40 transition-colors">
-                <x-dl.icon slug="features-grid:t8cALD" prefix="icon" name="{{ $feature['icon'] }}"
+                <x-dl.icon slug="features-grid:XalQEW" prefix="icon" name="{{ $feature['icon'] }}"
                     default-wrapper-classes="mb-4 text-primary"
                     default-classes="size-8" />
-                <x-dl.wrapper slug="features-grid:t8cALD" prefix="feature_title" tag="h3"
+                <x-dl.wrapper slug="features-grid:XalQEW" prefix="feature_title" tag="h3"
                     default-classes="text-lg font-semibold text-zinc-900 dark:text-white mb-2">
                     {{ $feature['title'] }}
                 </x-dl.wrapper>
-                <x-dl.wrapper slug="features-grid:t8cALD" prefix="feature_desc" tag="p"
+                <x-dl.wrapper slug="features-grid:XalQEW" prefix="feature_desc" tag="p"
                     default-classes="text-zinc-500 dark:text-zinc-400 text-sm leading-relaxed">
                     {{ $feature['desc'] }}
                 </x-dl.wrapper>
@@ -175,7 +175,7 @@ new #[Layout('layouts.public')] #[Title('Test Page')] class extends Component {}
         @endforeach
     </x-dl.grid>
 </x-dl.section>
-{{-- ROW:end:features-grid:t8cALD --}}
+{{-- ROW:end:features-grid:XalQEW --}}
 
 {{-- ROW:start:cta-banner:tigc6m --}}
 <x-dl.section slug="cta-banner:tigc6m"
