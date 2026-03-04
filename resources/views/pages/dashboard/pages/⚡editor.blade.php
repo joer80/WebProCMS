@@ -1342,8 +1342,9 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                                 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400': $wire.pageStatus === 'draft',
                                 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400': $wire.pageStatus === 'unpublished',
                             }"
-                            class="text-xs font-medium px-2 py-0.5 rounded-full capitalize cursor-default"
+                            class="text-xs font-medium px-2 py-0.5 rounded-full capitalize cursor-pointer"
                             x-text="$wire.pageStatus"
+                            @click="$wire.showSeoModal = true; $dispatch('open-settings-section', 'basic')"
                         ></span>
                     </flux:tooltip>
 
@@ -1353,8 +1354,9 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                             x-bind:class="$wire.seoNoindex
                                 ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
                                 : 'bg-zinc-100 text-zinc-500 dark:bg-zinc-700 dark:text-zinc-400'"
-                            class="text-xs font-medium px-2 py-0.5 rounded-full cursor-default"
+                            class="text-xs font-medium px-2 py-0.5 rounded-full cursor-pointer"
                             x-text="$wire.seoNoindex ? 'No Index' : 'Indexed'"
+                            @click="$wire.showSeoModal = true; $dispatch('open-settings-section', 'seo')"
                         ></span>
                     </flux:tooltip>
 
@@ -1364,8 +1366,9 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                             x-bind:class="$wire.redirectUrl
                                 ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
                                 : 'bg-zinc-100 text-zinc-500 dark:bg-zinc-700 dark:text-zinc-400'"
-                            class="text-xs font-medium px-2 py-0.5 rounded-full cursor-default"
+                            class="text-xs font-medium px-2 py-0.5 rounded-full cursor-pointer"
                             x-text="$wire.redirectUrl ? 'Redirect' : 'No Redirect'"
+                            @click="$wire.showSeoModal = true; $dispatch('open-settings-section', 'redirect')"
                         ></span>
                     </flux:tooltip>
                 </div>
@@ -1946,94 +1949,77 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
         <flux:heading size="lg">Page Settings</flux:heading>
 
         <div class="mt-6 space-y-4">
-            @if (preg_match('#^pages/⚡[^/]+\.blade\.php$#u', $file))
-                {{-- Slug --}}
-                <div>
+            {{-- Basic --}}
+            <div x-data="{ basicOpen: false }" x-on:open-settings-section.window="basicOpen = ($event.detail === 'basic')">
+                <button
+                    type="button"
+                    @click="basicOpen = !basicOpen"
+                    class="w-full flex items-center justify-between text-left"
+                >
+                    <div>
+                        <p class="text-xs font-semibold uppercase tracking-wide text-zinc-700 dark:text-zinc-200">Basic</p>
+                        <p class="text-xs text-zinc-400 dark:text-zinc-500 mt-0.5">Status and URL settings.</p>
+                    </div>
+                    <svg xmlns="http://www.w3.org/2000/svg" class="size-4 text-zinc-600 dark:text-zinc-300 transition-transform duration-200 shrink-0 ml-3" :class="basicOpen ? 'rotate-180' : ''" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="m19 9-7 7-7-7" />
+                    </svg>
+                </button>
+
+                <div x-show="basicOpen" x-transition class="mt-4 space-y-4">
+                    {{-- Visibility / Status --}}
                     <flux:field>
-                        <flux:label>Slug</flux:label>
-                        <flux:input wire:model.live.debounce.300ms="pageSlug" placeholder="my-page-slug" />
-                        <flux:description>URL path: /{{ $pageSlug ?: '…' }}</flux:description>
-                        <flux:error name="pageSlug" />
+                        <flux:label>Status</flux:label>
+                        <flux:select wire:model="pageStatus">
+                            <flux:select.option value="draft">Draft</flux:select.option>
+                            <flux:select.option value="published">Published</flux:select.option>
+                            <flux:select.option value="unlisted">Unlisted</flux:select.option>
+                            <flux:select.option value="unpublished">Unpublished</flux:select.option>
+                        </flux:select>
+                        <div x-data>
+                            <flux:description x-show="$wire.pageStatus === 'draft'">Saved but not yet visible to the public.</flux:description>
+                            <flux:description x-show="$wire.pageStatus === 'published'">Live and visible to all visitors.</flux:description>
+                            <flux:description x-show="$wire.pageStatus === 'unlisted'">Accessible via direct link, but excluded from auto-generated navigation.</flux:description>
+                            <flux:description x-show="$wire.pageStatus === 'unpublished'">Removed from public access — visitors will see a 404.</flux:description>
+                        </div>
+                        <flux:error name="pageStatus" />
                     </flux:field>
-                </div>
 
-                @if ($originalPageSlug && $pageSlug !== $originalPageSlug)
-                    {{-- Redirect from old slug --}}
-                    <div class="rounded-lg border border-zinc-200 dark:border-zinc-700 p-4 space-y-3">
-                        <flux:switch
-                            label="Redirect /{{ $originalPageSlug }} to /{{ $pageSlug ?: '…' }}"
-                            description="Forward visitors from the old URL to the new one."
-                            wire:model="createSlugRedirect"
-                        />
-
-                        @if ($createSlugRedirect)
-                            <flux:field>
-                                <flux:label>Redirect type</flux:label>
-                                <flux:select wire:model="slugRedirectType">
-                                    <flux:select.option value="301">301 — Permanent</flux:select.option>
-                                    <flux:select.option value="302">302 — Temporary</flux:select.option>
-                                </flux:select>
-                                <flux:description>Use 301 for permanent moves. Use 302 for temporary redirects.</flux:description>
-                            </flux:field>
-                        @endif
-                    </div>
-                @endif
-
-                {{-- Cache --}}
-                <div>
-                    <flux:switch
-                        label="Cache response"
-                        :description="'Full-page cache this page for ' . \Carbon\CarbonInterval::seconds(config('responsecache.cache_lifetime_in_seconds'))->cascade()->forHumans() . ' for unauthenticated visitors. Disable for pages with dynamic or user-specific content.'"
-                        wire:model="isCachedPage"
-                    />
-                </div>
-
-                {{-- Login Required --}}
-                <div x-data>
-                    <flux:switch
-                        label="Require login"
-                        description="Only authenticated users can access this page."
-                        wire:model.live="requiresLogin"
-                    />
-
-                    <div x-show="$wire.requiresLogin" x-transition class="mt-3">
+                    @if (preg_match('#^pages/⚡[^/]+\.blade\.php$#u', $file))
+                        {{-- Slug --}}
                         <flux:field>
-                            <flux:label>Required role</flux:label>
-                            <flux:select wire:model="requiredRole">
-                                <flux:select.option value="">Any logged-in user</flux:select.option>
-                                <flux:select.option value="manager">Manager or above</flux:select.option>
-                                <flux:select.option value="admin">Admin or above</flux:select.option>
-                                <flux:select.option value="super">Super only</flux:select.option>
-                            </flux:select>
-                            <flux:description>Restrict access to users with at least this role.</flux:description>
-                            <flux:error name="requiredRole" />
+                            <flux:label>Slug</flux:label>
+                            <flux:input wire:model.live.debounce.300ms="pageSlug" placeholder="my-page-slug" />
+                            <flux:description>URL path: /{{ $pageSlug ?: '…' }}</flux:description>
+                            <flux:error name="pageSlug" />
                         </flux:field>
-                    </div>
-                </div>
-            @endif
 
-            {{-- Visibility / Status --}}
-            <div>
-                <flux:field>
-                    <flux:label>Status</flux:label>
-                    <flux:select wire:model="pageStatus">
-                        <flux:select.option value="draft">Draft</flux:select.option>
-                        <flux:select.option value="published">Published</flux:select.option>
-                        <flux:select.option value="unlisted">Unlisted</flux:select.option>
-                        <flux:select.option value="unpublished">Unpublished</flux:select.option>
-                    </flux:select>
-                    <div x-data>
-                        <flux:description x-show="$wire.pageStatus === 'draft'">Saved but not yet visible to the public.</flux:description>
-                        <flux:description x-show="$wire.pageStatus === 'published'">Live and visible to all visitors.</flux:description>
-                        <flux:description x-show="$wire.pageStatus === 'unlisted'">Accessible via direct link, but excluded from auto-generated navigation.</flux:description>
-                        <flux:description x-show="$wire.pageStatus === 'unpublished'">Removed from public access — visitors will see a 404.</flux:description>
-                    </div>
-                    <flux:error name="pageStatus" />
-                </flux:field>
+                        @if ($originalPageSlug && $pageSlug !== $originalPageSlug)
+                            {{-- Redirect from old slug --}}
+                            <div class="rounded-lg border border-zinc-200 dark:border-zinc-700 p-4 space-y-3">
+                                <flux:switch
+                                    label="Redirect /{{ $originalPageSlug }} to /{{ $pageSlug ?: '…' }}"
+                                    description="Forward visitors from the old URL to the new one."
+                                    wire:model="createSlugRedirect"
+                                />
+
+                                @if ($createSlugRedirect)
+                                    <flux:field>
+                                        <flux:label>Redirect type</flux:label>
+                                        <flux:select wire:model="slugRedirectType">
+                                            <flux:select.option value="301">301 — Permanent</flux:select.option>
+                                            <flux:select.option value="302">302 — Temporary</flux:select.option>
+                                        </flux:select>
+                                        <flux:description>Use 301 for permanent moves. Use 302 for temporary redirects.</flux:description>
+                                    </flux:field>
+                                @endif
+                            </div>
+                        @endif
+                    @endif
+                </div>
             </div>
 
             {{-- SEO --}}
-            <div x-data="{ seoOpen: false }" class="pt-4 border-t border-zinc-200 dark:border-zinc-700">
+            <div x-data="{ seoOpen: false }" x-on:open-settings-section.window="seoOpen = ($event.detail === 'seo')" class="pt-4 border-t border-zinc-200 dark:border-zinc-700">
                 <button
                     type="button"
                     @click="seoOpen = !seoOpen"
@@ -2077,8 +2063,59 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                 </div>
             </div>
 
+            {{-- Advanced --}}
+            <div x-data="{ advancedOpen: false }" x-on:open-settings-section.window="advancedOpen = ($event.detail === 'advanced')" class="pt-4 border-t border-zinc-200 dark:border-zinc-700">
+                <button
+                    type="button"
+                    @click="advancedOpen = !advancedOpen"
+                    class="w-full flex items-center justify-between text-left"
+                >
+                    <div>
+                        <p class="text-xs font-semibold uppercase tracking-wide text-zinc-700 dark:text-zinc-200">Advanced</p>
+                        <p class="text-xs text-zinc-400 dark:text-zinc-500 mt-0.5">Caching and access control.</p>
+                    </div>
+                    <svg xmlns="http://www.w3.org/2000/svg" class="size-4 text-zinc-600 dark:text-zinc-300 transition-transform duration-200 shrink-0 ml-3" :class="advancedOpen ? 'rotate-180' : ''" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="m19 9-7 7-7-7" />
+                    </svg>
+                </button>
+
+                <div x-show="advancedOpen" x-transition class="mt-4 space-y-4">
+                    @if (preg_match('#^pages/⚡[^/]+\.blade\.php$#u', $file))
+                        {{-- Cache --}}
+                        <flux:switch
+                            label="Cache response"
+                            :description="'Full-page cache this page for ' . \Carbon\CarbonInterval::seconds(config('responsecache.cache_lifetime_in_seconds'))->cascade()->forHumans() . ' for unauthenticated visitors. Disable for pages with dynamic or user-specific content.'"
+                            wire:model="isCachedPage"
+                        />
+
+                        {{-- Login Required --}}
+                        <div x-data>
+                            <flux:switch
+                                label="Require login"
+                                description="Only authenticated users can access this page."
+                                wire:model.live="requiresLogin"
+                            />
+
+                            <div x-show="$wire.requiresLogin" x-transition class="mt-3">
+                                <flux:field>
+                                    <flux:label>Required role</flux:label>
+                                    <flux:select wire:model="requiredRole">
+                                        <flux:select.option value="">Any logged-in user</flux:select.option>
+                                        <flux:select.option value="manager">Manager or above</flux:select.option>
+                                        <flux:select.option value="admin">Admin or above</flux:select.option>
+                                        <flux:select.option value="super">Super only</flux:select.option>
+                                    </flux:select>
+                                    <flux:description>Restrict access to users with at least this role.</flux:description>
+                                    <flux:error name="requiredRole" />
+                                </flux:field>
+                            </div>
+                        </div>
+                    @endif
+                </div>
+            </div>
+
             {{-- Redirect --}}
-            <div x-data="{ redirectOpen: false }" class="pt-4 border-t border-zinc-200 dark:border-zinc-700">
+            <div x-data="{ redirectOpen: false }" x-on:open-settings-section.window="redirectOpen = ($event.detail === 'redirect')" class="pt-4 border-t border-zinc-200 dark:border-zinc-700">
                 <button
                     type="button"
                     @click="redirectOpen = !redirectOpen"
