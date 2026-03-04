@@ -32,93 +32,84 @@ new #[Layout('layouts.public', ['description' => 'Get in touch with the GetRows 
         $this->submitted = true;
     }
 }; ?>
-
-<div>
-    <div class="grid lg:grid-cols-2 gap-12">
-        {{-- Contact info --}}
-        <div>
-            <h1 class="text-4xl font-semibold leading-tight mb-4">Get in Touch</h1>
-            <p class="text-[#706f6c] dark:text-[#A1A09A] leading-normal mb-8">
-                Have a question or just want to say hello? Fill out the form and we'll get back to you within one business day.
-            </p>
-
-            <div class="space-y-6 text-sm">
-                <div>
-                    <p class="font-semibold mb-1">Email</p>
-                    <p class="text-[#706f6c] dark:text-[#A1A09A]">{{ config('business.email') }}</p>
-                </div>
-                <div>
-                    <p class="font-semibold mb-1">Phone</p>
-                    <p class="text-[#706f6c] dark:text-[#A1A09A]">{{ config('business.phone') }}</p>
-                </div>
-                <div>
-                    <p class="font-semibold mb-1">Office</p>
-                    <p class="text-[#706f6c] dark:text-[#A1A09A]">{{ config('business.address_street') }}<br>{{ config('business.address_city_state_zip') }}</p>
-                </div>
-                <div>
-                    <p class="font-semibold mb-1">Hours</p>
-                    <p class="text-[#706f6c] dark:text-[#A1A09A]">{{ config('business.hours') }}</p>
-                </div>
-            </div>
-        </div>
-
-        {{-- Form --}}
-        <div class="bg-white dark:bg-[#161615] rounded-lg shadow-[inset_0px_0px_0px_1px_rgba(26,26,0,0.16)] dark:shadow-[inset_0px_0px_0px_1px_#fffaed2d] p-8">
-            @if ($submitted)
-                <div class="flex flex-col items-center justify-center h-full text-center py-8 gap-4">
-                    <div class="w-12 h-12 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
-                        <flux:icon name="check" class="text-green-600 dark:text-green-400" />
-                    </div>
-                    <flux:heading size="lg">Message Sent!</flux:heading>
-                    <flux:text class="text-[#706f6c] dark:text-[#A1A09A]">
-                        Thanks for reaching out. We'll be in touch within one business day.
-                    </flux:text>
-                    <flux:button wire:click="$set('submitted', false)" variant="ghost">
-                        Send another message
-                    </flux:button>
-                </div>
-            @else
-                <form wire:submit="submit" class="space-y-5">
-                    <div class="grid grid-cols-2 gap-4">
-                        <flux:field>
-                            <flux:label>First Name</flux:label>
-                            <flux:input wire:model="firstName" type="text" placeholder="Jane" required />
-                            <flux:error name="firstName" />
-                        </flux:field>
-                        <flux:field>
-                            <flux:label>Last Name</flux:label>
-                            <flux:input wire:model="lastName" type="text" placeholder="Smith" required />
-                            <flux:error name="lastName" />
-                        </flux:field>
-                    </div>
-
-                    <flux:field>
-                        <flux:label>Email</flux:label>
-                        <flux:input wire:model="email" type="email" placeholder="jane@example.com" required />
-                        <flux:error name="email" />
-                    </flux:field>
-
-                    <flux:field>
-                        <flux:label>
-                            Phone Number
-                            <flux:badge size="sm" variant="outline" class="ml-1">Optional</flux:badge>
-                        </flux:label>
-                        <flux:input wire:model="phone" type="tel" placeholder="+1 (555) 000-0000" />
-                        <flux:error name="phone" />
-                    </flux:field>
-
-                    <flux:field>
-                        <flux:label>Your Inquiry</flux:label>
-                        <flux:textarea wire:model="inquiry" placeholder="Tell us how we can help…" rows="5" required />
-                        <flux:error name="inquiry" />
-                    </flux:field>
-
-                    <flux:button type="submit" variant="primary" class="w-full" wire:loading.attr="disabled">
-                        <span wire:loading.remove>Send Message</span>
-                        <span wire:loading>Sending…</span>
-                    </flux:button>
-                </form>
-            @endif
-        </div>
+<div>{{-- ROW:start:contact-form:YsqD1J --}}
+<x-dl.section slug="contact-form:YsqD1J"
+    default-section-classes="py-section px-6 bg-white dark:bg-zinc-900"
+    default-container-classes="max-w-5xl mx-auto grid lg:grid-cols-2 gap-12 items-start">
+    <div>
+        <x-dl.heading slug="contact-form:YsqD1J" prefix="headline" default="Get in Touch"
+            default-tag="h1"
+            default-classes="text-4xl font-semibold leading-tight mb-4" />
+        <x-dl.subheadline slug="contact-form:YsqD1J" prefix="description" default="Have a question or just want to say hello? Fill out the form and we'll get back to you within one business day."
+            default-classes="text-zinc-500 dark:text-zinc-400 leading-normal mb-8" />
+        <x-dl.grid slug="contact-form:YsqD1J" prefix="contact_items"
+            default-grid-classes="space-y-6 text-sm"
+            default-items='[{"label":"Email","value":"hello@example.com"},{"label":"Phone","value":"(555) 000-0000"},{"label":"Office","value":"123 Main Street, San Francisco CA 94105"},{"label":"Hours","value":"Mon\u2013Fri: 9am\u20136pm"}]'>
+            @dlItems('contact-form:YsqD1J', 'contact_items', $contactItems, '[{"label":"Email","value":"hello@example.com"},{"label":"Phone","value":"(555) 000-0000"},{"label":"Office","value":"123 Main Street, San Francisco CA 94105"},{"label":"Hours","value":"Mon\u2013Fri: 9am\u20136pm"}]')
+            @foreach ($contactItems as $contactItem)
+                <x-dl.card slug="contact-form:YsqD1J" prefix="contact_item" default-classes="">
+                    <x-dl.wrapper slug="contact-form:YsqD1J" prefix="item_label" tag="p"
+                        default-classes="font-semibold mb-1">{{ $contactItem['label'] }}</x-dl.wrapper>
+                    <x-dl.wrapper slug="contact-form:YsqD1J" prefix="item_value" tag="p"
+                        default-classes="text-zinc-500 dark:text-zinc-400">{{ $contactItem['value'] }}</x-dl.wrapper>
+                </x-dl.card>
+            @endforeach
+        </x-dl.grid>
     </div>
+    <x-dl.group slug="contact-form:YsqD1J" prefix="form" tag="form"
+        default-classes="space-y-5 bg-white dark:bg-[#161615] rounded-lg shadow-[inset_0px_0px_0px_1px_rgba(26,26,0,0.16)] dark:shadow-[inset_0px_0px_0px_1px_#fffaed2d] p-8">
+        <x-dl.card slug="contact-form:YsqD1J" prefix="name_grid"
+            default-classes="grid grid-cols-2 gap-4">
+            <div>
+                <x-dl.wrapper slug="contact-form:YsqD1J" prefix="first_name_label" tag="label"
+                    default-classes="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
+                    First Name
+                </x-dl.wrapper>
+                <x-dl.wrapper slug="contact-form:YsqD1J" prefix="first_name_input" tag="input"
+                    type="text" placeholder="Jane"
+                    default-classes="block w-full rounded-lg border border-zinc-200 dark:border-zinc-700 px-3 py-2 text-sm text-zinc-900 dark:text-white placeholder-zinc-400 bg-white dark:bg-zinc-700 focus:outline-none focus:ring-2 focus:ring-primary" />
+            </div>
+            <div>
+                <x-dl.wrapper slug="contact-form:YsqD1J" prefix="last_name_label" tag="label"
+                    default-classes="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
+                    Last Name
+                </x-dl.wrapper>
+                <x-dl.wrapper slug="contact-form:YsqD1J" prefix="last_name_input" tag="input"
+                    type="text" placeholder="Smith"
+                    default-classes="block w-full rounded-lg border border-zinc-200 dark:border-zinc-700 px-3 py-2 text-sm text-zinc-900 dark:text-white placeholder-zinc-400 bg-white dark:bg-zinc-700 focus:outline-none focus:ring-2 focus:ring-primary" />
+            </div>
+        </x-dl.card>
+        <div>
+            <x-dl.wrapper slug="contact-form:YsqD1J" prefix="email_label" tag="label"
+                default-classes="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
+                Email
+            </x-dl.wrapper>
+            <x-dl.wrapper slug="contact-form:YsqD1J" prefix="email_input" tag="input"
+                type="email" placeholder="jane@example.com"
+                default-classes="block w-full rounded-lg border border-zinc-200 dark:border-zinc-700 px-3 py-2 text-sm text-zinc-900 dark:text-white placeholder-zinc-400 bg-white dark:bg-zinc-700 focus:outline-none focus:ring-2 focus:ring-primary" />
+        </div>
+        <div>
+            <x-dl.wrapper slug="contact-form:YsqD1J" prefix="phone_label" tag="label"
+                default-classes="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
+                Phone Number
+            </x-dl.wrapper>
+            <x-dl.wrapper slug="contact-form:YsqD1J" prefix="phone_input" tag="input"
+                type="tel" placeholder="+1 (555) 000-0000"
+                default-classes="block w-full rounded-lg border border-zinc-200 dark:border-zinc-700 px-3 py-2 text-sm text-zinc-900 dark:text-white placeholder-zinc-400 bg-white dark:bg-zinc-700 focus:outline-none focus:ring-2 focus:ring-primary" />
+        </div>
+        <div>
+            <x-dl.wrapper slug="contact-form:YsqD1J" prefix="inquiry_label" tag="label"
+                default-classes="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
+                Your Inquiry
+            </x-dl.wrapper>
+            <x-dl.wrapper slug="contact-form:YsqD1J" prefix="inquiry_textarea" tag="textarea"
+                rows="5" placeholder="Tell us how we can help…"
+                default-classes="block w-full rounded-lg border border-zinc-200 dark:border-zinc-700 px-3 py-2 text-sm text-zinc-900 dark:text-white placeholder-zinc-400 bg-white dark:bg-zinc-700 focus:outline-none focus:ring-2 focus:ring-primary resize-none">
+            </x-dl.wrapper>
+        </div>
+        <x-dl.button slug="contact-form:YsqD1J" prefix="submit" type="submit" default="Send Message"
+            default-classes="w-full py-3 bg-primary text-white font-semibold rounded-lg hover:bg-primary/90 transition-colors" />
+    </x-dl.group>
+</x-dl.section>
+{{-- ROW:end:contact-form:YsqD1J --}}
 </div>
