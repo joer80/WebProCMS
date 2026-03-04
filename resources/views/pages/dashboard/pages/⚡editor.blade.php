@@ -33,6 +33,11 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
 
     public bool $isDirty = false;
 
+    /** @var array<int, array<int, array{slug: string, name: string, blade: string}>> */
+    public array $rowHistory = [];
+
+    public int $historyIndex = -1;
+
     public string $previewUrl = '';
 
     public string $liveUrl = '';
@@ -275,6 +280,8 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
             $this->isCachedPage = true;
             $this->requiredRole = '';
         }
+        $this->rowHistory = [$this->rows];
+        $this->historyIndex = 0;
         $this->liveUrl = $service->getRouteForFile($relativePath);
         $this->previewUrl = route('design-library.preview', ['token' => $service->previewToken($relativePath)]);
 
@@ -293,6 +300,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
         $rows = $this->rows;
         [$rows[$index - 1], $rows[$index]] = [$rows[$index], $rows[$index - 1]];
         $this->rows = array_values($rows);
+        $this->pushHistory();
         $this->isDirty = true;
 
         $this->refreshPreview();
@@ -307,6 +315,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
         $rows = $this->rows;
         [$rows[$index], $rows[$index + 1]] = [$rows[$index + 1], $rows[$index]];
         $this->rows = array_values($rows);
+        $this->pushHistory();
         $this->isDirty = true;
 
         $this->refreshPreview();
@@ -321,6 +330,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
         $row = array_splice($this->rows, $from, 1)[0];
         array_splice($this->rows, $to, 0, [$row]);
         $this->rows = array_values($this->rows);
+        $this->pushHistory();
         $this->isDirty = true;
 
         $this->refreshPreview();
@@ -329,6 +339,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
     public function toggleRowVisibility(int $index): void
     {
         $this->rows[$index]['hidden'] = empty($this->rows[$index]['hidden']) ? true : false;
+        $this->pushHistory();
         $this->isDirty = true;
 
         $this->refreshPreview();
@@ -351,6 +362,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
 
         array_splice($this->rows, $index, 1);
         $this->rows = array_values($this->rows);
+        $this->pushHistory();
         $this->loadRowDesignValues();
         $this->isDirty = true;
 
@@ -360,6 +372,73 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
         }
 
         $this->refreshPreview();
+    }
+
+    public function removeAllRows(): void
+    {
+        foreach ($this->rows as $row) {
+            $slug = $row['slug'] ?? null;
+            $isShared = ! empty($row['shared']);
+
+            if ($slug) {
+                if ($this->phpSection) {
+                    $this->phpSection = (new VoltFileService)->removePhpCode($this->phpSection, $slug);
+                }
+
+                if (! $isShared) {
+                    ContentOverride::query()->where('row_slug', $slug)->delete();
+                }
+            }
+        }
+
+        $this->rows = [];
+        $this->pushHistory();
+        $this->loadRowDesignValues();
+        $this->isDirty = true;
+        $this->showContentEditor = false;
+        $this->editingRowIndex = null;
+        $this->refreshPreview();
+        $this->dispatch('notify', message: 'All rows removed.');
+    }
+
+    public function pasteAllRows(array $rows): void
+    {
+        $newRows = [];
+
+        foreach ($rows as $row) {
+            $oldSlug = $row['slug'] ?? '';
+            $templateName = Str::before($oldSlug, ':');
+            $newSlug = $templateName.':'.Str::random(6);
+
+            $overrides = ContentOverride::query()->where('row_slug', $oldSlug)->get();
+
+            foreach ($overrides as $override) {
+                ContentOverride::query()->create([
+                    'row_slug' => $newSlug,
+                    'page_slug' => null,
+                    'key' => $override->key,
+                    'type' => $override->type->value,
+                    'value' => $override->value,
+                ]);
+            }
+
+            $newRows[] = [
+                'slug' => $newSlug,
+                'name' => $row['name'] ?? '',
+                'blade' => str_replace($oldSlug, $newSlug, $row['blade'] ?? ''),
+                'shared' => $row['shared'] ?? false,
+                'hidden' => $row['hidden'] ?? false,
+            ];
+        }
+
+        $this->rows = array_merge($this->rows, $newRows);
+        $this->pushHistory();
+        $this->loadRowDesignValues();
+        $this->isDirty = true;
+        $this->showContentEditor = false;
+        $this->editingRowIndex = null;
+        $this->refreshPreview();
+        $this->dispatch('notify', message: 'Rows pasted.');
     }
 
     public function openLibraryDrawer(int $atIndex): void
@@ -398,6 +477,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
 
         array_splice($this->rows, $atIndex, 0, [$newRow]);
         $this->rows = array_values($this->rows);
+        $this->pushHistory();
         $this->loadRowDesignValues();
         $this->isDirty = true;
         $this->showLibraryDrawer = false;
@@ -418,6 +498,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
         $filename = str_replace(':', '-', $slug);
         $this->rows[$index]['blade'] = "@include('shared-rows.{$filename}')";
         $this->rows[$index]['shared'] = true;
+        $this->pushHistory();
 
         $this->isDirty = true;
         $this->refreshPreview();
@@ -442,6 +523,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
 
         array_splice($this->rows, $atIndex, 0, [$newRow]);
         $this->rows = array_values($this->rows);
+        $this->pushHistory();
         $this->loadRowDesignValues();
         $this->isDirty = true;
         $this->showLibraryDrawer = false;
@@ -807,6 +889,51 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
         }
     }
 
+    private function pushHistory(): void
+    {
+        if ($this->historyIndex < count($this->rowHistory) - 1) {
+            $this->rowHistory = array_slice($this->rowHistory, 0, $this->historyIndex + 1);
+        }
+
+        $this->rowHistory[] = $this->rows;
+        $this->historyIndex = count($this->rowHistory) - 1;
+
+        if (count($this->rowHistory) > 20) {
+            array_shift($this->rowHistory);
+            $this->historyIndex = count($this->rowHistory) - 1;
+        }
+    }
+
+    public function undo(): void
+    {
+        if ($this->historyIndex <= 0) {
+            return;
+        }
+
+        $this->historyIndex--;
+        $this->rows = $this->rowHistory[$this->historyIndex];
+        $this->loadRowDesignValues();
+        $this->isDirty = true;
+        $this->showContentEditor = false;
+        $this->editingRowIndex = null;
+        $this->refreshPreview();
+    }
+
+    public function redo(): void
+    {
+        if ($this->historyIndex >= count($this->rowHistory) - 1) {
+            return;
+        }
+
+        $this->historyIndex++;
+        $this->rows = $this->rowHistory[$this->historyIndex];
+        $this->loadRowDesignValues();
+        $this->isDirty = true;
+        $this->showContentEditor = false;
+        $this->editingRowIndex = null;
+        $this->refreshPreview();
+    }
+
     private function loadRowDesignValues(): void
     {
         $this->rowDesignDefaults = [];
@@ -1166,11 +1293,13 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
         <div class="sticky top-0 z-30 bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-700 px-6 py-3 flex items-center gap-3">
             <div class="flex-1 flex items-center gap-3">
                 <flux:button href="{{ route('dashboard.pages') }}" variant="outline" size="sm" icon="arrow-left" wire:navigate>
-                    {{ __('Back to Pages') }}
+                    {{ __('Back to Dashboard') }}
                 </flux:button>
 
-                @if ($file)
-                    <flux:button variant="outline" size="sm" wire:click="$set('showSeoModal', true)" :loading="false">{{ __('Page Settings') }}</flux:button>
+                @if ($liveUrl)
+                    <flux:button href="{{ $liveUrl }}" variant="outline" size="sm">
+                        {{ __('Back to Website') }}
+                    </flux:button>
                 @endif
 
                 <flux:tooltip content="Selected Page">
@@ -1181,7 +1310,60 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                         @endforeach
                     </flux:select>
                 </flux:tooltip>
+
+                @if ($file)
+                    <flux:button variant="outline" size="sm" wire:click="$set('showSeoModal', true)" :loading="false">{{ __('Page Settings') }}</flux:button>
+                @endif
             </div>
+
+            {{-- Page status badges --}}
+            @if ($file)
+                @php
+                    $statusTooltips = [
+                        'draft'       => 'Saved but not yet visible to the public.',
+                        'published'   => 'Live and visible to all visitors.',
+                        'unlisted'    => 'Accessible via direct link, but excluded from auto-generated navigation.',
+                        'unpublished' => 'Removed from public access — visitors will see a 404.',
+                    ];
+                @endphp
+                <div class="flex items-center gap-1.5 ml-28">
+                    <flux:tooltip content="{{ $statusTooltips[$pageStatus] ?? '' }}" position="bottom">
+                        <span
+                            x-data
+                            x-bind:class="{
+                                'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400': $wire.pageStatus === 'published',
+                                'bg-zinc-100 text-zinc-600 dark:bg-zinc-700 dark:text-zinc-300': $wire.pageStatus === 'unlisted',
+                                'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400': $wire.pageStatus === 'draft',
+                                'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400': $wire.pageStatus === 'unpublished',
+                            }"
+                            class="text-xs font-medium px-2 py-0.5 rounded-full capitalize cursor-default"
+                            x-text="$wire.pageStatus"
+                        ></span>
+                    </flux:tooltip>
+
+                    <flux:tooltip content="{{ $seoNoindex ? 'Search engines are prevented from indexing this page.' : 'Search engines can index this page.' }}" position="bottom">
+                        <span
+                            x-data
+                            x-bind:class="$wire.seoNoindex
+                                ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
+                                : 'bg-zinc-100 text-zinc-500 dark:bg-zinc-700 dark:text-zinc-400'"
+                            class="text-xs font-medium px-2 py-0.5 rounded-full cursor-default"
+                            x-text="$wire.seoNoindex ? 'No Index' : 'Indexed'"
+                        ></span>
+                    </flux:tooltip>
+
+                    <flux:tooltip content="{{ $redirectUrl ? 'Redirects to: '.$redirectUrl : 'No redirect configured.' }}" position="bottom">
+                        <span
+                            x-data
+                            x-bind:class="$wire.redirectUrl
+                                ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
+                                : 'bg-zinc-100 text-zinc-500 dark:bg-zinc-700 dark:text-zinc-400'"
+                            class="text-xs font-medium px-2 py-0.5 rounded-full cursor-default"
+                            x-text="$wire.redirectUrl ? 'Redirect' : 'No Redirect'"
+                        ></span>
+                    </flux:tooltip>
+                </div>
+            @endif
 
             {{-- Center: preview width controls --}}
             <div class="flex-1 flex justify-center items-center gap-1">
@@ -1293,10 +1475,25 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
 
             <div class="flex-1 flex items-center justify-end gap-2">
                 @if ($isDirty)
-                    <span class="text-xs text-amber-600 dark:text-amber-400 font-medium">Unsaved changes</span>
+                    <span class="text-xs text-amber-600 dark:text-amber-400 font-medium whitespace-nowrap">Unsaved changes</span>
                 @endif
 
                 @if ($file)
+                    <span class="{{ $historyIndex <= 0 ? 'opacity-30 pointer-events-none' : '' }}">
+                        <flux:tooltip content="Undo">
+                            <flux:button wire:click="undo" variant="ghost" size="sm" icon="arrow-uturn-left" />
+                        </flux:tooltip>
+                    </span>
+                    <span class="{{ $historyIndex >= count($rowHistory) - 1 ? 'opacity-30 pointer-events-none' : '' }}">
+                        <flux:tooltip content="Redo">
+                            <flux:button wire:click="redo" variant="ghost" size="sm" icon="arrow-uturn-right" />
+                        </flux:tooltip>
+                    </span>
+                    <span class="{{ ! $isDirty ? 'opacity-30 pointer-events-none' : '' }}">
+                        <flux:tooltip content="Discard unsaved changes">
+                            <flux:button wire:click="discardChanges" variant="ghost" size="sm" icon="arrow-path" />
+                        </flux:tooltip>
+                    </span>
                     @if ($liveUrl)
                         <a href="{{ $liveUrl }}" target="_blank">
                             <flux:button variant="outline" size="sm" icon="arrow-top-right-on-square">{{ __('View Live') }}</flux:button>
@@ -1305,9 +1502,6 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                     <flux:button wire:click="saveFile" variant="primary" size="sm" icon="check">
                         {{ __('Save') }}
                     </flux:button>
-                    <flux:tooltip content="Discard changes">
-                        <flux:button wire:click="discardChanges" variant="ghost" size="sm" icon="arrow-path" />
-                    </flux:tooltip>
                 @endif
             </div>
         </div>
@@ -1473,49 +1667,43 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                     <div x-show="!editorOpen" class="flex flex-col flex-1">
                         <div class="shrink-0 px-4 py-3 border-b border-zinc-200 dark:border-zinc-700 flex items-center justify-between">
                             <flux:heading size="sm" class="text-zinc-600 dark:text-zinc-400">{{ __('Page Rows') }}</flux:heading>
-                            @php
-                                $statusTooltips = [
-                                    'draft'       => 'Saved but not yet visible to the public.',
-                                    'published'   => 'Live and visible to all visitors.',
-                                    'unlisted'    => 'Accessible via direct link, but excluded from auto-generated navigation.',
-                                    'unpublished' => 'Removed from public access — visitors will see a 404.',
-                                ];
-                            @endphp
-                            <div class="flex items-center gap-1.5">
-                                <flux:tooltip content="{{ $statusTooltips[$pageStatus] ?? '' }}" position="left">
-                                    <span
-                                        x-data
-                                        x-bind:class="{
-                                            'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400': $wire.pageStatus === 'published',
-                                            'bg-zinc-100 text-zinc-600 dark:bg-zinc-700 dark:text-zinc-300': $wire.pageStatus === 'unlisted',
-                                            'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400': $wire.pageStatus === 'draft',
-                                            'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400': $wire.pageStatus === 'unpublished',
-                                        }"
-                                        class="text-xs font-medium px-2 py-0.5 rounded-full capitalize cursor-default"
-                                        x-text="$wire.pageStatus"
-                                    ></span>
+                            <div class="flex items-center gap-0.5" x-data="{ allDesignsOpen: false }">
+                                <flux:tooltip content="Copy all rows" position="bottom">
+                                    <button type="button"
+                                        x-on:click="localStorage.setItem('webprocms_copied_rows', JSON.stringify($wire.rows)); $dispatch('notify', { message: 'Rows copied.' })"
+                                        class="p-1 rounded text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors"
+                                    >
+                                        <flux:icon name="clipboard-document" class="size-3.5" />
+                                    </button>
                                 </flux:tooltip>
-
-                                <flux:tooltip content="{{ $seoNoindex ? 'Search engines are prevented from indexing this page.' : 'Search engines can index this page.' }}" position="left">
-                                    <span
-                                        x-data
-                                        x-bind:class="$wire.seoNoindex
-                                            ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
-                                            : 'bg-zinc-100 text-zinc-500 dark:bg-zinc-700 dark:text-zinc-400'"
-                                        class="text-xs font-medium px-2 py-0.5 rounded-full cursor-default"
-                                        x-text="$wire.seoNoindex ? 'No Index' : 'Indexed'"
-                                    ></span>
+                                <flux:tooltip content="Paste all rows" position="bottom">
+                                    <button type="button"
+                                        x-on:click="
+                                            const data = localStorage.getItem('webprocms_copied_rows');
+                                            if (data) { $wire.pasteAllRows(JSON.parse(data)); }
+                                        "
+                                        class="p-1 rounded text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors"
+                                    >
+                                        <flux:icon name="clipboard-document-check" class="size-3.5" />
+                                    </button>
                                 </flux:tooltip>
-
-                                <flux:tooltip content="{{ $redirectUrl ? 'Redirects to: '.$redirectUrl : 'No redirect configured.' }}" position="left">
-                                    <span
-                                        x-data
-                                        x-bind:class="$wire.redirectUrl
-                                            ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
-                                            : 'bg-zinc-100 text-zinc-500 dark:bg-zinc-700 dark:text-zinc-400'"
-                                        class="text-xs font-medium px-2 py-0.5 rounded-full cursor-default"
-                                        x-text="$wire.redirectUrl ? 'Redirect' : 'No Redirect'"
-                                    ></span>
+                                <flux:tooltip content="Remove all rows" position="bottom">
+                                    <button type="button"
+                                        x-on:click="if (confirm('Remove all rows from this page?')) $wire.removeAllRows()"
+                                        class="p-1 rounded text-zinc-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors"
+                                    >
+                                        <flux:icon name="trash" class="size-3.5" />
+                                    </button>
+                                </flux:tooltip>
+                                <div class="w-px h-3.5 bg-zinc-200 dark:bg-zinc-600 mx-0.5"></div>
+                                <flux:tooltip content="Toggle all section designs" position="bottom">
+                                    <button type="button"
+                                        x-on:click="allDesignsOpen = !allDesignsOpen; $dispatch(allDesignsOpen ? 'expand-all-rows' : 'collapse-all-rows')"
+                                        :class="allDesignsOpen ? 'text-primary' : 'text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200'"
+                                        class="p-1 rounded hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors"
+                                    >
+                                        <flux:icon name="paint-brush" class="size-3.5" />
+                                    </button>
                                 </flux:tooltip>
                             </div>
                         </div>
@@ -1526,6 +1714,8 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                                     wire:key="row-item-{{ $row['slug'] }}"
                                     data-row-sidebar-index="{{ $index }}"
                                     x-data="{ designOpen: false }"
+                                    @collapse-all-rows.window="designOpen = false"
+                                    @expand-all-rows.window="designOpen = true"
                                     class="rounded-lg border bg-white dark:bg-zinc-900 overflow-hidden transition-colors {{ !empty($row['hidden']) ? 'opacity-60' : '' }}"
                                     :class="editorOpen && {{ $editingRowIndex ?? -1 }} === {{ $index }} ? 'border-primary' : (designOpen ? 'border-primary/50' : 'border-zinc-200 dark:border-zinc-700')"
                                     draggable="true"
