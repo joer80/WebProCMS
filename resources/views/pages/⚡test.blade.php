@@ -46,6 +46,10 @@ new #[Layout('layouts.public')] #[Title('Test Page')] class extends Component {}
     default-primary-classes="px-6 py-3 bg-primary text-white font-semibold rounded-lg hover:bg-primary/90 transition-colors"
     default-secondary-label="Learn More"
     default-secondary-classes="px-6 py-3 border border-zinc-300 dark:border-zinc-600 text-zinc-700 dark:text-zinc-200 font-semibold rounded-lg hover:bg-zinc-50 transition-colors" />
+
+<x-dl.button slug="section:KfOsBf" prefix="button" default="Get Started"
+    default-url="#"
+    default-classes="px-6 py-3 bg-primary text-white font-semibold rounded-lg hover:bg-primary/90 transition-colors" />
 </x-dl.section>
 {{-- ROW:end:section:KfOsBf --}}
 

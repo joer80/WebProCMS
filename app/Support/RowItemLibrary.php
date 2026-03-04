@@ -18,6 +18,7 @@ class RowItemLibrary
         $definitions = [
             'heading' => ['name' => 'Heading', 'icon' => 'document-text', 'prefix' => 'headline'],
             'subheadline' => ['name' => 'Subheadline', 'icon' => 'bars-3-bottom-left', 'prefix' => 'subheadline'],
+            'button' => ['name' => 'Button', 'icon' => 'cursor-arrow-rays', 'prefix' => 'button'],
             'buttons' => ['name' => 'Buttons', 'icon' => 'cursor-arrow-rays'],
             'image' => ['name' => 'Image', 'icon' => 'photo', 'prefix' => 'section_image'],
             'video' => ['name' => 'Video', 'icon' => 'film', 'prefix' => 'section_video'],

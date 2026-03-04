@@ -10,7 +10,8 @@ class Button extends Component
     public function __construct(
         public string $slug,
         public string $prefix = 'button',
-        public string $default = 'Submit',
+        public string $default = 'Get Started',
+        public string $defaultUrl = '#',
         public string $defaultClasses = 'px-6 py-3 bg-primary text-white font-semibold rounded-lg hover:bg-primary/90 transition-colors',
     ) {}
 
@@ -26,7 +27,9 @@ class Button extends Component
 
         return [
             ['key' => "toggle_{$prefix}", 'default' => '1'],
-            ['key' => $prefix, 'default' => $attrs['default'] ?? 'Submit'],
+            ['key' => $prefix, 'default' => $attrs['default'] ?? 'Get Started'],
+            ['key' => "{$prefix}_url", 'default' => $attrs['default-url'] ?? '#'],
+            ['key' => "{$prefix}_new_tab", 'default' => ''],
             ['key' => "{$prefix}_classes", 'default' => $attrs['default-classes'] ?? 'px-6 py-3 bg-primary text-white font-semibold rounded-lg hover:bg-primary/90 transition-colors'],
         ];
     }
