@@ -1595,7 +1595,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                 {{-- Right panel: row list / inline content editor --}}
                 <div
                     class="w-96 shrink-0 order-last border-l border-zinc-200 dark:border-zinc-700 flex flex-col"
-                    x-data="{ editorOpen: false, designMode: false, allGroupsOpen: true, selectedRowIndex: null }"
+                    x-data="{ editorOpen: false, designMode: false, allGroupsOpen: false, selectedRowIndex: null }"
                     x-on:content-editor-opened.window="editorOpen = true; designMode = false"
                     x-on:content-editor-closed.window="editorOpen = false"
                     x-on:row-selected.window="selectedRowIndex = $event.detail.index"
@@ -1676,7 +1676,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                                                 $groupAllClasses = $bodyFields->isNotEmpty() && $bodyFields->every(fn ($f) => $f['type'] === 'classes');
                                             @endphp
                                             <div x-show="designMode ? {{ $groupHasClassesFields ? 'true' : 'false' }} : {{ $groupAllClasses ? 'false' : 'true' }}">
-                                            <div x-data="{ open: true, groupDesignMode: false, groupContentMode: false, groupHasClasses: {{ $groupHasClassesFields ? 'true' : 'false' }} }" @set-group-design-mode.window="groupDesignMode = $event.detail.value; groupContentMode = false" @set-group-open.window="open = $event.detail.value" class="rounded-lg border border-zinc-200 dark:border-zinc-700 overflow-hidden">
+                                            <div x-data="{ open: false, groupDesignMode: false, groupContentMode: false, groupHasClasses: {{ $groupHasClassesFields ? 'true' : 'false' }} }" @set-group-design-mode.window="groupDesignMode = $event.detail.value; groupContentMode = false" @set-group-open.window="open = $event.detail.value" class="rounded-lg border border-zinc-200 dark:border-zinc-700 overflow-hidden">
                                                 <div class="flex items-center gap-2 px-3 py-2 bg-zinc-100 dark:bg-zinc-700/50">
                                                     <button
                                                         type="button"

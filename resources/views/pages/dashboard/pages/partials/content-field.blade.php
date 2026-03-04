@@ -34,33 +34,15 @@
                 </button>
             </div>
         @endif
-        <div
-            x-data
-            x-on:click="$refs.imgInput_{{ $field['key'] }}.click()"
-            class="flex items-center gap-3 px-4 py-3 border-2 border-dashed border-zinc-300 dark:border-zinc-600 rounded-lg cursor-pointer hover:border-primary transition-colors"
-        >
-            <flux:icon name="photo" class="size-5 text-zinc-400 shrink-0" />
-            <span class="text-sm text-zinc-500 dark:text-zinc-400">
-                {{ $currentPath ? 'Replace image…' : 'Upload image…' }}
-            </span>
-            <input
-                x-ref="imgInput_{{ $field['key'] }}"
-                type="file"
-                accept="image/*"
-                class="hidden"
-                x-on:change="
-                    $wire.setPendingImageKey('{{ $field['key'] }}').then(() => {
-                        $wire.upload('pendingImageUpload', $event.target.files[0])
-                    })
-                "
-            >
-        </div>
         <button
             wire:click="openMediaPicker('{{ $field['key'] }}')"
             type="button"
-            class="mt-1.5 text-xs text-zinc-500 dark:text-zinc-400 hover:text-primary dark:hover:text-primary underline"
+            class="flex items-center gap-3 px-4 py-3 w-full border-2 border-dashed border-zinc-300 dark:border-zinc-600 rounded-lg cursor-pointer hover:border-primary transition-colors"
         >
-            or pick from Media Library
+            <flux:icon name="photo" class="size-5 text-zinc-400 shrink-0" />
+            <span class="text-sm text-zinc-500 dark:text-zinc-400">
+                {{ $currentPath ? 'Replace image…' : 'Pick from Media Library…' }}
+            </span>
         </button>
     @elseif ($field['type'] === 'richtext')
         <flux:textarea
