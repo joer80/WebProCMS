@@ -15,9 +15,10 @@
     <head>
         @include('partials.head', ['cssBundle' => 'resources/css/public.css', 'noindex' => $noindex, 'ogImage' => $ogImage])
     </head>
-    <body class="bg-[#FDFDFC] dark:bg-[#0a0a0a] text-[#1b1b18] dark:text-[#EDEDEC] flex p-6 lg:p-8 min-h-screen flex-col antialiased">
-        <header class="w-full max-w-4xl mx-auto text-sm mb-10" x-data="{ open: false }">
-            <nav class="flex items-center justify-between gap-4">
+    <body class="bg-[#FDFDFC] dark:bg-[#0a0a0a] text-[#1b1b18] dark:text-[#EDEDEC] flex min-h-screen flex-col antialiased">
+        <header class="w-full border-b border-[#e3e3e0] dark:border-[#3E3E3A] text-sm mb-10" x-data="{ open: false }">
+            <div class="max-w-6xl mx-auto px-6">
+            <nav class="flex items-center justify-between gap-4 h-14">
                 <a href="{{ route('home') }}">
                     <img src="{{ config('branding.logo_url', asset('images/logo.svg')) }}" alt="{{ config('app.name') }}" class="h-8 w-auto" />
                 </a>
@@ -76,13 +77,15 @@
                     @endauth
                 @endif
             </div>
+            </div>
         </header>
 
-        <main class="w-full max-w-4xl mx-auto flex-1">
+        <main class="w-full flex-1">
             {{ $slot }}
         </main>
 
-        <footer class="w-full max-w-4xl mx-auto border-t border-[#e3e3e0] dark:border-[#3E3E3A] mt-16 pt-10 pb-8">
+        <footer class="w-full border-t border-[#e3e3e0] dark:border-[#3E3E3A] mt-16 pt-10 pb-8 px-6">
+            <div class="max-w-6xl mx-auto">
             <div class="flex flex-col gap-8 sm:flex-row sm:justify-between">
                 <div class="flex flex-col gap-3">
                     <a href="{{ route('home') }}">
@@ -125,6 +128,7 @@
             </div>
             <div class="mt-10 border-t border-[#e3e3e0] dark:border-[#3E3E3A] pt-6">
                 <p class="text-xs text-[#706f6c] dark:text-[#A1A09A]">&copy; {{ date('Y') }} {{ config('app.name') }}. All rights reserved.</p>
+            </div>
             </div>
         </footer>
 
