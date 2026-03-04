@@ -4,6 +4,7 @@ namespace App\Enums;
 
 enum RowCategory: string
 {
+    case Blank = 'blank';
     case NotFound = '404';
     case Login = 'login';
     case Blog = 'blog';

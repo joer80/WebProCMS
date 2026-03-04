@@ -6,6 +6,8 @@ use App\Models\ContentOverride;
 use App\Models\DesignRow;
 use App\Models\MediaItem;
 use App\Models\SharedRow;
+use App\Support\DesignLibraryService;
+use App\Support\RowItemLibrary;
 use App\Support\VoltFileService;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -87,6 +89,8 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
 
     // Content editor state
     public bool $showContentEditor = false;
+
+    public bool $showItemPicker = false;
 
     public ?int $editingRowIndex = null;
 
@@ -652,6 +656,62 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
         $this->dispatch('content-editor-opened');
     }
 
+    public function openItemPicker(): void
+    {
+        $this->showItemPicker = true;
+    }
+
+    public function addItemToRow(string $itemKey): void
+    {
+        $items = RowItemLibrary::items();
+
+        if (! isset($items[$itemKey]) || $this->editingRowIndex === null) {
+            return;
+        }
+
+        $item = $items[$itemKey];
+        $slug = $this->rows[$this->editingRowIndex]['slug'];
+        $blade = $this->rows[$this->editingRowIndex]['blade'];
+
+        $snippet = $item['blade'];
+
+        if (isset($item['prefix'])) {
+            $prefix = $this->findUniquePrefix($blade, $item['prefix']);
+            $snippet = str_replace('__PREFIX__', $prefix, $snippet);
+        }
+
+        $snippet = str_replace('__SLUG__', $slug, $snippet);
+
+        $this->rows[$this->editingRowIndex]['blade'] = str_replace(
+            '</x-dl.section>',
+            "\n".$snippet."\n</x-dl.section>",
+            $blade
+        );
+
+        $this->showItemPicker = false;
+        $this->isDirty = true;
+        $this->pushHistory();
+        $this->openContentEditor($this->editingRowIndex);
+        $this->refreshPreview();
+    }
+
+    private function findUniquePrefix(string $blade, string $desiredPrefix): string
+    {
+        preg_match_all('/\bprefix=["\']([^"\']+)["\']/', $blade, $matches);
+        $existingPrefixes = $matches[1];
+
+        if (! in_array($desiredPrefix, $existingPrefixes, true)) {
+            return $desiredPrefix;
+        }
+
+        $i = 2;
+        while (in_array("{$desiredPrefix}_{$i}", $existingPrefixes, true)) {
+            $i++;
+        }
+
+        return "{$desiredPrefix}_{$i}";
+    }
+
     public function cancelContentEditor(): void
     {
         foreach ($this->contentFields as $field) {
@@ -1102,8 +1162,8 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
      */
     private function parseContentFields(string $blade, string $slug): array
     {
-        $templateName = explode(':', $slug, 2)[0];
-        $schemaFields = app(\App\Support\SchemaCache::class)->getFieldsForRow($templateName);
+        $normalized = str_replace($slug, '__SLUG__', $blade);
+        $schemaFields = app(DesignLibraryService::class)->parseSchemaFields($normalized);
 
         return array_map(fn ($field) => array_merge($field, ['slug' => $slug]), $schemaFields);
     }
@@ -1302,6 +1362,23 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
 }; ?>
 
 <div>
+    {{-- Item Picker --}}
+    <flux:modal wire:model="showItemPicker" class="w-full max-w-sm">
+        <flux:heading size="lg" class="mb-1">{{ __('Add Item') }}</flux:heading>
+        <flux:subheading class="mb-4">{{ __('Choose an item to add to this section.') }}</flux:subheading>
+        <div class="grid grid-cols-2 gap-2">
+            @foreach (\App\Support\RowItemLibrary::items() as $itemKey => $item)
+                <button
+                    wire:click="addItemToRow('{{ $itemKey }}')"
+                    class="flex items-center gap-2 p-3 rounded-lg border border-zinc-200 dark:border-zinc-700 hover:border-primary/40 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors text-left"
+                >
+                    <flux:icon name="{{ $item['icon'] }}" class="size-4 text-zinc-500 dark:text-zinc-400 shrink-0" />
+                    <span class="text-sm font-medium text-zinc-800 dark:text-zinc-200">{{ $item['name'] }}</span>
+                </button>
+            @endforeach
+        </div>
+    </flux:modal>
+
     {{-- Library Drawer --}}
     <flux:modal wire:model="showLibraryDrawer" class="w-full max-w-xl">
         <flux:heading size="lg" class="mb-4">{{ __('Insert Row') }}</flux:heading>
@@ -1740,8 +1817,9 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                             @endif
                             @if (empty($contentFields))
                                 <div class="text-center py-8 text-zinc-400 dark:text-zinc-500">
-                                    <flux:icon name="pencil" class="size-10 mx-auto mb-2 opacity-40" />
-                                    <p class="text-sm">This row has no editable content fields.</p>
+                                    <flux:icon name="plus-circle" class="size-10 mx-auto mb-2 opacity-40" />
+                                    <p class="text-sm">No content yet.</p>
+                                    <p class="text-xs mt-1">Add items to build out this section.</p>
                                 </div>
                             @else
                                 @php
@@ -1836,6 +1914,14 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                                     @endforeach
                                 </div>
                             @endif
+
+                            <button
+                                wire:click="openItemPicker"
+                                class="mt-4 w-full py-3 border-2 border-dashed border-zinc-300 dark:border-zinc-700 rounded-lg text-sm text-zinc-500 dark:text-zinc-400 hover:border-primary hover:text-primary transition-colors flex items-center justify-center gap-2"
+                            >
+                                <flux:icon name="plus" class="size-4" />
+                                {{ __('Add Item') }}
+                            </button>
                         </div>
 
                         <div class="shrink-0 flex gap-2 p-3 border-t border-zinc-200 dark:border-zinc-700">
