@@ -15,6 +15,8 @@
 @source '../../vendor/livewire/flux-pro/stubs/**/*.blade.php';
 @source '../../vendor/livewire/flux/stubs/**/*.blade.php';
 
+@source inline("{dark:,hover:,focus:,}{text,bg,border,ring,ring-offset,outline,shadow,from,via,to,divide,decoration,caret,placeholder}-{primary,primary-hover,primary-foreground,primary-surface,accent,accent-content,accent-foreground}");
+
 @custom-variant dark (&:where(.dark, .dark *));
 
 @theme {
