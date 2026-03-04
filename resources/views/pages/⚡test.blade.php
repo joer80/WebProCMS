@@ -28,26 +28,26 @@ new #[Layout('layouts.public')] #[Title('Test Page')] class extends Component {}
 </x-dl.section>
 {{-- ROW:end:hero-split:4N5jN6 --}}
 
-{{-- ROW:start:blank-section:M6SoQ6 --}}
-<x-dl.section slug="blank-section:M6SoQ6"
+{{-- ROW:start:section:KfOsBf --}}
+<x-dl.section slug="section:KfOsBf"
     default-section-classes="py-section px-6 bg-white dark:bg-zinc-900"
     default-container-classes="max-w-6xl mx-auto">
 
-    <x-dl.heading slug="blank-section:M6SoQ6" prefix="headline" default="Your Heading"
-        default-tag="h2"
-        default-classes="font-heading text-3xl font-bold text-zinc-900 dark:text-white" />
+<x-dl.heading slug="section:KfOsBf" prefix="headline" default="Your Heading"
+    default-tag="h2"
+    default-classes="font-heading text-3xl font-bold text-zinc-900 dark:text-white" />
 
-    <x-dl.subheadline slug="blank-section:M6SoQ6" prefix="subheadline" default="Supporting text goes here."
-        default-classes="mt-4 text-lg text-zinc-500 dark:text-zinc-400" />
+<x-dl.subheadline slug="section:KfOsBf" prefix="subheadline" default="Supporting text goes here."
+    default-classes="mt-4 text-lg text-zinc-500 dark:text-zinc-400" />
 
-    <x-dl.buttons slug="blank-section:M6SoQ6"
-        default-wrapper-classes="mt-8 flex flex-wrap items-center gap-4"
-        default-primary-label="Get Started"
-        default-primary-classes="px-6 py-3 bg-primary text-white font-semibold rounded-lg hover:bg-primary/90 transition-colors"
-        default-secondary-label="Learn More"
-        default-secondary-classes="px-6 py-3 border border-zinc-300 dark:border-zinc-600 text-zinc-700 dark:text-zinc-200 font-semibold rounded-lg hover:bg-zinc-50 transition-colors" />
+<x-dl.buttons slug="section:KfOsBf"
+    default-wrapper-classes="mt-8 flex flex-wrap items-center gap-4"
+    default-primary-label="Get Started"
+    default-primary-classes="px-6 py-3 bg-primary text-white font-semibold rounded-lg hover:bg-primary/90 transition-colors"
+    default-secondary-label="Learn More"
+    default-secondary-classes="px-6 py-3 border border-zinc-300 dark:border-zinc-600 text-zinc-700 dark:text-zinc-200 font-semibold rounded-lg hover:bg-zinc-50 transition-colors" />
 </x-dl.section>
-{{-- ROW:end:blank-section:M6SoQ6 --}}
+{{-- ROW:end:section:KfOsBf --}}
 
 {{-- ROW:start:faqs-accordion:nTIGso --}}
 <x-dl.section slug="faqs-accordion:nTIGso"
