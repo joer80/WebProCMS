@@ -1332,7 +1332,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                         'unpublished' => 'Removed from public access — visitors will see a 404.',
                     ];
                 @endphp
-                <div class="flex items-center gap-1.5 ml-16">
+                <div class="flex-1 flex items-center justify-center gap-1.5">
                     <flux:tooltip content="{{ $statusTooltips[$pageStatus] ?? '' }}" position="bottom">
                         <span
                             x-data
