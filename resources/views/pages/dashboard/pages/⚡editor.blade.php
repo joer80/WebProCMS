@@ -1204,7 +1204,11 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
         preg_match("/'status'\s*=>\s*'([^']*)'/", $this->phpSection, $statusMatch);
         $this->pageStatus = $statusMatch[1] ?? 'published';
 
-        $this->altRowsEnabled = ! (bool) preg_match("/'alt_rows_disabled'\s*=>\s*true/", $this->phpSection);
+        if ((bool) preg_match("/'alt_rows_disabled'\s*=>\s*true/", $this->phpSection)) {
+            $this->altRowsEnabled = false;
+        } else {
+            $this->altRowsEnabled = (bool) config('branding.alt_rows_enabled', true);
+        }
 
         preg_match('/\/\/ ROW:php:start:page-redirect.*?redirect\(\'([^\']*)\',\s*(\d+)\)/s', $this->phpSection, $redirectMatch);
         $this->redirectUrl = $redirectMatch[1] ?? '';

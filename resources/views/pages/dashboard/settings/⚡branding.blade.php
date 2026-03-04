@@ -16,11 +16,21 @@ new #[Layout('layouts.app')] #[Title('Branding')] class extends Component {
 
     public string $sectionSpacing = '';
 
+    public bool $altRowsEnabled = true;
+
     public function mount(): void
     {
         $this->logoUrl = config('branding.logo_url');
+        $this->altRowsEnabled = (bool) config('branding.alt_rows_enabled', true);
         $this->loadThemeColors();
         $this->loadTypography();
+    }
+
+    public function saveAltRows(): void
+    {
+        $this->writeBrandingConfig();
+
+        $this->dispatch('notify', message: 'Alt row setting saved.');
     }
 
     public function saveLogo(): void
@@ -144,6 +154,8 @@ new #[Layout('layouts.app')] #[Title('Branding')] class extends Component {
         $path = config_path('branding.php');
         $e = fn (string $v): string => str_replace("'", "\\'", $v);
 
+        $altRowsPhp = $this->altRowsEnabled ? 'true' : 'false';
+
         file_put_contents($path, implode("\n", [
             '<?php',
             '',
@@ -152,6 +164,7 @@ new #[Layout('layouts.app')] #[Title('Branding')] class extends Component {
             "    'logo_url' => '{$e($this->logoUrl)}',",
             "    'body_font' => '{$e($this->bodyFont)}',",
             "    'heading_font' => '{$e($this->headingFont)}',",
+            "    'alt_rows_enabled' => {$altRowsPhp},",
             '',
             '];',
             '',
@@ -165,6 +178,7 @@ new #[Layout('layouts.app')] #[Title('Branding')] class extends Component {
             'branding.logo_url' => $this->logoUrl,
             'branding.body_font' => $this->bodyFont,
             'branding.heading_font' => $this->headingFont,
+            'branding.alt_rows_enabled' => $this->altRowsEnabled,
         ]);
     }
 
@@ -203,6 +217,19 @@ new #[Layout('layouts.app')] #[Title('Branding')] class extends Component {
                         </div>
                     </div>
                     <flux:button wire:click="saveLogo" variant="outline" class="shrink-0">Save</flux:button>
+                </div>
+            </div>
+
+            <div class="rounded-lg border border-zinc-200 dark:border-zinc-700 p-6">
+                <div class="flex items-start justify-between gap-6">
+                    <div class="flex-1">
+                        <flux:heading>Alt Row Backgrounds</flux:heading>
+                        <flux:text class="mt-1">Apply an alternating background color to every other section across all pages by default. Individual pages and rows can override this setting.</flux:text>
+                        <div class="mt-4">
+                            <flux:switch wire:model="altRowsEnabled" label="Enable alt row backgrounds site-wide" />
+                        </div>
+                    </div>
+                    <flux:button wire:click="saveAltRows" variant="outline" class="shrink-0">Save</flux:button>
                 </div>
             </div>
 
