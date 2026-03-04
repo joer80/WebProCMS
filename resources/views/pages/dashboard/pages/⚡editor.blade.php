@@ -38,6 +38,8 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
 
     public int $historyIndex = -1;
 
+    public int $savedHistoryIndex = -1;
+
     public string $previewUrl = '';
 
     public string $liveUrl = '';
@@ -282,6 +284,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
         }
         $this->rowHistory = [$this->rows];
         $this->historyIndex = 0;
+        $this->savedHistoryIndex = 0;
         $this->liveUrl = $service->getRouteForFile($relativePath);
         $this->previewUrl = route('design-library.preview', ['token' => $service->previewToken($relativePath)]);
 
@@ -824,6 +827,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
         }
 
         $this->isDirty = false;
+        $this->savedHistoryIndex = $this->historyIndex;
         $this->dispatch('notify', message: 'Page saved.');
     }
 
@@ -913,7 +917,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
         $this->historyIndex--;
         $this->rows = $this->rowHistory[$this->historyIndex];
         $this->loadRowDesignValues();
-        $this->isDirty = true;
+        $this->isDirty = $this->historyIndex !== $this->savedHistoryIndex;
         $this->showContentEditor = false;
         $this->editingRowIndex = null;
         $this->refreshPreview();
@@ -928,7 +932,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
         $this->historyIndex++;
         $this->rows = $this->rowHistory[$this->historyIndex];
         $this->loadRowDesignValues();
-        $this->isDirty = true;
+        $this->isDirty = $this->historyIndex !== $this->savedHistoryIndex;
         $this->showContentEditor = false;
         $this->editingRowIndex = null;
         $this->refreshPreview();
@@ -1292,14 +1296,14 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
         {{-- Editor toolbar --}}
         <div class="sticky top-0 z-30 bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-700 px-6 py-3 flex items-center gap-3">
             <div class="flex-1 flex items-center gap-3">
-                <flux:button href="{{ route('dashboard.pages') }}" variant="outline" size="sm" icon="arrow-left" wire:navigate>
-                    {{ __('Back to Dashboard') }}
-                </flux:button>
+                <flux:tooltip content="Back to Dashboard" position="bottom">
+                    <flux:button href="{{ route('dashboard.pages') }}" variant="outline" size="sm" icon="arrow-left" wire:navigate />
+                </flux:tooltip>
 
                 @if ($liveUrl)
-                    <flux:button href="{{ $liveUrl }}" variant="outline" size="sm">
-                        {{ __('Back to Website') }}
-                    </flux:button>
+                    <flux:tooltip content="Back to Website" position="bottom">
+                        <flux:button href="{{ $liveUrl }}" variant="outline" size="sm" icon="globe-alt" />
+                    </flux:tooltip>
                 @endif
 
                 <flux:tooltip content="Selected Page">
@@ -1312,7 +1316,9 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                 </flux:tooltip>
 
                 @if ($file)
-                    <flux:button variant="outline" size="sm" wire:click="$set('showSeoModal', true)" :loading="false">{{ __('Page Settings') }}</flux:button>
+                    <flux:tooltip content="Page Settings" position="bottom">
+                        <flux:button variant="outline" size="sm" icon="cog-6-tooth" wire:click="$set('showSeoModal', true)" :loading="false" />
+                    </flux:tooltip>
                 @endif
             </div>
 
@@ -1326,7 +1332,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                         'unpublished' => 'Removed from public access — visitors will see a 404.',
                     ];
                 @endphp
-                <div class="flex items-center gap-1.5 ml-28">
+                <div class="flex items-center gap-1.5 ml-16">
                     <flux:tooltip content="{{ $statusTooltips[$pageStatus] ?? '' }}" position="bottom">
                         <span
                             x-data
