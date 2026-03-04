@@ -26,7 +26,7 @@ class VoltFileService
             $relative = str_replace(resource_path('views').'/', '', $fullPath);
             $label = $this->labelFromPath($relative);
 
-            if (str_contains($relative, 'pages/auth/')) {
+            if (str_contains($relative, 'pages/auth/') || str_contains($relative, 'pages/blog/')) {
                 continue;
             }
 
@@ -34,7 +34,7 @@ class VoltFileService
                 continue;
             }
 
-            if (str_contains($relative, 'pages/dashboard/')) {
+            if (str_contains($relative, 'pages/dashboard/') || $relative === 'pages/⚡dashboard.blade.php') {
                 $groups['Dashboard'][$label] = $relative;
             } elseif (str_contains($relative, 'pages/settings/')) {
                 $groups['Other'][$label] = $relative;
