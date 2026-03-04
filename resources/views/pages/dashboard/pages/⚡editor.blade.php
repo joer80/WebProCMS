@@ -1965,7 +1965,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                     </svg>
                 </button>
 
-                <div x-show="basicOpen" x-transition class="mt-4 space-y-4">
+                <div x-show="basicOpen" x-transition class="mt-3 pl-4 border-l-2 border-zinc-200 dark:border-zinc-700 space-y-4">
                     {{-- Visibility / Status --}}
                     <flux:field>
                         <flux:label>Status</flux:label>
@@ -2034,7 +2034,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                     </svg>
                 </button>
 
-                <div x-show="seoOpen" x-transition class="mt-4 space-y-4">
+                <div x-show="seoOpen" x-transition class="mt-3 pl-4 border-l-2 border-zinc-200 dark:border-zinc-700 space-y-4">
                     <flux:input
                         label="Page Title"
                         wire:model="seoTitle"
@@ -2079,7 +2079,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                     </svg>
                 </button>
 
-                <div x-show="advancedOpen" x-transition class="mt-4 space-y-4">
+                <div x-show="advancedOpen" x-transition class="mt-3 pl-4 border-l-2 border-zinc-200 dark:border-zinc-700 space-y-4">
                     @if (preg_match('#^pages/⚡[^/]+\.blade\.php$#u', $file))
                         {{-- Cache --}}
                         <flux:switch
@@ -2130,7 +2130,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                     </svg>
                 </button>
 
-                <div x-show="redirectOpen" x-transition class="mt-4 space-y-3">
+                <div x-show="redirectOpen" x-transition class="mt-3 pl-4 border-l-2 border-zinc-200 dark:border-zinc-700 space-y-3">
                     <flux:input
                         label="Redirect URL"
                         wire:model="redirectUrl"
