@@ -444,6 +444,41 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
         $this->dispatch('notify', message: 'Rows pasted.');
     }
 
+    public function pasteSingleRow(array $row): void
+    {
+        $oldSlug = $row['slug'] ?? '';
+        $templateName = Str::before($oldSlug, ':');
+        $newSlug = $templateName.':'.Str::random(6);
+
+        $overrides = ContentOverride::query()->where('row_slug', $oldSlug)->get();
+
+        foreach ($overrides as $override) {
+            ContentOverride::query()->create([
+                'row_slug' => $newSlug,
+                'page_slug' => null,
+                'key' => $override->key,
+                'type' => $override->type->value,
+                'value' => $override->value,
+            ]);
+        }
+
+        $this->rows[] = [
+            'slug' => $newSlug,
+            'name' => $row['name'] ?? '',
+            'blade' => str_replace($oldSlug, $newSlug, $row['blade'] ?? ''),
+            'shared' => false,
+            'hidden' => $row['hidden'] ?? false,
+        ];
+        $this->rows = array_values($this->rows);
+        $this->pushHistory();
+        $this->loadRowDesignValues();
+        $this->isDirty = true;
+        $this->showContentEditor = false;
+        $this->editingRowIndex = null;
+        $this->refreshPreview();
+        $this->dispatch('notify', message: 'Row pasted.');
+    }
+
     public function openLibraryDrawer(int $atIndex): void
     {
         IndexDesignLibraryJob::dispatchSync();
@@ -1261,6 +1296,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                 const rows = $wire.rows;
                 const index = rows.findIndex(r => r.slug === slug);
                 if (index !== -1) {
+                    $dispatch('row-selected', { index: index });
                     $wire.openContentEditor(index);
                     $nextTick(() => {
                         const el = document.querySelector('[data-row-sidebar-index=\'' + index + '\']');
@@ -1287,6 +1323,28 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
         }"
         @keydown.ctrl.s.window.prevent="if ($wire.file) $wire.saveFile()"
         @keydown.meta.s.window.prevent="if ($wire.file) $wire.saveFile()"
+        @keydown.ctrl.c.window="
+            const activeTag = document.activeElement?.tagName;
+            const isTextField = ['INPUT', 'TEXTAREA', 'SELECT'].includes(activeTag) || document.activeElement?.isContentEditable;
+            const hasSelection = window.getSelection()?.toString().length > 0;
+            if (!isTextField && !hasSelection) { $dispatch('copy-row-keyboard'); }
+        "
+        @keydown.meta.c.window="
+            const activeTag = document.activeElement?.tagName;
+            const isTextField = ['INPUT', 'TEXTAREA', 'SELECT'].includes(activeTag) || document.activeElement?.isContentEditable;
+            const hasSelection = window.getSelection()?.toString().length > 0;
+            if (!isTextField && !hasSelection) { $dispatch('copy-row-keyboard'); }
+        "
+        @keydown.ctrl.v.window="
+            const activeTag = document.activeElement?.tagName;
+            const isTextField = ['INPUT', 'TEXTAREA', 'SELECT'].includes(activeTag) || document.activeElement?.isContentEditable;
+            if (!isTextField) { const data = localStorage.getItem('webprocms_copied_single_row'); if (data) { $wire.pasteSingleRow(JSON.parse(data)); } }
+        "
+        @keydown.meta.v.window="
+            const activeTag = document.activeElement?.tagName;
+            const isTextField = ['INPUT', 'TEXTAREA', 'SELECT'].includes(activeTag) || document.activeElement?.isContentEditable;
+            if (!isTextField) { const data = localStorage.getItem('webprocms_copied_single_row'); if (data) { $wire.pasteSingleRow(JSON.parse(data)); } }
+        "
         @message.window="
             if ($event.data && $event.data.editorRowSlug) { selectRowBySlug($event.data.editorRowSlug); }
             else if ($event.origin === window.location.origin && $event.data && $event.data.type === 'editor-save-page' && $wire.file) { $wire.saveFile(); }
@@ -1537,9 +1595,17 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                 {{-- Right panel: row list / inline content editor --}}
                 <div
                     class="w-96 shrink-0 order-last border-l border-zinc-200 dark:border-zinc-700 flex flex-col"
-                    x-data="{ editorOpen: false, designMode: false, allGroupsOpen: true }"
+                    x-data="{ editorOpen: false, designMode: false, allGroupsOpen: true, selectedRowIndex: null }"
                     x-on:content-editor-opened.window="editorOpen = true; designMode = false"
                     x-on:content-editor-closed.window="editorOpen = false"
+                    x-on:row-selected.window="selectedRowIndex = $event.detail.index"
+                    x-on:row-deselected.window="selectedRowIndex = null"
+                    x-on:copy-row-keyboard.window="
+                        if (selectedRowIndex !== null) {
+                            const row = $wire.rows[selectedRowIndex];
+                            if (row) { localStorage.setItem('webprocms_copied_single_row', JSON.stringify(row)); $dispatch('notify', { message: 'Row copied.' }); }
+                        }
+                    "
                 >
                     {{-- Content editor view --}}
                     <div x-show="editorOpen" class="flex flex-col flex-1" style="display: none">
@@ -1717,7 +1783,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                             </div>
                         </div>
 
-                        <div class="flex-1 overflow-y-auto p-3 space-y-2" x-data="{ dragging: null, over: null }">
+                        <div class="flex-1 overflow-y-auto p-3 space-y-2" x-data="{ dragging: null, over: null }" @click.self="$dispatch('row-deselected')">
                             @forelse ($rows as $index => $row)
                                 <div
                                     wire:key="row-item-{{ $row['slug'] }}"
@@ -1726,7 +1792,8 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                                     @collapse-all-rows.window="designOpen = false"
                                     @expand-all-rows.window="designOpen = true"
                                     class="rounded-lg border bg-white dark:bg-zinc-900 overflow-hidden transition-colors {{ !empty($row['hidden']) ? 'opacity-60' : '' }}"
-                                    :class="editorOpen && {{ $editingRowIndex ?? -1 }} === {{ $index }} ? 'border-primary' : (designOpen ? 'border-primary/50' : 'border-zinc-200 dark:border-zinc-700')"
+                                    :class="editorOpen && {{ $editingRowIndex ?? -1 }} === {{ $index }} ? 'border-primary' : (selectedRowIndex === {{ $index }} ? 'border-primary' : (designOpen ? 'border-primary/50' : 'border-zinc-200 dark:border-zinc-700'))"
+                                    @click="selectedRowIndex === {{ $index }} ? $dispatch('row-deselected') : $dispatch('row-selected', { index: {{ $index }} })"
                                     draggable="true"
                                     @dragstart="dragging = {{ $index }}"
                                     @dragover.prevent="over = {{ $index }}"
@@ -2178,4 +2245,5 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
             />
         @endif
     </flux:modal>
+
 </div>
