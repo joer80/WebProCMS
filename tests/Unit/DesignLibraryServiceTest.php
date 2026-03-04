@@ -146,15 +146,21 @@ BLADE);
 
     expect($keys[0])->toBe('section_classes')
         ->and($keys[1])->toBe('section_container_classes')
-        ->and($keys[2])->toBe('toggle_headline')
-        ->and($data['schema_fields'][2]['type'])->toBe('toggle')
-        ->and($keys[3])->toBe('headline_htag')
-        ->and($data['schema_fields'][3]['default'])->toBe('h1')
-        ->and($keys[4])->toBe('headline')
-        ->and($data['schema_fields'][4]['default'])->toBe('Your Headline')
-        ->and($keys[5])->toBe('headline_classes')
-        ->and($data['schema_fields'][5]['type'])->toBe('classes')
-        ->and($data['schema_fields'][5]['default'])->toBe('font-heading text-5xl font-bold text-zinc-900');
+        ->and($keys[2])->toBe('section_id')
+        ->and($data['schema_fields'][2]['type'])->toBe('id')
+        ->and($keys[3])->toBe('section_attrs')
+        ->and($data['schema_fields'][3]['type'])->toBe('attrs')
+        ->and($keys[4])->toBe('toggle_headline')
+        ->and($data['schema_fields'][4]['type'])->toBe('toggle')
+        ->and($keys[5])->toBe('headline_htag')
+        ->and($data['schema_fields'][5]['default'])->toBe('h1')
+        ->and($keys[6])->toBe('headline')
+        ->and($data['schema_fields'][6]['default'])->toBe('Your Headline')
+        ->and($keys[7])->toBe('headline_classes')
+        ->and($data['schema_fields'][7]['type'])->toBe('classes')
+        ->and($data['schema_fields'][7]['default'])->toBe('font-heading text-5xl font-bold text-zinc-900')
+        ->and($keys[8])->toBe('headline_id')
+        ->and($data['schema_fields'][8]['type'])->toBe('id');
 
     unlink($file);
 });

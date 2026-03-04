@@ -29,6 +29,8 @@ class Subheadline extends Component
             ['key' => "toggle_{$prefix}", 'default' => '1'],
             ['key' => $prefix, 'default' => $attrs['default'] ?? ''],
             ['key' => "{$prefix}_classes", 'default' => $attrs['default-classes'] ?? 'mt-4 text-lg text-zinc-500 dark:text-zinc-400'],
+            ['key' => "{$prefix}_id", 'default' => '', 'label' => 'Element ID'],
+            ['key' => "{$prefix}_attrs", 'default' => '[]', 'label' => 'Custom Attributes'],
         ];
     }
 

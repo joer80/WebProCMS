@@ -1,4 +1,14 @@
-<div wire:key="field-{{ str_replace(':', '-', $field['slug']) }}-{{ $field['key'] }}" x-show="{{ $field['type'] === 'classes' ? '(designMode || groupDesignMode) && !groupContentMode' : 'groupContentMode || !groupHasClasses || (!designMode && !groupDesignMode)' }}">
+@php
+$effMode = "(groupMode !== null ? groupMode : (advancedMode ? 'advanced' : (designMode ? 'design' : 'content')))";
+if (in_array($field['type'], ['id', 'attrs'])) {
+    $fieldShow = "{$effMode} === 'advanced'";
+} elseif ($field['type'] === 'classes') {
+    $fieldShow = "{$effMode} === 'design'";
+} else {
+    $fieldShow = "{$effMode} === 'content'";
+}
+@endphp
+<div wire:key="field-{{ str_replace(':', '-', $field['slug']) }}-{{ $field['key'] }}" x-show="{{ $fieldShow }}">
     @if ($field['type'] === 'classes')
         <div class="flex items-center justify-between mb-1.5">
             <flux:label class="text-zinc-500 dark:text-zinc-400">{{ $field['label'] }}</flux:label>
@@ -173,7 +183,7 @@
                     {{-- Collapsed header --}}
                     <div class="flex items-center gap-1.5 px-3 py-2">
                         <button type="button" @click="open = !open" class="flex items-center gap-1.5 flex-1 min-w-0 text-left">
-                            <flux:icon name="chevron-right" class="size-4 text-zinc-400 shrink-0 transition-transform duration-150" :class="open ? 'rotate-90' : ''" />
+                            <flux:icon name="chevron-right" class="size-4 text-zinc-400 shrink-0 transition-transform duration-150" x-bind:class="open ? 'rotate-90' : ''" />
                             <span class="text-sm text-zinc-700 dark:text-zinc-200 font-medium truncate" x-text="item.alt || (item.image ? item.image.split('/').pop() : null) || item.title || item.name || item.label || ('Item ' + (idx + 1))"></span>
                         </button>
                         <button
@@ -349,6 +359,87 @@
             rows="3"
             placeholder="{{ $field['default'] }}"
         />
+    @elseif ($field['type'] === 'id')
+        <flux:input
+            wire:model.live.debounce.400ms="contentValues.{{ $field['key'] }}"
+            placeholder="e.g. section-hero"
+        />
+        <flux:text class="text-xs text-zinc-400 mt-1">Used for anchor links: <code class="font-mono">#section-hero</code>. No spaces.</flux:text>
+    @elseif ($field['type'] === 'attrs')
+        @php
+            $attrsRaw = $contentValues[$field['key']] ?? $field['default'];
+            $attrsItems = json_decode($attrsRaw ?: '[]', true) ?: [];
+        @endphp
+        <div
+            x-data="{
+                items: {{ json_encode($attrsItems) }},
+                sync() {
+                    $wire.set('contentValues.{{ $field['key'] }}', JSON.stringify(this.items));
+                },
+                updateItem(idx, key, val) {
+                    this.items[idx][key] = val;
+                    this.sync();
+                },
+                removeItem(idx) {
+                    this.items.splice(idx, 1);
+                    this.sync();
+                },
+                addItem() {
+                    this.items.push({ name: '', value: '' });
+                    this.sync();
+                }
+            }"
+            x-on:content-attrs-reset.window="if ($event.detail.key === '{{ $field['key'] }}') { items = JSON.parse($event.detail.value || '[]'); }"
+            class="space-y-2"
+        >
+            <template x-for="(item, idx) in items" :key="idx">
+                <div x-data="{ open: false }" class="rounded-lg border border-zinc-200 dark:border-zinc-700 overflow-hidden">
+                    <div class="flex items-center gap-1.5 px-3 py-2">
+                        <button type="button" @click="open = !open" class="flex items-center gap-1.5 flex-1 min-w-0 text-left">
+                            <flux:icon name="chevron-right" class="size-4 text-zinc-400 shrink-0 transition-transform duration-150" x-bind:class="open ? 'rotate-90' : ''" />
+                            <span class="text-sm text-zinc-700 dark:text-zinc-200 font-medium font-mono truncate" x-text="item.name || ('Attribute ' + (idx + 1))"></span>
+                        </button>
+                        <button
+                            type="button"
+                            @click="removeItem(idx)"
+                            class="text-zinc-400 hover:text-red-500 transition-colors shrink-0"
+                            title="Remove attribute"
+                        >
+                            <flux:icon name="x-mark" class="size-3.5" />
+                        </button>
+                    </div>
+                    <div x-show="open" x-transition class="border-t border-zinc-200 dark:border-zinc-700 px-3 pt-2 pb-3 space-y-2">
+                        <div>
+                            <p class="text-[10px] uppercase tracking-wider font-semibold text-zinc-500 dark:text-zinc-400 mb-1">Name</p>
+                            <input
+                                :value="item.name"
+                                @change="updateItem(idx, 'name', $event.target.value)"
+                                type="text"
+                                placeholder="data-section"
+                                class="w-full text-sm font-mono rounded-lg border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-900 text-zinc-900 dark:text-white px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition"
+                            />
+                        </div>
+                        <div>
+                            <p class="text-[10px] uppercase tracking-wider font-semibold text-zinc-500 dark:text-zinc-400 mb-1">Value</p>
+                            <input
+                                :value="item.value"
+                                @change="updateItem(idx, 'value', $event.target.value)"
+                                type="text"
+                                placeholder="my-value"
+                                class="w-full text-sm rounded-lg border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-900 text-zinc-900 dark:text-white px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition"
+                            />
+                        </div>
+                    </div>
+                </div>
+            </template>
+            <button
+                type="button"
+                @click="addItem"
+                class="w-full py-2 border-2 border-dashed border-zinc-300 dark:border-zinc-600 rounded-lg text-sm text-zinc-500 dark:text-zinc-400 hover:border-primary hover:text-primary transition-colors"
+            >
+                + Add Attribute
+            </button>
+        </div>
     @else
         <flux:input
             wire:model.live.debounce.400ms="contentValues.{{ $field['key'] }}"

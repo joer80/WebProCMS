@@ -30,6 +30,8 @@ class Heading extends Component
             ['key' => "{$prefix}_htag", 'default' => $attrs['default-tag'] ?? 'h2'],
             ['key' => $prefix, 'default' => $attrs['default'] ?? ''],
             ['key' => "{$prefix}_classes", 'default' => $attrs['default-classes'] ?? 'font-heading text-4xl font-bold text-zinc-900 dark:text-white'],
+            ['key' => "{$prefix}_id", 'default' => '', 'label' => 'Heading ID'],
+            ['key' => "{$prefix}_attrs", 'default' => '[]', 'label' => 'Custom Attributes'],
         ];
     }
 

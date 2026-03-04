@@ -677,6 +677,16 @@ Icons stored as `"bolt"` (outline) or `"bolt:solid"` (solid). Use `x-dl.icon` �
 
 No manual DB insert is required — the index command handles it.
 
+### Custom IDs and Attributes
+
+Every row must support custom element IDs and HTML attributes for jump links and third-party integrations. This is provided automatically by the standard `x-dl.*` components:
+
+- `x-dl.section` — always registers `section_id` and `section_attrs` fields (Advanced tab in editor)
+- `x-dl.heading` — always registers `{prefix}_id` (Advanced tab)
+- `x-dl.wrapper` / `x-dl.card` / `x-dl.group` — always registers `{prefix}_id` (Advanced tab)
+
+Since these are built into the components, any row built using the standard `x-dl.*` skeleton automatically inherits this support. No extra steps needed — just use `x-dl.section` as the outer wrapper (required on every row) and the `id`/`attrs` fields appear in the Advanced tab automatically.
+
 ### Other notes
 
 - Template files only affect newly inserted rows. Existing page blade files have row code copied inline at insert time — update them separately if needed.

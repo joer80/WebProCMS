@@ -3,8 +3,16 @@
 @php
 $sectionCls = content($slug, 'section_classes', $defaultSectionClasses);
 $containerCls = content($slug, 'section_container_classes', $defaultContainerClasses);
+$sectionId = content($slug, 'section_id', '');
+$sectionAttrs = json_decode(content($slug, 'section_attrs', '[]'), true) ?: [];
+$extraAttrs = $sectionId ? ['id' => $sectionId] : [];
+foreach ($sectionAttrs as $attr) {
+    if (!empty($attr['name'])) {
+        $extraAttrs[$attr['name']] = $attr['value'] ?? '';
+    }
+}
 @endphp
-{!! "<{$tag} " . $attributes->merge(['class' => $sectionCls])->toHtml() . ">" !!}
+{!! "<{$tag} " . $attributes->merge(array_merge(['class' => $sectionCls], $extraAttrs))->toHtml() . ">" !!}
 <div class="{{ $containerCls }}">
     {{ $slot }}
 </div>

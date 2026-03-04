@@ -5,7 +5,15 @@ $toggle = content($slug, "toggle_{$prefix}", '1');
 $tag = content($slug, "{$prefix}_htag", $defaultTag);
 $text = content($slug, $prefix, $default);
 $cls = content($slug, "{$prefix}_classes", $defaultClasses);
+$headingId = content($slug, "{$prefix}_id", '');
+$headingAttrs = json_decode(content($slug, "{$prefix}_attrs", '[]'), true) ?: [];
+$extraAttrsStr = $headingId ? ' id="' . e($headingId) . '"' : '';
+foreach ($headingAttrs as $attr) {
+    if (!empty($attr['name'])) {
+        $extraAttrsStr .= ' ' . e($attr['name']) . '="' . e($attr['value'] ?? '') . '"';
+    }
+}
 @endphp
 @if($toggle)
-{!! "<{$tag} class=\"" . e($cls) . "\">" . e($text) . "</{$tag}>" !!}
+{!! "<{$tag}{$extraAttrsStr} class=\"" . e($cls) . "\">" . e($text) . "</{$tag}>" !!}
 @endif

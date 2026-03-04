@@ -31,6 +31,8 @@ class Link extends Component
             ['key' => "{$prefix}_url", 'default' => $attrs['default-url'] ?? '#'],
             ['key' => "{$prefix}_new_tab", 'default' => ''],
             ['key' => "{$prefix}_classes", 'default' => $attrs['default-classes'] ?? 'text-primary font-semibold hover:text-primary/80 transition-colors text-sm'],
+            ['key' => "{$prefix}_id", 'default' => '', 'label' => 'Element ID'],
+            ['key' => "{$prefix}_attrs", 'default' => '[]', 'label' => 'Custom Attributes'],
         ];
     }
 

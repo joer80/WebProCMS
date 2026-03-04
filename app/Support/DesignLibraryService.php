@@ -228,6 +228,14 @@ class DesignLibraryService
             return ['text', substr($key, 0, -5)];
         }
 
+        if (str_ends_with($key, '_id')) {
+            return ['id', substr($key, 0, -3)];
+        }
+
+        if (str_ends_with($key, '_attrs')) {
+            return ['attrs', substr($key, 0, -6)];
+        }
+
         return ['text', $key];
     }
 

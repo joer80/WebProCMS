@@ -41,6 +41,9 @@ class Group extends Component
             $fields[] = ['key' => "{$prefix}_featured_classes", 'default' => $attrs['default-featured-classes']];
         }
 
+        $fields[] = ['key' => "{$prefix}_id", 'default' => '', 'label' => 'Element ID'];
+        $fields[] = ['key' => "{$prefix}_attrs", 'default' => '[]', 'label' => 'Custom Attributes'];
+
         return $fields;
     }
 
