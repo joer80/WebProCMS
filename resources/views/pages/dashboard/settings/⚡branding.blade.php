@@ -242,7 +242,7 @@ new #[Layout('layouts.app')] #[Title('Branding')] class extends Component {
                 <div class="flex items-start justify-between gap-6">
                     <div class="flex-1">
                         <flux:heading>Theme Colors</flux:heading>
-                        <flux:text class="mt-1">Custom colors defined in <code class="text-xs bg-zinc-100 dark:bg-zinc-800 px-1 py-0.5 rounded">resources/css/app.css</code>. Changes must be committed to git to take effect in production.</flux:text>
+                        <flux:text class="mt-1">Custom theme colors for your site. Changes must be committed to git to take effect in production.</flux:text>
                         @if (! app()->isLocal())
                             <flux:text class="mt-2 text-xs text-amber-600 dark:text-amber-400">
                                 ⚠ Theme color editing is only available in your local environment. Make changes locally and commit to git.
