@@ -152,7 +152,7 @@ class DesignLibraryService
 
                 $newFields[] = [
                     'key' => $field['key'],
-                    'type' => $type,
+                    'type' => $field['type'] ?? $type,
                     'group' => $field['group'] ?? $group,
                     'default' => $field['default'],
                     'label' => $field['label'] ?? ucwords(str_replace('_', ' ', $field['key'])),

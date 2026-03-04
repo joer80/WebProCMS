@@ -633,6 +633,8 @@ The `@else` fallback div may use hardcoded classes — it's a developer placehol
 
 **Adding a new `x-dl.*` component:** Create `app/View/Components/Dl/Name.php` with a `schemaFields(array $attrs): array` static method and a `render()` method. Create `resources/views/components/dl/name.blade.php` starting with `@blaze`. The parser auto-discovers it by class name via `Str::studly($componentSlug)`. The PHP class file is already scanned by `public.css` and `editor.css` via `@source '../../app/View/Components/Dl/*.php'` — no CSS config change needed when adding new components to this directory.
 
+**Editor icons checklist for new components:** The editor shows up to three icons per field group — Content (has text/toggle/grid/image/richtext fields), Design (has `_classes` fields), Advanced (has `_id`/`_attrs` fields). When creating a new component that renders an element with styleable classes, also register `{prefix}_id` and `{prefix}_attrs` fields in `schemaFields()` so the Advanced icon appears. Use `'label' => 'Element ID'` and `'label' => 'Custom Attributes'` with defaults `''` and `'[]'`. Also apply them in the blade view (see `wrapper.blade.php` for the pattern). Grid item sub-field types: `desc`/`description`/`answer` → textarea; `icon` → icon picker; `image`/`*_image` → image picker; everything else → text input.
+
 The editor auto-promotes a `toggle_X` field to the group header switch when every other field in the group has a key containing `X` or ending with `_new_tab`.
 
 ### Grid rows
@@ -692,6 +694,39 @@ Since these are built into the components, any row built using the standard `x-d
 - Template files only affect newly inserted rows. Existing page blade files have row code copied inline at insert time — update them separately if needed.
 
 ## Key Lessons
+
+### Alpine + Livewire: Always Use `wire:ignore` on Alpine Grid Containers
+
+The editor's grid/attrs `x-data` containers in `content-field.blade.php` use `wire:ignore`. **Never remove it.** When `$wire.set` triggers a Livewire round-trip, morphdom can overwrite or reinitialize the Alpine `x-data` element, resetting `items` to the stale PHP-rendered value — even if Alpine already pushed a new item. `wire:ignore` prevents Livewire from touching the container; the `x-on:content-grid-reset.window` / `x-on:content-attrs-reset.window` listeners handle all server-initiated state resets (gallery picks, Reset/Remove All).
+
+**Applies to:** any `<div x-data="{ items: ... }">` that has its own `sync()` → `$wire.set()` cycle and a corresponding reset event listener.
+
+### Alpine v3: Never Nest `x-data` Inside `x-for` When Parent Methods Are Needed
+
+In Alpine v3, a nested `x-data` inside an `x-for` loop creates a child component scope. When methods like `removeItem(idx)` are called from inside that child scope, `this` is bound to the **child** data object (e.g. `{ open: false }`), not the parent — so `this.items` is `undefined` and the call fails silently.
+
+**Wrong:**
+```html
+<template x-for="(item, idx) in items">
+    <div x-data="{ open: false }">                          {{-- child scope --}}
+        <button @click="removeItem(idx)">...</button>       {{-- this.items = undefined --}}
+    </div>
+</template>
+```
+
+**Correct:** track open state in the parent's `x-data` using an object keyed by index:
+```html
+{{-- parent x-data: add openItems: {} --}}
+<template x-for="(item, idx) in items">
+    <div>                                                   {{-- no child x-data --}}
+        <button @click="openItems[idx] = !openItems[idx]">...</button>
+        <button @click="removeItem(idx)">...</button>       {{-- this.items = parent's array ✓ --}}
+        <div x-show="openItems[idx]">...</div>
+    </div>
+</template>
+```
+
+This applies anywhere parent methods or reactive data are needed inside a loop item.
 
 ### Vite HMR Reloads on Runtime-Written Files
 

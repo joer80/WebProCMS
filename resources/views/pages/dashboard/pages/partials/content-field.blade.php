@@ -152,9 +152,11 @@ if (in_array($field['type'], ['id', 'attrs'])) {
             $gridKeys = !empty($gridItems) ? array_keys($gridItems[0]) : (!empty($gridDefaultItems) ? array_keys($gridDefaultItems[0]) : []);
         @endphp
         <div
+            wire:ignore
             x-data="{
                 items: {{ json_encode($gridItems) }},
                 keys: {{ json_encode($gridKeys) }},
+                openItems: {},
                 sync() {
                     $wire.set('contentValues.{{ $field['key'] }}', JSON.stringify(this.items));
                 },
@@ -179,11 +181,11 @@ if (in_array($field['type'], ['id', 'attrs'])) {
             class="space-y-2"
         >
             <template x-for="(item, idx) in items" :key="idx">
-                <div x-data="{ open: false }" class="rounded-lg border border-zinc-200 dark:border-zinc-700 overflow-hidden">
+                <div class="rounded-lg border border-zinc-200 dark:border-zinc-700 overflow-hidden">
                     {{-- Collapsed header --}}
                     <div class="flex items-center gap-1.5 px-3 py-2">
-                        <button type="button" @click="open = !open" class="flex items-center gap-1.5 flex-1 min-w-0 text-left">
-                            <flux:icon name="chevron-right" class="size-4 text-zinc-400 shrink-0 transition-transform duration-150" x-bind:class="open ? 'rotate-90' : ''" />
+                        <button type="button" @click="openItems[idx] = !openItems[idx]" class="flex items-center gap-1.5 flex-1 min-w-0 text-left">
+                            <flux:icon name="chevron-right" class="size-4 text-zinc-400 shrink-0 transition-transform duration-150" x-bind:class="openItems[idx] ? 'rotate-90' : ''" />
                             <span class="text-sm text-zinc-700 dark:text-zinc-200 font-medium truncate" x-text="item.alt || (item.image ? item.image.split('/').pop() : null) || item.title || item.name || item.label || ('Item ' + (idx + 1))"></span>
                         </button>
                         <button
@@ -196,7 +198,7 @@ if (in_array($field['type'], ['id', 'attrs'])) {
                         </button>
                     </div>
                     {{-- Expanded fields --}}
-                    <div x-show="open" x-transition class="border-t border-zinc-200 dark:border-zinc-700 px-3 pt-2 pb-3 space-y-2">
+                    <div x-show="openItems[idx]" x-transition class="border-t border-zinc-200 dark:border-zinc-700 px-3 pt-2 pb-3 space-y-2">
                     <template x-for="fKey in keys" :key="fKey">
                         <div>
                             <p class="text-[10px] uppercase tracking-wider font-semibold text-zinc-500 dark:text-zinc-400 mb-1" x-text="fKey"></p>
@@ -280,7 +282,7 @@ if (in_array($field['type'], ['id', 'attrs'])) {
                                     </div>
                                 </div>
                             </template>
-                            <template x-if="fKey === 'desc' || fKey === 'description'">
+                            <template x-if="fKey === 'desc' || fKey === 'description' || fKey === 'answer' || fKey === 'a'">
                                 <textarea
                                     :value="item[fKey]"
                                     @change="updateField(idx, fKey, $event.target.value)"
@@ -304,7 +306,7 @@ if (in_array($field['type'], ['id', 'attrs'])) {
                                     </button>
                                 </div>
                             </template>
-                            <template x-if="fKey !== 'icon' && fKey !== 'desc' && fKey !== 'description' && fKey !== 'image' && !fKey.endsWith('_image')">
+                            <template x-if="fKey !== 'icon' && fKey !== 'desc' && fKey !== 'description' && fKey !== 'answer' && fKey !== 'a' && fKey !== 'image' && !fKey.endsWith('_image')">
                                 <input
                                     :value="item[fKey]"
                                     @change="updateField(idx, fKey, $event.target.value)"
@@ -371,8 +373,10 @@ if (in_array($field['type'], ['id', 'attrs'])) {
             $attrsItems = json_decode($attrsRaw ?: '[]', true) ?: [];
         @endphp
         <div
+            wire:ignore
             x-data="{
                 items: {{ json_encode($attrsItems) }},
+                openItems: {},
                 sync() {
                     $wire.set('contentValues.{{ $field['key'] }}', JSON.stringify(this.items));
                 },
@@ -393,10 +397,10 @@ if (in_array($field['type'], ['id', 'attrs'])) {
             class="space-y-2"
         >
             <template x-for="(item, idx) in items" :key="idx">
-                <div x-data="{ open: false }" class="rounded-lg border border-zinc-200 dark:border-zinc-700 overflow-hidden">
+                <div class="rounded-lg border border-zinc-200 dark:border-zinc-700 overflow-hidden">
                     <div class="flex items-center gap-1.5 px-3 py-2">
-                        <button type="button" @click="open = !open" class="flex items-center gap-1.5 flex-1 min-w-0 text-left">
-                            <flux:icon name="chevron-right" class="size-4 text-zinc-400 shrink-0 transition-transform duration-150" x-bind:class="open ? 'rotate-90' : ''" />
+                        <button type="button" @click="openItems[idx] = !openItems[idx]" class="flex items-center gap-1.5 flex-1 min-w-0 text-left">
+                            <flux:icon name="chevron-right" class="size-4 text-zinc-400 shrink-0 transition-transform duration-150" x-bind:class="openItems[idx] ? 'rotate-90' : ''" />
                             <span class="text-sm text-zinc-700 dark:text-zinc-200 font-medium font-mono truncate" x-text="item.name || ('Attribute ' + (idx + 1))"></span>
                         </button>
                         <button
@@ -408,7 +412,7 @@ if (in_array($field['type'], ['id', 'attrs'])) {
                             <flux:icon name="x-mark" class="size-3.5" />
                         </button>
                     </div>
-                    <div x-show="open" x-transition class="border-t border-zinc-200 dark:border-zinc-700 px-3 pt-2 pb-3 space-y-2">
+                    <div x-show="openItems[idx]" x-transition class="border-t border-zinc-200 dark:border-zinc-700 px-3 pt-2 pb-3 space-y-2">
                         <div>
                             <p class="text-[10px] uppercase tracking-wider font-semibold text-zinc-500 dark:text-zinc-400 mb-1">Name</p>
                             <input

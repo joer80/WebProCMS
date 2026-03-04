@@ -532,3 +532,73 @@ BLADE);
 
     unlink($file);
 });
+
+it('infers schema_fields from x-dl.accordion component tag', function (): void {
+    $file = tempnam(sys_get_temp_dir(), 'dltest_').'.blade.php';
+    file_put_contents($file, <<<'BLADE'
+{{--
+@name FAQs - Accordion
+@sort 10
+--}}
+<x-dl.section slug="__SLUG__" default-section-classes="py-section" default-container-classes="max-w-3xl mx-auto">
+    <x-dl.accordion slug="__SLUG__" prefix="faqs"
+        default-wrapper-classes="divide-y divide-zinc-200 dark:divide-zinc-700"
+        default-items='[{"q":"Question?","a":"Answer."}]'>
+    </x-dl.accordion>
+</x-dl.section>
+BLADE);
+
+    $data = $this->service->parseTemplateFile($file);
+
+    $keys = array_column($data['schema_fields'], 'key');
+
+    expect(in_array('toggle_faqs', $keys))->toBeTrue()
+        ->and(in_array('grid_faqs', $keys))->toBeTrue()
+        ->and(in_array('faqs_wrapper_classes', $keys))->toBeTrue();
+
+    $gridField = array_values(array_filter($data['schema_fields'], fn ($f) => $f['key'] === 'grid_faqs'))[0];
+    expect($gridField['type'])->toBe('grid')
+        ->and($gridField['default'])->toBe('[{"q":"Question?","a":"Answer."}]');
+
+    $wrapperField = array_values(array_filter($data['schema_fields'], fn ($f) => $f['key'] === 'faqs_wrapper_classes'))[0];
+    expect($wrapperField['type'])->toBe('classes')
+        ->and($wrapperField['default'])->toBe('divide-y divide-zinc-200 dark:divide-zinc-700');
+
+    unlink($file);
+});
+
+it('infers schema_fields from x-dl.accordion-item component tag', function (): void {
+    $file = tempnam(sys_get_temp_dir(), 'dltest_').'.blade.php';
+    file_put_contents($file, <<<'BLADE'
+{{--
+@name FAQs - Accordion
+@sort 10
+--}}
+<x-dl.section slug="__SLUG__" default-section-classes="py-section" default-container-classes="max-w-3xl mx-auto">
+    <x-dl.accordion-item slug="__SLUG__" prefix="faq_item" :index="0"
+        question="Question?"
+        default-classes="py-5"
+        default-button-classes="w-full flex items-center justify-between text-left"
+        default-question-classes="text-base font-semibold text-zinc-900 dark:text-white"
+        default-chevron-classes="size-5 text-zinc-400 shrink-0 transition-transform duration-200"
+        default-answer-classes="mt-3 text-zinc-500 dark:text-zinc-400 text-sm leading-relaxed">
+    </x-dl.accordion-item>
+</x-dl.section>
+BLADE);
+
+    $data = $this->service->parseTemplateFile($file);
+
+    $keys = array_column($data['schema_fields'], 'key');
+
+    expect(in_array('faq_item_classes', $keys))->toBeTrue()
+        ->and(in_array('faq_item_button_classes', $keys))->toBeTrue()
+        ->and(in_array('faq_item_question_classes', $keys))->toBeTrue()
+        ->and(in_array('faq_item_chevron_classes', $keys))->toBeTrue()
+        ->and(in_array('faq_item_answer_classes', $keys))->toBeTrue();
+
+    $itemField = array_values(array_filter($data['schema_fields'], fn ($f) => $f['key'] === 'faq_item_classes'))[0];
+    expect($itemField['type'])->toBe('classes')
+        ->and($itemField['default'])->toBe('py-5');
+
+    unlink($file);
+});
