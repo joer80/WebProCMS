@@ -40,22 +40,23 @@ new #[Layout('layouts.app')] #[Title('Branding')] class extends Component {
             return;
         }
 
-        $cssPath = resource_path('css/app.css');
-        $css = file_get_contents($cssPath);
+        foreach ([resource_path('css/app.css'), resource_path('css/public.css')] as $cssPath) {
+            $css = file_get_contents($cssPath);
 
-        foreach ($this->themeColors as $name => $value) {
-            if (! preg_match('/^#[0-9a-fA-F]{3,8}$/', $value)) {
-                continue;
+            foreach ($this->themeColors as $name => $value) {
+                if (! preg_match('/^#[0-9a-fA-F]{3,8}$/', $value)) {
+                    continue;
+                }
+
+                $css = preg_replace(
+                    '/(--color-' . preg_quote($name, '/') . '\s*:\s*)(#[0-9a-fA-F]{3,8})/',
+                    '${1}' . $value,
+                    $css
+                );
             }
 
-            $css = preg_replace(
-                '/(--color-' . preg_quote($name, '/') . '\s*:\s*)(#[0-9a-fA-F]{3,8})/',
-                '${1}' . $value,
-                $css
-            );
+            file_put_contents($cssPath, $css);
         }
-
-        file_put_contents($cssPath, $css);
 
         $this->dispatch('notify', message: 'Theme colors saved. Rebuild assets to apply.');
     }

@@ -19,6 +19,7 @@
     --color-primary-hover: #2f3b7a;
     --color-primary-foreground: #ffffff;
     --color-primary-surface: #eef0f9;
+    --color-alt-row: #eef0f9;
 
     --color-zinc-50: #fafafa;
     --color-zinc-100: #f5f5f5;
@@ -57,4 +58,10 @@
         border-color: var(--color-gray-200, currentColor);
     }
 
+}
+
+@layer utilities {
+    .row-alt {
+        background-color: var(--color-alt-row) !important;
+    }
 }

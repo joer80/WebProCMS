@@ -4,7 +4,7 @@ use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
 use Livewire\Component;
 
-new #[Layout('layouts.public')] #[Title('Test Page')] class extends Component {}; ?>
+new #[Layout('layouts.public', ['alt_rows_disabled' => true])] #[Title('Test Page')] class extends Component {}; ?>
 <div>{{-- ROW:start:hero-split:4N5jN6 --}}
 <x-dl.section slug="hero-split:4N5jN6"
     default-section-classes="py-section px-6 bg-white dark:bg-zinc-900"
