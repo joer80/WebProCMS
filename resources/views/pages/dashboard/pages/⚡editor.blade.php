@@ -863,6 +863,210 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
         ], $matches, array_keys($matches)));
     }
 
+    /**
+     * Extract top-level x-dl.* components from a blade snippet (direct children of x-dl.section).
+     * Returns components in document order with their full text and registered field keys.
+     *
+     * @return list<array{index: int, slug: string, name: string, full: string, fieldKeys: list<string>, openOffset: int, closeOffset: int}>
+     */
+    public function extractTopLevelComponentsFromBlade(string $blade): array
+    {
+        $skipSlugs = ['section', 'card', 'group', 'accordion-item'];
+
+        preg_match_all('/<x-dl\.([\w-]+)(.*?)\s*\/?' . '>/s', $blade, $tagMatches, PREG_SET_ORDER | PREG_OFFSET_CAPTURE);
+
+        $allComps = [];
+
+        foreach ($tagMatches as $tagMatch) {
+            $slug = $tagMatch[1][0];
+
+            if (in_array($slug, $skipSlugs, true)) {
+                continue;
+            }
+
+            $className = 'App\\View\\Components\\Dl\\'.Str::studly($slug);
+
+            if (! class_exists($className) || ! method_exists($className, 'schemaFields')) {
+                continue;
+            }
+
+            $openTag = $tagMatch[0][0];
+            $openOffset = $tagMatch[0][1];
+            $attrsStr = $tagMatch[2][0];
+            $isSelfClosing = str_contains($openTag, '/>');
+
+            $attrs = [];
+            preg_match_all('/(\w[\w-]*)=(["\'])(.*?)\2/s', $attrsStr, $attrMatches, PREG_SET_ORDER);
+
+            foreach ($attrMatches as $am) {
+                $attrs[$am[1]] = $am[3];
+            }
+
+            $fieldKeys = array_column($className::schemaFields($attrs), 'key');
+
+            if ($isSelfClosing) {
+                $closeOffset = $openOffset + strlen($openTag);
+                $fullText = $openTag;
+            } else {
+                $closeTag = '</x-dl.'.$slug.'>';
+                $closePos = strpos($blade, $closeTag, $openOffset + strlen($openTag));
+
+                if ($closePos === false) {
+                    $closeOffset = $openOffset + strlen($openTag);
+                    $fullText = $openTag;
+                } else {
+                    $closeOffset = $closePos + strlen($closeTag);
+                    $fullText = substr($blade, $openOffset, $closeOffset - $openOffset);
+                }
+            }
+
+            $allComps[] = [
+                'slug' => $slug,
+                'attrs' => $attrs,
+                'fieldKeys' => $fieldKeys,
+                'openOffset' => $openOffset,
+                'closeOffset' => $closeOffset,
+                'full' => $fullText,
+            ];
+        }
+
+        // Keep only top-level components (not nested inside another component's offset range)
+        $topLevel = [];
+
+        foreach ($allComps as $i => $comp) {
+            $isNested = false;
+
+            foreach ($allComps as $j => $other) {
+                if ($i === $j) {
+                    continue;
+                }
+
+                if ($comp['openOffset'] > $other['openOffset'] && $comp['openOffset'] < $other['closeOffset']) {
+                    $isNested = true;
+                    break;
+                }
+            }
+
+            if (! $isNested) {
+                $topLevel[] = $comp;
+            }
+        }
+
+        usort($topLevel, fn ($a, $b) => $a['openOffset'] <=> $b['openOffset']);
+
+        // Merge field keys from nested components into each top-level component
+        foreach ($topLevel as &$topComp) {
+            foreach ($allComps as $nested) {
+                if ($nested['openOffset'] > $topComp['openOffset'] && $nested['openOffset'] < $topComp['closeOffset']) {
+                    $topComp['fieldKeys'] = array_values(array_unique(array_merge($topComp['fieldKeys'], $nested['fieldKeys'])));
+                }
+            }
+        }
+        unset($topComp);
+
+        $result = [];
+
+        foreach ($topLevel as $i => $comp) {
+            $prefix = $comp['attrs']['prefix'] ?? '';
+            $name = ucwords(str_replace(['-', '_'], ' ', $prefix ?: $comp['slug']));
+            $result[] = array_merge($comp, ['index' => $i, 'name' => $name]);
+        }
+
+        return $result;
+    }
+
+    public function reorderComponents(int $from, int $to): void
+    {
+        if ($from === $to || $this->editingRowIndex === null) {
+            return;
+        }
+
+        $blade = $this->rows[$this->editingRowIndex]['blade'];
+        $components = $this->extractTopLevelComponentsFromBlade($blade);
+
+        foreach ($components as $i => $comp) {
+            $blade = str_replace($comp['full'], "%%DL_COMP_{$i}%%", $blade);
+        }
+
+        $moved = array_splice($components, $from, 1)[0];
+        array_splice($components, $to, 0, [$moved]);
+
+        foreach ($components as $i => $comp) {
+            $blade = str_replace("%%DL_COMP_{$i}%%", $comp['full'], $blade);
+        }
+
+        $this->rows[$this->editingRowIndex]['blade'] = $blade;
+        $this->isDirty = true;
+        $this->pushHistory();
+        $this->openContentEditor($this->editingRowIndex);
+        $this->refreshPreview();
+    }
+
+    public function moveComponentUp(int $index): void
+    {
+        if ($this->editingRowIndex === null || $index <= 0) {
+            return;
+        }
+
+        $this->swapComponents($index, $index - 1);
+    }
+
+    public function moveComponentDown(int $index): void
+    {
+        if ($this->editingRowIndex === null) {
+            return;
+        }
+
+        $components = $this->extractTopLevelComponentsFromBlade($this->rows[$this->editingRowIndex]['blade']);
+
+        if ($index >= count($components) - 1) {
+            return;
+        }
+
+        $this->swapComponents($index, $index + 1);
+    }
+
+    public function deleteComponent(int $componentIndex): void
+    {
+        if ($this->editingRowIndex === null) {
+            return;
+        }
+
+        $blade = $this->rows[$this->editingRowIndex]['blade'];
+        $components = $this->extractTopLevelComponentsFromBlade($blade);
+
+        if (! isset($components[$componentIndex])) {
+            return;
+        }
+
+        $full = $components[$componentIndex]['full'];
+        $blade = str_replace("\n".$full."\n", "\n", $blade);
+        $blade = str_replace($full, '', $blade);
+
+        $this->rows[$this->editingRowIndex]['blade'] = $blade;
+        $this->isDirty = true;
+        $this->pushHistory();
+        $this->openContentEditor($this->editingRowIndex);
+        $this->refreshPreview();
+    }
+
+    private function swapComponents(int $indexA, int $indexB): void
+    {
+        $blade = $this->rows[$this->editingRowIndex]['blade'];
+        $components = $this->extractTopLevelComponentsFromBlade($blade);
+
+        $blade = str_replace($components[$indexA]['full'], '%%DL_SWAP_COMP_A%%', $blade);
+        $blade = str_replace($components[$indexB]['full'], '%%DL_SWAP_COMP_B%%', $blade);
+        $blade = str_replace('%%DL_SWAP_COMP_A%%', $components[$indexB]['full'], $blade);
+        $blade = str_replace('%%DL_SWAP_COMP_B%%', $components[$indexA]['full'], $blade);
+
+        $this->rows[$this->editingRowIndex]['blade'] = $blade;
+        $this->isDirty = true;
+        $this->pushHistory();
+        $this->openContentEditor($this->editingRowIndex);
+        $this->refreshPreview();
+    }
+
     public function cancelContentEditor(): void
     {
         foreach ($this->contentFields as $field) {
@@ -2106,96 +2310,144 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                                 </div>
                             @else
                                 @php
-                                    $fieldGroups = collect($contentFields)->groupBy('group');
-                                    $showGroupHeaders = $fieldGroups->count() > 1;
+                                    $dlComponents = $this->extractTopLevelComponentsFromBlade($rows[$editingRowIndex]['blade']);
+                                    $allComponentFieldKeys = ! empty($dlComponents)
+                                        ? array_merge(...array_map(fn ($c) => $c['fieldKeys'], $dlComponents))
+                                        : [];
+                                    $orphanedFields = collect($contentFields)->filter(fn ($f) => ! in_array($f['key'], $allComponentFieldKeys));
                                 @endphp
-                                <div class="{{ $showGroupHeaders ? 'space-y-4' : 'space-y-5' }}">
-                                    @foreach ($fieldGroups as $groupKey => $groupFields)
-                                        @if ($showGroupHeaders)
+                                {{-- Design library row: component-level cards with move/delete action bars --}}
+                                    @if ($orphanedFields->isNotEmpty())
+                                        @php
+                                            $orphanHasClassesFields = $orphanedFields->contains(fn ($f) => $f['type'] === 'classes');
+                                            $orphanHasAdvancedFields = $orphanedFields->contains(fn ($f) => in_array($f['type'], ['id', 'attrs']));
+                                        @endphp
+                                        <div
+                                            x-data="{ open: false, groupMode: null }"
+                                            @set-group-open.window="open = $event.detail.value"
+                                            @set-group-mode.window="groupMode = null"
+                                            class="mb-2 rounded-lg border border-zinc-200 dark:border-zinc-700 overflow-hidden"
+                                        >
+                                            <div class="flex items-center gap-2 px-3 py-2 bg-zinc-100 dark:bg-zinc-700/50 cursor-pointer select-none" @click="open = !open">
+                                                <span class="text-sm font-medium text-zinc-800 dark:text-zinc-200 flex-1 truncate">Row Settings</span>
+                                                @if ($orphanHasClassesFields)
+                                                    <button type="button" @click.stop="groupMode = 'design'; open = true"
+                                                        :class="(groupMode !== null ? groupMode === 'design' : (designMode && !advancedMode)) ? 'text-zinc-300 dark:text-zinc-600' : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 transition-colors'"
+                                                        title="Design"><flux:icon name="paint-brush" class="size-3.5" /></button>
+                                                @endif
+                                                @if ($orphanHasAdvancedFields)
+                                                    <button type="button" @click.stop="groupMode = 'advanced'; open = true"
+                                                        :class="(groupMode !== null ? groupMode === 'advanced' : advancedMode) ? 'text-zinc-300 dark:text-zinc-600' : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 transition-colors'"
+                                                        title="Advanced"><flux:icon name="code-bracket" class="size-3.5" /></button>
+                                                @endif
+                                            </div>
+                                            <div x-show="open" x-collapse class="border-t border-zinc-200 dark:border-zinc-700 p-3 space-y-4">
+                                                @foreach ($orphanedFields as $field)
+                                                    @include('pages.dashboard.pages.partials.content-field', ['field' => $field])
+                                                @endforeach
+                                            </div>
+                                        </div>
+                                    @endif
+                                    <div class="space-y-2" x-data="{ dragging: null, over: null }">
+                                        @foreach ($dlComponents as $comp)
                                             @php
-                                                // Detect a group-level toggle: a show_ toggle whose prefix matches all other field keys in the group.
-                                                $groupShowField = $groupFields->first(fn ($f) => $f['type'] === 'toggle' && str_starts_with($f['key'], 'toggle_'));
+                                                $compFields = collect($contentFields)->filter(fn ($f) => in_array($f['key'], $comp['fieldKeys']));
+                                                $compShowField = $compFields->first(fn ($f) => $f['type'] === 'toggle' && str_starts_with($f['key'], 'toggle_'));
                                                 $headerToggleField = null;
-                                                if ($groupShowField) {
-                                                    $showPrefix = str_replace('toggle_', '', $groupShowField['key']);
-                                                    $otherFields = $groupFields->reject(fn ($f) => $f['key'] === $groupShowField['key']);
-                                                    $isGroupToggle = $otherFields->every(fn ($f) => $f['type'] === 'toggle' || str_ends_with($f['key'], '_new_tab') || str_contains($f['key'], $showPrefix));
-                                                    if ($isGroupToggle) {
-                                                        $headerToggleField = $groupShowField;
+                                                if ($compShowField) {
+                                                    $showPrefix = str_replace('toggle_', '', $compShowField['key']);
+                                                    $otherFields = $compFields->reject(fn ($f) => $f['key'] === $compShowField['key']);
+                                                    $isCompToggle = $otherFields->every(fn ($f) => $f['type'] === 'toggle' || str_ends_with($f['key'], '_new_tab') || str_contains($f['key'], $showPrefix));
+                                                    if ($isCompToggle) {
+                                                        $headerToggleField = $compShowField;
                                                     }
                                                 }
                                                 $bodyFields = $headerToggleField
-                                                    ? $groupFields->reject(fn ($f) => $f['key'] === $headerToggleField['key'])
-                                                    : $groupFields;
-                                                $groupHasClassesFields = $bodyFields->contains(fn ($f) => $f['type'] === 'classes');
-                                                $groupHasAdvancedFields = $bodyFields->contains(fn ($f) => in_array($f['type'], ['id', 'attrs']));
-                                                $groupHasContentFields = $bodyFields->contains(fn ($f) => ! in_array($f['type'], ['classes', 'id', 'attrs']));
-                                                $modeConditions = [];
-                                                if ($groupHasContentFields) {
-                                                    $modeConditions[] = "(groupMode !== null ? groupMode === 'content' : (!designMode && !advancedMode))";
-                                                }
-                                                if ($groupHasClassesFields) {
-                                                    $modeConditions[] = "(groupMode !== null ? groupMode === 'design' : (designMode && !advancedMode))";
-                                                }
-                                                if ($groupHasAdvancedFields) {
-                                                    $modeConditions[] = "(groupMode !== null ? groupMode === 'advanced' : advancedMode)";
-                                                }
-                                                $groupShowExpr = implode(' || ', $modeConditions) ?: 'false';
+                                                    ? $compFields->reject(fn ($f) => $f['key'] === $headerToggleField['key'])
+                                                    : $compFields;
+                                                $compHasContentFields = $bodyFields->contains(fn ($f) => ! in_array($f['type'], ['classes', 'id', 'attrs']));
+                                                $compHasClassesFields = $bodyFields->contains(fn ($f) => $f['type'] === 'classes');
+                                                $compHasAdvancedFields = $bodyFields->contains(fn ($f) => in_array($f['type'], ['id', 'attrs']));
+                                                $isFirst = $comp['index'] === 0;
+                                                $isLast = $comp['index'] === count($dlComponents) - 1;
                                             @endphp
                                             <div
+                                                class="rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 overflow-hidden transition-colors"
                                                 x-data="{ open: false, groupMode: null }"
-                                                x-show="{{ $groupShowExpr }}"
                                                 @set-group-open.window="open = $event.detail.value"
                                                 @set-group-mode.window="groupMode = null"
-                                                class="rounded-lg border border-zinc-200 dark:border-zinc-700 overflow-hidden"
+                                                draggable="true"
+                                                @dragstart="dragging = {{ $comp['index'] }}"
+                                                @dragover.prevent="over = {{ $comp['index'] }}"
+                                                @drop="if (dragging !== null) { $wire.reorderComponents(dragging, over); } dragging = null; over = null"
+                                                @dragend="dragging = null; over = null"
+                                                :style="{
+                                                    opacity: dragging === {{ $comp['index'] }} ? '0.4' : '',
+                                                    'border-top': over === {{ $comp['index'] }} && dragging !== null && dragging > {{ $comp['index'] }} ? '2px solid var(--color-primary)' : '',
+                                                    'border-bottom': over === {{ $comp['index'] }} && dragging !== null && dragging < {{ $comp['index'] }} ? '2px solid var(--color-primary)' : ''
+                                                }"
                                             >
-                                                <div class="flex items-center gap-2 px-3 py-2 bg-zinc-100 dark:bg-zinc-700/50">
-                                                    <button
-                                                        type="button"
-                                                        @click="open = !open"
-                                                        class="flex-1 min-w-0 text-left text-xs uppercase tracking-wider font-semibold text-zinc-600 dark:text-zinc-300"
-                                                    >{{ ucwords(str_replace('_', ' ', $groupKey)) }}</button>
-                                                    @if ($groupHasContentFields)
-                                                    <button
-                                                        type="button"
-                                                        @click="groupMode = 'content'; open = true"
-                                                        :class="(groupMode !== null ? groupMode === 'content' : (!designMode && !advancedMode)) ? 'text-zinc-300 dark:text-zinc-600' : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 transition-colors'"
-                                                        title="Content"
-                                                    ><flux:icon name="document-text" class="size-3.5" /></button>
+                                                <div class="flex items-center gap-2 px-3 py-2 bg-zinc-100 dark:bg-zinc-700/50 cursor-pointer select-none" @click="open = !open">
+                                                    <span class="text-sm font-medium text-zinc-800 dark:text-zinc-200 flex-1 truncate">{{ $comp['name'] }}</span>
+                                                    @if ($compHasContentFields)
+                                                        <button type="button" @click.stop="groupMode = 'content'; open = true"
+                                                            :class="(groupMode !== null ? groupMode === 'content' : (!designMode && !advancedMode)) ? 'text-zinc-300 dark:text-zinc-600' : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 transition-colors'"
+                                                            title="Content"><flux:icon name="document-text" class="size-3.5" /></button>
                                                     @endif
-                                                    @if ($groupHasClassesFields)
-                                                    <button
-                                                        type="button"
-                                                        @click="groupMode = 'design'; open = true"
-                                                        :class="(groupMode !== null ? groupMode === 'design' : (designMode && !advancedMode)) ? 'text-zinc-300 dark:text-zinc-600' : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 transition-colors'"
-                                                        title="Design"
-                                                    ><flux:icon name="paint-brush" class="size-3.5" /></button>
+                                                    @if ($compHasClassesFields)
+                                                        <button type="button" @click.stop="groupMode = 'design'; open = true"
+                                                            :class="(groupMode !== null ? groupMode === 'design' : (designMode && !advancedMode)) ? 'text-zinc-300 dark:text-zinc-600' : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 transition-colors'"
+                                                            title="Design"><flux:icon name="paint-brush" class="size-3.5" /></button>
                                                     @endif
-                                                    @if ($groupHasAdvancedFields)
-                                                    <button
-                                                        type="button"
-                                                        @click="groupMode = 'advanced'; open = true"
-                                                        :class="(groupMode !== null ? groupMode === 'advanced' : advancedMode) ? 'text-zinc-300 dark:text-zinc-600' : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 transition-colors'"
-                                                        title="Advanced"
-                                                    ><flux:icon name="code-bracket" class="size-3.5" /></button>
+                                                    @if ($compHasAdvancedFields)
+                                                        <button type="button" @click.stop="groupMode = 'advanced'; open = true"
+                                                            :class="(groupMode !== null ? groupMode === 'advanced' : advancedMode) ? 'text-zinc-300 dark:text-zinc-600' : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 transition-colors'"
+                                                            title="Advanced"><flux:icon name="code-bracket" class="size-3.5" /></button>
                                                     @endif
                                                     @if ($headerToggleField)
-                                                        <flux:switch wire:model.live="contentValues.{{ $headerToggleField['key'] }}" />
+                                                        <flux:switch wire:model.live="contentValues.{{ $headerToggleField['key'] }}" @click.stop />
                                                     @endif
                                                 </div>
-                                                <div x-show="open" x-collapse class="border-t border-zinc-200 dark:border-zinc-700 p-3 space-y-4">
-                                                    @foreach ($bodyFields as $field)
-                                                        @include('pages.dashboard.pages.partials.content-field', ['field' => $field])
-                                                    @endforeach
+                                                <div x-show="open" x-collapse>
+                                                    @if ($bodyFields->isNotEmpty())
+                                                        <div class="border-t border-zinc-200 dark:border-zinc-700 p-3 space-y-4">
+                                                            @foreach ($bodyFields as $field)
+                                                                @include('pages.dashboard.pages.partials.content-field', ['field' => $field])
+                                                            @endforeach
+                                                        </div>
+                                                    @endif
+                                                </div>
+                                                <div class="relative flex items-center px-2 py-1.5 border-t border-zinc-200 dark:border-zinc-700">
+                                                    <div class="flex items-center gap-0.5">
+                                                        <flux:button
+                                                            wire:click="moveComponentUp({{ $comp['index'] }})"
+                                                            variant="ghost" size="sm" icon="arrow-up"
+                                                            :disabled="$isFirst"
+                                                            :class="$isFirst ? 'opacity-15!' : ''"
+                                                            title="Move up" :loading="false"
+                                                        />
+                                                        <flux:button
+                                                            wire:click="moveComponentDown({{ $comp['index'] }})"
+                                                            variant="ghost" size="sm" icon="arrow-down"
+                                                            :disabled="$isLast"
+                                                            :class="$isLast ? 'opacity-15!' : ''"
+                                                            title="Move down" :loading="false"
+                                                        />
+                                                        <flux:icon name="bars-2" class="size-4 text-zinc-400 dark:text-zinc-500 cursor-grab active:cursor-grabbing mx-2" title="Drag to reorder" />
+                                                    </div>
+                                                    <div class="flex items-center gap-0.5 ml-auto">
+                                                        <flux:button
+                                                            wire:click="deleteComponent({{ $comp['index'] }})"
+                                                            wire:confirm="Delete this component?"
+                                                            variant="ghost" size="sm" icon="trash"
+                                                            class="text-red-500 dark:text-red-400"
+                                                            title="Delete component" :loading="false"
+                                                        />
+                                                    </div>
                                                 </div>
                                             </div>
-                                        @else
-                                            @foreach ($groupFields as $field)
-                                                @include('pages.dashboard.pages.partials.content-field', ['field' => $field])
-                                            @endforeach
-                                        @endif
-                                    @endforeach
-                                </div>
+                                        @endforeach
+                                    </div>
                             @endif
 
                             <button
