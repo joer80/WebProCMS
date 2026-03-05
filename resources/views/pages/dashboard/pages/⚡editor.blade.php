@@ -674,17 +674,19 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
         $blade = $this->rows[$this->editingRowIndex]['blade'];
 
         $snippet = $item['blade'];
+        $prefix = $itemKey;
 
         if (isset($item['prefix'])) {
             $prefix = $this->findUniquePrefix($blade, $item['prefix']);
             $snippet = str_replace('__PREFIX__', $prefix, $snippet);
         }
-
         $snippet = str_replace('__SLUG__', $slug, $snippet);
+
+        $marked = "{{-- @dl-item:{$itemKey}:{$prefix}:{$item['name']} --}}\n{$snippet}\n{{-- /@dl-item --}}";
 
         $this->rows[$this->editingRowIndex]['blade'] = str_replace(
             '</x-dl.section>',
-            "\n".$snippet."\n</x-dl.section>",
+            "\n".$marked."\n</x-dl.section>",
             $blade
         );
 
@@ -710,6 +712,92 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
         }
 
         return "{$desiredPrefix}_{$i}";
+    }
+
+    public function deleteItemFromRow(int $itemIndex): void
+    {
+        if ($this->editingRowIndex === null) {
+            return;
+        }
+
+        $blade = $this->rows[$this->editingRowIndex]['blade'];
+        $blocks = $this->extractItemBlocks($blade);
+
+        if (! isset($blocks[$itemIndex])) {
+            return;
+        }
+
+        $full = $blocks[$itemIndex]['full'];
+        $blade = str_replace("\n".$full."\n", "\n", $blade);
+        $blade = str_replace($full, '', $blade);
+
+        $this->rows[$this->editingRowIndex]['blade'] = $blade;
+        $this->isDirty = true;
+        $this->pushHistory();
+        $this->openContentEditor($this->editingRowIndex);
+        $this->refreshPreview();
+    }
+
+    public function moveItemUp(int $itemIndex): void
+    {
+        if ($itemIndex === 0 || $this->editingRowIndex === null) {
+            return;
+        }
+
+        $this->swapItems($itemIndex - 1, $itemIndex);
+    }
+
+    public function moveItemDown(int $itemIndex): void
+    {
+        if ($this->editingRowIndex === null) {
+            return;
+        }
+
+        $blocks = $this->extractItemBlocks($this->rows[$this->editingRowIndex]['blade']);
+
+        if ($itemIndex >= count($blocks) - 1) {
+            return;
+        }
+
+        $this->swapItems($itemIndex, $itemIndex + 1);
+    }
+
+    private function swapItems(int $indexA, int $indexB): void
+    {
+        $blade = $this->rows[$this->editingRowIndex]['blade'];
+        $blocks = $this->extractItemBlocks($blade);
+
+        $blade = str_replace($blocks[$indexA]['full'], '%%DL_SWAP_A%%', $blade);
+        $blade = str_replace($blocks[$indexB]['full'], '%%DL_SWAP_B%%', $blade);
+        $blade = str_replace('%%DL_SWAP_A%%', $blocks[$indexB]['full'], $blade);
+        $blade = str_replace('%%DL_SWAP_B%%', $blocks[$indexA]['full'], $blade);
+
+        $this->rows[$this->editingRowIndex]['blade'] = $blade;
+        $this->isDirty = true;
+        $this->pushHistory();
+        $this->openContentEditor($this->editingRowIndex);
+        $this->refreshPreview();
+    }
+
+    /**
+     * @return array<int, array{full: string, type: string, prefix: string, name: string}>
+     */
+    public function extractItemBlocks(string $blade): array
+    {
+        preg_match_all(
+            '/\{\{--\s*@dl-item:([a-z_-]+):([a-z_0-9]+):([^-]+?)\s*--\}\}.*?\{\{--\s*\/@dl-item\s*--\}\}/s',
+            $blade,
+            $matches,
+            PREG_SET_ORDER
+        );
+
+        return array_values(array_map(fn ($m, $i) => [
+            'index' => $i,
+            'full' => $m[0],
+            'type' => $m[1],
+            'prefix' => $m[2],
+            'name' => trim($m[3]),
+        ], $matches, array_keys($matches)));
     }
 
     public function cancelContentEditor(): void
@@ -1815,6 +1903,49 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                                     <span>Shared row — changes affect all pages using it.</span>
                                 </div>
                             @endif
+
+                            @php
+                                $rowItemBlocks = $editingRowIndex !== null ? $this->extractItemBlocks($rows[$editingRowIndex]['blade']) : [];
+                            @endphp
+                            @if (! empty($rowItemBlocks))
+                                <div class="space-y-2 mb-4">
+                                    @foreach ($rowItemBlocks as $item)
+                                        <div class="rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 overflow-hidden">
+                                            <div class="flex items-center gap-2 px-3 py-2 bg-zinc-100 dark:bg-zinc-700/50">
+                                                <div class="text-sm font-medium text-zinc-800 dark:text-zinc-200 flex-1 truncate">{{ $item['name'] }}</div>
+                                            </div>
+                                            <div class="relative flex items-center px-2 py-1.5">
+                                                <div class="flex items-center gap-0.5">
+                                                    @php $isFirst = $item['index'] === 0; $isLast = $item['index'] === count($rowItemBlocks) - 1; @endphp
+                                                    <flux:button
+                                                        wire:click="moveItemUp({{ $item['index'] }})"
+                                                        variant="ghost" size="sm" icon="arrow-up"
+                                                        :disabled="$isFirst"
+                                                        :class="$isFirst ? 'opacity-15!' : ''"
+                                                        title="Move up" :loading="false"
+                                                    />
+                                                    <flux:button
+                                                        wire:click="moveItemDown({{ $item['index'] }})"
+                                                        variant="ghost" size="sm" icon="arrow-down"
+                                                        :disabled="$isLast"
+                                                        :class="$isLast ? 'opacity-15!' : ''"
+                                                        title="Move down" :loading="false"
+                                                    />
+                                                    <flux:icon name="bars-2" class="size-4 text-zinc-400 dark:text-zinc-500 mx-2" />
+                                                </div>
+                                                <div class="flex items-center gap-0.5 ml-auto">
+                                                    <flux:button
+                                                        wire:click="deleteItemFromRow({{ $item['index'] }})"
+                                                        variant="ghost" size="sm" icon="trash"
+                                                        title="Delete item" :loading="false"
+                                                    />
+                                                </div>
+                                            </div>
+                                        </div>
+                                    @endforeach
+                                </div>
+                            @endif
+
                             @if (empty($contentFields))
                                 <div class="text-center py-8 text-zinc-400 dark:text-zinc-500">
                                     <flux:icon name="plus-circle" class="size-10 mx-auto mb-2 opacity-40" />
