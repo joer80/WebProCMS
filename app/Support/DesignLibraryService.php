@@ -154,6 +154,7 @@ class DesignLibraryService
                     'key' => $field['key'],
                     'type' => $field['type'] ?? $type,
                     'group' => $field['group'] ?? $group,
+                    'subgroup' => $field['subgroup'] ?? null,
                     'default' => $field['default'],
                     'label' => $field['label'] ?? ucwords(str_replace('_', ' ', $field['key'])),
                 ];

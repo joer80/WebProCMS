@@ -1878,6 +1878,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
         @message.window="
             if ($event.data && $event.data.editorRowSlug) {
                 if ($event.data.editorGroup) { $dispatch('pending-group', { group: $event.data.editorGroup }); }
+                if ($event.data.editorSubgroup) { $dispatch('pending-subgroup', { subgroup: $event.data.editorSubgroup }); }
                 selectRowBySlug($event.data.editorRowSlug);
             }
             else if ($event.origin === window.location.origin && $event.data && $event.data.type === 'editor-save-page' && $wire.file) { $wire.saveFile(); }
@@ -2128,15 +2129,18 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                 {{-- Right panel: row list / inline content editor --}}
                 <div
                     class="w-96 shrink-0 order-last border-l border-zinc-200 dark:border-zinc-700 flex flex-col"
-                    x-data="{ editorOpen: false, designMode: false, advancedMode: false, groupMode: null, allGroupsOpen: false, selectedRowIndex: null, pendingGroup: null }"
+                    x-data="{ editorOpen: false, designMode: false, advancedMode: false, groupMode: null, allGroupsOpen: false, selectedRowIndex: null, pendingGroup: null, pendingSubgroup: null }"
                     x-on:pending-group.window="pendingGroup = $event.detail.group"
+                    x-on:pending-subgroup.window="pendingSubgroup = $event.detail.subgroup"
                     x-on:content-editor-opened.window="
                         editorOpen = true; designMode = false; advancedMode = false;
                         if (pendingGroup) {
                             const g = pendingGroup; pendingGroup = null;
+                            const sg = pendingSubgroup; pendingSubgroup = null;
                             $nextTick(() => {
                                 $dispatch('open-group', { group: g });
                                 $nextTick(() => {
+                                    if (sg) { $dispatch('open-subgroup', { subgroup: sg }); }
                                     const gEl = document.querySelector('[data-group-id=\'' + g + '\']');
                                     if (gEl) { gEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); }
                                 });
@@ -2218,7 +2222,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                                             data-group-id="{{ $item['prefix'] }}"
                                             @set-group-open.window="open = $event.detail.value"
                                             @set-group-mode.window="groupMode = null"
-                                            @open-group.window="if ($event.detail.group === '{{ $item['prefix'] }}') { open = true; }"
+                                            @open-group.window="open = ($event.detail.group === '{{ $item['prefix'] }}')"
                                             draggable="true"
                                             @dragstart="dragging = {{ $item['index'] }}"
                                             @dragover.prevent="over = {{ $item['index'] }}"
@@ -2255,9 +2259,39 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                                             {{-- Collapsible body: fields --}}
                                             <div x-show="open" x-collapse>
                                                 @if ($bodyFields->isNotEmpty())
+                                                    @php
+                                                        $flatFields = $bodyFields->filter(fn ($f) => empty($f['subgroup'] ?? null));
+                                                        $subgroupedFields = $bodyFields->filter(fn ($f) => ! empty($f['subgroup'] ?? null))->groupBy('subgroup');
+                                                    @endphp
                                                     <div class="border-t border-zinc-200 dark:border-zinc-700 p-3 space-y-4">
-                                                        @foreach ($bodyFields as $field)
+                                                        @foreach ($flatFields as $field)
                                                             @include('pages.dashboard.pages.partials.content-field', ['field' => $field])
+                                                        @endforeach
+                                                        @foreach ($subgroupedFields as $subgroupKey => $subFields)
+                                                            @php
+                                                                $subgroupToggle = $subFields->first(fn ($f) => $f['type'] === 'toggle' && str_starts_with($f['key'], 'toggle_'));
+                                                                $subgroupBodyFields = $subgroupToggle
+                                                                    ? $subFields->reject(fn ($f) => $f['key'] === $subgroupToggle['key'])
+                                                                    : $subFields;
+                                                            @endphp
+                                                            <div x-data="{ open: true }" class="border border-zinc-200 dark:border-zinc-700 rounded-lg overflow-hidden"
+                                                                @open-subgroup.window="open = ($event.detail.subgroup === '{{ $subgroupKey }}')">
+                                                                <button type="button" @click="open = !open"
+                                                                    class="w-full flex items-center justify-between px-3 py-2 bg-zinc-50 dark:bg-zinc-800 text-xs font-medium text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors">
+                                                                    <span>{{ ucwords(str_replace('_', ' ', $subgroupKey)) }}</span>
+                                                                    <div class="flex items-center gap-2">
+                                                                        @if ($subgroupToggle)
+                                                                            <flux:switch wire:model.live="contentValues.{{ $subgroupToggle['key'] }}" @click.stop />
+                                                                        @endif
+                                                                        <flux:icon name="chevron-down" class="size-3.5 transition-transform duration-200" :class="open ? '' : '-rotate-90'" />
+                                                                    </div>
+                                                                </button>
+                                                                <div x-show="open" x-collapse class="space-y-4 p-3">
+                                                                    @foreach ($subgroupBodyFields as $field)
+                                                                        @include('pages.dashboard.pages.partials.content-field', ['field' => $field])
+                                                                    @endforeach
+                                                                </div>
+                                                            </div>
                                                         @endforeach
                                                     </div>
                                                 @endif
@@ -2395,7 +2429,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                                                 data-group-id="{{ $comp['attrs']['prefix'] ?? $comp['slug'] }}"
                                                 @set-group-open.window="open = $event.detail.value"
                                                 @set-group-mode.window="groupMode = null"
-                                                @open-group.window="if ($event.detail.group === '{{ $comp['attrs']['prefix'] ?? $comp['slug'] }}') { open = true; }"
+                                                @open-group.window="open = ($event.detail.group === '{{ $comp['attrs']['prefix'] ?? $comp['slug'] }}')"
                                                 draggable="true"
                                                 @dragstart="dragging = {{ $comp['index'] }}"
                                                 @dragover.prevent="over = {{ $comp['index'] }}"
@@ -2430,9 +2464,39 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                                                 </div>
                                                 <div x-show="open" x-collapse>
                                                     @if ($bodyFields->isNotEmpty())
+                                                        @php
+                                                            $flatFields = $bodyFields->filter(fn ($f) => empty($f['subgroup'] ?? null));
+                                                            $subgroupedFields = $bodyFields->filter(fn ($f) => ! empty($f['subgroup'] ?? null))->groupBy('subgroup');
+                                                        @endphp
                                                         <div class="border-t border-zinc-200 dark:border-zinc-700 p-3 space-y-4">
-                                                            @foreach ($bodyFields as $field)
+                                                            @foreach ($flatFields as $field)
                                                                 @include('pages.dashboard.pages.partials.content-field', ['field' => $field])
+                                                            @endforeach
+                                                            @foreach ($subgroupedFields as $subgroupKey => $subFields)
+                                                                @php
+                                                                    $subgroupToggle = $subFields->first(fn ($f) => $f['type'] === 'toggle' && str_starts_with($f['key'], 'toggle_'));
+                                                                    $subgroupBodyFields = $subgroupToggle
+                                                                        ? $subFields->reject(fn ($f) => $f['key'] === $subgroupToggle['key'])
+                                                                        : $subFields;
+                                                                @endphp
+                                                                <div x-data="{ open: true }" class="border border-zinc-200 dark:border-zinc-700 rounded-lg overflow-hidden"
+                                                                    @open-subgroup.window="open = ($event.detail.subgroup === '{{ $subgroupKey }}')">
+                                                                    <button type="button" @click="open = !open"
+                                                                        class="w-full flex items-center justify-between px-3 py-2 bg-zinc-50 dark:bg-zinc-800 text-xs font-medium text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors">
+                                                                        <span>{{ ucwords(str_replace('_', ' ', $subgroupKey)) }}</span>
+                                                                        <div class="flex items-center gap-2">
+                                                                            @if ($subgroupToggle)
+                                                                                <flux:switch wire:model.live="contentValues.{{ $subgroupToggle['key'] }}" @click.stop />
+                                                                            @endif
+                                                                            <flux:icon name="chevron-down" class="size-3.5 transition-transform duration-200" :class="open ? '' : '-rotate-90'" />
+                                                                        </div>
+                                                                    </button>
+                                                                    <div x-show="open" x-collapse class="space-y-4 p-3">
+                                                                        @foreach ($subgroupBodyFields as $field)
+                                                                            @include('pages.dashboard.pages.partials.content-field', ['field' => $field])
+                                                                        @endforeach
+                                                                    </div>
+                                                                </div>
                                                             @endforeach
                                                         </div>
                                                     @endif

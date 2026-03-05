@@ -19,6 +19,7 @@ $secondaryNewTab = content($slug, 'secondary_button_new_tab', '');
         href="{{ $primaryUrl }}"
         @if($primaryNewTab) target="_blank" rel="noopener noreferrer" @endif
         class="{{ $primaryCls }}"
+        data-editor-group="primary_button"
     >{{ $primaryLabel }}</a>
     @endif
     @if($toggleSecondary)
@@ -26,6 +27,7 @@ $secondaryNewTab = content($slug, 'secondary_button_new_tab', '');
         href="{{ $secondaryUrl }}"
         @if($secondaryNewTab) target="_blank" rel="noopener noreferrer" @endif
         class="{{ $secondaryCls }}"
+        data-editor-group="secondary_button"
     >{{ $secondaryLabel }}</a>
     @endif
 </div>
