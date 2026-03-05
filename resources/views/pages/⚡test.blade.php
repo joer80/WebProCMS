@@ -5,53 +5,55 @@ use Livewire\Attributes\Title;
 use Livewire\Component;
 
 new #[Layout('layouts.public')] #[Title('Test Page')] class extends Component {}; ?>
-<div>{{-- ROW:start:hero-split:4N5jN6 --}}
-<x-dl.section slug="hero-split:4N5jN6"
+<div>{{-- ROW:start:hero-split:r15FRP --}}
+<x-dl.section slug="hero-split:r15FRP"
     default-section-classes="py-section px-6 bg-white dark:bg-zinc-900"
     default-container-classes="max-w-6xl mx-auto grid md:grid-cols-2 gap-12 items-center">
         <div>
-            <x-dl.heading slug="hero-split:4N5jN6" prefix="headline" default="Build Something Amazing"
+            <x-dl.heading slug="hero-split:r15FRP" prefix="headline" default="Build Something Amazing"
                 default-tag="h1"
                 default-classes="font-heading text-5xl font-bold text-zinc-900 dark:text-white leading-tight" />
-            <x-dl.subheadline slug="hero-split:4N5jN6" prefix="subheadline" default="Describe your product or service here. Keep it concise and focused on the value you deliver to customers."
+            <x-dl.subheadline slug="hero-split:r15FRP" prefix="subheadline" default="Describe your product or service here. Keep it concise and focused on the value you deliver to customers."
                 default-classes="mt-6 text-lg text-zinc-500 dark:text-zinc-400" />
-            <x-dl.buttons slug="hero-split:4N5jN6"
+            <x-dl.buttons slug="hero-split:r15FRP"
                 default-wrapper-classes="mt-8 flex flex-wrap gap-4"
                 default-primary-label="Start Free Trial"
                 default-primary-classes="px-6 py-3 bg-primary text-white font-semibold rounded-lg hover:bg-primary/90 transition-colors"
                 default-secondary-label="Watch Demo →"
                 default-secondary-classes="px-6 py-3 text-zinc-600 dark:text-zinc-300 font-semibold hover:text-zinc-900 dark:hover:text-white transition-colors" />
         </div>
-        <x-dl.media slug="hero-split:4N5jN6"
+        <x-dl.media slug="hero-split:r15FRP"
             default-wrapper-classes="rounded-card overflow-hidden bg-zinc-100 dark:bg-zinc-800 aspect-video flex items-center justify-center"
             default-image-classes="w-full h-full object-cover" />
 </x-dl.section>
-{{-- ROW:end:hero-split:4N5jN6 --}}
+{{-- ROW:end:hero-split:r15FRP --}}
 
-{{-- ROW:start:section:KfOsBf --}}
-<x-dl.section slug="section:KfOsBf"
+{{-- ROW:start:section:DrV7fX --}}
+<x-dl.section slug="section:DrV7fX"
     default-section-classes="py-section px-6 bg-white dark:bg-zinc-900"
     default-container-classes="max-w-6xl mx-auto">
 
-<x-dl.heading slug="section:KfOsBf" prefix="headline" default="Your Heading"
+{{-- @dl-item:heading:headline:Heading --}}
+<x-dl.heading slug="section:DrV7fX" prefix="headline" default="Your Heading"
     default-tag="h2"
     default-classes="font-heading text-3xl font-bold text-zinc-900 dark:text-white" />
+{{-- /@dl-item --}}
 
-<x-dl.subheadline slug="section:KfOsBf" prefix="subheadline" default="Supporting text goes here."
+
+{{-- @dl-item:subheadline:subheadline:Subheadline --}}
+<x-dl.subheadline slug="section:DrV7fX" prefix="subheadline" default="Supporting text goes here."
     default-classes="mt-4 text-lg text-zinc-500 dark:text-zinc-400" />
-
-<x-dl.buttons slug="section:KfOsBf"
+{{-- /@dl-item --}}
+{{-- @dl-item:buttons:buttons:Buttons --}}
+<x-dl.buttons slug="section:DrV7fX"
     default-wrapper-classes="mt-8 flex flex-wrap items-center gap-4"
     default-primary-label="Get Started"
     default-primary-classes="px-6 py-3 bg-primary text-white font-semibold rounded-lg hover:bg-primary/90 transition-colors"
     default-secondary-label="Learn More"
     default-secondary-classes="px-6 py-3 border border-zinc-300 dark:border-zinc-600 text-zinc-700 dark:text-zinc-200 font-semibold rounded-lg hover:bg-zinc-50 transition-colors" />
-
-<x-dl.button slug="section:KfOsBf" prefix="button" default="Get Started"
-    default-url="#"
-    default-classes="px-6 py-3 bg-primary text-white font-semibold rounded-lg hover:bg-primary/90 transition-colors" />
+{{-- /@dl-item --}}
 </x-dl.section>
-{{-- ROW:end:section:KfOsBf --}}
+{{-- ROW:end:section:DrV7fX --}}
 
 {{-- ROW:start:faqs-accordion:nTIGso --}}
 <x-dl.section slug="faqs-accordion:nTIGso"

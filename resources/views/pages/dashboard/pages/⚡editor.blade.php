@@ -93,6 +93,8 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
 
     public bool $showItemPicker = false;
 
+    public ?int $insertAtItemIndex = null;
+
     public ?int $editingRowIndex = null;
 
     /** @var array<int, array{slug: string, key: string, type: string, default: string, label: string, group: string}> */
@@ -191,7 +193,8 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
         $storeValue = (string) $value === $default ? '' : (string) $value;
 
         $drafts = session('editor_draft_overrides', []);
-        $drafts[$slug.':'.$fieldKey] = ['type' => 'classes', 'value' => $storeValue];
+        $type = $fieldKey === 'section_id' ? 'text' : 'classes';
+        $drafts[$slug.':'.$fieldKey] = ['type' => $type, 'value' => $storeValue];
         session(['editor_draft_overrides' => $drafts]);
 
         $this->isDirty = true;
@@ -607,7 +610,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
         $row = $this->rows[$index];
         $this->contentFields = array_values(array_filter(
             $this->parseContentFields($row['blade'], $row['slug']),
-            fn ($f) => ! in_array($f['key'], ['section_classes', 'section_container_classes'], true)
+            fn ($f) => ! in_array($f['key'], ['section_classes', 'section_container_classes', 'section_id', 'section_attrs'], true)
         ));
         $this->pendingImageKey = '';
         $this->pendingImageUpload = null;
@@ -659,6 +662,19 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
 
     public function openItemPicker(): void
     {
+        $this->insertAtItemIndex = null;
+        $this->showItemPicker = true;
+    }
+
+    public function openItemPickerAbove(int $itemIndex): void
+    {
+        $this->insertAtItemIndex = $itemIndex;
+        $this->showItemPicker = true;
+    }
+
+    public function openItemPickerBelow(int $itemIndex): void
+    {
+        $this->insertAtItemIndex = $itemIndex + 1;
         $this->showItemPicker = true;
     }
 
@@ -685,11 +701,30 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
 
         $marked = "{{-- @dl-item:{$itemKey}:{$prefix}:{$item['name']} --}}\n{$snippet}\n{{-- /@dl-item --}}";
 
-        $this->rows[$this->editingRowIndex]['blade'] = str_replace(
-            '</x-dl.section>',
-            "\n".$marked."\n</x-dl.section>",
-            $blade
-        );
+        if ($this->insertAtItemIndex !== null) {
+            $blocks = $this->extractItemBlocks($blade);
+            if (isset($blocks[$this->insertAtItemIndex])) {
+                $targetFull = $blocks[$this->insertAtItemIndex]['full'];
+                $this->rows[$this->editingRowIndex]['blade'] = str_replace(
+                    "\n".$targetFull,
+                    "\n".$marked."\n".$targetFull,
+                    $blade
+                );
+            } else {
+                $this->rows[$this->editingRowIndex]['blade'] = str_replace(
+                    '</x-dl.section>',
+                    "\n".$marked."\n</x-dl.section>",
+                    $blade
+                );
+            }
+            $this->insertAtItemIndex = null;
+        } else {
+            $this->rows[$this->editingRowIndex]['blade'] = str_replace(
+                '</x-dl.section>',
+                "\n".$marked."\n</x-dl.section>",
+                $blade
+            );
+        }
 
         $this->showItemPicker = false;
         $this->isDirty = true;
@@ -761,6 +796,33 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
         }
 
         $this->swapItems($itemIndex, $itemIndex + 1);
+    }
+
+    public function reorderItems(int $from, int $to): void
+    {
+        if ($from === $to || $this->editingRowIndex === null) {
+            return;
+        }
+
+        $blade = $this->rows[$this->editingRowIndex]['blade'];
+        $blocks = $this->extractItemBlocks($blade);
+
+        foreach ($blocks as $i => $block) {
+            $blade = str_replace($block['full'], "%%DL_ITEM_{$i}%%", $blade);
+        }
+
+        $moved = array_splice($blocks, $from, 1)[0];
+        array_splice($blocks, $to, 0, [$moved]);
+
+        foreach ($blocks as $i => $block) {
+            $blade = str_replace("%%DL_ITEM_{$i}%%", $block['full'], $blade);
+        }
+
+        $this->rows[$this->editingRowIndex]['blade'] = $blade;
+        $this->isDirty = true;
+        $this->pushHistory();
+        $this->openContentEditor($this->editingRowIndex);
+        $this->refreshPreview();
     }
 
     private function swapItems(int $indexA, int $indexB): void
@@ -1162,7 +1224,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
             $fields = $this->parseContentFields($row['blade'], $row['slug']);
 
             foreach ($fields as $field) {
-                if (in_array($field['key'], ['section_classes', 'section_container_classes'], true)) {
+                if (in_array($field['key'], ['section_classes', 'section_container_classes', 'section_id'], true)) {
                     $this->rowDesignDefaults[$row['slug']][$field['key']] = $field['default'];
                 }
             }
@@ -1182,7 +1244,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
 
         $overrides = ContentOverride::query()
             ->whereIn('row_slug', $slugs)
-            ->whereIn('key', ['section_classes', 'section_container_classes', 'section_no_alt'])
+            ->whereIn('key', ['section_classes', 'section_container_classes', 'section_no_alt', 'section_id'])
             ->get()
             ->keyBy(fn (ContentOverride $o) => $o->row_slug.':'.$o->key);
 
@@ -1886,19 +1948,10 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                                 <div class="text-sm font-medium text-zinc-800 dark:text-zinc-200 truncate">{{ $rows[$editingRowIndex]['name'] }}</div>
                                 <div class="text-[10px] font-mono text-zinc-400 dark:text-zinc-500 truncate">{{ $rows[$editingRowIndex]['slug'] }}</div>
                             </div>
-                            <button
-                                type="button"
-                                @click="allGroupsOpen = !allGroupsOpen; $dispatch('set-group-open', { value: allGroupsOpen })"
-                                :title="allGroupsOpen ? 'Collapse all' : 'Expand all'"
-                                class="text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 transition-colors shrink-0"
-                            >
-                                <flux:icon x-show="allGroupsOpen" name="chevron-up" class="size-4" />
-                                <flux:icon x-show="!allGroupsOpen" name="chevron-down" class="size-4" />
-                            </button>
-                            <div class="flex rounded-md border border-zinc-200 dark:border-zinc-700 text-[11px] font-medium overflow-hidden shrink-0">
-                                <button type="button" @click="designMode = false; advancedMode = false; $wire.resetEmptyClassesFields(); $dispatch('set-group-mode', {})" :class="!designMode && !advancedMode ? 'bg-zinc-800 text-white dark:bg-zinc-100 dark:text-zinc-900' : 'bg-white text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200'" class="px-2.5 py-1 transition-colors">Content</button>
-                                <button type="button" @click="designMode = true; advancedMode = false; $wire.resetEmptyClassesFields(); $dispatch('set-group-mode', {})" :class="designMode && !advancedMode ? 'bg-zinc-800 text-white dark:bg-zinc-100 dark:text-zinc-900' : 'bg-white text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200'" class="px-2.5 py-1 transition-colors border-l border-zinc-200 dark:border-zinc-700">Design</button>
-                                <button type="button" @click="advancedMode = true; designMode = false; $wire.resetEmptyClassesFields(); $dispatch('set-group-mode', {})" :class="advancedMode ? 'bg-zinc-800 text-white dark:bg-zinc-100 dark:text-zinc-900' : 'bg-white text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200'" class="px-2.5 py-1 transition-colors border-l border-zinc-200 dark:border-zinc-700">Advanced</button>
+                            <div class="flex rounded-md border border-zinc-200 dark:border-zinc-700 overflow-hidden shrink-0">
+                                <button type="button" @click="if (!designMode && !advancedMode) { allGroupsOpen = !allGroupsOpen; $dispatch('set-group-open', { value: allGroupsOpen }); } else { designMode = false; advancedMode = false; allGroupsOpen = true; $wire.resetEmptyClassesFields(); $dispatch('set-group-mode', {}); $dispatch('set-group-open', { value: true }); }" :class="!designMode && !advancedMode ? 'bg-zinc-800 text-white dark:bg-zinc-100 dark:text-zinc-900' : 'bg-white text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200'" class="p-1.5 transition-colors" title="Content"><flux:icon name="document-text" class="size-3.5" /></button>
+                                <button type="button" @click="if (designMode && !advancedMode) { allGroupsOpen = !allGroupsOpen; $dispatch('set-group-open', { value: allGroupsOpen }); } else { designMode = true; advancedMode = false; allGroupsOpen = true; $wire.resetEmptyClassesFields(); $dispatch('set-group-mode', {}); $dispatch('set-group-open', { value: true }); }" :class="designMode && !advancedMode ? 'bg-zinc-800 text-white dark:bg-zinc-100 dark:text-zinc-900' : 'bg-white text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200'" class="p-1.5 transition-colors border-l border-zinc-200 dark:border-zinc-700" title="Design"><flux:icon name="paint-brush" class="size-3.5" /></button>
+                                <button type="button" @click="if (advancedMode) { allGroupsOpen = !allGroupsOpen; $dispatch('set-group-open', { value: allGroupsOpen }); } else { advancedMode = true; designMode = false; allGroupsOpen = true; $wire.resetEmptyClassesFields(); $dispatch('set-group-mode', {}); $dispatch('set-group-open', { value: true }); }" :class="advancedMode ? 'bg-zinc-800 text-white dark:bg-zinc-100 dark:text-zinc-900' : 'bg-white text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200'" class="p-1.5 transition-colors border-l border-zinc-200 dark:border-zinc-700" title="Advanced"><flux:icon name="code-bracket" class="size-3.5" /></button>
                             </div>
                         </div>
 
@@ -1914,15 +1967,82 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                                 $rowItemBlocks = $editingRowIndex !== null ? $this->extractItemBlocks($rows[$editingRowIndex]['blade']) : [];
                             @endphp
                             @if (! empty($rowItemBlocks))
-                                <div class="space-y-2 mb-4">
+                                {{-- Item-based rows: each item is a collapsible card with fields + actions inside --}}
+                                @php $allItemFieldGroups = collect($contentFields)->groupBy('group'); @endphp
+                                <div class="space-y-2 mb-4" x-data="{ dragging: null, over: null }">
                                     @foreach ($rowItemBlocks as $item)
-                                        <div class="rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 overflow-hidden">
-                                            <div class="flex items-center gap-2 px-3 py-2 bg-zinc-100 dark:bg-zinc-700/50">
-                                                <div class="text-sm font-medium text-zinc-800 dark:text-zinc-200 flex-1 truncate">{{ $item['name'] }}</div>
+                                        @php
+                                            $itemFields = $allItemFieldGroups->get($item['prefix'], collect());
+                                            $groupShowField = $itemFields->first(fn ($f) => $f['type'] === 'toggle' && str_starts_with($f['key'], 'toggle_'));
+                                            $headerToggleField = null;
+                                            if ($groupShowField) {
+                                                $showPrefix = str_replace('toggle_', '', $groupShowField['key']);
+                                                $otherFields = $itemFields->reject(fn ($f) => $f['key'] === $groupShowField['key']);
+                                                $isGroupToggle = $otherFields->every(fn ($f) => $f['type'] === 'toggle' || str_ends_with($f['key'], '_new_tab') || str_contains($f['key'], $showPrefix));
+                                                if ($isGroupToggle) {
+                                                    $headerToggleField = $groupShowField;
+                                                }
+                                            }
+                                            $bodyFields = $headerToggleField
+                                                ? $itemFields->reject(fn ($f) => $f['key'] === $headerToggleField['key'])
+                                                : $itemFields;
+                                            $itemHasContentFields = $bodyFields->contains(fn ($f) => ! in_array($f['type'], ['classes', 'id', 'attrs']));
+                                            $itemHasClassesFields = $bodyFields->contains(fn ($f) => $f['type'] === 'classes');
+                                            $itemHasAdvancedFields = $bodyFields->contains(fn ($f) => in_array($f['type'], ['id', 'attrs']));
+                                            $isFirst = $item['index'] === 0;
+                                            $isLast = $item['index'] === count($rowItemBlocks) - 1;
+                                        @endphp
+                                        <div
+                                            class="rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 overflow-hidden transition-colors"
+                                            x-data="{ open: false, groupMode: null }"
+                                            @set-group-open.window="open = $event.detail.value"
+                                            @set-group-mode.window="groupMode = null"
+                                            draggable="true"
+                                            @dragstart="dragging = {{ $item['index'] }}"
+                                            @dragover.prevent="over = {{ $item['index'] }}"
+                                            @drop="if (dragging !== null) { $wire.reorderItems(dragging, over); } dragging = null; over = null"
+                                            @dragend="dragging = null; over = null"
+                                            :style="{
+                                                opacity: dragging === {{ $item['index'] }} ? '0.4' : '',
+                                                'border-top': over === {{ $item['index'] }} && dragging !== null && dragging > {{ $item['index'] }} ? '2px solid var(--color-primary)' : '',
+                                                'border-bottom': over === {{ $item['index'] }} && dragging !== null && dragging < {{ $item['index'] }} ? '2px solid var(--color-primary)' : ''
+                                            }"
+                                        >
+                                            {{-- Card header: click to expand/collapse --}}
+                                            <div class="flex items-center gap-2 px-3 py-2 bg-zinc-100 dark:bg-zinc-700/50 cursor-pointer select-none" @click="open = !open">
+                                                <span class="text-sm font-medium text-zinc-800 dark:text-zinc-200 flex-1 truncate">{{ $item['name'] }}</span>
+                                                @if ($itemHasContentFields)
+                                                    <button type="button" @click.stop="groupMode = 'content'; open = true"
+                                                        :class="(groupMode !== null ? groupMode === 'content' : (!designMode && !advancedMode)) ? 'text-zinc-300 dark:text-zinc-600' : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 transition-colors'"
+                                                        title="Content"><flux:icon name="document-text" class="size-3.5" /></button>
+                                                @endif
+                                                @if ($itemHasClassesFields)
+                                                    <button type="button" @click.stop="groupMode = 'design'; open = true"
+                                                        :class="(groupMode !== null ? groupMode === 'design' : (designMode && !advancedMode)) ? 'text-zinc-300 dark:text-zinc-600' : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 transition-colors'"
+                                                        title="Design"><flux:icon name="paint-brush" class="size-3.5" /></button>
+                                                @endif
+                                                @if ($itemHasAdvancedFields)
+                                                    <button type="button" @click.stop="groupMode = 'advanced'; open = true"
+                                                        :class="(groupMode !== null ? groupMode === 'advanced' : advancedMode) ? 'text-zinc-300 dark:text-zinc-600' : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 transition-colors'"
+                                                        title="Advanced"><flux:icon name="code-bracket" class="size-3.5" /></button>
+                                                @endif
+                                                @if ($headerToggleField)
+                                                    <flux:switch wire:model.live="contentValues.{{ $headerToggleField['key'] }}" @click.stop />
+                                                @endif
                                             </div>
-                                            <div class="relative flex items-center px-2 py-1.5">
+                                            {{-- Collapsible body: fields --}}
+                                            <div x-show="open" x-collapse>
+                                                @if ($bodyFields->isNotEmpty())
+                                                    <div class="border-t border-zinc-200 dark:border-zinc-700 p-3 space-y-4">
+                                                        @foreach ($bodyFields as $field)
+                                                            @include('pages.dashboard.pages.partials.content-field', ['field' => $field])
+                                                        @endforeach
+                                                    </div>
+                                                @endif
+                                            </div>
+                                            {{-- Action bar: always visible --}}
+                                            <div class="relative flex items-center px-2 py-1.5 border-t border-zinc-200 dark:border-zinc-700">
                                                 <div class="flex items-center gap-0.5">
-                                                    @php $isFirst = $item['index'] === 0; $isLast = $item['index'] === count($rowItemBlocks) - 1; @endphp
                                                     <flux:button
                                                         wire:click="moveItemUp({{ $item['index'] }})"
                                                         variant="ghost" size="sm" icon="arrow-up"
@@ -1937,12 +2057,40 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                                                         :class="$isLast ? 'opacity-15!' : ''"
                                                         title="Move down" :loading="false"
                                                     />
-                                                    <flux:icon name="bars-2" class="size-4 text-zinc-400 dark:text-zinc-500 mx-2" />
+                                                    <flux:icon name="bars-2" class="size-4 text-zinc-400 dark:text-zinc-500 cursor-grab active:cursor-grabbing mx-2" title="Drag to reorder" />
                                                 </div>
                                                 <div class="flex items-center gap-0.5 ml-auto">
                                                     <flux:button
+                                                        wire:click="openItemPickerAbove({{ $item['index'] }})"
+                                                        variant="ghost"
+                                                        size="sm"
+                                                        title="Insert item above"
+                                                        class="px-1!"
+                                                        :loading="false"
+                                                    >
+                                                        <span class="inline-flex items-center">
+                                                            <flux:icon name="plus" class="size-3" />
+                                                            <flux:icon name="arrow-up" class="size-3" />
+                                                        </span>
+                                                    </flux:button>
+                                                    <flux:button
+                                                        wire:click="openItemPickerBelow({{ $item['index'] }})"
+                                                        variant="ghost"
+                                                        size="sm"
+                                                        title="Insert item below"
+                                                        class="px-1!"
+                                                        :loading="false"
+                                                    >
+                                                        <span class="inline-flex items-center">
+                                                            <flux:icon name="plus" class="size-3" />
+                                                            <flux:icon name="arrow-down" class="size-3" />
+                                                        </span>
+                                                    </flux:button>
+                                                    <flux:button
                                                         wire:click="deleteItemFromRow({{ $item['index'] }})"
+                                                        wire:confirm="Delete this item?"
                                                         variant="ghost" size="sm" icon="trash"
+                                                        class="text-red-500 dark:text-red-400"
                                                         title="Delete item" :loading="false"
                                                     />
                                                 </div>
@@ -1950,9 +2098,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                                         </div>
                                     @endforeach
                                 </div>
-                            @endif
-
-                            @if (empty($contentFields))
+                            @elseif (empty($contentFields))
                                 <div class="text-center py-8 text-zinc-400 dark:text-zinc-500">
                                     <flux:icon name="plus-circle" class="size-10 mx-auto mb-2 opacity-40" />
                                     <p class="text-sm">No content yet.</p>
@@ -2076,7 +2222,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                     <div x-show="!editorOpen" class="flex flex-col flex-1">
                         <div class="shrink-0 px-4 py-3 border-b border-zinc-200 dark:border-zinc-700 flex items-center justify-between">
                             <flux:heading size="sm" class="text-zinc-600 dark:text-zinc-400">{{ __('Page Rows') }}</flux:heading>
-                            <div class="flex items-center gap-0.5" x-data="{ allDesignsOpen: false }">
+                            <div class="flex items-center gap-0.5" x-data="{ allDesignsOpen: false, allAdvancedOpen: false }">
                                 <flux:tooltip content="Copy all rows" position="bottom">
                                     <button type="button"
                                         x-on:click="localStorage.setItem('webprocms_copied_rows', JSON.stringify($wire.rows)); $dispatch('notify', { message: 'Rows copied.' })"
@@ -2107,11 +2253,20 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                                 <div class="w-px h-3.5 bg-zinc-200 dark:bg-zinc-600 mx-0.5"></div>
                                 <flux:tooltip content="Toggle all section designs" position="bottom">
                                     <button type="button"
-                                        x-on:click="allDesignsOpen = !allDesignsOpen; $dispatch(allDesignsOpen ? 'expand-all-rows' : 'collapse-all-rows')"
+                                        x-on:click="allAdvancedOpen = false; allDesignsOpen = !allDesignsOpen; $dispatch(allDesignsOpen ? 'expand-all-rows' : 'collapse-all-rows')"
                                         :class="allDesignsOpen ? 'text-primary' : 'text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200'"
                                         class="p-1 rounded hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors"
                                     >
                                         <flux:icon name="paint-brush" class="size-3.5" />
+                                    </button>
+                                </flux:tooltip>
+                                <flux:tooltip content="Toggle all section advanced" position="bottom">
+                                    <button type="button"
+                                        x-on:click="allDesignsOpen = false; allAdvancedOpen = !allAdvancedOpen; $dispatch(allAdvancedOpen ? 'expand-all-advanced' : 'collapse-all-rows')"
+                                        :class="allAdvancedOpen ? 'text-primary' : 'text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200'"
+                                        class="p-1 rounded hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors"
+                                    >
+                                        <flux:icon name="code-bracket" class="size-3.5" />
                                     </button>
                                 </flux:tooltip>
                             </div>
@@ -2122,11 +2277,12 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                                 <div
                                     wire:key="row-item-{{ $row['slug'] }}"
                                     data-row-sidebar-index="{{ $index }}"
-                                    x-data="{ designOpen: false }"
-                                    @collapse-all-rows.window="designOpen = false"
-                                    @expand-all-rows.window="designOpen = true"
+                                    x-data="{ panelMode: null }"
+                                    @collapse-all-rows.window="panelMode = null"
+                                    @expand-all-rows.window="panelMode = 'design'"
+                                    @expand-all-advanced.window="panelMode = 'advanced'"
                                     class="rounded-lg border bg-white dark:bg-zinc-900 overflow-hidden transition-colors {{ !empty($row['hidden']) ? 'opacity-60' : '' }}"
-                                    :class="editorOpen && {{ $editingRowIndex ?? -1 }} === {{ $index }} ? 'border-primary' : (selectedRowIndex === {{ $index }} ? 'border-primary' : (designOpen ? 'border-primary/50' : 'border-zinc-200 dark:border-zinc-700'))"
+                                    :class="editorOpen && {{ $editingRowIndex ?? -1 }} === {{ $index }} ? 'border-primary' : (selectedRowIndex === {{ $index }} ? 'border-primary' : (panelMode !== null ? 'border-primary/50' : 'border-zinc-200 dark:border-zinc-700'))"
                                     @click="selectedRowIndex === {{ $index }} ? $dispatch('row-deselected') : $dispatch('row-selected', { index: {{ $index }} })"
                                     draggable="true"
                                     @dragstart="dragging = {{ $index }}"
@@ -2139,7 +2295,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                                         'border-bottom': over === {{ $index }} && dragging !== null && dragging < {{ $index }} ? '2px solid var(--color-primary)' : ''
                                     }"
                                 >
-                                    {{-- Row header: clickable name area + paintbrush + visibility toggle --}}
+                                    {{-- Row header: name + 3 mode icons + visibility toggle --}}
                                     <div class="flex items-center gap-2 px-3 py-2 bg-zinc-100 dark:bg-zinc-700/50">
                                         <button
                                             wire:click="openContentEditor({{ $index }})"
@@ -2151,18 +2307,17 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                                                     <flux:badge size="sm" color="blue" class="shrink-0">Shared</flux:badge>
                                                 @endif
                                             </div>
-                                            <!-- <div class="text-[10px] font-mono text-zinc-400 dark:text-zinc-500 truncate mt-0.5">{{ $row['slug'] }}</div> -->
                                         </button>
                                         @if (isset($rowDesignDefaults[$row['slug']]))
-                                            <button
-                                                type="button"
-                                                @click.stop="designOpen = !designOpen"
-                                                :class="designOpen ? 'text-primary' : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-800 dark:hover:text-zinc-200'"
-                                                class="transition-colors shrink-0"
-                                                title="Edit section styles"
-                                            >
-                                                <flux:icon name="paint-brush" class="size-3.5" />
-                                            </button>
+                                            <button type="button" @click.stop="$wire.openContentEditor({{ $index }})"
+                                                :class="editorOpen && {{ $editingRowIndex ?? -1 }} === {{ $index }} ? 'text-primary' : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 transition-colors'"
+                                                title="Edit content"><flux:icon name="document-text" class="size-3.5" /></button>
+                                            <button type="button" @click.stop="panelMode = panelMode === 'design' ? null : 'design'"
+                                                :class="panelMode === 'design' ? 'text-primary' : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 transition-colors'"
+                                                title="Edit section styles"><flux:icon name="paint-brush" class="size-3.5" /></button>
+                                            <button type="button" @click.stop="panelMode = panelMode === 'advanced' ? null : 'advanced'"
+                                                :class="panelMode === 'advanced' ? 'text-primary' : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 transition-colors'"
+                                                title="Advanced settings"><flux:icon name="code-bracket" class="size-3.5" /></button>
                                         @endif
                                         <flux:switch
                                             :checked="empty($row['hidden'])"
@@ -2171,57 +2326,77 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                                         />
                                     </div>
 
-                                    {{-- Inline design panel --}}
+                                    {{-- Inline panel: design mode (classes) or advanced mode (section id) --}}
                                     @if (isset($rowDesignDefaults[$row['slug']]))
-                                        <div x-show="designOpen" x-collapse class="border-t border-zinc-200 dark:border-zinc-700 p-3 space-y-3">
-                                            <div class="flex items-center justify-between">
-                                                <span class="text-[11px] uppercase tracking-wider font-semibold text-zinc-500 dark:text-zinc-400">Disable Alt Row Background</span>
-                                                <flux:switch
-                                                    :checked="($rowDesignValues[$row['slug']]['section_no_alt'] ?? '') === '1'"
-                                                    wire:click="toggleNoAltRow('{{ $row['slug'] }}')"
-                                                    title="Exclude this row from the alternating background pattern"
-                                                />
-                                            </div>
-                                            @foreach (['section_classes' => 'Section Classes', 'section_container_classes' => 'Container Classes'] as $fieldKey => $fieldLabel)
-                                                @if (isset($rowDesignDefaults[$row['slug']][$fieldKey]))
-                                                    <div>
-                                                        <div class="flex items-center justify-between mb-1.5">
-                                                            <span class="text-[11px] uppercase tracking-wider font-semibold text-zinc-500 dark:text-zinc-400">{{ $fieldLabel }}</span>
-                                                            <button wire:click="resetRowDesignField('{{ $row['slug'] }}', '{{ $fieldKey }}')" type="button" class="text-xs text-zinc-400 dark:text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 transition-colors">Reset</button>
-                                                        </div>
-                                                        <div x-data="twAutocomplete('{{ $row['slug'] }}_{{ $fieldKey }}')" class="relative">
-                                                            <textarea
-                                                                x-ref="input"
-                                                                wire:model.live.debounce.400ms="rowDesignValues.{{ $row['slug'] }}.{{ $fieldKey }}"
-                                                                rows="2"
-                                                                x-on:input="suggest($event)"
-                                                                x-on:keydown="handleKey($event)"
-                                                                x-on:blur="delayClose()"
-                                                                placeholder="{{ $rowDesignDefaults[$row['slug']][$fieldKey] }}"
-                                                                class="w-full font-mono text-xs rounded-lg border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-900 text-zinc-900 dark:text-white px-3 py-2 resize-none focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition"
-                                                            ></textarea>
-                                                            <div
-                                                                x-show="open"
-                                                                x-transition:enter="transition ease-out duration-75"
-                                                                x-transition:enter-start="opacity-0 -translate-y-1"
-                                                                x-transition:enter-end="opacity-100 translate-y-0"
-                                                                x-bind:style="dropdownStyle"
-                                                                class="bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg shadow-lg overflow-y-auto max-h-48"
-                                                            >
-                                                                <template x-for="(item, i) in suggestions" :key="item">
-                                                                    <button
-                                                                        type="button"
-                                                                        @mousedown.prevent="pick(item)"
-                                                                        :class="i === activeIndex ? 'bg-primary text-white' : 'text-zinc-700 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-700'"
-                                                                        class="block w-full text-left px-3 py-1.5 text-xs font-mono transition-colors"
-                                                                        x-text="item"
-                                                                    ></button>
-                                                                </template>
+                                        <div x-show="panelMode !== null" x-collapse class="border-t border-zinc-200 dark:border-zinc-700">
+                                            {{-- Design mode --}}
+                                            <div x-show="panelMode === 'design'" class="p-3 space-y-3">
+                                                <div class="flex items-center justify-between">
+                                                    <span class="text-[11px] uppercase tracking-wider font-semibold text-zinc-500 dark:text-zinc-400">Disable Alt Row Background</span>
+                                                    <flux:switch
+                                                        :checked="($rowDesignValues[$row['slug']]['section_no_alt'] ?? '') === '1'"
+                                                        wire:click="toggleNoAltRow('{{ $row['slug'] }}')"
+                                                        title="Exclude this row from the alternating background pattern"
+                                                    />
+                                                </div>
+                                                @foreach (['section_classes' => 'Section Classes', 'section_container_classes' => 'Container Classes'] as $fieldKey => $fieldLabel)
+                                                    @if (isset($rowDesignDefaults[$row['slug']][$fieldKey]))
+                                                        <div>
+                                                            <div class="flex items-center justify-between mb-1.5">
+                                                                <span class="text-[11px] uppercase tracking-wider font-semibold text-zinc-500 dark:text-zinc-400">{{ $fieldLabel }}</span>
+                                                                <button wire:click="resetRowDesignField('{{ $row['slug'] }}', '{{ $fieldKey }}')" type="button" class="text-xs text-zinc-400 dark:text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 transition-colors">Reset</button>
+                                                            </div>
+                                                            <div x-data="twAutocomplete('{{ $row['slug'] }}_{{ $fieldKey }}')" class="relative">
+                                                                <textarea
+                                                                    x-ref="input"
+                                                                    wire:model.live.debounce.400ms="rowDesignValues.{{ $row['slug'] }}.{{ $fieldKey }}"
+                                                                    rows="2"
+                                                                    x-on:input="suggest($event)"
+                                                                    x-on:keydown="handleKey($event)"
+                                                                    x-on:blur="delayClose()"
+                                                                    placeholder="{{ $rowDesignDefaults[$row['slug']][$fieldKey] }}"
+                                                                    class="w-full font-mono text-xs rounded-lg border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-900 text-zinc-900 dark:text-white px-3 py-2 resize-none focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition"
+                                                                ></textarea>
+                                                                <div
+                                                                    x-show="open"
+                                                                    x-transition:enter="transition ease-out duration-75"
+                                                                    x-transition:enter-start="opacity-0 -translate-y-1"
+                                                                    x-transition:enter-end="opacity-100 translate-y-0"
+                                                                    x-bind:style="dropdownStyle"
+                                                                    class="bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg shadow-lg overflow-y-auto max-h-48"
+                                                                >
+                                                                    <template x-for="(item, i) in suggestions" :key="item">
+                                                                        <button
+                                                                            type="button"
+                                                                            @mousedown.prevent="pick(item)"
+                                                                            :class="i === activeIndex ? 'bg-primary text-white' : 'text-zinc-700 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-700'"
+                                                                            class="block w-full text-left px-3 py-1.5 text-xs font-mono transition-colors"
+                                                                            x-text="item"
+                                                                        ></button>
+                                                                    </template>
+                                                                </div>
                                                             </div>
                                                         </div>
+                                                    @endif
+                                                @endforeach
+                                            </div>
+                                            {{-- Advanced mode --}}
+                                            <div x-show="panelMode === 'advanced'" class="p-3 space-y-3">
+                                                @if (isset($rowDesignDefaults[$row['slug']]['section_id']))
+                                                    <div>
+                                                        <div class="flex items-center justify-between mb-1.5">
+                                                            <span class="text-[11px] uppercase tracking-wider font-semibold text-zinc-500 dark:text-zinc-400">Section ID</span>
+                                                            <button wire:click="resetRowDesignField('{{ $row['slug'] }}', 'section_id')" type="button" class="text-xs text-zinc-400 dark:text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 transition-colors">Reset</button>
+                                                        </div>
+                                                        <input
+                                                            type="text"
+                                                            wire:model.live.debounce.400ms="rowDesignValues.{{ $row['slug'] }}.section_id"
+                                                            placeholder="e.g. about-us"
+                                                            class="w-full font-mono text-xs rounded-lg border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-900 text-zinc-900 dark:text-white px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition"
+                                                        />
                                                     </div>
                                                 @endif
-                                            @endforeach
+                                            </div>
                                         </div>
                                     @endif
 
