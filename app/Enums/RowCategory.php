@@ -20,6 +20,7 @@ enum RowCategory: string
     case Header = 'header';
     case Gallery = 'gallery';
     case IconList = 'icon-list';
+    case Locations = 'locations';
     case Pricing = 'pricing';
     case Slider = 'slider';
     case SocialProof = 'social-proof';

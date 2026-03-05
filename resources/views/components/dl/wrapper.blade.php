@@ -1,4 +1,3 @@
-@blaze
 @props(['slug', 'prefix' => 'wrapper', 'tag' => 'div', 'defaultClasses' => '', 'defaultFeaturedClasses' => null, 'featured' => false])
 @php
 $isVoid = in_array(strtolower($tag), ['area', 'base', 'br', 'col', 'embed', 'hr', 'img', 'input', 'link', 'meta', 'param', 'source', 'track', 'wbr']);

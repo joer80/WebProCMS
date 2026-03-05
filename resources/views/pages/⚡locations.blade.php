@@ -48,90 +48,107 @@ new #[Layout('layouts.public', ['description' => 'Find a GetRows office near you
     {
         $this->selectedState = '';
     }
+    // ROW:php:start:locations-grid:SfKKnK
+    public string $locationsSelectedState = '';
+    
+    #[\Livewire\Attributes\Computed]
+    public function locationsFiltered(): \Illuminate\Database\Eloquent\Collection
+    {
+        return \App\Models\Location::query()
+            ->when($this->locationsSelectedState !== '', fn ($q) => $q->where('state', $this->locationsSelectedState))
+            ->orderBy('name')
+            ->get();
+    }
+    
+    #[\Livewire\Attributes\Computed]
+    public function locationsAvailableStates(): array
+    {
+        return \App\Models\Location::query()
+            ->distinct()
+            ->orderBy('state')
+            ->pluck('state')
+            ->all();
+    }
+    
+    public function filterLocationsByState(string $state): void
+    {
+        $this->locationsSelectedState = $state;
+    }
+    
+    public function clearLocationsFilter(): void
+    {
+        $this->locationsSelectedState = '';
+    }
+    // ROW:php:end:locations-grid:SfKKnK
 }; ?>
+<div>{{-- ROW:start:locations-grid:SfKKnK --}}
+<x-dl.section slug="locations-grid:SfKKnK"
+    default-section-classes="py-section px-6 bg-white dark:bg-zinc-900"
+    default-container-classes="max-w-6xl mx-auto">
+    <x-dl.wrapper slug="locations-grid:SfKKnK" prefix="header_wrapper" default-classes="mb-10">
+        <x-dl.heading slug="locations-grid:SfKKnK" prefix="headline" default="Our Locations"
+            default-tag="h2"
+            default-classes="font-heading text-4xl font-bold text-zinc-900 dark:text-white mb-4" />
+        <x-dl.subheadline slug="locations-grid:SfKKnK" prefix="subheadline" default="Find a location near you."
+            default-classes="text-zinc-500 dark:text-zinc-400 leading-normal" />
+    </x-dl.wrapper>
 
-@push('head')
-    @php
-        $appName = config('app.name');
-        $locationSchemas = $this->allLocations->map(fn (App\Models\Location $loc) => [
-            '@context' => 'https://schema.org',
-            '@type' => 'LocalBusiness',
-            'name' => $appName.' — '.$loc->name,
-            'telephone' => $loc->phone,
-            'address' => [
-                '@type' => 'PostalAddress',
-                'streetAddress' => $loc->address,
-                'addressLocality' => $loc->city,
-                'addressRegion' => $loc->state,
-                'postalCode' => $loc->zip,
-                'addressCountry' => config('seo.schema.address.country'),
-            ],
-        ])->values()->all();
-    @endphp
-    <script type="application/ld+json">{!! json_encode($locationSchemas, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) !!}</script>
-@endpush
-
-<div>
-    <div class="mb-10">
-        <h1 class="text-4xl font-semibold leading-tight mb-4">Our Locations</h1>
-        <p class="text-[#706f6c] dark:text-[#A1A09A] leading-normal">
-            Find a GetRows location near you. We have offices across the South and Midwest.
-        </p>
-    </div>
-
-    {{-- State filter --}}
-    <div class="flex flex-wrap items-center gap-2 mb-8">
-        <button
-            wire:click="clearFilter"
-            class="inline-block px-4 py-1.5 text-sm rounded-sm border transition-all {{ $selectedState === '' ? 'bg-[#1b1b18] dark:bg-[#EDEDEC] text-white dark:text-[#1b1b18] border-transparent' : 'border-[#19140035] dark:border-[#3E3E3A] text-[#1b1b18] dark:text-[#EDEDEC] hover:border-[#1915014a] dark:hover:border-[#62605b]' }}"
-        >
+    <x-dl.wrapper slug="locations-grid:SfKKnK" prefix="filter_wrapper" default-classes="flex flex-wrap items-center gap-2 mb-8">
+        <x-dl.wrapper slug="locations-grid:SfKKnK" prefix="filter_button" tag="button"
+            wire:click="clearLocationsFilter"
+            x-bind:class="$wire.locationsSelectedState === '' ? 'bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 border-transparent' : 'border-zinc-300 dark:border-zinc-700 text-zinc-800 dark:text-zinc-200 hover:border-zinc-400'"
+            default-classes="inline-block px-4 py-1.5 text-sm rounded-sm border transition-all">
             All
-        </button>
-
-        @foreach ($this->availableStates as $state)
-            <button
-                wire:click="filterByState('{{ $state }}')"
-                class="inline-block px-4 py-1.5 text-sm rounded-sm border transition-all {{ $selectedState === $state ? 'bg-[#1b1b18] dark:bg-[#EDEDEC] text-white dark:text-[#1b1b18] border-transparent' : 'border-[#19140035] dark:border-[#3E3E3A] text-[#1b1b18] dark:text-[#EDEDEC] hover:border-[#1915014a] dark:hover:border-[#62605b]' }}"
-            >
-                {{ $this->stateFullName($state) }}
-            </button>
+        </x-dl.wrapper>
+        @foreach ($this->locationsAvailableStates as $locState)
+            <x-dl.wrapper slug="locations-grid:SfKKnK" prefix="filter_button" tag="button"
+                wire:click="filterLocationsByState('{{ $locState }}')"
+                x-bind:class="$wire.locationsSelectedState === '{{ $locState }}' ? 'bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 border-transparent' : 'border-zinc-300 dark:border-zinc-700 text-zinc-800 dark:text-zinc-200 hover:border-zinc-400'"
+                default-classes="inline-block px-4 py-1.5 text-sm rounded-sm border transition-all">
+                {{ \App\Support\States::fullName($locState) }}
+            </x-dl.wrapper>
         @endforeach
-    </div>
+    </x-dl.wrapper>
 
-    {{-- Location grid --}}
-    @if ($this->filteredLocations->isNotEmpty())
-        <div class="grid sm:grid-cols-3 gap-6">
-            @foreach ($this->filteredLocations as $location)
-                <div wire:key="location-{{ $location->id }}" wire:transition class="bg-white dark:bg-[#161615] rounded-lg shadow-[inset_0px_0px_0px_1px_rgba(26,26,0,0.16)] dark:shadow-[inset_0px_0px_0px_1px_#fffaed2d] overflow-hidden">
+    @if ($this->locationsFiltered->isNotEmpty())
+        <x-dl.wrapper slug="locations-grid:SfKKnK" prefix="locations_grid" default-classes="grid sm:grid-cols-3 gap-6">
+            @foreach ($this->locationsFiltered as $location)
+                <x-dl.card slug="locations-grid:SfKKnK" prefix="location_card"
+                    default-classes="bg-white dark:bg-zinc-800 rounded-card shadow-card overflow-hidden">
                     @if ($location->photoUrl())
-                        <img
+                        <x-dl.wrapper slug="locations-grid:SfKKnK" prefix="location_image" tag="img"
                             src="{{ $location->photoUrl() }}"
                             alt="{{ $location->name }}"
-                            class="w-full h-48 object-cover"
-                        />
+                            default-classes="w-full h-48 object-cover" />
                     @endif
-                    <div class="p-5">
-                        <h2 class="font-semibold text-base mb-3">{{ $location->name }}</h2>
-
-                        <div class="space-y-1.5 text-sm text-[#706f6c] dark:text-[#A1A09A] mb-5">
+                    <x-dl.group slug="locations-grid:SfKKnK" prefix="card_content" default-classes="p-5">
+                        <x-dl.wrapper slug="locations-grid:SfKKnK" prefix="location_name" tag="h3"
+                            default-classes="font-semibold text-base text-zinc-900 dark:text-white mb-3">
+                            {{ $location->name }}
+                        </x-dl.wrapper>
+                        <x-dl.wrapper slug="locations-grid:SfKKnK" prefix="location_details"
+                            default-classes="space-y-1.5 text-sm text-zinc-500 dark:text-zinc-400 mb-5">
                             <p>{{ $location->address }}</p>
                             <p>{{ $location->city }}, {{ $location->state }} {{ $location->zip }}</p>
                             <p>{{ $location->phone }}</p>
-                        </div>
-
-                        <a
+                        </x-dl.wrapper>
+                        <x-dl.wrapper slug="locations-grid:SfKKnK" prefix="directions_link" tag="a"
                             href="https://maps.google.com/?q={{ urlencode($location->address.', '.$location->city.', '.$location->state.' '.$location->zip) }}"
                             target="_blank"
                             rel="noopener noreferrer"
-                            class="inline-block px-4 py-1.5 text-sm border border-[#19140035] dark:border-[#3E3E3A] hover:border-[#1915014a] dark:hover:border-[#62605b] text-[#1b1b18] dark:text-[#EDEDEC] rounded-sm transition-all"
-                        >
+                            default-classes="inline-block px-4 py-1.5 text-sm border border-zinc-300 dark:border-zinc-600 hover:border-zinc-400 text-zinc-800 dark:text-zinc-200 rounded-sm transition-all">
                             Get Directions
-                        </a>
-                    </div>
-                </div>
+                        </x-dl.wrapper>
+                    </x-dl.group>
+                </x-dl.card>
             @endforeach
-        </div>
+        </x-dl.wrapper>
     @else
-        <p class="text-[#706f6c] dark:text-[#A1A09A] text-sm">No locations found for the selected state.</p>
+        <x-dl.wrapper slug="locations-grid:SfKKnK" prefix="empty_state" tag="p"
+            default-classes="text-zinc-500 dark:text-zinc-400 text-sm">
+            No locations found for the selected state.
+        </x-dl.wrapper>
     @endif
+</x-dl.section>
+{{-- ROW:end:locations-grid:SfKKnK --}}
 </div>

@@ -877,7 +877,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
         $skipAllSlugs = ['section'];
         $skipTopLevelSlugs = ['card', 'group', 'accordion-item'];
 
-        preg_match_all('/<x-dl\.([\w-]+)(.*?)\s*\/?' . '>/s', $blade, $tagMatches, PREG_SET_ORDER | PREG_OFFSET_CAPTURE);
+        preg_match_all('/<x-dl\.([\w-]+)((?:"[^"]*"|' . "'[^']*'" . '|[^>])*)\s*\/?' . '>/', $blade, $tagMatches, PREG_SET_ORDER | PREG_OFFSET_CAPTURE);
 
         $allComps = [];
 
@@ -913,7 +913,68 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                 $fullText = $openTag;
             } else {
                 $closeTag = '</x-dl.'.$slug.'>';
-                $closePos = strpos($blade, $closeTag, $openOffset + strlen($openTag));
+                $openPattern = '<x-dl.'.$slug;
+
+                // Track nesting depth so same-type nested components don't confuse strpos.
+                $depth = 1;
+                $searchPos = $openOffset + strlen($openTag);
+                $closePos = false;
+
+                // Helper: scan forward from $from respecting quoted strings, return position of the closing >.
+                $findTagEnd = function (string $blade, int $from): int|false {
+                    $len = strlen($blade);
+                    $i = $from;
+                    $inQuote = false;
+                    $quoteChar = '';
+                    while ($i < $len) {
+                        $c = $blade[$i];
+                        if ($inQuote) {
+                            if ($c === $quoteChar) {
+                                $inQuote = false;
+                            }
+                        } else {
+                            if ($c === '"' || $c === "'") {
+                                $inQuote = true;
+                                $quoteChar = $c;
+                            } elseif ($c === '>') {
+                                return $i;
+                            }
+                        }
+                        $i++;
+                    }
+
+                    return false;
+                };
+
+                while ($depth > 0) {
+                    $nextOpen = strpos($blade, $openPattern, $searchPos);
+                    $nextClose = strpos($blade, $closeTag, $searchPos);
+
+                    if ($nextClose === false) {
+                        break;
+                    }
+
+                    if ($nextOpen !== false && $nextOpen < $nextClose) {
+                        // Verify it is a proper opening tag, not a longer component name.
+                        $charAfter = $blade[$nextOpen + strlen($openPattern)] ?? '';
+                        if ($charAfter === ' ' || $charAfter === "\n" || $charAfter === "\t" || $charAfter === '/' || $charAfter === '>') {
+                            // Only increment depth for non-self-closing nested tags.
+                            $nestedTagEnd = $findTagEnd($blade, $nextOpen + strlen($openPattern));
+                            $nestedSelfClosing = $nestedTagEnd !== false && $blade[$nestedTagEnd - 1] === '/';
+                            if (! $nestedSelfClosing) {
+                                $depth++;
+                            }
+                        }
+                        $searchPos = $nextOpen + strlen($openPattern);
+                    } else {
+                        $depth--;
+                        if ($depth === 0) {
+                            $closePos = $nextClose;
+                            break;
+                        }
+                        $searchPos = $nextClose + strlen($closeTag);
+                    }
+                }
 
                 if ($closePos === false) {
                     $closeOffset = $openOffset + strlen($openTag);

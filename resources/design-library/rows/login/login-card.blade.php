@@ -22,7 +22,7 @@
         </x-dl.wrapper>
         <x-dl.wrapper slug="__SLUG__" prefix="card"
             default-classes="bg-white dark:bg-zinc-900 rounded-card shadow-card border border-zinc-200 dark:border-zinc-700 p-8">
-            <x-dl.wrapper slug="__SLUG__" prefix="form" tag="form"
+            <x-dl.group slug="__SLUG__" prefix="form" tag="form"
                 default-classes="space-y-5">
                 <div>
                     <x-dl.wrapper slug="__SLUG__" prefix="label" tag="label"
@@ -34,7 +34,7 @@
                         default-classes="w-full px-4 py-2.5 rounded-lg border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition" />
                 </div>
                 <div>
-                    <x-dl.wrapper slug="__SLUG__" prefix="password_row"
+                    <x-dl.group slug="__SLUG__" prefix="password_row"
                         default-classes="flex items-center justify-between mb-1">
                         <x-dl.wrapper slug="__SLUG__" prefix="label" tag="label"
                             default-classes="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
@@ -45,7 +45,7 @@
                             default-classes="text-xs text-primary hover:text-primary/80">
                             Forgot password?
                         </x-dl.wrapper>
-                    </x-dl.wrapper>
+                    </x-dl.group>
                     <x-dl.wrapper slug="__SLUG__" prefix="input" tag="input"
                         type="password"
                         default-classes="w-full px-4 py-2.5 rounded-lg border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition" />
@@ -55,7 +55,7 @@
                     default-classes="w-full py-3 bg-primary text-white font-semibold rounded-lg hover:bg-primary/90 transition-colors">
                     Sign In
                 </x-dl.wrapper>
-            </x-dl.wrapper>
+            </x-dl.group>
         </x-dl.wrapper>
         <x-dl.wrapper slug="__SLUG__" prefix="signup_text" tag="p"
             default-classes="mt-6 text-center text-sm text-zinc-500 dark:text-zinc-400">

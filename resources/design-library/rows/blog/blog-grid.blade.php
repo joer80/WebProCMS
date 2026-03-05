@@ -23,9 +23,9 @@
         <x-dl.wrapper slug="__SLUG__" prefix="posts_grid"
             default-classes="grid md:grid-cols-3 gap-8">
             @foreach ($this->recentPosts ?? [] as $post)
-                <x-dl.wrapper slug="__SLUG__" prefix="article" tag="article"
+                <x-dl.card slug="__SLUG__" prefix="article" tag="article"
                     default-classes="group">
-                    <x-dl.wrapper slug="__SLUG__" prefix="post_link" tag="a"
+                    <x-dl.group slug="__SLUG__" prefix="post_link" tag="a"
                         href="{{ route('blog.show', $post->slug) }}"
                         default-classes="block">
                         <x-dl.wrapper slug="__SLUG__" prefix="image_wrapper"
@@ -57,8 +57,8 @@
                             default-classes="mt-3 text-xs text-zinc-400 dark:text-zinc-500">
                             {{ $post->published_at?->format('M j, Y') }}
                         </x-dl.wrapper>
-                    </x-dl.wrapper>
-                </x-dl.wrapper>
+                    </x-dl.group>
+                </x-dl.card>
             @endforeach
         </x-dl.wrapper>
 </x-dl.section>

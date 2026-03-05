@@ -444,7 +444,7 @@ See `resources/design-library/rows/pricing/pricing-cards.blade.php` for the refe
 
 ### Design Library Components (`x-dl.*`)
 
-Four Blade components handle the repeating standard patterns. Each lives in `app/View/Components/Dl/` (PHP class) and `resources/views/components/dl/` (blade view starting with `@blaze`). Each class has a `public static function schemaFields(array $attrs): array` that the parser calls to register fields — so the component tag in the template IS the field declaration.
+Four Blade components handle the repeating standard patterns. Each lives in `app/View/Components/Dl/` (PHP class) and `resources/views/components/dl/` (blade view starting with `@props`). Each class has a `public static function schemaFields(array $attrs): array` that the parser calls to register fields — so the component tag in the template IS the field declaration.
 
 **`x-dl.section`** — section/container wrapper (2 fields: `section_classes`, `section_container_classes`). Wrapping component — use it as the outermost element of every row:
 ```blade
@@ -512,7 +512,7 @@ Fields registered: `toggle_{prefix}`, `{prefix}_video_url`, `{prefix}_wrapper_cl
 ```
 Fields registered: `toggle_{prefix}`, `{prefix}` (label text), `{prefix}_url`, `{prefix}_new_tab`, `{prefix}_classes`.
 
-**`x-dl.wrapper`** — generic element wrapper (classes only, no toggle). Use for **leaf-level elements** — those whose children are only text, self-closing components (`x-dl.icon`, `x-dl.heading`, etc.), or plain HTML with no non-self-closing wrapper children. Forwards all non-prop attributes (href, type, wire:model, src, alt, etc.) to the rendered element. Void elements (input, img, br, etc.) self-close without a slot.
+**`x-dl.wrapper`** — generic element wrapper (classes only, no toggle). Use for any element that should appear as its own top-level sidebar card — whether a leaf element or a container. Forwards all non-prop attributes to the rendered element. Void elements self-close without a slot.
 ```blade
 {{-- Simple div (leaf) --}}
 <x-dl.wrapper slug="__SLUG__" prefix="text_block" default-classes="p-6 rounded-card border border-zinc-200">
@@ -532,7 +532,7 @@ Fields registered: `toggle_{prefix}`, `{prefix}` (label text), `{prefix}_url`, `
 ```
 Fields registered: `{prefix}_classes` (+ `{prefix}_featured_classes` if `default-featured-classes` attr is provided).
 
-**`x-dl.card`** — outermost loop item wrapper. Use as the **direct child of `@foreach`** inside a grid or gallery. Identical API to `x-dl.wrapper` but uses a different Blaze-compiled hash, preventing variable collision when loop items contain nested wrappers.
+**`x-dl.card`** — outermost loop item wrapper. Use as the **direct child of `@foreach`** inside a grid or gallery. Identical API to `x-dl.wrapper`. `@blaze` is intentionally absent from this component.
 ```blade
 {{-- Outermost loop item --}}
 <x-dl.card slug="__SLUG__" prefix="feature_card"
@@ -550,7 +550,7 @@ Fields registered: `{prefix}_classes` (+ `{prefix}_featured_classes` if `default
 ```
 Fields registered: same as `x-dl.wrapper`.
 
-**`x-dl.group`** — intermediate wrapper that **itself contains other non-self-closing wrappers** as children (e.g. a price row containing a period span, a features list containing item wrappers). Use when you need a container that is neither the outermost loop item (`x-dl.card`) nor a leaf element (`x-dl.wrapper`).
+**`x-dl.group`** — intermediate container whose fields should merge into the enclosing top-level component's sidebar card rather than appearing as their own card. Use when you want the element's classes to be editable but grouped under the parent's sidebar entry (e.g. `author_wrapper` inside a slide, `card_content` inside a loop card). `@blaze` is intentionally absent.
 ```blade
 {{-- Intermediate container holding other non-self-closing wrappers --}}
 <x-dl.group slug="__SLUG__" prefix="author_row"
@@ -566,11 +566,14 @@ Fields registered: same as `x-dl.wrapper`.
 | Scenario | Use |
 |----------|-----|
 | Outermost element of a `@foreach` loop item | `x-dl.card` |
-| Container inside a loop item that itself wraps other non-self-closing components | `x-dl.group` |
-| Leaf element (children are text, self-closing tags, or plain HTML only) | `x-dl.wrapper` |
-| Outside of any loop | `x-dl.wrapper` |
+| Intermediate container whose fields should merge into an enclosing top-level component's sidebar card | `x-dl.group` |
+| Any other element (leaf or container) that should appear as its own top-level sidebar card | `x-dl.wrapper` |
 
-**Why this matters:** Blaze compiles non-self-closing `<x-dl.*>` tags using a `$__attrs{hash}` variable where the hash is derived from the component's file path. If two nested non-self-closing tags share the same component (same file path = same hash), the inner assignment overwrites the outer one, causing the outer element to render with the wrong tag/classes. `x-dl.card`, `x-dl.group`, and `x-dl.wrapper` each have unique file paths and therefore unique hashes — they can be safely nested.
+**Critical: `x-dl.group` cannot be used for outer containers.** `x-dl.group` is in `$skipTopLevelSlugs` — it never appears as its own top-level sidebar card. Its fields merge into the nearest enclosing top-level component. If a container has no enclosing `x-dl.*` parent (other than `x-dl.section`, which is `$skipAllSlugs`), making it `x-dl.group` orphans all its fields into "Row Settings" with no top-level to merge into. Any container at the outermost nesting level must be `x-dl.wrapper`. The editor parser (`extractTopLevelComponentsFromBlade`) uses depth-tracking close tag search so same-type nested `x-dl.wrapper` components are handled correctly — nesting `x-dl.wrapper` inside `x-dl.wrapper` is safe.
+
+**Common mistake:** Using `x-dl.group` for an outer/top-level container (e.g. `prefix="filter_wrapper"`, `prefix="posts_grid"`, `prefix="columns_grid"`) that has no enclosing parent `x-dl.*` component. These must be `x-dl.wrapper`. Reserve `x-dl.group` for intermediate containers that sit *inside* another top-level `x-dl.wrapper` and whose fields should merge into that parent's sidebar card (e.g. `author_wrapper` inside `slides_wrapper`, `card_content` inside a loop card).
+
+`x-dl.wrapper`, `x-dl.card`, and `x-dl.group` intentionally do **not** use `@blaze`, so they render through the standard Blade component stack. This gives each instance its own scope and allows safe nesting at any depth with no hash collisions. **Do not add `@blaze` to these three components** — it would re-introduce the variable collision bug. If a future `x-dl.*` component exhibits broken/mismatched HTML when nested, the first fix to try is removing `@blaze` from that component's blade view.
 
 **`x-dl.icon`** — heroicon with optional wrapper div. Handles `name:variant` parsing (e.g. `"bolt:solid"`). Supports featured class switching. Wrapper is only rendered when `default-wrapper-classes` is non-empty.
 ```blade
@@ -765,6 +768,21 @@ The editor's `extractTopLevelComponentsFromBlade()` method uses two distinct lis
 - **`$skipTopLevelSlugs`** (`['card', 'group', 'accordion-item']`) — added to `$allComps` (so their fields get merged into the enclosing top-level component's `fieldKeys`), but blocked from appearing as their own top-level sidebar cards via the `skipTopLevel` flag.
 
 **Why this matters:** If you add a new structural wrapper component (like card/group) and put it in `$skipAllSlugs`, its fields will be in `contentFields` (from `parseSchemaFields`) but absent from all `$allComponentFieldKeys`. Those fields become orphaned and surface in the "Row Settings" group unexpectedly. Any new component that wraps loop items or intermediates goes in `$skipTopLevelSlugs`, not `$skipAllSlugs`.
+
+### Blade Template Files: PHP String Literals with `?>` and `\'`
+
+The Blade compiler pre-processes `.blade.php` files as text before PHP parses them. Two pitfalls when writing PHP code (regex patterns, etc.) inside Blade files:
+
+1. **`?>`** — Blade interprets `?>` as a PHP close tag, even inside PHP string literals. The compiled output will have malformed PHP. Split the string: `'\/?' . '>'` instead of `\/?>`.
+2. **`\'` in single-quoted strings** — The Blade lexer can misparse `\'` inside single-quoted strings in PHP blocks, causing a compile/parse error in the cached view.
+
+**Safe pattern for regex with single-quoted content inside a Blade file:**
+```php
+// Use string concatenation — double-quoted string for the single-quote part, split at ?>
+preg_match_all('/<x-dl\.([\w-]+)((?:"[^"]*"|' . "'[^']*'" . '|[^>])*)\s*\/?' . '>/', $blade, ...);
+```
+
+This avoids both issues: `"'[^']*'"` is a double-quoted string containing single quotes (no escaping needed), and `'\/?' . '>'` splits `?>` across two literals.
 
 ### Bulk Design Library Row Edits
 

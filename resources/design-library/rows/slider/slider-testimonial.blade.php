@@ -27,7 +27,7 @@
                         default-classes="text-xl text-zinc-700 dark:text-zinc-300 italic leading-relaxed">
                         "{{ $t['quote'] }}"
                     </x-dl.wrapper>
-                    <x-dl.wrapper slug="__SLUG__" prefix="author_wrapper"
+                    <x-dl.group slug="__SLUG__" prefix="author_wrapper"
                         default-classes="mt-6">
                         <x-dl.wrapper slug="__SLUG__" prefix="author_name"
                             default-classes="font-semibold text-zinc-900 dark:text-white">
@@ -37,7 +37,7 @@
                             default-classes="text-sm text-zinc-500 dark:text-zinc-400">
                             {{ $t['role'] }}
                         </x-dl.wrapper>
-                    </x-dl.wrapper>
+                    </x-dl.group>
                 </div>
             @endforeach
         </x-dl.wrapper>

@@ -9,7 +9,7 @@
     default-container-classes="max-w-6xl mx-auto">
         <x-dl.wrapper slug="__SLUG__" prefix="columns_grid"
             default-classes="grid grid-cols-2 md:grid-cols-4 gap-10 mb-12">
-            <x-dl.wrapper slug="__SLUG__" prefix="brand_col"
+            <x-dl.group slug="__SLUG__" prefix="brand_col"
                 default-classes="col-span-2 md:col-span-1">
                 <x-dl.wrapper slug="__SLUG__" prefix="brand" tag="a"
                     href="/"
@@ -19,41 +19,41 @@
                 </x-dl.wrapper>
                 <x-dl.subheadline slug="__SLUG__" prefix="description" tag="p" default="A short description of your company and what makes you unique."
                     default-classes="mt-3 text-sm text-zinc-400 leading-relaxed" />
-            </x-dl.wrapper>
+            </x-dl.group>
             <div>
                 <x-dl.wrapper slug="__SLUG__" prefix="column_heading" tag="h4"
                     default-classes="text-sm font-semibold text-white uppercase tracking-wider mb-4">
                     Company
                 </x-dl.wrapper>
-                <x-dl.wrapper slug="__SLUG__" prefix="column_list" tag="ul"
+                <x-dl.group slug="__SLUG__" prefix="column_list" tag="ul"
                     default-classes="space-y-2 text-sm text-zinc-400">
                     <li><x-dl.wrapper slug="__SLUG__" prefix="column_link" tag="a" href="#" default-classes="hover:text-white transition-colors">About</x-dl.wrapper></li>
                     <li><x-dl.wrapper slug="__SLUG__" prefix="column_link" tag="a" href="#" default-classes="hover:text-white transition-colors">Blog</x-dl.wrapper></li>
                     <li><x-dl.wrapper slug="__SLUG__" prefix="column_link" tag="a" href="#" default-classes="hover:text-white transition-colors">Careers</x-dl.wrapper></li>
-                </x-dl.wrapper>
+                </x-dl.group>
             </div>
             <div>
                 <x-dl.wrapper slug="__SLUG__" prefix="column_heading" tag="h4"
                     default-classes="text-sm font-semibold text-white uppercase tracking-wider mb-4">
                     Product
                 </x-dl.wrapper>
-                <x-dl.wrapper slug="__SLUG__" prefix="column_list" tag="ul"
+                <x-dl.group slug="__SLUG__" prefix="column_list" tag="ul"
                     default-classes="space-y-2 text-sm text-zinc-400">
                     <li><x-dl.wrapper slug="__SLUG__" prefix="column_link" tag="a" href="#" default-classes="hover:text-white transition-colors">Features</x-dl.wrapper></li>
                     <li><x-dl.wrapper slug="__SLUG__" prefix="column_link" tag="a" href="#" default-classes="hover:text-white transition-colors">Pricing</x-dl.wrapper></li>
                     <li><x-dl.wrapper slug="__SLUG__" prefix="column_link" tag="a" href="#" default-classes="hover:text-white transition-colors">Docs</x-dl.wrapper></li>
-                </x-dl.wrapper>
+                </x-dl.group>
             </div>
             <div>
                 <x-dl.wrapper slug="__SLUG__" prefix="column_heading" tag="h4"
                     default-classes="text-sm font-semibold text-white uppercase tracking-wider mb-4">
                     Legal
                 </x-dl.wrapper>
-                <x-dl.wrapper slug="__SLUG__" prefix="column_list" tag="ul"
+                <x-dl.group slug="__SLUG__" prefix="column_list" tag="ul"
                     default-classes="space-y-2 text-sm text-zinc-400">
                     <li><x-dl.wrapper slug="__SLUG__" prefix="column_link" tag="a" href="#" default-classes="hover:text-white transition-colors">Privacy</x-dl.wrapper></li>
                     <li><x-dl.wrapper slug="__SLUG__" prefix="column_link" tag="a" href="#" default-classes="hover:text-white transition-colors">Terms</x-dl.wrapper></li>
-                </x-dl.wrapper>
+                </x-dl.group>
             </div>
         </x-dl.wrapper>
         <x-dl.wrapper slug="__SLUG__" prefix="bottom_bar"
