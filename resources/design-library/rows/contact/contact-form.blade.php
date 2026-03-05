@@ -14,8 +14,21 @@
             default-classes="text-zinc-500 dark:text-zinc-400 leading-normal mb-8" />
         <x-dl.grid slug="__SLUG__" prefix="contact_items"
             default-grid-classes="space-y-6 text-sm"
-            default-items='[{"label":"Email","value":"hello@example.com"},{"label":"Phone","value":"(555) 000-0000"},{"label":"Office","value":"123 Main Street, San Francisco CA 94105"},{"label":"Hours","value":"Mon\u2013Fri: 9am\u20136pm"}]'>
-            @dlItems('__SLUG__', 'contact_items', $contactItems, '[{"label":"Email","value":"hello@example.com"},{"label":"Phone","value":"(555) 000-0000"},{"label":"Office","value":"123 Main Street, San Francisco CA 94105"},{"label":"Hours","value":"Mon\u2013Fri: 9am\u20136pm"}]')
+            default-items='[{"label":"Email","value":""},{"label":"Phone","value":""},{"label":"Office","value":""},{"label":"Hours","value":""}]'>
+            <x-dl.business-info-toggle slug="__SLUG__" />
+            @dlItems('__SLUG__', 'contact_items', $contactItems, '[{"label":"Email","value":""},{"label":"Phone","value":""},{"label":"Office","value":""},{"label":"Hours","value":""}]')
+            @php
+            if (content('__SLUG__', 'toggle_use_business_info', '1') === '1') {
+                $contactItems = array_values(array_filter([
+                    config('business.email') ? ['label' => 'Email', 'value' => config('business.email')] : null,
+                    config('business.phone') ? ['label' => 'Phone', 'value' => config('business.phone')] : null,
+                    (config('business.address_street') || config('business.address_city_state_zip'))
+                        ? ['label' => 'Office', 'value' => implode(', ', array_filter([config('business.address_street'), config('business.address_city_state_zip')]))]
+                        : null,
+                    config('business.hours') ? ['label' => 'Hours', 'value' => config('business.hours')] : null,
+                ]));
+            }
+            @endphp
             @foreach ($contactItems as $contactItem)
                 <x-dl.card slug="__SLUG__" prefix="contact_item" default-classes="">
                     <x-dl.wrapper slug="__SLUG__" prefix="item_label" tag="p"
@@ -26,58 +39,5 @@
             @endforeach
         </x-dl.grid>
     </div>
-    <x-dl.group slug="__SLUG__" prefix="form" tag="form"
-        default-classes="space-y-5 bg-white dark:bg-[#161615] rounded-lg shadow-[inset_0px_0px_0px_1px_rgba(26,26,0,0.16)] dark:shadow-[inset_0px_0px_0px_1px_#fffaed2d] p-8">
-        <x-dl.card slug="__SLUG__" prefix="name_grid"
-            default-classes="grid grid-cols-2 gap-4">
-            <div>
-                <x-dl.wrapper slug="__SLUG__" prefix="first_name_label" tag="label"
-                    default-classes="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
-                    First Name
-                </x-dl.wrapper>
-                <x-dl.wrapper slug="__SLUG__" prefix="first_name_input" tag="input"
-                    type="text" placeholder="Jane"
-                    default-classes="block w-full rounded-lg border border-zinc-200 dark:border-zinc-700 px-3 py-2 text-sm text-zinc-900 dark:text-white placeholder-zinc-400 bg-white dark:bg-zinc-700 focus:outline-none focus:ring-2 focus:ring-primary" />
-            </div>
-            <div>
-                <x-dl.wrapper slug="__SLUG__" prefix="last_name_label" tag="label"
-                    default-classes="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
-                    Last Name
-                </x-dl.wrapper>
-                <x-dl.wrapper slug="__SLUG__" prefix="last_name_input" tag="input"
-                    type="text" placeholder="Smith"
-                    default-classes="block w-full rounded-lg border border-zinc-200 dark:border-zinc-700 px-3 py-2 text-sm text-zinc-900 dark:text-white placeholder-zinc-400 bg-white dark:bg-zinc-700 focus:outline-none focus:ring-2 focus:ring-primary" />
-            </div>
-        </x-dl.card>
-        <div>
-            <x-dl.wrapper slug="__SLUG__" prefix="email_label" tag="label"
-                default-classes="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
-                Email
-            </x-dl.wrapper>
-            <x-dl.wrapper slug="__SLUG__" prefix="email_input" tag="input"
-                type="email" placeholder="jane@example.com"
-                default-classes="block w-full rounded-lg border border-zinc-200 dark:border-zinc-700 px-3 py-2 text-sm text-zinc-900 dark:text-white placeholder-zinc-400 bg-white dark:bg-zinc-700 focus:outline-none focus:ring-2 focus:ring-primary" />
-        </div>
-        <div>
-            <x-dl.wrapper slug="__SLUG__" prefix="phone_label" tag="label"
-                default-classes="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
-                Phone Number
-            </x-dl.wrapper>
-            <x-dl.wrapper slug="__SLUG__" prefix="phone_input" tag="input"
-                type="tel" placeholder="+1 (555) 000-0000"
-                default-classes="block w-full rounded-lg border border-zinc-200 dark:border-zinc-700 px-3 py-2 text-sm text-zinc-900 dark:text-white placeholder-zinc-400 bg-white dark:bg-zinc-700 focus:outline-none focus:ring-2 focus:ring-primary" />
-        </div>
-        <div>
-            <x-dl.wrapper slug="__SLUG__" prefix="inquiry_label" tag="label"
-                default-classes="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
-                Your Inquiry
-            </x-dl.wrapper>
-            <x-dl.wrapper slug="__SLUG__" prefix="inquiry_textarea" tag="textarea"
-                rows="5" placeholder="Tell us how we can help…"
-                default-classes="block w-full rounded-lg border border-zinc-200 dark:border-zinc-700 px-3 py-2 text-sm text-zinc-900 dark:text-white placeholder-zinc-400 bg-white dark:bg-zinc-700 focus:outline-none focus:ring-2 focus:ring-primary resize-none">
-            </x-dl.wrapper>
-        </div>
-        <x-dl.button slug="__SLUG__" prefix="submit" type="submit" default="Send Message"
-            default-classes="w-full py-3 bg-primary text-white font-semibold rounded-lg hover:bg-primary/90 transition-colors" />
-    </x-dl.group>
+    <x-dl.form-select slug="__SLUG__" />
 </x-dl.section>

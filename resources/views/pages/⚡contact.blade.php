@@ -2,35 +2,9 @@
 
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
-use Livewire\Attributes\Validate;
 use Livewire\Component;
 
 new #[Layout('layouts.public', ['description' => 'Get in touch with the GetRows team. We respond within one business day. Ask us about pricing, enterprise plans, or anything else.'])] #[Title('Contact Us — GetRows')] class extends Component {
-    #[Validate('required|string|max:100')]
-    public string $firstName = '';
-
-    #[Validate('required|string|max:100')]
-    public string $lastName = '';
-
-    #[Validate('required|email|max:255')]
-    public string $email = '';
-
-    #[Validate('nullable|string|max:30')]
-    public string $phone = '';
-
-    #[Validate('required|string|max:2000')]
-    public string $inquiry = '';
-
-    public bool $submitted = false;
-
-    public function submit(): void
-    {
-        $this->validate();
-
-        // TODO: Send email when SMTP is configured.
-
-        $this->submitted = true;
-    }
 }; ?>
 <div>{{-- ROW:start:contact-form:YsqD1J --}}
 <x-dl.section slug="contact-form:YsqD1J"
@@ -56,60 +30,7 @@ new #[Layout('layouts.public', ['description' => 'Get in touch with the GetRows 
             @endforeach
         </x-dl.grid>
     </div>
-    <x-dl.group slug="contact-form:YsqD1J" prefix="form" tag="form"
-        default-classes="space-y-5 bg-white dark:bg-[#161615] rounded-lg shadow-[inset_0px_0px_0px_1px_rgba(26,26,0,0.16)] dark:shadow-[inset_0px_0px_0px_1px_#fffaed2d] p-8">
-        <x-dl.card slug="contact-form:YsqD1J" prefix="name_grid"
-            default-classes="grid grid-cols-2 gap-4">
-            <div>
-                <x-dl.wrapper slug="contact-form:YsqD1J" prefix="first_name_label" tag="label"
-                    default-classes="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
-                    First Name
-                </x-dl.wrapper>
-                <x-dl.wrapper slug="contact-form:YsqD1J" prefix="first_name_input" tag="input"
-                    type="text" placeholder="Jane"
-                    default-classes="block w-full rounded-lg border border-zinc-200 dark:border-zinc-700 px-3 py-2 text-sm text-zinc-900 dark:text-white placeholder-zinc-400 bg-white dark:bg-zinc-700 focus:outline-none focus:ring-2 focus:ring-primary" />
-            </div>
-            <div>
-                <x-dl.wrapper slug="contact-form:YsqD1J" prefix="last_name_label" tag="label"
-                    default-classes="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
-                    Last Name
-                </x-dl.wrapper>
-                <x-dl.wrapper slug="contact-form:YsqD1J" prefix="last_name_input" tag="input"
-                    type="text" placeholder="Smith"
-                    default-classes="block w-full rounded-lg border border-zinc-200 dark:border-zinc-700 px-3 py-2 text-sm text-zinc-900 dark:text-white placeholder-zinc-400 bg-white dark:bg-zinc-700 focus:outline-none focus:ring-2 focus:ring-primary" />
-            </div>
-        </x-dl.card>
-        <div>
-            <x-dl.wrapper slug="contact-form:YsqD1J" prefix="email_label" tag="label"
-                default-classes="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
-                Email
-            </x-dl.wrapper>
-            <x-dl.wrapper slug="contact-form:YsqD1J" prefix="email_input" tag="input"
-                type="email" placeholder="jane@example.com"
-                default-classes="block w-full rounded-lg border border-zinc-200 dark:border-zinc-700 px-3 py-2 text-sm text-zinc-900 dark:text-white placeholder-zinc-400 bg-white dark:bg-zinc-700 focus:outline-none focus:ring-2 focus:ring-primary" />
-        </div>
-        <div>
-            <x-dl.wrapper slug="contact-form:YsqD1J" prefix="phone_label" tag="label"
-                default-classes="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
-                Phone Number
-            </x-dl.wrapper>
-            <x-dl.wrapper slug="contact-form:YsqD1J" prefix="phone_input" tag="input"
-                type="tel" placeholder="+1 (555) 000-0000"
-                default-classes="block w-full rounded-lg border border-zinc-200 dark:border-zinc-700 px-3 py-2 text-sm text-zinc-900 dark:text-white placeholder-zinc-400 bg-white dark:bg-zinc-700 focus:outline-none focus:ring-2 focus:ring-primary" />
-        </div>
-        <div>
-            <x-dl.wrapper slug="contact-form:YsqD1J" prefix="inquiry_label" tag="label"
-                default-classes="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
-                Your Inquiry
-            </x-dl.wrapper>
-            <x-dl.wrapper slug="contact-form:YsqD1J" prefix="inquiry_textarea" tag="textarea"
-                rows="5" placeholder="Tell us how we can help…"
-                default-classes="block w-full rounded-lg border border-zinc-200 dark:border-zinc-700 px-3 py-2 text-sm text-zinc-900 dark:text-white placeholder-zinc-400 bg-white dark:bg-zinc-700 focus:outline-none focus:ring-2 focus:ring-primary resize-none">
-            </x-dl.wrapper>
-        </div>
-        <x-dl.button slug="contact-form:YsqD1J" prefix="submit" type="submit" default="Send Message"
-            default-classes="w-full py-3 bg-primary text-white font-semibold rounded-lg hover:bg-primary/90 transition-colors" />
-    </x-dl.group>
+    <x-dl.form-select slug="contact-form:YsqD1J" />
 </x-dl.section>
 {{-- ROW:end:contact-form:YsqD1J --}}
 </div>

@@ -372,6 +372,14 @@ if (in_array($field['type'], ['id', 'attrs'])) {
             placeholder="e.g. section-hero"
         />
         <flux:text class="text-xs text-zinc-400 mt-1">Used for anchor links: <code class="font-mono">#section-hero</code>. No spaces.</flux:text>
+    @elseif ($field['type'] === 'form_select')
+        @php $availableForms = \App\Models\Form::query()->orderBy('name')->get(['id', 'name']); @endphp
+        <flux:select wire:model.live="contentValues.{{ $field['key'] }}">
+            <flux:select.option value="">Select a form…</flux:select.option>
+            @foreach ($availableForms as $availableForm)
+                <flux:select.option value="{{ $availableForm->id }}">{{ $availableForm->name }}</flux:select.option>
+            @endforeach
+        </flux:select>
     @elseif ($field['type'] === 'attrs')
         @php
             $attrsRaw = $contentValues[$field['key']] ?? $field['default'];

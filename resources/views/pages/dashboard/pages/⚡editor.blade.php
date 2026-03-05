@@ -871,7 +871,11 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
      */
     public function extractTopLevelComponentsFromBlade(string $blade): array
     {
-        $skipSlugs = ['section', 'card', 'group', 'accordion-item'];
+        // section is excluded entirely (its fields are handled separately via rowDesignValues)
+        // card/group/accordion-item are included in $allComps so their fields get merged into
+        // the enclosing top-level component, but they cannot themselves be top-level sidebar cards
+        $skipAllSlugs = ['section'];
+        $skipTopLevelSlugs = ['card', 'group', 'accordion-item'];
 
         preg_match_all('/<x-dl\.([\w-]+)(.*?)\s*\/?' . '>/s', $blade, $tagMatches, PREG_SET_ORDER | PREG_OFFSET_CAPTURE);
 
@@ -880,7 +884,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
         foreach ($tagMatches as $tagMatch) {
             $slug = $tagMatch[1][0];
 
-            if (in_array($slug, $skipSlugs, true)) {
+            if (in_array($slug, $skipAllSlugs, true)) {
                 continue;
             }
 
@@ -927,6 +931,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                 'openOffset' => $openOffset,
                 'closeOffset' => $closeOffset,
                 'full' => $fullText,
+                'skipTopLevel' => in_array($slug, $skipTopLevelSlugs, true),
             ];
         }
 
@@ -947,7 +952,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                 }
             }
 
-            if (! $isNested) {
+            if (! $isNested && ! $comp['skipTopLevel']) {
                 $topLevel[] = $comp;
             }
         }

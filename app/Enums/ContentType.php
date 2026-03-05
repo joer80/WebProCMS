@@ -10,6 +10,7 @@ enum ContentType: string
     case Toggle = 'toggle';
     case Classes = 'classes';
     case Grid = 'grid';
+    case FormSelect = 'form_select';
 
     public function label(): string
     {
@@ -20,6 +21,7 @@ enum ContentType: string
             ContentType::Toggle => 'Toggle',
             ContentType::Classes => 'Classes',
             ContentType::Grid => 'Grid',
+            ContentType::FormSelect => 'Form Select',
         };
     }
 }

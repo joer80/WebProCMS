@@ -757,6 +757,15 @@ Both must match. Default temp limit is 12MB.
 
 Seeders are for demo data only. Data every install must have belongs in the migration using `DB::table()->insert()`.
 
+### Editor Sidebar: `extractTopLevelComponentsFromBlade` Skip Lists
+
+The editor's `extractTopLevelComponentsFromBlade()` method uses two distinct lists (not one):
+
+- **`$skipAllSlugs`** (`['section']`) — excluded entirely. Section fields are handled separately via `rowDesignValues` and filtered out of `contentFields`, so they must never enter `$allComps`.
+- **`$skipTopLevelSlugs`** (`['card', 'group', 'accordion-item']`) — added to `$allComps` (so their fields get merged into the enclosing top-level component's `fieldKeys`), but blocked from appearing as their own top-level sidebar cards via the `skipTopLevel` flag.
+
+**Why this matters:** If you add a new structural wrapper component (like card/group) and put it in `$skipAllSlugs`, its fields will be in `contentFields` (from `parseSchemaFields`) but absent from all `$allComponentFieldKeys`. Those fields become orphaned and surface in the "Row Settings" group unexpectedly. Any new component that wraps loop items or intermediates goes in `$skipTopLevelSlugs`, not `$skipAllSlugs`.
+
 ### Bulk Design Library Row Edits
 
 When asked to update many design library rows at once (e.g. "make all classes editable"), **skip directly to a single Task subagent call** (subagent_type: `general-purpose`). Do NOT attempt Read → Write/Edit in the main context — context compression causes the "File has not been read yet" error on Write/Edit even after successful reads. The subagent has fresh context, reads and writes files without that issue, and handles all files in one shot. Provide the full list of files and required changes in the prompt.

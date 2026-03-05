@@ -92,6 +92,11 @@ Route::middleware(['auth', 'verified'])->group(function (): void {
         Route::livewire('dashboard/locations/create', 'pages::dashboard.locations.create')->name('dashboard.locations.create');
         Route::livewire('dashboard/locations/{location}/edit', 'pages::dashboard.locations.edit')->name('dashboard.locations.edit');
 
+        Route::livewire('dashboard/forms', 'pages::dashboard.forms.index')->name('dashboard.forms.index');
+        Route::livewire('dashboard/forms/create', 'pages::dashboard.forms.create')->name('dashboard.forms.create');
+        Route::livewire('dashboard/forms/{form}/edit', 'pages::dashboard.forms.edit')->name('dashboard.forms.edit');
+        Route::livewire('dashboard/forms/{form}/submissions', 'pages::dashboard.forms.submissions')->name('dashboard.forms.submissions');
+
         Route::livewire('dashboard/tools', 'pages::dashboard.tools')->name('dashboard.tools');
         Route::redirect('dashboard/settings', '/dashboard/settings/general')->name('dashboard.settings');
         Route::livewire('dashboard/settings/general', 'pages::dashboard.settings.general')->name('dashboard.settings.general');

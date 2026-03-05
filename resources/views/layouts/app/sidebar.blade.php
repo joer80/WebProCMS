@@ -28,6 +28,9 @@
                         <flux:sidebar.item icon="map-pin" :href="route('dashboard.locations.index')" :current="request()->routeIs('dashboard.locations.*')" wire:navigate>
                             {{ __('Locations') }}
                         </flux:sidebar.item>
+                        <flux:sidebar.item icon="document-check" :href="route('dashboard.forms.index')" :current="request()->routeIs('dashboard.forms.*')" wire:navigate>
+                            {{ __('Forms') }}
+                        </flux:sidebar.item>
                         <flux:sidebar.item icon="bars-3" :href="route('dashboard.menus')" :current="request()->routeIs('dashboard.menus')" wire:navigate>
                             {{ __('Menus') }}
                         </flux:sidebar.item>
