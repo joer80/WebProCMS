@@ -308,7 +308,8 @@ Three separate bundles — do NOT cross-contaminate sources:
 ## CSS Theme Tokens
 
 Tokens defined in `resources/css/app.css` `@theme {}`. When adding new tokens, also update `resources/js/tw-autocomplete.js`.
-Current tokens: `primary`, `font-heading`, `py-section`, `rounded-card`, `shadow-card`, `accent`.
+Current tokens: `primary`, `font-heading`, `py-section`, `py-section-banner`, `py-section-hero`, `rounded-card`, `shadow-card`, `accent`.
+Section spacing tokens are controlled together via the Branding page (Small/Medium/Large): `py-section` (standard rows), `py-section-banner` (compact CTAs, 1rem less), `py-section-hero` (heroes, 1rem more).
 
 ## Memories
 

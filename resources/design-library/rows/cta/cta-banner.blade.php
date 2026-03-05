@@ -4,7 +4,7 @@
 @sort 10
 --}}
 <x-dl.section slug="__SLUG__"
-    default-section-classes="bg-primary py-section px-6 text-center"
+    default-section-classes="bg-primary py-section-banner px-6 text-center"
     default-container-classes="max-w-3xl mx-auto">
         <x-dl.heading slug="__SLUG__" prefix="headline" default="Ready to Get Started?"
             default-tag="h2"

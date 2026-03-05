@@ -5,48 +5,48 @@ use Livewire\Attributes\Title;
 use Livewire\Component;
 
 new #[Layout('layouts.public')] #[Title('Test Page')] class extends Component {}; ?>
-<div>{{-- ROW:start:hero-split:lya8Fv --}}
-<x-dl.section slug="hero-split:lya8Fv"
-    default-section-classes="py-section px-6 bg-white dark:bg-zinc-900"
+<div>{{-- ROW:start:hero-split:JkIwN1 --}}
+<x-dl.section slug="hero-split:JkIwN1"
+    default-section-classes="py-section-hero px-6 bg-white dark:bg-zinc-900"
     default-container-classes="max-w-6xl mx-auto grid md:grid-cols-2 gap-12 items-center">
         <div>
-            <x-dl.heading slug="hero-split:lya8Fv" prefix="headline" default="Build Something Amazing"
+            <x-dl.heading slug="hero-split:JkIwN1" prefix="headline" default="Build Something Amazing"
                 default-tag="h1"
                 default-classes="font-heading text-5xl font-bold text-zinc-900 dark:text-white leading-tight" />
-            <x-dl.subheadline slug="hero-split:lya8Fv" prefix="subheadline" default="Describe your product or service here. Keep it concise and focused on the value you deliver to customers."
+            <x-dl.subheadline slug="hero-split:JkIwN1" prefix="subheadline" default="Describe your product or service here. Keep it concise and focused on the value you deliver to customers."
                 default-classes="mt-6 text-lg text-zinc-500 dark:text-zinc-400" />
-            <x-dl.buttons slug="hero-split:lya8Fv"
+            <x-dl.buttons slug="hero-split:JkIwN1"
                 default-wrapper-classes="mt-8 flex flex-wrap gap-4"
                 default-primary-label="Start Free Trial"
                 default-primary-classes="px-6 py-3 bg-primary text-white font-semibold rounded-lg hover:bg-primary/90 transition-colors"
                 default-secondary-label="Watch Demo →"
                 default-secondary-classes="px-6 py-3 text-zinc-600 dark:text-zinc-300 font-semibold hover:text-zinc-900 dark:hover:text-white transition-colors" />
         </div>
-        <x-dl.media slug="hero-split:lya8Fv"
+        <x-dl.media slug="hero-split:JkIwN1"
             default-wrapper-classes="rounded-card overflow-hidden bg-zinc-100 dark:bg-zinc-800 aspect-video flex items-center justify-center"
             default-image-classes="w-full h-full object-cover" />
 </x-dl.section>
-{{-- ROW:end:hero-split:lya8Fv --}}
+{{-- ROW:end:hero-split:JkIwN1 --}}
 
-{{-- ROW:start:section:VI2JV4 --}}
-<x-dl.section slug="section:VI2JV4"
+{{-- ROW:start:section:yaZ2S0 --}}
+<x-dl.section slug="section:yaZ2S0"
     default-section-classes="py-section px-6 bg-white dark:bg-zinc-900"
     default-container-classes="max-w-6xl mx-auto">
 
 {{-- @dl-item:heading:headline:Heading --}}
-<x-dl.heading slug="section:VI2JV4" prefix="headline" default="Your Heading"
+<x-dl.heading slug="section:yaZ2S0" prefix="headline" default="Your Heading"
     default-tag="h2"
     default-classes="font-heading text-3xl font-bold text-zinc-900 dark:text-white" />
 {{-- /@dl-item --}}
 
 {{-- @dl-item:subheadline:subheadline:Subheadline --}}
-<x-dl.subheadline slug="section:VI2JV4" prefix="subheadline" default="Supporting text goes here."
+<x-dl.subheadline slug="section:yaZ2S0" prefix="subheadline" default="Supporting text goes here."
     default-classes="mt-4 text-lg text-zinc-500 dark:text-zinc-400" />
 {{-- /@dl-item --}}
 
 
 {{-- @dl-item:buttons:buttons:Buttons --}}
-<x-dl.buttons slug="section:VI2JV4"
+<x-dl.buttons slug="section:yaZ2S0"
     default-wrapper-classes="mt-8 flex flex-wrap items-center gap-4"
     default-primary-label="Get Started"
     default-primary-classes="px-6 py-3 bg-primary text-white font-semibold rounded-lg hover:bg-primary/90 transition-colors"
@@ -54,46 +54,46 @@ new #[Layout('layouts.public')] #[Title('Test Page')] class extends Component {}
     default-secondary-classes="px-6 py-3 border border-zinc-300 dark:border-zinc-600 text-zinc-700 dark:text-zinc-200 font-semibold rounded-lg hover:bg-zinc-50 transition-colors" />
 {{-- /@dl-item --}}
 </x-dl.section>
-{{-- ROW:end:section:VI2JV4 --}}
+{{-- ROW:end:section:yaZ2S0 --}}
 
-{{-- ROW:start:faqs-accordion:nTIGso --}}
-<x-dl.section slug="faqs-accordion:nTIGso"
+{{-- ROW:start:faqs-accordion:TbpLHg --}}
+<x-dl.section slug="faqs-accordion:TbpLHg"
     default-section-classes="py-section px-6 bg-white dark:bg-zinc-900"
     default-container-classes="max-w-3xl mx-auto">
-    <x-dl.wrapper slug="faqs-accordion:nTIGso" prefix="header_wrapper"
+    <x-dl.wrapper slug="faqs-accordion:TbpLHg" prefix="header_wrapper"
         default-classes="text-center mb-16">
-        <x-dl.heading slug="faqs-accordion:nTIGso" prefix="headline" default="Frequently Asked Questions"
+        <x-dl.heading slug="faqs-accordion:TbpLHg" prefix="headline" default="Frequently Asked Questions"
             default-tag="h2"
             default-classes="font-heading text-4xl font-bold text-zinc-900 dark:text-white" />
-        <x-dl.subheadline slug="faqs-accordion:nTIGso" prefix="subheadline" default="Can't find what you're looking for?"
+        <x-dl.subheadline slug="faqs-accordion:TbpLHg" prefix="subheadline" default="Can't find what you're looking for?"
             default-classes="mt-4 text-lg text-zinc-500 dark:text-zinc-400" />
-        <x-dl.link slug="faqs-accordion:nTIGso" prefix="contact"
+        <x-dl.link slug="faqs-accordion:TbpLHg" prefix="contact"
             default-label="Contact us"
             default-url="/contact"
             default-classes="text-primary underline" />
     </x-dl.wrapper>
-    <x-dl.accordion slug="faqs-accordion:nTIGso" prefix="faqs"
+    <x-dl.accordion slug="faqs-accordion:TbpLHg" prefix="faqs"
         default-wrapper-classes="divide-y divide-zinc-200 dark:divide-zinc-700"
-        default-items='[{"q":"How do I get started?","a":"Simply sign up for a free account and follow the onboarding wizard. You can be up and running in under 5 minutes."},{"q":"Is there a free trial?","a":"Yes! All plans come with a 14-day free trial. No credit card required."},{"q":"Can I cancel at any time?","a":"Absolutely. You can cancel your subscription at any time from your account settings. No questions asked."},{"q":"Do you offer customer support?","a":"We offer email support on all plans, with priority support and live chat available on Pro and Enterprise plans."}]'>
-        @dlItems('faqs-accordion:nTIGso', 'faqs', $faqs, '[{"q":"How do I get started?","a":"Simply sign up for a free account and follow the onboarding wizard. You can be up and running in under 5 minutes."},{"q":"Is there a free trial?","a":"Yes! All plans come with a 14-day free trial. No credit card required."},{"q":"Can I cancel at any time?","a":"Absolutely. You can cancel your subscription at any time from your account settings. No questions asked."},{"q":"Do you offer customer support?","a":"We offer email support on all plans, with priority support and live chat available on Pro and Enterprise plans."}]')
+        default-items='[{"question":"How do I get started?","answer":"Simply sign up for a free account and follow the onboarding wizard. You can be up and running in under 5 minutes."},{"question":"Is there a free trial?","answer":"Yes! All plans come with a 14-day free trial. No credit card required."},{"question":"Can I cancel at any time?","answer":"Absolutely. You can cancel your subscription at any time from your account settings. No questions asked."},{"question":"Do you offer customer support?","answer":"We offer email support on all plans, with priority support and live chat available on Pro and Enterprise plans."}]'>
+        @dlItems('faqs-accordion:TbpLHg', 'faqs', $faqs, '[{"question":"How do I get started?","answer":"Simply sign up for a free account and follow the onboarding wizard. You can be up and running in under 5 minutes."},{"question":"Is there a free trial?","answer":"Yes! All plans come with a 14-day free trial. No credit card required."},{"question":"Can I cancel at any time?","answer":"Absolutely. You can cancel your subscription at any time from your account settings. No questions asked."},{"question":"Do you offer customer support?","answer":"We offer email support on all plans, with priority support and live chat available on Pro and Enterprise plans."}]')
         @foreach ($faqs as $i => $faq)
-            <x-dl.accordion-item slug="faqs-accordion:nTIGso" prefix="faq_item" :index="$i"
-                question="{{ $faq['q'] }}"
+            <x-dl.accordion-item slug="faqs-accordion:TbpLHg" prefix="faq_item" :index="$i"
+                question="{{ $faq['question'] }}"
                 default-classes="py-5"
                 default-button-classes="w-full flex items-center justify-between text-left"
                 default-question-classes="text-base font-semibold text-zinc-900 dark:text-white"
                 default-chevron-classes="size-5 text-zinc-400 shrink-0 transition-transform duration-200"
                 default-answer-classes="mt-3 text-zinc-500 dark:text-zinc-400 text-sm leading-relaxed">
-                {{ $faq['a'] }}
+                {{ $faq['answer'] }}
             </x-dl.accordion-item>
         @endforeach
     </x-dl.accordion>
 </x-dl.section>
-{{-- ROW:end:faqs-accordion:nTIGso --}}
+{{-- ROW:end:faqs-accordion:TbpLHg --}}
 
-{{-- ROW:start:gallery-grid:uO6O2F --}}
-@php $galleryLightboxEnabled = content('gallery-grid:uO6O2F', 'toggle_lightbox', '1') === '1'; @endphp
-<x-dl.section slug="gallery-grid:uO6O2F"
+{{-- ROW:start:gallery-grid:buM1HF --}}
+@php $galleryLightboxEnabled = content('gallery-grid:buM1HF', 'toggle_lightbox', '1') === '1'; @endphp
+<x-dl.section slug="gallery-grid:buM1HF"
     default-section-classes="py-section px-6 bg-white dark:bg-zinc-900"
     default-container-classes="max-w-6xl mx-auto"
     x-data="{
@@ -117,19 +117,19 @@ new #[Layout('layouts.public')] #[Title('Test Page')] class extends Component {}
         prev() { this.lightboxIndex = (this.lightboxIndex - 1 + this.images.length) % this.images.length; },
         next() { this.lightboxIndex = (this.lightboxIndex + 1) % this.images.length; }
     }">
-    <x-dl.wrapper slug="gallery-grid:uO6O2F" prefix="header_wrapper" default-classes="text-center mb-12">
-        <x-dl.heading slug="gallery-grid:uO6O2F" prefix="headline" default="Our Gallery"
+    <x-dl.wrapper slug="gallery-grid:buM1HF" prefix="header_wrapper" default-classes="text-center mb-12">
+        <x-dl.heading slug="gallery-grid:buM1HF" prefix="headline" default="Our Gallery"
             default-tag="h2"
             default-classes="font-heading text-4xl font-bold text-zinc-900 dark:text-white" />
-        <x-dl.subheadline slug="gallery-grid:uO6O2F" prefix="subheadline" default="A glimpse into our work and culture."
+        <x-dl.subheadline slug="gallery-grid:buM1HF" prefix="subheadline" default="A glimpse into our work and culture."
             default-classes="mt-4 text-zinc-500 dark:text-zinc-400" />
     </x-dl.wrapper>
-    @dlItems('gallery-grid:uO6O2F', 'images', $galleryImages, '[{"image":"","alt":"Photo 1","caption":""},{"image":"","alt":"Photo 2","caption":""},{"image":"","alt":"Photo 3","caption":""},{"image":"","alt":"Photo 4","caption":""},{"image":"","alt":"Photo 5","caption":""},{"image":"","alt":"Photo 6","caption":""}]')
-    <x-dl.gallery slug="gallery-grid:uO6O2F" prefix="images"
+    @dlItems('gallery-grid:buM1HF', 'images', $galleryImages, '[{"image":"","alt":"Photo 1","caption":""},{"image":"","alt":"Photo 2","caption":""},{"image":"","alt":"Photo 3","caption":""},{"image":"","alt":"Photo 4","caption":""},{"image":"","alt":"Photo 5","caption":""},{"image":"","alt":"Photo 6","caption":""}]')
+    <x-dl.gallery slug="gallery-grid:buM1HF" prefix="images"
         default-grid-classes="grid grid-cols-2 md:grid-cols-3 gap-4"
         default-items='[{"image":"","alt":"Photo 1","caption":""},{"image":"","alt":"Photo 2","caption":""},{"image":"","alt":"Photo 3","caption":""},{"image":"","alt":"Photo 4","caption":""},{"image":"","alt":"Photo 5","caption":""},{"image":"","alt":"Photo 6","caption":""}]'>
         @foreach ($galleryImages as $img)
-            <x-dl.card slug="gallery-grid:uO6O2F" prefix="gallery_item"
+            <x-dl.card slug="gallery-grid:buM1HF" prefix="gallery_item"
                 default-classes="rounded-card overflow-hidden bg-zinc-100 dark:bg-zinc-800 aspect-square"
                 @click="open($el.querySelector('img[data-lightbox-src]'))"
                 x-bind:class="lightboxEnabled && $el.querySelector('img[data-lightbox-src]') ? 'cursor-zoom-in' : ''">
@@ -203,34 +203,34 @@ new #[Layout('layouts.public')] #[Title('Test Page')] class extends Component {}
         </div>
     </template>
 </x-dl.section>
-{{-- ROW:end:gallery-grid:uO6O2F --}}
+{{-- ROW:end:gallery-grid:buM1HF --}}
 
-{{-- ROW:start:features-grid:XalQEW --}}
-<x-dl.section slug="features-grid:XalQEW"
+{{-- ROW:start:features-grid:86pxJq --}}
+<x-dl.section slug="features-grid:86pxJq"
     default-section-classes="py-section px-6 bg-white dark:bg-zinc-900"
     default-container-classes="max-w-6xl mx-auto">
-    <x-dl.wrapper slug="features-grid:XalQEW" prefix="header_wrapper" default-classes="text-center mb-16">
-        <x-dl.heading slug="features-grid:XalQEW" prefix="headline" default="Everything You Need"
+    <x-dl.wrapper slug="features-grid:86pxJq" prefix="header_wrapper" default-classes="text-center mb-16">
+        <x-dl.heading slug="features-grid:86pxJq" prefix="headline" default="Everything You Need"
             default-tag="h2"
             default-classes="font-heading text-4xl font-bold text-zinc-900 dark:text-white" />
-        <x-dl.subheadline slug="features-grid:XalQEW" prefix="subheadline" default="Powerful features designed to help you succeed."
+        <x-dl.subheadline slug="features-grid:86pxJq" prefix="subheadline" default="Powerful features designed to help you succeed."
             default-classes="mt-4 text-lg text-zinc-500 dark:text-zinc-400" />
     </x-dl.wrapper>
-    <x-dl.grid slug="features-grid:XalQEW" prefix="features"
+    <x-dl.grid slug="features-grid:86pxJq" prefix="features"
         default-grid-classes="grid md:grid-cols-3 gap-8"
         default-items='[{"icon":"bolt","title":"Lightning Fast","desc":"Optimized for speed at every level of the stack."},{"icon":"shield-check","title":"Secure by Default","desc":"Enterprise-grade security built into every feature."},{"icon":"chart-bar","title":"Detailed Analytics","desc":"Gain insight into every aspect of your business."},{"icon":"adjustments-horizontal","title":"Easy to Customize","desc":"Tailor the platform to your exact requirements."},{"icon":"globe-alt","title":"Global Scale","desc":"Built to handle millions of users worldwide."},{"icon":"chat-bubble-left-right","title":"24/7 Support","desc":"Our team is always here when you need us."}]'>
-        @dlItems('features-grid:XalQEW', 'features', $features, '[{"icon":"bolt","title":"Lightning Fast","desc":"Optimized for speed at every level of the stack."},{"icon":"shield-check","title":"Secure by Default","desc":"Enterprise-grade security built into every feature."},{"icon":"chart-bar","title":"Detailed Analytics","desc":"Gain insight into every aspect of your business."},{"icon":"adjustments-horizontal","title":"Easy to Customize","desc":"Tailor the platform to your exact requirements."},{"icon":"globe-alt","title":"Global Scale","desc":"Built to handle millions of users worldwide."},{"icon":"chat-bubble-left-right","title":"24/7 Support","desc":"Our team is always here when you need us."}]')
+        @dlItems('features-grid:86pxJq', 'features', $features, '[{"icon":"bolt","title":"Lightning Fast","desc":"Optimized for speed at every level of the stack."},{"icon":"shield-check","title":"Secure by Default","desc":"Enterprise-grade security built into every feature."},{"icon":"chart-bar","title":"Detailed Analytics","desc":"Gain insight into every aspect of your business."},{"icon":"adjustments-horizontal","title":"Easy to Customize","desc":"Tailor the platform to your exact requirements."},{"icon":"globe-alt","title":"Global Scale","desc":"Built to handle millions of users worldwide."},{"icon":"chat-bubble-left-right","title":"24/7 Support","desc":"Our team is always here when you need us."}]')
         @foreach ($features as $feature)
-            <x-dl.card slug="features-grid:XalQEW" prefix="feature_card"
+            <x-dl.card slug="features-grid:86pxJq" prefix="feature_card"
                 default-classes="p-6 rounded-card border border-zinc-200 dark:border-zinc-700 hover:border-primary/40 transition-colors">
-                <x-dl.icon slug="features-grid:XalQEW" prefix="icon" name="{{ $feature['icon'] }}"
+                <x-dl.icon slug="features-grid:86pxJq" prefix="icon" name="{{ $feature['icon'] }}"
                     default-wrapper-classes="mb-4 text-primary"
                     default-classes="size-8" />
-                <x-dl.wrapper slug="features-grid:XalQEW" prefix="feature_title" tag="h3"
+                <x-dl.wrapper slug="features-grid:86pxJq" prefix="feature_title" tag="h3"
                     default-classes="text-lg font-semibold text-zinc-900 dark:text-white mb-2">
                     {{ $feature['title'] }}
                 </x-dl.wrapper>
-                <x-dl.wrapper slug="features-grid:XalQEW" prefix="feature_desc" tag="p"
+                <x-dl.wrapper slug="features-grid:86pxJq" prefix="feature_desc" tag="p"
                     default-classes="text-zinc-500 dark:text-zinc-400 text-sm leading-relaxed">
                     {{ $feature['desc'] }}
                 </x-dl.wrapper>
@@ -238,23 +238,23 @@ new #[Layout('layouts.public')] #[Title('Test Page')] class extends Component {}
         @endforeach
     </x-dl.grid>
 </x-dl.section>
-{{-- ROW:end:features-grid:XalQEW --}}
+{{-- ROW:end:features-grid:86pxJq --}}
 
-{{-- ROW:start:cta-banner:tigc6m --}}
-<x-dl.section slug="cta-banner:tigc6m"
-    default-section-classes="bg-primary py-section px-6 text-center"
+{{-- ROW:start:cta-banner:ctq8Be --}}
+<x-dl.section slug="cta-banner:ctq8Be"
+    default-section-classes="bg-primary py-section-banner px-6 text-center"
     default-container-classes="max-w-3xl mx-auto">
-        <x-dl.heading slug="cta-banner:tigc6m" prefix="headline" default="Ready to Get Started?"
+        <x-dl.heading slug="cta-banner:ctq8Be" prefix="headline" default="Ready to Get Started?"
             default-tag="h2"
             default-classes="font-heading text-4xl font-bold text-white" />
-        <x-dl.subheadline slug="cta-banner:tigc6m" prefix="subheadline" default="Join thousands of satisfied customers today."
+        <x-dl.subheadline slug="cta-banner:ctq8Be" prefix="subheadline" default="Join thousands of satisfied customers today."
             default-classes="mt-4 text-lg text-white/80" />
-        <x-dl.buttons slug="cta-banner:tigc6m"
+        <x-dl.buttons slug="cta-banner:ctq8Be"
             default-wrapper-classes="mt-8 flex flex-wrap items-center justify-center gap-4"
             default-primary-label="Start Free Trial"
             default-primary-classes="px-8 py-3 bg-white text-primary font-semibold rounded-lg hover:bg-zinc-100 transition-colors"
             default-secondary-label="Talk to Sales"
             default-secondary-classes="px-8 py-3 border border-white/30 text-white font-semibold rounded-lg hover:bg-white/10 transition-colors" />
 </x-dl.section>
-{{-- ROW:end:cta-banner:tigc6m --}}
+{{-- ROW:end:cta-banner:ctq8Be --}}
 </div>

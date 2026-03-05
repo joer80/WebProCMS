@@ -141,6 +141,11 @@ if (in_array($field['type'], ['id', 'attrs'])) {
                         <p class="text-zinc-500 dark:text-zinc-400 mb-1">Your brand colors from Branding settings:</p>
                         <code class="block font-mono bg-zinc-100 dark:bg-zinc-700 text-zinc-700 dark:text-zinc-200 px-2 py-1 rounded">text-primary bg-primary border-primary</code>
                     </div>
+                    <div>
+                        <p class="font-medium text-zinc-600 dark:text-zinc-300 mb-0.5">Custom theme tokens</p>
+                        <p class="text-zinc-500 dark:text-zinc-400 mb-1">Site-wide design tokens set in Branding:</p>
+                        <code class="block font-mono bg-zinc-100 dark:bg-zinc-700 text-zinc-700 dark:text-zinc-200 px-2 py-1 rounded leading-relaxed">font-heading rounded-card shadow-card<br>py-section &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;— standard rows<br>py-section-banner — compact CTAs<br>py-section-hero &nbsp;&nbsp;— hero sections</code>
+                    </div>
                 </div>
             </div>
         </div>

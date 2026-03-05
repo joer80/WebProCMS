@@ -4,7 +4,7 @@
 @sort 10
 --}}
 <x-dl.section slug="__SLUG__"
-    default-section-classes="py-section px-6 bg-white dark:bg-zinc-900 text-center"
+    default-section-classes="py-section-hero px-6 bg-white dark:bg-zinc-900 text-center"
     default-container-classes="max-w-3xl mx-auto">
         <x-dl.subheadline slug="__SLUG__" prefix="badge" tag="span" default="Welcome"
             default-classes="inline-block px-3 py-1 text-xs font-semibold tracking-widest uppercase bg-primary/10 text-primary rounded-full mb-6" />

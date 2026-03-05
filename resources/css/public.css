@@ -33,7 +33,9 @@
     --color-zinc-900: #171717;
     --color-zinc-950: #0a0a0a;
 
-    --spacing-section: 5rem;
+    --spacing-section: 5rem;        /* py-section — standard rows */
+    --spacing-section-banner: 4rem; /* py-section-banner — compact rows (CTA banners) */
+    --spacing-section-hero: 6rem;   /* py-section-hero — spacious rows (heroes) */
 
     --color-accent: var(--color-neutral-800);
     --color-accent-content: var(--color-neutral-800);

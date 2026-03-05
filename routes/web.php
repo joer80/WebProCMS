@@ -38,7 +38,7 @@ Route::middleware([
     // Route::get('blog2', \App\Livewire\Blog2::class)->name('blog2.index');
 
     // new cached pages are inserted here
-        Route::livewire('test-clone-dest-69a8e3668adb1', 'pages::test-clone-dest-69a8e3668adb1')->name('test-clone-dest-69a8e3668adb1');
+    Route::livewire('test-clone-dest-69a8e3668adb1', 'pages::test-clone-dest-69a8e3668adb1')->name('test-clone-dest-69a8e3668adb1');
     Route::livewire('test-clone-dest-69a8db6f1ddb4', 'pages::test-clone-dest-69a8db6f1ddb4')->name('test-clone-dest-69a8db6f1ddb4');
     Route::livewire('test-clone-dest-69a744a4299e1', 'pages::test-clone-dest-69a744a4299e1')->name('test-clone-dest-69a744a4299e1');
     Route::livewire('test-clone-dest-69a74457a629a', 'pages::test-clone-dest-69a74457a629a')->name('test-clone-dest-69a74457a629a');
@@ -96,6 +96,7 @@ Route::middleware(['auth', 'verified'])->group(function (): void {
         Route::redirect('dashboard/settings', '/dashboard/settings/general')->name('dashboard.settings');
         Route::livewire('dashboard/settings/general', 'pages::dashboard.settings.general')->name('dashboard.settings.general');
         Route::livewire('dashboard/settings/branding', 'pages::dashboard.settings.branding')->name('dashboard.settings.branding');
+        Route::livewire('dashboard/settings/design', 'pages::dashboard.settings.design')->name('dashboard.settings.design');
         Route::livewire('dashboard/settings/advanced', 'pages::dashboard.settings.advanced')->name('dashboard.settings.advanced');
 
         Route::livewire('dashboard/users', 'pages::dashboard.users')->name('dashboard.users');

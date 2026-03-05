@@ -97,7 +97,7 @@ function buildTwClasses() {
     // — Padding —
     ['p','px','py','pt','pr','pb','pl'].forEach(p => {
         SPACING.forEach(s => cls.push(`${p}-${s}`));
-        cls.push(`${p}-auto`,`${p}-section`);
+        cls.push(`${p}-auto`,`${p}-section`,`${p}-section-banner`,`${p}-section-hero`);
     });
 
     // — Margin —

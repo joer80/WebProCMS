@@ -337,7 +337,7 @@ it('loads the full page cache lifetime from config on mount', function (): void 
         ->assertSet('fullPageCacheLifetime', 7200);
 });
 
-// ── Branding — Typography ───────────────────────────────────────────────────────
+// ── Design — Typography ─────────────────────────────────────────────────────────
 
 it('loads font choices from branding config on mount', function (): void {
     config(['branding.body_font' => 'inter', 'branding.heading_font' => 'system']);
@@ -345,10 +345,10 @@ it('loads font choices from branding config on mount', function (): void {
     $user = User::factory()->create();
 
     Livewire::actingAs($user)
-        ->test('pages::dashboard.settings.branding')
+        ->test('pages::dashboard.settings.design')
         ->assertSet('bodyFont', 'inter')
         ->assertSet('headingFont', 'system')
-        ->assertSet('sectionSpacing', '5rem');
+        ->assertSet('sectionSpacing', 'medium');
 });
 
 it('saves typography to css files and writes branding config', function (): void {
@@ -367,10 +367,10 @@ it('saves typography to css files and writes branding config', function (): void
     $user = User::factory()->create();
 
     Livewire::actingAs($user)
-        ->test('pages::dashboard.settings.branding')
+        ->test('pages::dashboard.settings.design')
         ->set('bodyFont', 'inter')
         ->set('headingFont', 'instrument-sans')
-        ->set('sectionSpacing', '6rem')
+        ->set('sectionSpacing', 'large')
         ->call('saveTypography')
         ->assertHasNoErrors()
         ->assertDispatched('notify', message: 'Typography saved. Rebuild assets to apply.');
@@ -378,7 +378,9 @@ it('saves typography to css files and writes branding config', function (): void
     expect(file_get_contents($appCssPath))
         ->toContain("--font-sans: 'Inter',")
         ->toContain("--font-heading: 'Instrument Sans',")
-        ->toContain('--spacing-section: 6rem;');
+        ->toContain('--spacing-section: 6rem')
+        ->toContain('--spacing-section-banner: 5rem')
+        ->toContain('--spacing-section-hero: 7rem');
 
     expect(file_get_contents($publicCssPath))->toContain("--font-sans: 'Inter',");
     expect(file_get_contents($editorCssPath))->toContain("--font-sans: 'Inter',");
@@ -399,10 +401,10 @@ it('saves system font choice without a named font in the css stack', function ()
     $user = User::factory()->create();
 
     Livewire::actingAs($user)
-        ->test('pages::dashboard.settings.branding')
+        ->test('pages::dashboard.settings.design')
         ->set('bodyFont', 'system')
         ->set('headingFont', 'system')
-        ->set('sectionSpacing', '5rem')
+        ->set('sectionSpacing', 'medium')
         ->call('saveTypography')
         ->assertHasNoErrors();
 
@@ -417,19 +419,19 @@ it('validates that body font is one of the allowed choices', function (): void {
     $user = User::factory()->create();
 
     Livewire::actingAs($user)
-        ->test('pages::dashboard.settings.branding')
+        ->test('pages::dashboard.settings.design')
         ->set('bodyFont', 'comic-sans')
         ->call('saveTypography')
         ->assertHasErrors(['bodyFont']);
 });
 
-it('validates that section spacing uses a valid css unit', function (): void {
+it('validates that section spacing uses a valid size keyword', function (): void {
     app()->detectEnvironment(fn () => 'local');
 
     $user = User::factory()->create();
 
     Livewire::actingAs($user)
-        ->test('pages::dashboard.settings.branding')
+        ->test('pages::dashboard.settings.design')
         ->set('sectionSpacing', 'invalid')
         ->call('saveTypography')
         ->assertHasErrors(['sectionSpacing']);

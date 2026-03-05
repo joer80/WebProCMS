@@ -2682,7 +2682,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                                                                 <span class="text-[11px] uppercase tracking-wider font-semibold text-zinc-500 dark:text-zinc-400">{{ $fieldLabel }}</span>
                                                                 <button wire:click="resetRowDesignField('{{ $row['slug'] }}', '{{ $fieldKey }}')" type="button" class="text-xs text-zinc-400 dark:text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 transition-colors">Reset</button>
                                                             </div>
-                                                            <div x-data="twAutocomplete('{{ $row['slug'] }}_{{ $fieldKey }}')" class="relative">
+                                                            <div x-data="{ ...twAutocomplete('{{ $row['slug'] }}_{{ $fieldKey }}'), showHelp: false }" class="relative">
                                                                 <textarea
                                                                     x-ref="input"
                                                                     wire:model.live.debounce.400ms="rowDesignValues.{{ $row['slug'] }}.{{ $fieldKey }}"
@@ -2710,6 +2710,46 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                                                                             x-text="item"
                                                                         ></button>
                                                                     </template>
+                                                                </div>
+                                                                <div class="flex items-center gap-1.5 mt-1">
+                                                                    <p class="text-xs text-zinc-400 dark:text-zinc-500">Tailwind CSS classes. Tab or Enter to complete.</p>
+                                                                    <button
+                                                                        @click="showHelp = !showHelp"
+                                                                        type="button"
+                                                                        :class="showHelp ? 'text-primary' : 'text-zinc-400 dark:text-zinc-500 hover:text-zinc-600 dark:hover:text-zinc-300'"
+                                                                        class="transition-colors shrink-0"
+                                                                        title="Tips"
+                                                                    >
+                                                                        <flux:icon name="question-mark-circle" class="size-3.5" />
+                                                                    </button>
+                                                                </div>
+                                                                <div
+                                                                    x-show="showHelp"
+                                                                    x-transition:enter="transition ease-out duration-100"
+                                                                    x-transition:enter-start="opacity-0 -translate-y-1"
+                                                                    x-transition:enter-end="opacity-100 translate-y-0"
+                                                                    class="mt-1 p-3 rounded-lg bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200 dark:border-zinc-700 text-xs space-y-3"
+                                                                >
+                                                                    <div>
+                                                                        <p class="font-medium text-zinc-600 dark:text-zinc-300 mb-0.5">Theme colors</p>
+                                                                        <code class="block font-mono bg-zinc-100 dark:bg-zinc-700 text-zinc-700 dark:text-zinc-200 px-2 py-1 rounded">text-primary bg-primary border-primary</code>
+                                                                    </div>
+                                                                    <div>
+                                                                        <p class="font-medium text-zinc-600 dark:text-zinc-300 mb-0.5">Section spacing tokens</p>
+                                                                        <code class="block font-mono bg-zinc-100 dark:bg-zinc-700 text-zinc-700 dark:text-zinc-200 px-2 py-1 rounded leading-relaxed">py-section &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;— standard rows<br>py-section-banner — compact CTAs<br>py-section-hero &nbsp;&nbsp;— hero sections</code>
+                                                                    </div>
+                                                                    <div>
+                                                                        <p class="font-medium text-zinc-600 dark:text-zinc-300 mb-0.5">Other tokens</p>
+                                                                        <code class="block font-mono bg-zinc-100 dark:bg-zinc-700 text-zinc-700 dark:text-zinc-200 px-2 py-1 rounded">font-heading rounded-card shadow-card</code>
+                                                                    </div>
+                                                                    <div>
+                                                                        <p class="font-medium text-zinc-600 dark:text-zinc-300 mb-0.5">Arbitrary values</p>
+                                                                        <code class="block font-mono bg-zinc-100 dark:bg-zinc-700 text-zinc-700 dark:text-zinc-200 px-2 py-1 rounded">text-[1.25rem] w-[320px] mt-[10px]</code>
+                                                                    </div>
+                                                                    <div>
+                                                                        <p class="font-medium text-zinc-600 dark:text-zinc-300 mb-0.5">Responsive &amp; dark mode</p>
+                                                                        <code class="block font-mono bg-zinc-100 dark:bg-zinc-700 text-zinc-700 dark:text-zinc-200 px-2 py-1 rounded">bg-white dark:bg-zinc-900 md:px-12</code>
+                                                                    </div>
                                                                 </div>
                                                             </div>
                                                         </div>
