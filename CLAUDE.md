@@ -696,6 +696,8 @@ Since these are built into the components, any row built using the standard `x-d
 ### Other notes
 
 - Template files only affect newly inserted rows. Existing page blade files have row code copied inline at insert time — update them separately if needed.
+- When a row has both a heading and subheadline, place them as direct children of `x-dl.section` — do **not** wrap them together in a shared `header_wrapper`. Each becomes its own sidebar card. Move any bottom spacing (e.g. `mb-10`) from the wrapper onto the subheadline's `default-classes`.
+- When a row displays data pulled dynamically from the database (e.g. locations, team members, posts), always add a `note` attribute to the `x-dl.wrapper` that wraps that dynamic content. The note should tell the user where that data is managed, with a dashboard link. Example: `note="Content is pulled from the <a href='/dashboard/locations' class='text-primary underline hover:text-primary/80'>Locations</a> page."`
 
 ## Key Lessons
 
@@ -783,6 +785,10 @@ preg_match_all('/<x-dl\.([\w-]+)((?:"[^"]*"|' . "'[^']*'" . '|[^>])*)\s*\/?' . '
 ```
 
 This avoids both issues: `"'[^']*'"` is a double-quoted string containing single quotes (no escaping needed), and `'\/?' . '>'` splits `?>` across two literals.
+
+### `DesignLibraryService::parseSchemaFields` Tag Regex Must Be Quote-Aware
+
+`parseSchemaFields` uses a regex to find `<x-dl.*>` opening tags. The correct pattern is `((?:"[^"]*"|'[^']*'|[^>])*)` — the same quote-aware pattern used in `extractTopLevelComponentsFromBlade`. **Never use `(.*?)\s*\/?>` (lazy match)**, because it stops at the first `>` character, which will prematurely end the match if any attribute value contains `>` (e.g. HTML inside a `note="..."` attr). If `parseSchemaFields` silently drops fields and a component group won't open in content mode, this is the first thing to check.
 
 ### Bulk Design Library Row Edits
 

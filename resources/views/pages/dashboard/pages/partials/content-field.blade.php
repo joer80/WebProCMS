@@ -14,7 +14,7 @@ if (in_array($field['type'], ['id', 'attrs'])) {
             <flux:label class="text-zinc-500 dark:text-zinc-400">{{ $field['label'] }}</flux:label>
             <button wire:click="resetClassesField('{{ $field['key'] }}')" type="button" class="text-xs text-zinc-400 dark:text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 transition-colors">Reset</button>
         </div>
-    @elseif ($field['type'] !== 'toggle')
+    @elseif (! in_array($field['type'], ['toggle', 'note']))
         <div class="flex items-center justify-between mb-1.5">
             <flux:label class="text-zinc-500 dark:text-zinc-400">{{ $field['label'] }}</flux:label>
             <div class="flex items-center gap-2">
@@ -380,6 +380,8 @@ if (in_array($field['type'], ['id', 'attrs'])) {
                 <flux:select.option value="{{ $availableForm->id }}">{{ $availableForm->name }}</flux:select.option>
             @endforeach
         </flux:select>
+    @elseif ($field['type'] === 'note')
+        <div class="rounded-lg bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200 dark:border-zinc-700 px-3 py-2.5 text-xs text-zinc-500 dark:text-zinc-400 leading-relaxed">{!! $field['message'] ?? '' !!}</div>
     @elseif ($field['type'] === 'attrs')
         @php
             $attrsRaw = $contentValues[$field['key']] ?? $field['default'];

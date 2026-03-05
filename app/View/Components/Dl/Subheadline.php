@@ -13,6 +13,7 @@ class Subheadline extends Component
         public string $default = '',
         public string $defaultClasses = 'mt-4 text-lg text-zinc-500 dark:text-zinc-400',
         public string $tag = 'p',
+        public bool $noToggle = false,
     ) {}
 
     /**
@@ -25,13 +26,18 @@ class Subheadline extends Component
     {
         $prefix = $attrs['prefix'] ?? 'subheadline';
 
-        return [
-            ['key' => "toggle_{$prefix}", 'default' => '1'],
+        $fields = [];
+        if (! ($attrs['no-toggle'] ?? false)) {
+            $fields[] = ['key' => "toggle_{$prefix}", 'default' => '1'];
+        }
+        $fields = array_merge($fields, [
             ['key' => $prefix, 'default' => $attrs['default'] ?? ''],
             ['key' => "{$prefix}_classes", 'default' => $attrs['default-classes'] ?? 'mt-4 text-lg text-zinc-500 dark:text-zinc-400'],
             ['key' => "{$prefix}_id", 'default' => '', 'label' => 'Element ID'],
             ['key' => "{$prefix}_attrs", 'default' => '[]', 'label' => 'Custom Attributes'],
-        ];
+        ]);
+
+        return $fields;
     }
 
     public function render(): View

@@ -116,7 +116,7 @@ class DesignLibraryService
 
         // 2. Collect <x-dl.*> component tag matches with their document offsets.
         preg_match_all(
-            '/<x-dl\.([\w-]+)(.*?)\s*\/?>/s',
+            '/<x-dl\.([\w-]+)((?:"[^"]*"|\'[^\']*\'|[^>])*)\s*\/?>/',
             $bladeCode,
             $tagMatches,
             PREG_SET_ORDER | PREG_OFFSET_CAPTURE
@@ -150,7 +150,7 @@ class DesignLibraryService
                 $seen[$field['key']] = true;
                 [$type, $group] = $this->inferTypeAndGroup($field['key']);
 
-                $newFields[] = [
+                $entry = [
                     'key' => $field['key'],
                     'type' => $field['type'] ?? $type,
                     'group' => $field['group'] ?? $group,
@@ -158,6 +158,12 @@ class DesignLibraryService
                     'default' => $field['default'],
                     'label' => $field['label'] ?? ucwords(str_replace('_', ' ', $field['key'])),
                 ];
+
+                if (isset($field['message'])) {
+                    $entry['message'] = $field['message'];
+                }
+
+                $newFields[] = $entry;
             }
 
             if ($newFields) {

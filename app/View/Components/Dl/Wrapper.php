@@ -33,9 +33,13 @@ class Wrapper extends Component
     {
         $prefix = $attrs['prefix'] ?? 'wrapper';
 
-        $fields = [
-            ['key' => "{$prefix}_classes", 'default' => $attrs['default-classes'] ?? ''],
-        ];
+        $fields = [];
+
+        if (! empty($attrs['note'])) {
+            $fields[] = ['key' => "{$prefix}_note", 'type' => 'note', 'message' => $attrs['note'], 'default' => '', 'label' => 'Info'];
+        }
+
+        $fields[] = ['key' => "{$prefix}_classes", 'default' => $attrs['default-classes'] ?? ''];
 
         if (array_key_exists('default-featured-classes', $attrs)) {
             $fields[] = ['key' => "{$prefix}_featured_classes", 'default' => $attrs['default-featured-classes']];

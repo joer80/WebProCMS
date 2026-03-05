@@ -6,13 +6,11 @@
 <x-dl.section slug="__SLUG__"
     default-section-classes="py-section px-6 bg-white dark:bg-zinc-900"
     default-container-classes="max-w-6xl mx-auto">
-    <x-dl.wrapper slug="__SLUG__" prefix="header_wrapper" default-classes="mb-10">
-        <x-dl.heading slug="__SLUG__" prefix="headline" default="Our Locations"
-            default-tag="h2"
-            default-classes="font-heading text-4xl font-bold text-zinc-900 dark:text-white mb-4" />
-        <x-dl.subheadline slug="__SLUG__" prefix="subheadline" default="Find a location near you."
-            default-classes="text-zinc-500 dark:text-zinc-400 leading-normal" />
-    </x-dl.wrapper>
+    <x-dl.heading slug="__SLUG__" prefix="headline" default="Our Locations"
+        default-tag="h2"
+        default-classes="font-heading text-4xl font-bold text-zinc-900 dark:text-white mb-4" />
+    <x-dl.subheadline slug="__SLUG__" prefix="subheadline" default="Find a location near you."
+        default-classes="text-zinc-500 dark:text-zinc-400 leading-normal mb-10" />
 
     <x-dl.wrapper slug="__SLUG__" prefix="filter_wrapper" default-classes="flex flex-wrap items-center gap-2 mb-8">
         <x-dl.wrapper slug="__SLUG__" prefix="filter_button" tag="button"
@@ -32,10 +30,11 @@
     </x-dl.wrapper>
 
     @if ($this->locationsFiltered->isNotEmpty())
-        <x-dl.wrapper slug="__SLUG__" prefix="locations_grid" default-classes="grid sm:grid-cols-3 gap-6">
+        <x-dl.wrapper slug="__SLUG__" prefix="locations_grid" default-classes="grid sm:grid-cols-3 gap-6"
+            note="Content is pulled from the <a href='/dashboard/locations' class='text-primary underline hover:text-primary/80'>Locations</a> page.">
             @foreach ($this->locationsFiltered as $location)
                 <x-dl.card slug="__SLUG__" prefix="location_card"
-                    default-classes="bg-white dark:bg-zinc-800 rounded-card shadow-card overflow-hidden">
+                    default-classes="bg-white dark:bg-zinc-800 rounded-card border border-zinc-200 dark:border-zinc-700 shadow-card overflow-hidden">
                     @if ($location->photoUrl())
                         <x-dl.wrapper slug="__SLUG__" prefix="location_image" tag="img"
                             src="{{ $location->photoUrl() }}"
@@ -65,10 +64,9 @@
             @endforeach
         </x-dl.wrapper>
     @else
-        <x-dl.wrapper slug="__SLUG__" prefix="empty_state" tag="p"
-            default-classes="text-zinc-500 dark:text-zinc-400 text-sm">
-            No locations found for the selected state.
-        </x-dl.wrapper>
+        <x-dl.subheadline slug="__SLUG__" prefix="empty_state" no-toggle
+            default="No locations found for the selected state."
+            default-classes="text-zinc-500 dark:text-zinc-400 text-sm" />
     @endif
 </x-dl.section>
 {{--
