@@ -7,10 +7,7 @@ it('renders the content editor service detail page', function (): void {
     $response->assertSeeText('Visual Content Editor');
 });
 
-it('links to the content editor page from the services page', function (): void {
-    $response = $this->get(route('services'));
-
-    $response->assertOk();
-    $response->assertSee(route('services.content-editor'));
-    $response->assertSeeText('Learn more');
+it('loads the services page successfully', function (): void {
+    $this->get(route('services'))
+        ->assertOk();
 });

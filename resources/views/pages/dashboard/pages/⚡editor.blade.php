@@ -8,6 +8,7 @@ use App\Models\MediaItem;
 use App\Models\SharedRow;
 use App\Support\DesignLibraryService;
 use App\Support\RowItemLibrary;
+use App\Support\SchemaCache;
 use App\Support\VoltFileService;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -1252,6 +1253,11 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
     {
         $normalized = str_replace($slug, '__SLUG__', $blade);
         $schemaFields = app(DesignLibraryService::class)->parseSchemaFields($normalized);
+
+        if (empty($schemaFields) && str_contains($slug, ':')) {
+            $templateName = substr($slug, 0, strrpos($slug, ':'));
+            $schemaFields = app(SchemaCache::class)->getFieldsForRow($templateName);
+        }
 
         return array_map(fn ($field) => array_merge($field, ['slug' => $slug]), $schemaFields);
     }
