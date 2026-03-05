@@ -13,7 +13,7 @@ $secondaryCls = content($slug, 'secondary_button_classes', $defaultSecondaryClas
 $secondaryUrl = content($slug, 'secondary_button_url', '#');
 $secondaryNewTab = content($slug, 'secondary_button_new_tab', '');
 @endphp
-<div class="{{ $wrapperCls }}">
+<div class="{{ $wrapperCls }}" data-editor-group="buttons">
     @if($togglePrimary)
     <a
         href="{{ $primaryUrl }}"

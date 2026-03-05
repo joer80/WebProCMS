@@ -6,7 +6,7 @@ $text = content($slug, $prefix, $default);
 $cls = content($slug, "{$prefix}_classes", $defaultClasses);
 $subId = content($slug, "{$prefix}_id", '');
 $subAttrsRaw = json_decode(content($slug, "{$prefix}_attrs", '[]'), true) ?: [];
-$extraAttrs = $subId ? ['id' => $subId] : [];
+$extraAttrs = array_merge(['data-editor-group' => $prefix], $subId ? ['id' => $subId] : []);
 foreach ($subAttrsRaw as $attr) {
     if (!empty($attr['name'])) {
         $extraAttrs[$attr['name']] = $attr['value'] ?? '';

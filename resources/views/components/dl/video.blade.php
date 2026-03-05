@@ -7,7 +7,7 @@ $rawUrl = content($slug, "{$prefix}_video_url", $defaultVideoUrl);
 $embedUrl = $rawUrl ? \App\View\Components\Dl\Video::parseEmbedUrl($rawUrl) : '';
 @endphp
 @if(content($slug, "toggle_{$prefix}", '1'))
-<div class="{{ $wrapperCls }}">
+<div class="{{ $wrapperCls }}" data-editor-group="{{ $prefix }}">
     @if($embedUrl)
         <iframe src="{{ $embedUrl }}" class="{{ $videoCls }}" frameborder="0" allowfullscreen></iframe>
     @else

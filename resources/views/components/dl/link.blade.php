@@ -8,7 +8,8 @@ $newTab = content($slug, "{$prefix}_new_tab", '');
 $classes = content($slug, "{$prefix}_classes", $defaultClasses);
 $linkId = content($slug, "{$prefix}_id", '');
 $linkAttrsRaw = json_decode(content($slug, "{$prefix}_attrs", '[]'), true) ?: [];
-$extraAttrsStr = $linkId ? ' id="' . e($linkId) . '"' : '';
+$extraAttrsStr = ' data-editor-group="' . e($prefix) . '"';
+$extraAttrsStr .= $linkId ? ' id="' . e($linkId) . '"' : '';
 foreach ($linkAttrsRaw as $attr) {
     if (!empty($attr['name'])) {
         $extraAttrsStr .= ' ' . e($attr['name']) . '="' . e($attr['value'] ?? '') . '"';

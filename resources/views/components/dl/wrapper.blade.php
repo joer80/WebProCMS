@@ -10,7 +10,7 @@ if ($defaultFeaturedClasses !== null) {
 }
 $wrapperId = content($slug, "{$prefix}_id", '');
 $wrapperAttrsRaw = json_decode(content($slug, "{$prefix}_attrs", '[]'), true) ?: [];
-$extraAttrs = $wrapperId ? ['id' => $wrapperId] : [];
+$extraAttrs = array_merge(['data-editor-group' => $prefix], $wrapperId ? ['id' => $wrapperId] : []);
 foreach ($wrapperAttrsRaw as $attr) {
     if (!empty($attr['name'])) {
         $extraAttrs[$attr['name']] = $attr['value'] ?? '';

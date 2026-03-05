@@ -11,7 +11,7 @@ if ($defaultFeaturedClasses !== null) {
 [$iconName, $iconVariant] = array_pad(explode(':', $name, 2), 2, 'outline');
 @endphp
 @if($wrapperCls !== null)
-<div class="{{ $wrapperCls }}">
+<div class="{{ $wrapperCls }}" data-editor-group="{{ $prefix }}">
 @endif
 <x-heroicon name="{{ $iconName }}" variant="{{ $iconVariant }}" class="{{ $activeCls }}" />
 @if($wrapperCls !== null)

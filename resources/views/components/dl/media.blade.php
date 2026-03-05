@@ -7,7 +7,7 @@ $imgSrc = content($slug, 'image', '');
 $imgAlt = content($slug, 'image_alt', '');
 @endphp
 @if(content($slug, 'toggle_image', '1'))
-<div class="{{ $wrapperCls }}">
+<div class="{{ $wrapperCls }}" data-editor-group="media">
     @if($imgSrc)
         <img src="{{ $imgSrc }}" alt="{{ $imgAlt }}" class="{{ $imageCls }}">
     @else

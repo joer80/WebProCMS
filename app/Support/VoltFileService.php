@@ -290,7 +290,15 @@ class VoltFileService
     document.addEventListener('click', function (e) {
         var el = e.target.closest('[data-editor-row]');
         if (el) {
-            window.parent.postMessage({ editorRowSlug: el.dataset.editorRow }, '*');
+            var node = e.target;
+            var group = null;
+            while (node && node !== el) {
+                if (node.dataset && node.dataset.editorGroup) {
+                    group = node.dataset.editorGroup;
+                }
+                node = node.parentElement;
+            }
+            window.parent.postMessage({ editorRowSlug: el.dataset.editorRow, editorGroup: group }, '*');
         }
     }, true);
 })();

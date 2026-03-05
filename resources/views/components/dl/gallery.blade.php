@@ -5,7 +5,7 @@ $toggle = content($slug, "toggle_{$prefix}", '1');
 $gridCls = content($slug, "{$prefix}_grid_classes", $defaultGridClasses);
 @endphp
 @if($toggle)
-<div class="{{ $gridCls }}">
+<div class="{{ $gridCls }}" data-editor-group="{{ $prefix }}">
     {{ $slot }}
 </div>
 @endif
