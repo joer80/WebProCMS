@@ -132,6 +132,26 @@
             </div>
         </footer>
 
+        @auth
+            @if(auth()->user()->isAtLeast(\App\Enums\Role::Manager))
+                @php
+                    $routeName = Route::currentRouteName();
+                    $pageFile = "pages/⚡{$routeName}.blade.php";
+                    $editorUrl = $routeName && file_exists(resource_path("views/{$pageFile}"))
+                        ? route('dashboard.design-library.editor') . '?file=' . urlencode($pageFile)
+                        : null;
+                @endphp
+                @if($editorUrl)
+                    <a href="{{ $editorUrl }}"
+                       class="fixed bottom-6 right-6 z-50 flex items-center gap-2 rounded-full bg-zinc-900 dark:bg-white px-4 py-2.5 text-sm font-semibold text-white dark:text-zinc-900 shadow-lg hover:bg-zinc-700 dark:hover:bg-zinc-100 transition-colors">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="size-4 shrink-0" viewBox="0 0 20 20" fill="currentColor">
+                            <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
+                        </svg>
+                        Edit Page
+                    </a>
+                @endif
+            @endif
+        @endauth
         @stack('scripts')
         @fluxScripts
         <script>
