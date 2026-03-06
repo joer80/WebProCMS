@@ -2,6 +2,7 @@
 
 use App\Support\ContentCache;
 use App\Support\SchemaCache;
+use App\Support\ShortcodeProcessor;
 use Illuminate\Support\Facades\Storage;
 
 if (! function_exists('content')) {
@@ -9,6 +10,7 @@ if (! function_exists('content')) {
      * Retrieve a content override from the database, falling back to the given default.
      * On editor preview requests, unsaved draft values stored in the session take precedence.
      * For 'image' type, the stored path is converted to a public URL.
+     * For 'text' and 'richtext' types, [[shortcode]] tags are expanded.
      *
      * For new-format slugs (templateName:randomId), type and default are resolved from the
      *
@@ -42,6 +44,8 @@ if (! function_exists('content')) {
 
                 return match ($resolvedType) {
                     'image' => Storage::url($draft),
+                    'richtext' => ShortcodeProcessor::containsShortcodes($draft) ? ShortcodeProcessor::process($draft) : $draft,
+                    'text' => ShortcodeProcessor::containsShortcodes($draft) ? ShortcodeProcessor::processRaw($draft) : $draft,
                     default => $draft,
                 };
             }
@@ -55,6 +59,8 @@ if (! function_exists('content')) {
 
         return match ($resolvedType) {
             'image' => Storage::url($value),
+            'richtext' => ShortcodeProcessor::containsShortcodes($value) ? ShortcodeProcessor::process($value) : $value,
+            'text' => ShortcodeProcessor::containsShortcodes($value) ? ShortcodeProcessor::processRaw($value) : $value,
             default => $value,
         };
     }

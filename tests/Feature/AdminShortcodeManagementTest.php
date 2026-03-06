@@ -183,3 +183,91 @@ it('shows processed shortcodes on the public blog post page', function (): void 
         ->assertOk()
         ->assertSee('903-733-2962');
 });
+
+it('processRaw replaces shortcodes without html-escaping plain text', function (): void {
+    Shortcode::factory()->singleText()->create(['tag' => 'phone', 'content' => '903-733-2962', 'is_active' => true]);
+
+    $result = ShortcodeProcessor::processRaw('Call us at [[phone]] today.');
+
+    expect($result)->toBe('Call us at 903-733-2962 today.');
+});
+
+it('processRaw returns rich text shortcode content unescaped', function (): void {
+    Shortcode::factory()->richText()->create(['tag' => 'cta', 'content' => '<strong>Click here</strong>', 'is_active' => true]);
+
+    $result = ShortcodeProcessor::processRaw('[[cta]]');
+
+    expect($result)->toBe('<strong>Click here</strong>');
+});
+
+it('processRaw leaves unknown shortcodes as-is', function (): void {
+    $result = ShortcodeProcessor::processRaw('Hello [[unknown]]!');
+
+    expect($result)->toBe('Hello [[unknown]]!');
+});
+
+it('content helper expands shortcodes in text fields', function (): void {
+    Shortcode::factory()->singleText()->create(['tag' => 'phone', 'content' => '903-733-2962', 'is_active' => true]);
+
+    \App\Models\ContentOverride::create([
+        'row_slug' => 'test-row:abc123',
+        'page_slug' => 'home',
+        'key' => 'headline',
+        'type' => 'text',
+        'value' => 'Call us at [[phone]]',
+    ]);
+
+    $result = content('test-row:abc123', 'headline', '', 'text');
+
+    expect($result)->toBe('Call us at 903-733-2962');
+});
+
+it('content helper does not expand shortcodes for non-text types', function (): void {
+    Shortcode::factory()->singleText()->create(['tag' => 'phone', 'content' => '903-733-2962', 'is_active' => true]);
+
+    \App\Models\ContentOverride::create([
+        'row_slug' => 'test-row:abc123',
+        'page_slug' => 'home',
+        'key' => 'section_classes',
+        'type' => 'classes',
+        'value' => 'py-section [[phone]]',
+    ]);
+
+    $result = content('test-row:abc123', 'section_classes', '', 'classes');
+
+    expect($result)->toBe('py-section [[phone]]');
+});
+
+it('resolves system shortcodes from config', function (): void {
+    config(['business.phone' => '555-0100']);
+
+    expect(ShortcodeProcessor::process('Call [[business_phone]]'))->toBe('Call 555-0100');
+    expect(ShortcodeProcessor::processRaw('Call [[business_phone]]'))->toBe('Call 555-0100');
+});
+
+it('db shortcode takes priority over system shortcode with same tag', function (): void {
+    config(['business.phone' => '555-0100']);
+    Shortcode::factory()->singleText()->create(['tag' => 'business_phone', 'content' => '555-9999', 'is_active' => true]);
+
+    expect(ShortcodeProcessor::process('[[business_phone]]'))->toBe('555-9999');
+});
+
+it('resolves business_address as combined street and city', function (): void {
+    config(['business.address_street' => '100 Main St', 'business.address_city_state_zip' => 'Austin, TX 78701']);
+
+    expect(ShortcodeProcessor::processRaw('[[business_address]]'))->toBe('100 Main St, Austin, TX 78701');
+});
+
+it('shows system shortcodes on the shortcodes index page', function (): void {
+    config(['business.phone' => '555-0100']);
+    $user = User::factory()->create();
+
+    \Livewire\Features\SupportLazyLoading\SupportLazyLoading::disableWhileTesting();
+
+    Livewire::actingAs($user)
+        ->test('pages::dashboard.shortcodes.index')
+        ->assertSeeText('Built-in Shortcodes')
+        ->assertSeeText('Phone')
+        ->assertSee('[[business_phone]]')
+        ->assertSeeText('555-0100');
+});
