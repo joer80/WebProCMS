@@ -38,8 +38,8 @@ Route::middleware([
     // Route::get('blog2', \App\Livewire\Blog2::class)->name('blog2.index');
 
     // new cached pages are inserted here
-        Route::livewire('test-clone-dest-69aaebec41ee6', 'pages::test-clone-dest-69aaebec41ee6')->name('test-clone-dest-69aaebec41ee6');
-        Route::livewire('test-clone-dest-69aaeb7c13aa0', 'pages::test-clone-dest-69aaeb7c13aa0')->name('test-clone-dest-69aaeb7c13aa0');
+    Route::livewire('test-clone-dest-69aaebec41ee6', 'pages::test-clone-dest-69aaebec41ee6')->name('test-clone-dest-69aaebec41ee6');
+    Route::livewire('test-clone-dest-69aaeb7c13aa0', 'pages::test-clone-dest-69aaeb7c13aa0')->name('test-clone-dest-69aaeb7c13aa0');
     Route::livewire('404', 'pages::404')->name('404');
     Route::livewire('test-clone-dest-69a8e3668adb1', 'pages::test-clone-dest-69a8e3668adb1')->name('test-clone-dest-69a8e3668adb1');
     Route::livewire('test-clone-dest-69a8db6f1ddb4', 'pages::test-clone-dest-69a8db6f1ddb4')->name('test-clone-dest-69a8db6f1ddb4');
@@ -90,6 +90,10 @@ Route::middleware(['auth', 'verified'])->group(function (): void {
         Route::livewire('dashboard/shortcodes', 'pages::dashboard.shortcodes.index')->name('dashboard.shortcodes.index');
         Route::livewire('dashboard/shortcodes/create', 'pages::dashboard.shortcodes.create')->name('dashboard.shortcodes.create');
         Route::livewire('dashboard/shortcodes/{shortcode}/edit', 'pages::dashboard.shortcodes.edit')->name('dashboard.shortcodes.edit');
+
+        Route::livewire('dashboard/snippets', 'pages::dashboard.snippets.index')->name('dashboard.snippets.index');
+        Route::livewire('dashboard/snippets/create', 'pages::dashboard.snippets.create')->name('dashboard.snippets.create');
+        Route::livewire('dashboard/snippets/{snippet}/edit', 'pages::dashboard.snippets.edit')->name('dashboard.snippets.edit');
 
         Route::livewire('dashboard/locations', 'pages::dashboard.locations.index')->name('dashboard.locations.index');
         Route::livewire('dashboard/locations/create', 'pages::dashboard.locations.create')->name('dashboard.locations.create');

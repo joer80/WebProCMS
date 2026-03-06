@@ -1,5 +1,8 @@
 @props(['title' => null, 'description' => null, 'noindex' => false, 'ogImage' => null])
 @php
+    use App\Enums\SnippetPlacement;
+    use App\Models\Snippet;
+
     $siteType = config('features.website_type', 'saas');
     $navConfig = config("navigation.{$siteType}", config('navigation.saas'));
     $showAuthLinks = $navConfig['show_auth_links'] ?? false;
@@ -9,7 +12,23 @@
     $navItems = array_filter($navMenu['items'] ?? [], fn ($item) => $item['active'] ?? true);
     $footerSlugs = $navConfig['footer_slugs'] ?? [];
     $footerMenus = collect($footerSlugs)->map(fn ($slug) => $allMenus->firstWhere('slug', $slug))->filter()->values()->all();
+
+    $currentPath = trim(request()->path(), '/');
+    $pageSnippets = cache()->remember('snippets:'.$currentPath, 300, fn () => Snippet::forPage($currentPath)->get());
+
+    foreach ($pageSnippets->filter(fn ($s) => $s->placement === SnippetPlacement::PhpTop) as $snippet) {
+        try {
+            eval($snippet->content);
+        } catch (\Throwable) {
+        }
+    }
 @endphp
+@foreach ($pageSnippets->filter(fn ($s) => $s->placement === SnippetPlacement::Head) as $snippet)
+    @push('head'){!! $snippet->content !!}@endpush
+@endforeach
+@foreach ($pageSnippets->filter(fn ($s) => $s->placement === SnippetPlacement::BodyEnd) as $snippet)
+    @push('scripts'){!! $snippet->content !!}@endpush
+@endforeach
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
     <head>
