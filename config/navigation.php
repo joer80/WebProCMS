@@ -18,7 +18,7 @@
 
 return [
 
-    'show_auth_links' => true,
+    'show_auth_links' => false,
     'show_account_in_footer' => true,
     'footer_slugs' => ['footer-company', 'legal'],
     'menus' => [
