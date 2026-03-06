@@ -50,9 +50,13 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
 
     public bool $showLibraryDrawer = false;
 
+    public string $libraryTab = 'rows';
+
     public string $librarySearch = '';
 
     public string $libraryCategory = '';
+
+    public string $libraryPageCategory = '';
 
     public ?int $insertAtIndex = null;
 
@@ -277,6 +281,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
     {
         return DesignPage::query()
             ->when($this->librarySearch, fn ($q) => $q->where('name', 'like', '%'.$this->librarySearch.'%'))
+            ->when($this->libraryPageCategory, fn ($q) => $q->where('website_category', $this->libraryPageCategory))
             ->orderBy('website_category')
             ->orderBy('sort_order')
             ->orderBy('name')
@@ -289,6 +294,15 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
     {
         return collect(RowCategory::cases())
             ->mapWithKeys(fn (RowCategory $c) => [$c->value => $c->label()])
+            ->all();
+    }
+
+    /** @return array<string, string> */
+    #[Computed]
+    public function pageCategories(): array
+    {
+        return collect(\App\Enums\PageCategory::cases())
+            ->mapWithKeys(fn (\App\Enums\PageCategory $c) => [$c->value => $c->label()])
             ->all();
     }
 
@@ -536,10 +550,21 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
         IndexDesignLibraryJob::dispatchSync();
 
         $this->insertAtIndex = $atIndex;
+        $this->libraryTab = 'rows';
         $this->librarySearch = '';
         $this->libraryCategory = '';
+        $this->libraryPageCategory = '';
         $this->showLibraryDrawer = true;
-        unset($this->libraryRows);
+        unset($this->libraryRows, $this->libraryPages);
+    }
+
+    public function switchLibraryTab(string $tab): void
+    {
+        $this->libraryTab = $tab;
+        $this->librarySearch = '';
+        $this->libraryCategory = '';
+        $this->libraryPageCategory = '';
+        unset($this->libraryRows, $this->libraryPages);
     }
 
     public function openBrowseMode(int $rowIndex): void
@@ -1968,41 +1993,87 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
     <flux:modal wire:model="showLibraryDrawer" class="w-full max-w-xl">
         <flux:heading size="lg" class="mb-4">{{ __('Insert Row') }}</flux:heading>
 
-        <div class="flex gap-3 mb-4">
-            <flux:input
-                wire:model.live="librarySearch"
-                placeholder="Search rows…"
-                icon="magnifying-glass"
-                class="flex-1"
-                autofocus
-            />
-            <flux:select wire:model.live="libraryCategory" class="w-44">
-                <flux:select.option value="">{{ __('All categories') }}</flux:select.option>
-                @foreach ($this->rowCategories as $value => $label)
-                    <flux:select.option value="{{ $value }}">{{ $label }}</flux:select.option>
-                @endforeach
-                <flux:select.option value="shared">{{ __('Shared Rows') }}</flux:select.option>
-                <flux:select.option value="page-bundles">{{ __('Page Bundles') }}</flux:select.option>
-            </flux:select>
+        {{-- Tabs --}}
+        <div class="flex gap-1 mb-4 border-b border-zinc-200 dark:border-zinc-700">
+            <button
+                wire:click="switchLibraryTab('rows')"
+                class="px-4 py-2 text-sm font-medium border-b-2 transition-colors -mb-px {{ $libraryTab === 'rows' ? 'border-primary text-primary' : 'border-transparent text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200' }}"
+            >
+                {{ __('Rows') }}
+            </button>
+            <button
+                wire:click="switchLibraryTab('groups')"
+                class="px-4 py-2 text-sm font-medium border-b-2 transition-colors -mb-px {{ $libraryTab === 'groups' ? 'border-primary text-primary' : 'border-transparent text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200' }}"
+            >
+                {{ __('Row Groups') }}
+            </button>
         </div>
 
-        @if ($libraryCategory === 'shared')
-            @if ($this->sharedLibraryRows->isEmpty())
+        @if ($libraryTab === 'rows')
+            <div class="flex gap-3 mb-4">
+                <flux:input
+                    wire:model.live="librarySearch"
+                    placeholder="Search rows…"
+                    icon="magnifying-glass"
+                    class="flex-1"
+                    autofocus
+                />
+                <flux:select wire:model.live="libraryCategory" class="w-44">
+                    <flux:select.option value="">{{ __('All categories') }}</flux:select.option>
+                    @foreach ($this->rowCategories as $value => $label)
+                        <flux:select.option value="{{ $value }}">{{ $label }}</flux:select.option>
+                    @endforeach
+                    <flux:select.option value="shared">{{ __('Shared Rows') }}</flux:select.option>
+                </flux:select>
+            </div>
+
+            @if ($libraryCategory === 'shared')
+                @if ($this->sharedLibraryRows->isEmpty())
+                    <div class="text-center py-12 text-zinc-500 dark:text-zinc-400">
+                        <flux:icon name="share" class="size-10 mx-auto mb-3 opacity-40" />
+                        <p class="text-sm">No shared rows yet.</p>
+                        <p class="text-xs mt-1">Use the "Make Shared" action on any row to share it.</p>
+                    </div>
+                @else
+                    <div class="space-y-2 max-h-96 overflow-y-auto">
+                        @foreach ($this->sharedLibraryRows as $sharedRow)
+                            <div wire:key="shared-{{ $sharedRow->slug }}" class="flex items-center gap-3 p-3 rounded-lg border border-zinc-200 dark:border-zinc-700 hover:border-primary/40 transition-colors">
+                                <div class="flex-1 min-w-0">
+                                    <div class="font-medium text-zinc-900 dark:text-white text-sm truncate">{{ $sharedRow->name }}</div>
+                                    <div class="text-[10px] font-mono text-zinc-400 dark:text-zinc-500 truncate mt-0.5">{{ $sharedRow->slug }}</div>
+                                </div>
+                                <flux:button
+                                    wire:click="insertSharedRow('{{ $sharedRow->slug }}', {{ $insertAtIndex ?? count($rows) }})"
+                                    variant="primary"
+                                    size="sm"
+                                >
+                                    {{ __('Insert') }}
+                                </flux:button>
+                            </div>
+                        @endforeach
+                    </div>
+                @endif
+            @elseif ($this->libraryRows->isEmpty())
                 <div class="text-center py-12 text-zinc-500 dark:text-zinc-400">
-                    <flux:icon name="share" class="size-10 mx-auto mb-3 opacity-40" />
-                    <p class="text-sm">No shared rows yet.</p>
-                    <p class="text-xs mt-1">Use the "Make Shared" action on any row to share it.</p>
+                    <flux:icon name="squares-2x2" class="size-10 mx-auto mb-3 opacity-40" />
+                    <p class="text-sm">No rows found.</p>
                 </div>
             @else
                 <div class="space-y-2 max-h-96 overflow-y-auto">
-                    @foreach ($this->sharedLibraryRows as $sharedRow)
-                        <div wire:key="shared-{{ $sharedRow->slug }}" class="flex items-center gap-3 p-3 rounded-lg border border-zinc-200 dark:border-zinc-700 hover:border-primary/40 transition-colors">
+                    @foreach ($this->libraryRows as $libRow)
+                        <div wire:key="lib-{{ $libRow->id }}" class="flex items-center gap-3 p-3 rounded-lg border border-zinc-200 dark:border-zinc-700 hover:border-primary/40 transition-colors">
                             <div class="flex-1 min-w-0">
-                                <div class="font-medium text-zinc-900 dark:text-white text-sm truncate">{{ $sharedRow->name }}</div>
-                                <div class="text-[10px] font-mono text-zinc-400 dark:text-zinc-500 truncate mt-0.5">{{ $sharedRow->slug }}</div>
+                                <div class="font-medium text-zinc-900 dark:text-white text-sm truncate">{{ $libRow->name }}</div>
+                                @if ($libRow->description)
+                                    <div class="text-xs text-zinc-500 dark:text-zinc-400 truncate mt-0.5">{{ $libRow->description }}</div>
+                                @endif
+                                <flux:badge size="sm" class="mt-1">{{ $libRow->category->label() }}</flux:badge>
                             </div>
+                            <a href="{{ route('dashboard.design-library.preview', ['type' => 'row', 'id' => $libRow->id]) }}" target="_blank" rel="noopener noreferrer">
+                                <flux:button variant="ghost" size="sm" icon="eye" />
+                            </a>
                             <flux:button
-                                wire:click="insertSharedRow('{{ $sharedRow->slug }}', {{ $insertAtIndex ?? count($rows) }})"
+                                wire:click="insertRow({{ $libRow->id }}, {{ $insertAtIndex ?? count($rows) }})"
                                 variant="primary"
                                 size="sm"
                             >
@@ -2012,12 +2083,28 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                     @endforeach
                 </div>
             @endif
-        @elseif ($libraryCategory === 'page-bundles')
+        @else
+            <div class="flex gap-3 mb-4">
+                <flux:input
+                    wire:model.live="librarySearch"
+                    placeholder="Search row groups…"
+                    icon="magnifying-glass"
+                    class="flex-1"
+                    autofocus
+                />
+                <flux:select wire:model.live="libraryPageCategory" class="w-44">
+                    <flux:select.option value="">{{ __('All types') }}</flux:select.option>
+                    @foreach ($this->pageCategories as $value => $label)
+                        <flux:select.option value="{{ $value }}">{{ $label }}</flux:select.option>
+                    @endforeach
+                </flux:select>
+            </div>
+
             @if ($this->libraryPages->isEmpty())
                 <div class="text-center py-12 text-zinc-500 dark:text-zinc-400">
                     <flux:icon name="document-text" class="size-10 mx-auto mb-3 opacity-40" />
-                    <p class="text-sm">No page bundles found.</p>
-                    <p class="text-xs mt-1">Create bundles in the Design Library to quickly insert multiple rows.</p>
+                    <p class="text-sm">No row groups found.</p>
+                    <p class="text-xs mt-1">Create groups in the Design Library to quickly insert multiple rows at once.</p>
                 </div>
             @else
                 <div class="space-y-2 max-h-96 overflow-y-auto">
@@ -2031,6 +2118,9 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                                     @endif
                                 </div>
                                 <flux:badge size="sm" class="shrink-0">{{ $libPage->website_category->label() }}</flux:badge>
+                                <a href="{{ route('dashboard.design-library.preview', ['type' => 'page', 'id' => $libPage->id]) }}" target="_blank" rel="noopener noreferrer">
+                                    <flux:button variant="ghost" size="sm" icon="eye" />
+                                </a>
                                 <flux:button
                                     wire:click="insertPageBundle({{ $libPage->id }}, {{ $insertAtIndex ?? count($rows) }})"
                                     variant="primary"
@@ -2040,7 +2130,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                                 </flux:button>
                             </div>
                             @if (! empty($libPage->row_names))
-                                <div class="flex flex-wrap gap-1 mt-1">
+                                <div class="flex flex-wrap gap-1">
                                     @foreach ($libPage->row_names as $rowName)
                                         <span class="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded bg-zinc-100 dark:bg-zinc-700 text-zinc-500 dark:text-zinc-400">
                                             <flux:icon name="rectangle-stack" class="size-2.5" />
@@ -2053,35 +2143,6 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                     @endforeach
                 </div>
             @endif
-        @elseif ($this->libraryRows->isEmpty())
-            <div class="text-center py-12 text-zinc-500 dark:text-zinc-400">
-                <flux:icon name="squares-2x2" class="size-10 mx-auto mb-3 opacity-40" />
-                <p class="text-sm">No rows found.</p>
-            </div>
-        @else
-            <div class="space-y-2 max-h-96 overflow-y-auto">
-                @foreach ($this->libraryRows as $libRow)
-                    <div wire:key="lib-{{ $libRow->id }}" class="flex items-center gap-3 p-3 rounded-lg border border-zinc-200 dark:border-zinc-700 hover:border-primary/40 transition-colors">
-                        <div class="flex-1 min-w-0">
-                            <div class="font-medium text-zinc-900 dark:text-white text-sm truncate">{{ $libRow->name }}</div>
-                            @if ($libRow->description)
-                                <div class="text-xs text-zinc-500 dark:text-zinc-400 truncate mt-0.5">{{ $libRow->description }}</div>
-                            @endif
-                            <flux:badge size="sm" class="mt-1">{{ $libRow->category->label() }}</flux:badge>
-                        </div>
-                        <a href="{{ route('dashboard.design-library.preview', ['type' => 'row', 'id' => $libRow->id]) }}" target="_blank" rel="noopener noreferrer">
-                            <flux:button variant="ghost" size="sm" icon="eye" />
-                        </a>
-                        <flux:button
-                            wire:click="insertRow({{ $libRow->id }}, {{ $insertAtIndex ?? count($rows) }})"
-                            variant="primary"
-                            size="sm"
-                        >
-                            {{ __('Insert') }}
-                        </flux:button>
-                    </div>
-                @endforeach
-            </div>
         @endif
     </flux:modal>
 

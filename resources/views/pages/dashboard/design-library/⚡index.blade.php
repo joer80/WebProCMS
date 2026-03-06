@@ -11,8 +11,11 @@ use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
 use Livewire\Attributes\Url;
 use Livewire\Component;
+use Livewire\WithPagination;
 
 new #[Layout('layouts.app')] #[Title('Design Library')] class extends Component {
+    use WithPagination;
+
     #[Url]
     public string $tab = 'rows';
 
@@ -43,28 +46,26 @@ new #[Layout('layouts.app')] #[Title('Design Library')] class extends Component 
     // Confirm delete
     public ?int $confirmingDelete = null;
 
-    /** @return \Illuminate\Database\Eloquent\Collection<int, DesignRow> */
     #[Computed]
-    public function rows(): \Illuminate\Database\Eloquent\Collection
+    public function rows(): \Illuminate\Pagination\LengthAwarePaginator
     {
         return DesignRow::query()
             ->when($this->category, fn ($q) => $q->where('category', $this->category))
             ->orderBy('category')
             ->orderBy('sort_order')
             ->orderBy('name')
-            ->get();
+            ->paginate(20);
     }
 
-    /** @return \Illuminate\Database\Eloquent\Collection<int, DesignPage> */
     #[Computed]
-    public function pages(): \Illuminate\Database\Eloquent\Collection
+    public function pages(): \Illuminate\Pagination\LengthAwarePaginator
     {
         return DesignPage::query()
             ->when($this->category, fn ($q) => $q->where('website_category', $this->category))
             ->orderBy('website_category')
             ->orderBy('sort_order')
             ->orderBy('name')
-            ->get();
+            ->paginate(20, pageName: 'pagesPage');
     }
 
     /** @return \Illuminate\Database\Eloquent\Collection<int, DesignRow> */
@@ -99,6 +100,14 @@ new #[Layout('layouts.app')] #[Title('Design Library')] class extends Component 
     {
         $this->tab = $tab;
         $this->category = '';
+        $this->resetPage();
+        $this->resetPage('pagesPage');
+    }
+
+    public function updatedCategory(): void
+    {
+        $this->resetPage();
+        $this->resetPage('pagesPage');
     }
 
     public function syncLibrary(): void
@@ -423,7 +432,7 @@ new #[Layout('layouts.app')] #[Title('Design Library')] class extends Component 
                     >
                         {{ __('Row Library') }}
                         <span class="ml-1.5 text-xs px-1.5 py-0.5 rounded-full {{ $tab === 'rows' ? 'bg-primary/10 text-primary' : 'bg-zinc-100 dark:bg-zinc-700 text-zinc-500 dark:text-zinc-400' }}">
-                            {{ $this->rows->count() }}
+                            {{ $this->rows->total() }}
                         </span>
                     </button>
                     <button
@@ -432,7 +441,7 @@ new #[Layout('layouts.app')] #[Title('Design Library')] class extends Component 
                     >
                         {{ __('Page Library') }}
                         <span class="ml-1.5 text-xs px-1.5 py-0.5 rounded-full {{ $tab === 'pages' ? 'bg-primary/10 text-primary' : 'bg-zinc-100 dark:bg-zinc-700 text-zinc-500 dark:text-zinc-400' }}">
-                            {{ $this->pages->count() }}
+                            {{ $this->pages->total() }}
                         </span>
                     </button>
                 </div>
@@ -452,10 +461,21 @@ new #[Layout('layouts.app')] #[Title('Design Library')] class extends Component 
                         <div class="grid sm:grid-cols-2 xl:grid-cols-3 gap-4">
                             @foreach ($this->rows as $row)
                                 <div wire:key="row-{{ $row->id }}" class="group rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 overflow-hidden hover:border-primary/40 transition-colors flex flex-col">
-                                    {{-- Code preview --}}
-                                    <div class="bg-zinc-950 text-zinc-300 p-3 font-mono text-[10px] leading-relaxed overflow-hidden h-28 relative">
-                                        <span class="opacity-60">{{ Str::limit(strip_tags($row->blade_code), 180) }}</span>
-                                        <div class="absolute inset-x-0 bottom-0 h-8 bg-gradient-to-t from-zinc-950"></div>
+                                    {{-- Live preview --}}
+                                    <div class="relative h-40 overflow-hidden bg-zinc-100 dark:bg-zinc-800">
+                                        <div class="absolute inset-0 flex items-center justify-center animate-pulse pointer-events-none">
+                                            <flux:icon name="photo" class="size-8 text-zinc-300 dark:text-zinc-600" />
+                                        </div>
+                                        <iframe
+                                            src="{{ route('dashboard.design-library.preview', ['type' => 'row', 'id' => $row->id]) }}"
+                                            class="absolute top-0 left-0 border-0"
+                                            style="width:1280px;height:800px;transform:scale(0.25);transform-origin:0 0;pointer-events:none;"
+                                            loading="lazy"
+                                            scrolling="no"
+                                            tabindex="-1"
+                                            aria-hidden="true"
+                                            onload="this.previousElementSibling.style.display='none'"
+                                        ></iframe>
                                     </div>
 
                                     {{-- Card body --}}
@@ -495,6 +515,9 @@ new #[Layout('layouts.app')] #[Title('Design Library')] class extends Component 
                                 </div>
                             @endforeach
                         </div>
+                        @if ($this->rows->hasPages())
+                            <div class="mt-6">{{ $this->rows->links() }}</div>
+                        @endif
                     @endif
                 @else
                     @if ($this->pages->isEmpty())
@@ -559,6 +582,9 @@ new #[Layout('layouts.app')] #[Title('Design Library')] class extends Component 
                                 </div>
                             @endforeach
                         </div>
+                        @if ($this->pages->hasPages())
+                            <div class="mt-6">{{ $this->pages->links() }}</div>
+                        @endif
                     @endif
                 @endif
             </div>
