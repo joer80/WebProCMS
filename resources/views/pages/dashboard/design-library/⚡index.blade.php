@@ -534,16 +534,21 @@ new #[Layout('layouts.app')] #[Title('Design Library')] class extends Component 
                         <div class="grid sm:grid-cols-2 xl:grid-cols-3 gap-4">
                             @foreach ($this->pages as $page)
                                 <div wire:key="page-{{ $page->id }}" class="group rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 overflow-hidden hover:border-primary/40 transition-colors flex flex-col">
-                                    {{-- Row list preview --}}
-                                    <div class="p-3 bg-zinc-50 dark:bg-zinc-800 border-b border-zinc-200 dark:border-zinc-700 min-h-28 flex flex-col justify-center gap-1">
-                                        @forelse ($page->row_names ?? [] as $rowName)
-                                            <div class="flex items-center gap-2 text-xs text-zinc-600 dark:text-zinc-400">
-                                                <flux:icon name="rectangle-stack" class="size-3 shrink-0 text-zinc-400 dark:text-zinc-500" />
-                                                <span class="truncate">{{ $rowName }}</span>
-                                            </div>
-                                        @empty
-                                            <p class="text-xs text-zinc-400 dark:text-zinc-500 italic text-center">No rows defined</p>
-                                        @endforelse
+                                    {{-- Live preview --}}
+                                    <div class="relative h-40 overflow-hidden bg-zinc-100 dark:bg-zinc-800">
+                                        <div class="absolute inset-0 flex items-center justify-center animate-pulse pointer-events-none">
+                                            <flux:icon name="photo" class="size-8 text-zinc-300 dark:text-zinc-600" />
+                                        </div>
+                                        <iframe
+                                            src="{{ route('dashboard.design-library.preview', ['type' => 'page', 'id' => $page->id]) }}"
+                                            class="absolute top-0 left-0 border-0"
+                                            style="width:1280px;height:800px;transform:scale(0.25);transform-origin:0 0;pointer-events:none;"
+                                            loading="lazy"
+                                            scrolling="no"
+                                            tabindex="-1"
+                                            aria-hidden="true"
+                                            onload="this.previousElementSibling.style.display='none'"
+                                        ></iframe>
                                     </div>
 
                                     <div class="p-4 flex flex-col flex-1">
