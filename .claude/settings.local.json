@@ -37,7 +37,8 @@
       "Bash(done)",
       "Bash(curl -s -k https://webprocms.test/test)",
       "Bash(curl -s http://webprocms.test/test)",
-      "WebFetch(domain:raw.githubusercontent.com)"
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "Bash(xargs -I{} basename {} .blade.php)"
     ]
   },
   "defaultMode": "acceptEdits"

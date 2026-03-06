@@ -1,0 +1,72 @@
+{{--
+@name Header - Mega Menu
+@description Header with an Alpine.js powered full-width mega dropdown menu.
+@sort 100
+--}}
+<x-dl.section slug="__SLUG__"
+    tag="header"
+    default-section-classes="sticky top-0 z-50 bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800"
+    default-container-classes="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between"
+    x-data="{ megaOpen: false }">
+    <x-dl.wrapper slug="__SLUG__" prefix="brand" tag="a"
+        href="/"
+        default-classes="font-heading text-xl font-bold text-zinc-900 dark:text-white">
+        <x-dl.subheadline slug="__SLUG__" prefix="brand_name" tag="span" default="Brand"
+            default-classes="" />
+    </x-dl.wrapper>
+    <x-dl.wrapper slug="__SLUG__" prefix="nav" tag="nav"
+        default-classes="hidden md:flex items-center gap-8">
+        <x-dl.wrapper slug="__SLUG__" prefix="link_products" tag="button"
+            default-classes="flex items-center gap-1 text-sm text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition-colors"
+            @click="megaOpen = !megaOpen"
+            @keydown.escape.window="megaOpen = false">
+            Products
+            <x-dl.icon slug="__SLUG__" prefix="mega_chevron" name="chevron-down"
+                default-classes="size-4 transition-transform duration-200"
+                x-bind:class="megaOpen ? 'rotate-180' : ''" />
+        </x-dl.wrapper>
+        <x-dl.wrapper slug="__SLUG__" prefix="link_pricing" tag="a" href="#"
+            default-classes="text-sm text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition-colors">Pricing</x-dl.wrapper>
+        <x-dl.wrapper slug="__SLUG__" prefix="link_blog" tag="a" href="#"
+            default-classes="text-sm text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition-colors">Blog</x-dl.wrapper>
+    </x-dl.wrapper>
+    <x-dl.link slug="__SLUG__" prefix="primary_cta"
+        default-label="Get Started"
+        default-url="#"
+        default-classes="px-4 py-2 bg-primary text-white text-sm font-semibold rounded-lg hover:bg-primary/90 transition-colors" />
+    <div x-show="megaOpen"
+        x-transition:enter="transition ease-out duration-150"
+        x-transition:enter-start="opacity-0 -translate-y-1"
+        x-transition:enter-end="opacity-100 translate-y-0"
+        @click.outside="megaOpen = false"
+        style="display:none;"
+        class="absolute top-16 left-0 right-0 border-b border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-lg">
+        <x-dl.wrapper slug="__SLUG__" prefix="mega_panel"
+            default-classes="max-w-6xl mx-auto px-6 py-8 grid md:grid-cols-3 gap-6">
+            <x-dl.grid slug="__SLUG__" prefix="mega_items"
+                default-grid-classes="contents"
+                default-items='[{"icon":"bolt","title":"Performance","desc":"Global edge delivery for fast load times."},{"icon":"shield-check","title":"Security","desc":"Zero-trust, end-to-end encryption."},{"icon":"chart-bar","title":"Analytics","desc":"Real-time insights for every metric."}]'>
+                @dlItems('__SLUG__', 'mega_items', $megaItems, '[{"icon":"bolt","title":"Performance","desc":"Global edge delivery for fast load times."},{"icon":"shield-check","title":"Security","desc":"Zero-trust, end-to-end encryption."},{"icon":"chart-bar","title":"Analytics","desc":"Real-time insights for every metric."}]')
+                @foreach ($megaItems as $item)
+                    <x-dl.card slug="__SLUG__" prefix="mega_item"
+                        default-classes="flex gap-4 p-4 rounded-card hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors">
+                        <x-dl.icon slug="__SLUG__" prefix="mega_icon" name="{{ $item['icon'] }}"
+                            default-wrapper-classes="mt-0.5 text-primary shrink-0"
+                            default-classes="size-5" />
+                        <x-dl.group slug="__SLUG__" prefix="mega_text"
+                            default-classes="">
+                            <x-dl.wrapper slug="__SLUG__" prefix="mega_title" tag="h4"
+                                default-classes="text-sm font-semibold text-zinc-900 dark:text-white mb-1">
+                                {{ $item['title'] }}
+                            </x-dl.wrapper>
+                            <x-dl.wrapper slug="__SLUG__" prefix="mega_desc" tag="p"
+                                default-classes="text-xs text-zinc-500 dark:text-zinc-400">
+                                {{ $item['desc'] }}
+                            </x-dl.wrapper>
+                        </x-dl.group>
+                    </x-dl.card>
+                @endforeach
+            </x-dl.grid>
+        </x-dl.wrapper>
+    </div>
+</x-dl.section>
