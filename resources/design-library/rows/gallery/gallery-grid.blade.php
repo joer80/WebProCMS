@@ -35,18 +35,19 @@
         <x-dl.subheadline slug="__SLUG__" prefix="subheadline" default="A glimpse into our work and culture."
             default-classes="mt-4 text-zinc-500 dark:text-zinc-400" />
     </x-dl.wrapper>
-    @dlItems('__SLUG__', 'images', $galleryImages, '[{"image":"","alt":"Photo 1","caption":""},{"image":"","alt":"Photo 2","caption":""},{"image":"","alt":"Photo 3","caption":""},{"image":"","alt":"Photo 4","caption":""},{"image":"","alt":"Photo 5","caption":""},{"image":"","alt":"Photo 6","caption":""}]')
+    @dlItems('__SLUG__', 'images', $galleryImages, '[{"image":"https://placehold.co/600x600","alt":"Photo 1","caption":""},{"image":"https://placehold.co/600x600","alt":"Photo 2","caption":""},{"image":"https://placehold.co/600x600","alt":"Photo 3","caption":""},{"image":"https://placehold.co/600x600","alt":"Photo 4","caption":""},{"image":"https://placehold.co/600x600","alt":"Photo 5","caption":""},{"image":"https://placehold.co/600x600","alt":"Photo 6","caption":""}]')
     <x-dl.gallery slug="__SLUG__" prefix="images"
         default-grid-classes="grid grid-cols-2 md:grid-cols-3 gap-4"
-        default-items='[{"image":"","alt":"Photo 1","caption":""},{"image":"","alt":"Photo 2","caption":""},{"image":"","alt":"Photo 3","caption":""},{"image":"","alt":"Photo 4","caption":""},{"image":"","alt":"Photo 5","caption":""},{"image":"","alt":"Photo 6","caption":""}]'>
+        default-items='[{"image":"https://placehold.co/600x600","alt":"Photo 1","caption":""},{"image":"https://placehold.co/600x600","alt":"Photo 2","caption":""},{"image":"https://placehold.co/600x600","alt":"Photo 3","caption":""},{"image":"https://placehold.co/600x600","alt":"Photo 4","caption":""},{"image":"https://placehold.co/600x600","alt":"Photo 5","caption":""},{"image":"https://placehold.co/600x600","alt":"Photo 6","caption":""}]'>
         @foreach ($galleryImages as $img)
+            @php $imgUrl = $img['image'] ? (str_starts_with($img['image'], 'http') ? $img['image'] : Storage::url($img['image'])) : null; @endphp
             <x-dl.card slug="__SLUG__" prefix="gallery_item"
                 default-classes="rounded-card overflow-hidden bg-zinc-100 dark:bg-zinc-800 aspect-square"
                 @click="open($el.querySelector('img[data-lightbox-src]'))"
                 x-bind:class="lightboxEnabled && $el.querySelector('img[data-lightbox-src]') ? 'cursor-zoom-in' : ''">
-                @if ($img['image'])
-                    <img src="{{ Storage::url($img['image']) }}" alt="{{ $img['alt'] }}"
-                        data-lightbox-src="{{ Storage::url($img['image']) }}"
+                @if ($imgUrl)
+                    <img src="{{ $imgUrl }}" alt="{{ $img['alt'] }}"
+                        data-lightbox-src="{{ $imgUrl }}"
                         data-lightbox-caption="{{ $img['caption'] ?? '' }}"
                         class="w-full h-full object-cover">
                 @else

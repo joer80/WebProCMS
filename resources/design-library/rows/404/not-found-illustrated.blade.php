@@ -8,7 +8,8 @@
     default-container-classes="max-w-5xl mx-auto grid md:grid-cols-2 gap-12 items-center w-full py-20">
     <x-dl.media slug="__SLUG__"
         default-wrapper-classes="rounded-card overflow-hidden bg-zinc-100 dark:bg-zinc-800 aspect-square flex items-center justify-center"
-        default-image-classes="w-full h-full object-cover" />
+        default-image-classes="w-full h-full object-cover"
+        default-image="https://placehold.co/800x800" />
     <div>
         <x-dl.wrapper slug="__SLUG__" prefix="error_badge"
             default-classes="inline-flex items-center px-3 py-1 rounded-full bg-red-50 dark:bg-red-900/20 text-red-500 dark:text-red-400 text-sm font-semibold mb-6">

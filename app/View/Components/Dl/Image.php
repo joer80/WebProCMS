@@ -12,6 +12,7 @@ class Image extends Component
         public string $prefix = 'image',
         public string $defaultWrapperClasses = 'rounded-card overflow-hidden aspect-video',
         public string $defaultImageClasses = 'w-full h-full object-cover',
+        public string $defaultImage = '',
     ) {}
 
     /**

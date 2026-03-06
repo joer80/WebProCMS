@@ -11,6 +11,7 @@ class Media extends Component
         public string $slug,
         public string $defaultWrapperClasses = 'rounded-card overflow-hidden aspect-video',
         public string $defaultImageClasses = 'w-full h-full object-cover',
+        public string $defaultImage = '',
     ) {}
 
     /**

@@ -19,5 +19,6 @@
         default-secondary-classes="px-8 py-3 text-zinc-600 dark:text-zinc-300 font-semibold hover:text-zinc-900 dark:hover:text-white transition-colors" />
     <x-dl.media slug="__SLUG__"
         default-wrapper-classes="mt-16 rounded-card overflow-hidden shadow-card ring-1 ring-zinc-200 dark:ring-zinc-700"
-        default-image-classes="w-full h-auto" />
+        default-image-classes="w-full h-auto"
+        default-image="https://placehold.co/1400x800" />
 </x-dl.section>

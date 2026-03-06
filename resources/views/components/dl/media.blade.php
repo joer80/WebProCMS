@@ -1,9 +1,9 @@
 @blaze
-@props(['slug', 'defaultWrapperClasses' => 'rounded-card overflow-hidden aspect-video', 'defaultImageClasses' => 'w-full h-full object-cover'])
+@props(['slug', 'defaultWrapperClasses' => 'rounded-card overflow-hidden aspect-video', 'defaultImageClasses' => 'w-full h-full object-cover', 'defaultImage' => ''])
 @php
 $wrapperCls = content($slug, 'image_wrapper_classes', $defaultWrapperClasses);
 $imageCls = content($slug, 'image_classes', $defaultImageClasses);
-$imgSrc = content($slug, 'image', '');
+$imgSrc = content($slug, 'image', $defaultImage);
 $imgAlt = content($slug, 'image_alt', '');
 @endphp
 @if(content($slug, 'toggle_image', '1'))

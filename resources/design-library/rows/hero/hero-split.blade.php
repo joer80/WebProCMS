@@ -21,5 +21,6 @@
         </div>
         <x-dl.media slug="__SLUG__"
             default-wrapper-classes="rounded-card overflow-hidden bg-zinc-100 dark:bg-zinc-800 aspect-video flex items-center justify-center"
-            default-image-classes="w-full h-full object-cover" />
+            default-image-classes="w-full h-full object-cover"
+            default-image="https://placehold.co/1200x675" />
 </x-dl.section>
