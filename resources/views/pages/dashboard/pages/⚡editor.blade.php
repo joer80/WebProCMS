@@ -130,18 +130,9 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
     /** @var array<string, array<string, string>> */
     public array $rowDesignDefaults = [];
 
-    // Library browse mode state
-    public int $browsingRowIndex = -1;
-
-    public string $browseCategory = '';
-
-    public int $browsePosition = 0;
-
-    /** @var array<int, array{id: int, name: string}> */
-    public array $browseRowOptions = [];
-
-    /** @var array<int, array{value: string, label: string}> */
-    public array $allCategoryOptions = [];
+    // Library browse mode state — keyed by row slug
+    /** @var array<string, array{category: string, position: int, rowOptions: array<int, array{id: int, name: string}>, categoryOptions: array<int, array{value: string, label: string}>}> */
+    public array $rowBrowseData = [];
 
     public function mount(): void
     {
@@ -541,33 +532,28 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
     public function openBrowseMode(int $rowIndex): void
     {
         $this->browsingRowIndex = $rowIndex;
-        $row = $this->rows[$rowIndex];
+        $slug = $this->rows[$rowIndex]['slug'];
+        $this->rowBrowseData[$slug] = $this->buildBrowseDataForSlug($slug);
+    }
 
-        // Derive template name from the slug (format: templateName:randomId)
-        $templateName = Str::before($row['slug'], ':');
+    public function openAllBrowseMode(): void
+    {
+        foreach ($this->rows as $row) {
+            $this->rowBrowseData[$row['slug']] = $this->buildBrowseDataForSlug($row['slug']);
+        }
+    }
 
-        // Find the matching design row to get its category
+    private function buildBrowseDataForSlug(string $slug): array
+    {
+        $templateName = Str::before($slug, ':');
+
         $designRow = DesignRow::query()
             ->where('source_file', 'LIKE', '%/'.$templateName.'.blade.php')
             ->first();
 
-        $this->browseCategory = $designRow?->category?->value ?? RowCategory::cases()[0]->value;
-        $this->loadBrowseRowsForCategory();
+        $category = $designRow?->category?->value ?? RowCategory::cases()[0]->value;
 
-        // Set current position to match the active template
-        if ($designRow) {
-            $ids = array_column($this->browseRowOptions, 'id');
-            $pos = array_search($designRow->id, $ids, true);
-            $this->browsePosition = $pos !== false ? (int) $pos : 0;
-        } else {
-            $this->browsePosition = 0;
-        }
-    }
-
-    private function loadBrowseRowsForCategory(): void
-    {
-        // All categories that have rows (for the dropdown)
-        $this->allCategoryOptions = DesignRow::query()
+        $categoryOptions = DesignRow::query()
             ->select('category')
             ->distinct()
             ->orderBy('category')
@@ -579,42 +565,63 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
             ->values()
             ->toArray();
 
-        // Rows in the selected category
-        $this->browseRowOptions = DesignRow::query()
-            ->where('category', $this->browseCategory)
+        $rowOptions = DesignRow::query()
+            ->where('category', $category)
             ->orderBy('sort_order')
             ->get(['id', 'name'])
             ->map(fn (DesignRow $r) => ['id' => $r->id, 'name' => $r->name])
             ->values()
             ->toArray();
+
+        $position = 0;
+
+        if ($designRow) {
+            $ids = array_column($rowOptions, 'id');
+            $pos = array_search($designRow->id, $ids, true);
+            $position = $pos !== false ? (int) $pos : 0;
+        }
+
+        return compact('category', 'categoryOptions', 'rowOptions', 'position');
     }
 
-    public function browseCategoryChange(string $category): void
+    public function browseCategoryChange(string $slug, string $category): void
     {
-        $this->browseCategory = $category;
-        $this->browsePosition = 0;
-        $this->loadBrowseRowsForCategory();
+        $rowOptions = DesignRow::query()
+            ->where('category', $category)
+            ->orderBy('sort_order')
+            ->get(['id', 'name'])
+            ->map(fn (DesignRow $r) => ['id' => $r->id, 'name' => $r->name])
+            ->values()
+            ->toArray();
 
-        if (! empty($this->browseRowOptions)) {
-            $this->applyBrowseRow($this->browseRowOptions[0]['id']);
+        $this->rowBrowseData[$slug]['category'] = $category;
+        $this->rowBrowseData[$slug]['position'] = 0;
+        $this->rowBrowseData[$slug]['rowOptions'] = $rowOptions;
+
+        if (! empty($rowOptions)) {
+            $this->applyBrowseRow($slug, $rowOptions[0]['id']);
         }
     }
 
-    public function browseRowStep(int $step): void
+    public function browseRowStep(string $slug, int $step): void
     {
-        $count = count($this->browseRowOptions);
+        $options = $this->rowBrowseData[$slug]['rowOptions'] ?? [];
+        $count = count($options);
 
         if ($count === 0) {
             return;
         }
 
-        $this->browsePosition = ($this->browsePosition + $step + $count) % $count;
-        $this->applyBrowseRow($this->browseRowOptions[$this->browsePosition]['id']);
+        $position = (($this->rowBrowseData[$slug]['position'] ?? 0) + $step + $count) % $count;
+        $this->rowBrowseData[$slug]['position'] = $position;
+        $this->applyBrowseRow($slug, $options[$position]['id']);
     }
 
-    private function applyBrowseRow(int $designRowId): void
+    private function applyBrowseRow(string $slug, int $designRowId): void
     {
-        if ($this->browsingRowIndex < 0) {
+        $rowIndex = collect($this->rows)->search(fn (array $r) => $r['slug'] === $slug);
+
+        if ($rowIndex === false) {
             return;
         }
 
@@ -624,13 +631,12 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
             return;
         }
 
-        $existing = $this->rows[$this->browsingRowIndex];
-        $existingSlug = $existing['slug'];
+        $existing = $this->rows[$rowIndex];
 
-        $this->rows[$this->browsingRowIndex] = [
-            'slug' => $existingSlug,
+        $this->rows[$rowIndex] = [
+            'slug' => $slug,
             'name' => $designRow->name,
-            'blade' => str_replace('__SLUG__', $existingSlug, $designRow->blade_code),
+            'blade' => str_replace('__SLUG__', $slug, $designRow->blade_code),
             'shared' => $existing['shared'] ?? false,
             'hidden' => $existing['hidden'] ?? false,
         ];
@@ -2743,7 +2749,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                     <div x-show="!editorOpen" class="flex flex-col flex-1">
                         <div class="shrink-0 px-4 py-3 border-b border-zinc-200 dark:border-zinc-700 flex items-center justify-between">
                             <flux:heading size="sm" class="text-zinc-600 dark:text-zinc-400">{{ __('Page Rows') }}</flux:heading>
-                            <div class="flex items-center gap-0.5" x-data="{ allDesignsOpen: false, allAdvancedOpen: false }">
+                            <div class="flex items-center gap-0.5" x-data="{ allDesignsOpen: false, allAdvancedOpen: false, allBrowseOpen: false }">
                                 <flux:tooltip content="Copy all rows" position="bottom">
                                     <button type="button"
                                         x-on:click="localStorage.setItem('webprocms_copied_rows', JSON.stringify($wire.rows)); $dispatch('notify', { message: 'Rows copied.' })"
@@ -2774,7 +2780,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                                 <div class="w-px h-3.5 bg-zinc-200 dark:bg-zinc-600 mx-0.5"></div>
                                 <flux:tooltip content="Toggle all section designs" position="bottom">
                                     <button type="button"
-                                        x-on:click="allAdvancedOpen = false; allDesignsOpen = !allDesignsOpen; $dispatch(allDesignsOpen ? 'expand-all-rows' : 'collapse-all-rows')"
+                                        x-on:click="allAdvancedOpen = false; allBrowseOpen = false; allDesignsOpen = !allDesignsOpen; $dispatch(allDesignsOpen ? 'expand-all-rows' : 'collapse-all-rows')"
                                         :class="allDesignsOpen ? 'text-primary' : 'text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200'"
                                         class="p-1 rounded hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors"
                                     >
@@ -2783,11 +2789,20 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                                 </flux:tooltip>
                                 <flux:tooltip content="Toggle all section advanced" position="bottom">
                                     <button type="button"
-                                        x-on:click="allDesignsOpen = false; allAdvancedOpen = !allAdvancedOpen; $dispatch(allAdvancedOpen ? 'expand-all-advanced' : 'collapse-all-rows')"
+                                        x-on:click="allDesignsOpen = false; allBrowseOpen = false; allAdvancedOpen = !allAdvancedOpen; $dispatch(allAdvancedOpen ? 'expand-all-advanced' : 'collapse-all-rows')"
                                         :class="allAdvancedOpen ? 'text-primary' : 'text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200'"
                                         class="p-1 rounded hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors"
                                     >
                                         <flux:icon name="code-bracket" class="size-3.5" />
+                                    </button>
+                                </flux:tooltip>
+                                <flux:tooltip content="Browse library rows for all" position="bottom">
+                                    <button type="button"
+                                        x-on:click="allDesignsOpen = false; allAdvancedOpen = false; allBrowseOpen = !allBrowseOpen; if (allBrowseOpen) { $wire.openAllBrowseMode(); $dispatch('expand-all-browse'); } else { $dispatch('collapse-all-rows'); }"
+                                        :class="allBrowseOpen ? 'text-primary' : 'text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200'"
+                                        class="p-1 rounded hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors"
+                                    >
+                                        <flux:icon name="rectangle-stack" class="size-3.5" />
                                     </button>
                                 </flux:tooltip>
                             </div>
@@ -2802,6 +2817,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                                     @collapse-all-rows.window="panelMode = null"
                                     @expand-all-rows.window="panelMode = 'design'"
                                     @expand-all-advanced.window="panelMode = 'advanced'"
+                                    @expand-all-browse.window="panelMode = 'browse'"
                                     class="rounded-lg border bg-white dark:bg-zinc-900 overflow-hidden transition-colors {{ !empty($row['hidden']) ? 'opacity-60' : '' }}"
                                     :class="editorOpen && {{ $editingRowIndex ?? -1 }} === {{ $index }} ? 'border-primary' : (selectedRowIndex === {{ $index }} ? 'border-primary' : (panelMode !== null ? 'border-primary/50' : 'border-zinc-200 dark:border-zinc-700'))"
                                     @click="selectedRowIndex === {{ $index }} ? $dispatch('row-deselected') : $dispatch('row-selected', { index: {{ $index }} })"
@@ -2841,7 +2857,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                                                 title="Advanced settings"><flux:icon name="code-bracket" class="size-3.5" /></button>
                                             <button type="button" @click.stop="panelMode = panelMode === 'browse' ? null : 'browse'; if (panelMode === 'browse') $wire.openBrowseMode({{ $index }})"
                                                 :class="panelMode === 'browse' ? 'text-primary' : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 transition-colors'"
-                                                title="Browse library rows"><flux:icon name="rectangle-stack" class="size-3.5" /></button>
+                                                title="Browse library rows for this row"><flux:icon name="rectangle-stack" class="size-3.5" /></button>
                                         @endif
                                         <flux:switch
                                             :checked="empty($row['hidden'])"
@@ -2963,9 +2979,10 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                                             </div>
                                             {{-- Browse mode info --}}
                                             <div x-show="panelMode === 'browse'" class="px-3 py-2 border-t border-zinc-200 dark:border-zinc-700">
-                                                @if ($browsingRowIndex === $index)
-                                                    <p class="text-[11px] text-zinc-500 dark:text-zinc-400 truncate" title="{{ $browseRowOptions[$browsePosition]['name'] ?? $row['name'] }}">
-                                                        {{ $browseRowOptions[$browsePosition]['name'] ?? $row['name'] }}
+                                                @php $bd = $rowBrowseData[$row['slug']] ?? null; @endphp
+                                                @if ($bd)
+                                                    <p class="text-[11px] text-zinc-500 dark:text-zinc-400 truncate" title="{{ $bd['rowOptions'][$bd['position']]['name'] ?? $row['name'] }}">
+                                                        {{ $bd['rowOptions'][$bd['position']]['name'] ?? $row['name'] }}
                                                     </p>
                                                 @endif
                                             </div>
@@ -3053,36 +3070,37 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
 
                                         {{-- Browse mode action bar --}}
                                         <div x-show="panelMode === 'browse'" class="flex items-center gap-2 w-full">
-                                            @if ($browsingRowIndex === $index && ! empty($allCategoryOptions))
+                                            @php $bd = $rowBrowseData[$row['slug']] ?? null; @endphp
+                                            @if ($bd)
                                                 <select
-                                                    x-on:change="$wire.browseCategoryChange($event.target.value)"
+                                                    x-on:change="$wire.browseCategoryChange('{{ $row['slug'] }}', $event.target.value)"
                                                     class="flex-1 min-w-0 text-xs rounded-lg border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-900 text-zinc-900 dark:text-white px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition"
                                                 >
-                                                    @foreach ($allCategoryOptions as $cat)
-                                                        <option value="{{ $cat['value'] }}" {{ $browseCategory === $cat['value'] ? 'selected' : '' }}>{{ $cat['label'] }}</option>
+                                                    @foreach ($bd['categoryOptions'] as $cat)
+                                                        <option value="{{ $cat['value'] }}" {{ $bd['category'] === $cat['value'] ? 'selected' : '' }}>{{ $cat['label'] }}</option>
                                                     @endforeach
                                                 </select>
                                                 <div class="flex items-center gap-1 shrink-0">
                                                     <flux:button
-                                                        wire:click="browseRowStep(-1)"
+                                                        wire:click="browseRowStep('{{ $row['slug'] }}', -1)"
                                                         variant="ghost"
                                                         size="sm"
                                                         icon="arrow-left"
                                                         title="Previous row"
                                                         :loading="false"
-                                                        :disabled="count($browseRowOptions) <= 1"
+                                                        :disabled="count($bd['rowOptions']) <= 1"
                                                     />
                                                     <span class="text-[11px] text-zinc-500 dark:text-zinc-400 tabular-nums whitespace-nowrap">
-                                                        {{ $browsePosition + 1 }} / {{ count($browseRowOptions) }}
+                                                        {{ $bd['position'] + 1 }} / {{ count($bd['rowOptions']) }}
                                                     </span>
                                                     <flux:button
-                                                        wire:click="browseRowStep(1)"
+                                                        wire:click="browseRowStep('{{ $row['slug'] }}', 1)"
                                                         variant="ghost"
                                                         size="sm"
                                                         icon="arrow-right"
                                                         title="Next row"
                                                         :loading="false"
-                                                        :disabled="count($browseRowOptions) <= 1"
+                                                        :disabled="count($bd['rowOptions']) <= 1"
                                                     />
                                                 </div>
                                             @endif

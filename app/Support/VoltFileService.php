@@ -419,8 +419,10 @@ JS;
         foreach (app('router')->getRoutes() as $route) {
             $action = $route->getAction();
 
-            if (isset($action['view'])) {
-                $viewId = str_replace('.', '::', $action['view']);
+            $viewKey = $action['view'] ?? $action['livewire_component'] ?? null;
+
+            if ($viewKey) {
+                $viewId = str_replace('.', '::', $viewKey);
                 $name = $route->getName();
 
                 if ($name) {

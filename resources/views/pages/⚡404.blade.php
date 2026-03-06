@@ -27,22 +27,4 @@ new #[Layout('layouts.public', ['status' => 'unlisted'])] #[Title('404')] class 
             default-secondary-classes="px-6 py-3 border border-zinc-300 dark:border-zinc-600 text-zinc-700 dark:text-zinc-200 font-semibold rounded-lg hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors" />
 </x-dl.section>
 {{-- ROW:end:not-found-simple:Xzy1bv --}}
-
-{{-- ROW:start:cta-banner:pMHQ2m --}}
-<x-dl.section slug="cta-banner:pMHQ2m"
-    default-section-classes="bg-primary py-section-banner px-6 text-center"
-    default-container-classes="max-w-3xl mx-auto">
-        <x-dl.heading slug="cta-banner:pMHQ2m" prefix="headline" default="Ready to Get Started?"
-            default-tag="h2"
-            default-classes="font-heading text-4xl font-bold text-white" />
-        <x-dl.subheadline slug="cta-banner:pMHQ2m" prefix="subheadline" default="Join thousands of satisfied customers today."
-            default-classes="mt-4 text-lg text-white/80" />
-        <x-dl.buttons slug="cta-banner:pMHQ2m"
-            default-wrapper-classes="mt-8 flex flex-wrap items-center justify-center gap-4"
-            default-primary-label="Start Free Trial"
-            default-primary-classes="px-8 py-3 bg-white text-primary font-semibold rounded-lg hover:bg-zinc-100 transition-colors"
-            default-secondary-label="Talk to Sales"
-            default-secondary-classes="px-8 py-3 border border-white/30 text-white font-semibold rounded-lg hover:bg-white/10 transition-colors" />
-</x-dl.section>
-{{-- ROW:end:cta-banner:pMHQ2m --}}
 </div>
