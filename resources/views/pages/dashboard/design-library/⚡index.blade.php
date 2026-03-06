@@ -323,14 +323,9 @@ new #[Layout('layouts.app')] #[Title('Design Library')] class extends Component 
         }
 
         $currentConfig = config('navigation');
-        $currentMenus = $currentConfig['menus'] ?? [];
-        $existingSlugs = array_column($currentMenus, 'slug');
+        $currentMenusBySlug = collect($currentConfig['menus'] ?? [])->keyBy('slug')->all();
 
         foreach ($template['menus'] ?? [] as $menu) {
-            if (in_array($menu['slug'], $existingSlugs, true)) {
-                continue;
-            }
-
             $processedItems = [];
 
             foreach ($menu['items'] ?? [] as $item) {
@@ -359,7 +354,8 @@ new #[Layout('layouts.app')] #[Title('Design Library')] class extends Component 
             }
 
             $menu['items'] = $processedItems;
-            $currentMenus[] = $menu;
+            // Replace existing menu with same slug, or add new one
+            $currentMenusBySlug[$menu['slug']] = $menu;
         }
 
         // Merge footer slugs from template (add any not already present)
@@ -371,7 +367,7 @@ new #[Layout('layouts.app')] #[Title('Design Library')] class extends Component 
             }
         }
 
-        $currentConfig['menus'] = array_values($currentMenus);
+        $currentConfig['menus'] = array_values($currentMenusBySlug);
         $currentConfig['footer_slugs'] = array_values($currentFooterSlugs);
         $currentConfig['show_auth_links'] = $template['show_auth_links'] ?? $currentConfig['show_auth_links'];
         $currentConfig['show_account_in_footer'] = $template['show_account_in_footer'] ?? $currentConfig['show_account_in_footer'];

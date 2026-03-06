@@ -26,14 +26,18 @@ return [
             'slug' => 'main-navigation',
             'label' => 'Main Navigation',
             'items' => [
+            ['label' => 'About', 'route' => 'about', 'active' => true],
             ['label' => 'Blog', 'route' => 'blog.index', 'active' => true],
+            ['label' => 'Contact', 'route' => 'contact', 'active' => true],
             ],
         ],
         [
             'slug' => 'footer-company',
             'label' => 'Company',
             'items' => [
+            ['label' => 'About', 'route' => 'about', 'active' => true],
             ['label' => 'Blog', 'route' => 'blog.index', 'active' => true],
+            ['label' => 'Contact', 'route' => 'contact', 'active' => true],
             ],
         ],
         [
