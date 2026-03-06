@@ -1868,6 +1868,9 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                             @endif
                             <flux:badge size="sm" class="mt-1">{{ $libRow->category->label() }}</flux:badge>
                         </div>
+                        <a href="{{ route('dashboard.design-library.preview', ['type' => 'row', 'id' => $libRow->id]) }}" target="_blank" rel="noopener noreferrer">
+                            <flux:button variant="ghost" size="sm" icon="eye" />
+                        </a>
                         <flux:button
                             wire:click="insertRow({{ $libRow->id }}, {{ $insertAtIndex ?? count($rows) }})"
                             variant="primary"

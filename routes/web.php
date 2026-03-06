@@ -38,6 +38,8 @@ Route::middleware([
     // Route::get('blog2', \App\Livewire\Blog2::class)->name('blog2.index');
 
     // new cached pages are inserted here
+    Route::livewire('test2', 'pages::test2')->name('test2');
+    Route::livewire('404', 'pages::404')->name('404');
     Route::livewire('test-clone-dest-69a8e3668adb1', 'pages::test-clone-dest-69a8e3668adb1')->name('test-clone-dest-69a8e3668adb1');
     Route::livewire('test-clone-dest-69a8db6f1ddb4', 'pages::test-clone-dest-69a8db6f1ddb4')->name('test-clone-dest-69a8db6f1ddb4');
     Route::livewire('test-clone-dest-69a744a4299e1', 'pages::test-clone-dest-69a744a4299e1')->name('test-clone-dest-69a744a4299e1');
@@ -111,6 +113,24 @@ Route::middleware(['auth', 'verified'])->group(function (): void {
         Route::livewire('dashboard/menus', 'pages::dashboard.menus')->name('dashboard.menus');
 
         Route::livewire('dashboard/design-library', 'pages::dashboard.design-library.index')->name('dashboard.design-library.index');
+        Route::get('dashboard/design-library/preview/{type}/{id}', function (string $type, int $id) {
+            abort_if(! in_array($type, ['row', 'page']), 404);
+
+            $item = $type === 'row'
+                ? \App\Models\DesignRow::query()->findOrFail($id)
+                : \App\Models\DesignPage::query()->findOrFail($id);
+
+            $slug = 'preview-'.$type.'-'.$id;
+            $blade = str_replace('__SLUG__', $slug, $item->blade_code);
+
+            try {
+                $content = \Illuminate\Support\Facades\Blade::render($blade);
+            } catch (\Throwable $e) {
+                $content = '<div style="padding:2rem;color:red;font-family:monospace;white-space:pre-wrap;">Preview error: '.htmlspecialchars($e->getMessage()).'</div>';
+            }
+
+            return view('design-library-preview', ['content' => $content, 'name' => $item->name]);
+        })->name('dashboard.design-library.preview');
         Route::livewire('dashboard/redirects', 'pages::dashboard.redirects')->name('dashboard.redirects');
         Route::livewire('dashboard/pages/editor', 'pages::dashboard.pages.editor')->name('dashboard.design-library.editor');
 

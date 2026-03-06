@@ -317,6 +317,8 @@ When the user asks to remember something, ask whether it should go in their **pe
 
 ## Design Library
 
+When creating a new `x-dl.*` component, also ask the user whether a standalone design library row file is needed so it appears in the "add item" picker.
+
 Location: `resources/design-library/rows/[category]/[name].blade.php`
 
 ### Slug format

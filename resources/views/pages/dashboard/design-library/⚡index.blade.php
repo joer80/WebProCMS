@@ -436,6 +436,9 @@ new #[Layout('layouts.app')] #[Title('Design Library')] class extends Component 
                                             >
                                                 {{ __('Use in Page') }}
                                             </flux:button>
+                                            <a href="{{ route('dashboard.design-library.preview', ['type' => 'row', 'id' => $row->id]) }}" target="_blank" rel="noopener noreferrer">
+                                                <flux:button variant="ghost" size="sm" icon="eye" />
+                                            </a>
                                             <flux:button wire:click="openEditModal({{ $row->id }})" variant="ghost" size="sm" icon="pencil" />
                                             @if ($confirmingDelete === $row->id)
                                                 <flux:button wire:click="deleteItem({{ $row->id }})" variant="danger" size="sm">{{ __('Delete?') }}</flux:button>
@@ -490,6 +493,9 @@ new #[Layout('layouts.app')] #[Title('Design Library')] class extends Component 
                                             >
                                                 {{ __('Use in Page') }}
                                             </flux:button>
+                                            <a href="{{ route('dashboard.design-library.preview', ['type' => 'page', 'id' => $page->id]) }}" target="_blank" rel="noopener noreferrer">
+                                                <flux:button variant="ghost" size="sm" icon="eye" />
+                                            </a>
                                             <flux:button wire:click="openEditModal({{ $page->id }})" variant="ghost" size="sm" icon="pencil" />
                                             @if ($confirmingDelete === $page->id)
                                                 <flux:button wire:click="deleteItem({{ $page->id }})" variant="danger" size="sm">{{ __('Delete?') }}</flux:button>
