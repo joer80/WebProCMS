@@ -10,8 +10,6 @@ use Livewire\Attributes\Title;
 use Livewire\Component;
 
 new #[Layout('layouts.app')] #[Title('Pages')] #[Lazy] class extends Component {
-    public bool $showAll = false;
-
     public string $search = '';
 
     public bool $showCreateModal = false;
@@ -50,22 +48,6 @@ new #[Layout('layouts.app')] #[Title('Pages')] #[Lazy] class extends Component {
         $files = $service->listVoltFiles();
 
         unset($files['Other'], $files['Dashboard']);
-
-        if (! $this->showAll) {
-            $currentType = config('features.website_type');
-            $typeMap = $service->buildPageTypeMap();
-
-            $files['Public Pages'] = array_filter(
-                $files['Public Pages'] ?? [],
-                function (string $path) use ($typeMap, $currentType): bool {
-                    $types = $typeMap[$path] ?? [];
-
-                    return empty($types) || in_array($currentType, $types, true);
-                },
-            );
-
-            $files = array_filter($files);
-        }
 
         if ($this->search !== '') {
             $term = strtolower($this->search);
@@ -214,7 +196,6 @@ new #[Layout('layouts.app')] #[Title('Pages')] #[Lazy] class extends Component {
                 <flux:heading size="xl">Pages</flux:heading>
                 <flux:text class="mt-1">Browse and edit your website pages.</flux:text>
             </div>
-            <flux:switch wire:model.live="showAll" label="Show all" />
         </div>
 
         @if (auth()->user()->isAtLeast(Role::Manager))

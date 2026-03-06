@@ -47,45 +47,6 @@ class VoltFileService
     }
 
     /**
-     * Build a map of relative page path → website types derived from the navigation config.
-     * Pages that appear in no navigation type return an empty array (treated as universal).
-     *
-     * @return array<string, list<string>>
-     */
-    public function buildPageTypeMap(): array
-    {
-        $navigation = config('menu-templates', []);
-        $routeTypes = [];
-
-        foreach ($navigation as $type => $config) {
-            $routes = [];
-
-            foreach ($config['menus'] ?? [] as $menu) {
-                foreach ($menu['items'] ?? [] as $item) {
-                    if (isset($item['route'])) {
-                        $routes[] = $item['route'];
-                    }
-                }
-            }
-
-            foreach (array_unique($routes) as $route) {
-                $routeTypes[$route][] = $type;
-            }
-        }
-
-        $typeMap = [];
-
-        foreach ($this->listVoltFiles() as $group) {
-            foreach ($group as $relativePath) {
-                $routeName = $this->routeNameFromPath($relativePath);
-                $typeMap[$relativePath] = $routeName ? ($routeTypes[$routeName] ?? []) : [];
-            }
-        }
-
-        return $typeMap;
-    }
-
-    /**
      * Derive a route name from a relative page path.
      * e.g. "pages/⚡donate.blade.php" → "donate"
      * e.g. "pages/blog/⚡index.blade.php" → "blog.index"
