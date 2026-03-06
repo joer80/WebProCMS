@@ -9,7 +9,7 @@ class DesignLibraryService
     /**
      * Parse a design library .blade.php template file into structured data.
      *
-     * @return array{name: string, description: string, sort_order: int, blade_code: string, php_code: string, source_file: string, schema_fields: list<array{key: string, type: string, group: string, default: string, label: string}>}
+     * @return array{name: string, description: string, sort_order: int, blade_code: string, php_code: string, source_file: string, schema_fields: list<array{key: string, type: string, group: string, default: string, label: string}>, row_names: list<string>}
      */
     public function parseTemplateFile(string $fullPath): array
     {
@@ -20,6 +20,7 @@ class DesignLibraryService
         $sortOrder = 0;
         $phpCode = '';
         $schemaFields = [];
+        $rowNames = [];
 
         // Extract frontmatter from the first {{-- ... --}} block
         if (preg_match('/^\{\{--\s*(.*?)\s*--\}\}/s', $contents, $frontmatterMatch)) {
@@ -35,6 +36,10 @@ class DesignLibraryService
 
             if (preg_match('/@sort\s+(\d+)/i', $frontmatter, $m)) {
                 $sortOrder = (int) $m[1];
+            }
+
+            if (preg_match('/@rows\s+(.+)/i', $frontmatter, $m)) {
+                $rowNames = array_values(array_filter(array_map('trim', explode(',', $m[1]))));
             }
 
             // Remove the frontmatter block from content
@@ -58,7 +63,36 @@ class DesignLibraryService
             'php_code' => $phpCode,
             'source_file' => $this->relativeSourcePath($fullPath),
             'schema_fields' => $schemaFields,
+            'row_names' => $rowNames,
         ];
+    }
+
+    /**
+     * Build a page bundle .blade.php file string (frontmatter only, no blade code).
+     *
+     * @param  array{name: string, description?: string, sort_order?: int, row_names?: list<string>}  $data
+     */
+    public function buildPageFile(array $data): string
+    {
+        $lines = [];
+        $lines[] = '{{--';
+        $lines[] = '@name '.$data['name'];
+
+        if (! empty($data['description'])) {
+            $lines[] = '@description '.$data['description'];
+        }
+
+        if (! empty($data['sort_order'])) {
+            $lines[] = '@sort '.$data['sort_order'];
+        }
+
+        if (! empty($data['row_names'])) {
+            $lines[] = '@rows '.implode(', ', $data['row_names']);
+        }
+
+        $lines[] = '--}}';
+
+        return implode("\n", $lines)."\n";
     }
 
     /**
@@ -329,6 +363,22 @@ class DesignLibraryService
         return str_starts_with($fullPath, $base)
             ? substr($fullPath, strlen($base))
             : $fullPath;
+    }
+
+    /**
+     * Write a page bundle file to disk.
+     *
+     * @param  array{name: string, description?: string, sort_order?: int, row_names?: list<string>}  $data
+     */
+    public function writePageFile(string $fullPath, array $data): void
+    {
+        $directory = dirname($fullPath);
+
+        if (! is_dir($directory)) {
+            mkdir($directory, 0755, true);
+        }
+
+        file_put_contents($fullPath, $this->buildPageFile($data));
     }
 
     /**

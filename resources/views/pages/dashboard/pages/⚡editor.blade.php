@@ -3,6 +3,7 @@
 use App\Enums\RowCategory;
 use App\Jobs\IndexDesignLibraryJob;
 use App\Models\ContentOverride;
+use App\Models\DesignPage;
 use App\Models\DesignRow;
 use App\Models\MediaItem;
 use App\Models\SharedRow;
@@ -268,6 +269,18 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
     public function sharedLibraryRows(): \Illuminate\Database\Eloquent\Collection
     {
         return SharedRow::query()->orderBy('name')->get();
+    }
+
+    /** @return \Illuminate\Database\Eloquent\Collection<int, DesignPage> */
+    #[Computed]
+    public function libraryPages(): \Illuminate\Database\Eloquent\Collection
+    {
+        return DesignPage::query()
+            ->when($this->librarySearch, fn ($q) => $q->where('name', 'like', '%'.$this->librarySearch.'%'))
+            ->orderBy('website_category')
+            ->orderBy('sort_order')
+            ->orderBy('name')
+            ->get();
     }
 
     /** @return array<string, string> */
@@ -678,6 +691,30 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
         $this->showLibraryDrawer = false;
 
         $this->refreshPreview();
+    }
+
+    public function insertPageBundle(int $designPageId, int $atIndex): void
+    {
+        $page = DesignPage::query()->find($designPageId);
+
+        if (! $page || empty($page->row_names)) {
+            return;
+        }
+
+        $offset = 0;
+        foreach ($page->row_names as $templateName) {
+            $row = DesignRow::query()
+                ->where('source_file', 'like', '%/'.$templateName.'.blade.php')
+                ->first();
+
+            if ($row) {
+                $this->insertRow($row->id, $atIndex + $offset);
+                $offset++;
+            }
+        }
+
+        $this->showLibraryDrawer = false;
+        $this->dispatch('notify', message: $offset.' rows inserted from "'.$page->name.'".');
     }
 
     public function makeRowShared(int $index): void
@@ -1945,6 +1982,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                     <flux:select.option value="{{ $value }}">{{ $label }}</flux:select.option>
                 @endforeach
                 <flux:select.option value="shared">{{ __('Shared Rows') }}</flux:select.option>
+                <flux:select.option value="page-bundles">{{ __('Page Bundles') }}</flux:select.option>
             </flux:select>
         </div>
 
@@ -1970,6 +2008,47 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                             >
                                 {{ __('Insert') }}
                             </flux:button>
+                        </div>
+                    @endforeach
+                </div>
+            @endif
+        @elseif ($libraryCategory === 'page-bundles')
+            @if ($this->libraryPages->isEmpty())
+                <div class="text-center py-12 text-zinc-500 dark:text-zinc-400">
+                    <flux:icon name="document-text" class="size-10 mx-auto mb-3 opacity-40" />
+                    <p class="text-sm">No page bundles found.</p>
+                    <p class="text-xs mt-1">Create bundles in the Design Library to quickly insert multiple rows.</p>
+                </div>
+            @else
+                <div class="space-y-2 max-h-96 overflow-y-auto">
+                    @foreach ($this->libraryPages as $libPage)
+                        <div wire:key="page-{{ $libPage->id }}" class="p-3 rounded-lg border border-zinc-200 dark:border-zinc-700 hover:border-primary/40 transition-colors">
+                            <div class="flex items-center gap-3 mb-2">
+                                <div class="flex-1 min-w-0">
+                                    <div class="font-medium text-zinc-900 dark:text-white text-sm truncate">{{ $libPage->name }}</div>
+                                    @if ($libPage->description)
+                                        <div class="text-xs text-zinc-500 dark:text-zinc-400 truncate mt-0.5">{{ $libPage->description }}</div>
+                                    @endif
+                                </div>
+                                <flux:badge size="sm" class="shrink-0">{{ $libPage->website_category->label() }}</flux:badge>
+                                <flux:button
+                                    wire:click="insertPageBundle({{ $libPage->id }}, {{ $insertAtIndex ?? count($rows) }})"
+                                    variant="primary"
+                                    size="sm"
+                                >
+                                    {{ __('Insert All') }}
+                                </flux:button>
+                            </div>
+                            @if (! empty($libPage->row_names))
+                                <div class="flex flex-wrap gap-1 mt-1">
+                                    @foreach ($libPage->row_names as $rowName)
+                                        <span class="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded bg-zinc-100 dark:bg-zinc-700 text-zinc-500 dark:text-zinc-400">
+                                            <flux:icon name="rectangle-stack" class="size-2.5" />
+                                            {{ $rowName }}
+                                        </span>
+                                    @endforeach
+                                </div>
+                            @endif
                         </div>
                     @endforeach
                 </div>

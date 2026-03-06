@@ -19,6 +19,7 @@ class DesignPage extends Model
         'php_code',
         'source_file',
         'sort_order',
+        'row_names',
     ];
 
     protected function casts(): array
@@ -26,6 +27,7 @@ class DesignPage extends Model
         return [
             'website_category' => PageCategory::class,
             'sort_order' => 'integer',
+            'row_names' => 'array',
         ];
     }
 }

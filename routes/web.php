@@ -38,6 +38,7 @@ Route::middleware([
     // Route::get('blog2', \App\Livewire\Blog2::class)->name('blog2.index');
 
     // new cached pages are inserted here
+    Route::livewire('test-2', 'pages::test-2')->name('test-2');
     Route::livewire('test-clone-dest-69aaebec41ee6', 'pages::test-clone-dest-69aaebec41ee6')->name('test-clone-dest-69aaebec41ee6');
     Route::livewire('test-clone-dest-69aaeb7c13aa0', 'pages::test-clone-dest-69aaeb7c13aa0')->name('test-clone-dest-69aaeb7c13aa0');
     Route::livewire('404', 'pages::404')->name('404');
@@ -121,12 +122,38 @@ Route::middleware(['auth', 'verified'])->group(function (): void {
         Route::get('dashboard/design-library/preview/{type}/{id}', function (string $type, int $id) {
             abort_if(! in_array($type, ['row', 'page']), 404);
 
-            $item = $type === 'row'
-                ? \App\Models\DesignRow::query()->findOrFail($id)
-                : \App\Models\DesignPage::query()->findOrFail($id);
+            if ($type === 'row') {
+                $item = \App\Models\DesignRow::query()->findOrFail($id);
+                $slug = 'preview-row-'.$id;
+                $blade = str_replace('__SLUG__', $slug, $item->blade_code);
+            } else {
+                $item = \App\Models\DesignPage::query()->findOrFail($id);
+                $rowNames = $item->row_names ?? [];
+                $parts = [];
 
-            $slug = 'preview-'.$type.'-'.$id;
-            $blade = str_replace('__SLUG__', $slug, $item->blade_code);
+                foreach ($rowNames as $i => $templateName) {
+                    $row = \App\Models\DesignRow::query()
+                        ->where('source_file', 'like', '%/'.$templateName.'.blade.php')
+                        ->first();
+
+                    if (! $row) {
+                        $parts[] = '<div style="padding:1rem 2rem;background:#fef9c3;color:#854d0e;font-family:monospace;font-size:0.75rem;">Row not found: '.$templateName.'</div>';
+
+                        continue;
+                    }
+
+                    $slug = 'preview-page-'.$id.'-'.$i;
+                    $blade = str_replace('__SLUG__', $slug, $row->blade_code);
+
+                    try {
+                        $parts[] = \Illuminate\Support\Facades\Blade::render($blade);
+                    } catch (\Throwable $e) {
+                        $parts[] = '<div style="padding:1rem 2rem;background:#fef3c7;color:#92400e;font-family:monospace;font-size:0.75rem;"><strong>'.$templateName.'</strong> — preview unavailable (requires live data)</div>';
+                    }
+                }
+
+                return view('design-library-preview', ['content' => implode("\n", $parts), 'name' => $item->name]);
+            }
 
             try {
                 $content = \Illuminate\Support\Facades\Blade::render($blade);

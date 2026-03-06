@@ -19,8 +19,9 @@ class DesignPageFactory extends Factory
             'name' => fake()->words(3, true),
             'website_category' => $category,
             'description' => fake()->sentence(),
-            'blade_code' => '<div class="min-h-screen"><section class="py-20"><h1 class="text-5xl font-bold">'.fake()->sentence(3).'</h1></section></div>',
+            'blade_code' => null,
             'php_code' => null,
+            'row_names' => [],
             'source_file' => 'pages/'.$category->value.'/'.$slug.'.blade.php',
             'sort_order' => fake()->numberBetween(0, 100),
         ];

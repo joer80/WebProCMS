@@ -26,7 +26,7 @@ new #[Layout('layouts.app')] #[Title('Design Library')] class extends Component 
     public function mount(): void
     {
         IndexDesignLibraryJob::dispatchSync();
-        unset($this->rows, $this->pages);
+        unset($this->rows, $this->pages, $this->allRows);
     }
 
     // Row form fields
@@ -35,6 +35,10 @@ new #[Layout('layouts.app')] #[Title('Design Library')] class extends Component 
     public string $formDescription = '';
     public string $formBladeCode = '';
     public string $formPhpCode = '';
+
+    // Page form fields
+    /** @var list<string> */
+    public array $formRowNames = [];
 
     // Confirm delete
     public ?int $confirmingDelete = null;
@@ -59,6 +63,16 @@ new #[Layout('layouts.app')] #[Title('Design Library')] class extends Component 
             ->when($this->category, fn ($q) => $q->where('website_category', $this->category))
             ->orderBy('website_category')
             ->orderBy('sort_order')
+            ->orderBy('name')
+            ->get();
+    }
+
+    /** @return \Illuminate\Database\Eloquent\Collection<int, DesignRow> */
+    #[Computed]
+    public function allRows(): \Illuminate\Database\Eloquent\Collection
+    {
+        return DesignRow::query()
+            ->orderBy('category')
             ->orderBy('name')
             ->get();
     }
@@ -93,7 +107,7 @@ new #[Layout('layouts.app')] #[Title('Design Library')] class extends Component 
         IndexDesignLibraryJob::dispatchSync();
         $this->indexing = false;
 
-        unset($this->rows, $this->pages);
+        unset($this->rows, $this->pages, $this->allRows);
 
         $this->dispatch('notify', message: 'Design Library synced successfully.');
     }
@@ -121,8 +135,7 @@ new #[Layout('layouts.app')] #[Title('Design Library')] class extends Component 
             $this->formName = $page->name;
             $this->formCategory = $page->website_category->value;
             $this->formDescription = $page->description ?? '';
-            $this->formBladeCode = $page->blade_code;
-            $this->formPhpCode = $page->php_code ?? '';
+            $this->formRowNames = $page->row_names ?? [];
         }
 
         $this->showModal = true;
@@ -130,23 +143,29 @@ new #[Layout('layouts.app')] #[Title('Design Library')] class extends Component 
 
     public function save(): void
     {
-        $this->validate([
-            'formName' => ['required', 'string', 'max:255'],
-            'formCategory' => ['required', 'string'],
-            'formBladeCode' => ['required', 'string'],
-        ]);
-
-        $data = [
-            'name' => $this->formName,
-            'description' => $this->formDescription ?: null,
-            'blade_code' => $this->formBladeCode,
-            'php_code' => $this->formPhpCode ?: null,
-        ];
+        if ($this->tab === 'rows') {
+            $this->validate([
+                'formName' => ['required', 'string', 'max:255'],
+                'formCategory' => ['required', 'string'],
+                'formBladeCode' => ['required', 'string'],
+            ]);
+        } else {
+            $this->validate([
+                'formName' => ['required', 'string', 'max:255'],
+                'formCategory' => ['required', 'string'],
+            ]);
+        }
 
         $service = new DesignLibraryService;
 
         if ($this->tab === 'rows') {
-            $data['category'] = $this->formCategory;
+            $data = [
+                'name' => $this->formName,
+                'description' => $this->formDescription ?: null,
+                'blade_code' => $this->formBladeCode,
+                'php_code' => $this->formPhpCode ?: null,
+                'category' => $this->formCategory,
+            ];
 
             if ($this->editingId) {
                 $row = DesignRow::query()->findOrFail($this->editingId);
@@ -176,7 +195,12 @@ new #[Layout('layouts.app')] #[Title('Design Library')] class extends Component 
 
             unset($this->rows);
         } else {
-            $data['website_category'] = $this->formCategory;
+            $data = [
+                'name' => $this->formName,
+                'description' => $this->formDescription ?: null,
+                'row_names' => array_values(array_filter($this->formRowNames)),
+                'website_category' => $this->formCategory,
+            ];
 
             if ($this->editingId) {
                 $page = DesignPage::query()->findOrFail($this->editingId);
@@ -185,11 +209,11 @@ new #[Layout('layouts.app')] #[Title('Design Library')] class extends Component 
                 if ($page->source_file) {
                     $fullPath = $service->fullPath($page->source_file);
                     if (file_exists($fullPath)) {
-                        $service->writeTemplateFile($fullPath, array_merge($data, ['sort_order' => $page->sort_order]));
+                        $service->writePageFile($fullPath, array_merge($data, ['sort_order' => $page->sort_order]));
                     }
                 }
 
-                $message = 'Page template updated.';
+                $message = 'Page bundle updated.';
             } else {
                 $slug = $this->formCategory.'-'.now()->format('YmdHis');
                 $data['source_file'] = 'pages/'.$this->formCategory.'/'.$slug.'.blade.php';
@@ -197,10 +221,11 @@ new #[Layout('layouts.app')] #[Title('Design Library')] class extends Component 
                 $page = DesignPage::query()->create($data);
 
                 if (app()->isLocal()) {
-                    $service->writeTemplateFile($service->fullPath($page->source_file), $data);
+                    $fullPath = $service->fullPath($page->source_file);
+                    $service->writePageFile($fullPath, array_merge($data, ['sort_order' => $page->sort_order]));
                 }
 
-                $message = 'Page template created.';
+                $message = 'Page bundle created.';
             }
 
             unset($this->pages);
@@ -254,6 +279,7 @@ new #[Layout('layouts.app')] #[Title('Design Library')] class extends Component 
         $this->formDescription = '';
         $this->formBladeCode = '';
         $this->formPhpCode = '';
+        $this->formRowNames = [];
     }
 }; ?>
 
@@ -261,7 +287,7 @@ new #[Layout('layouts.app')] #[Title('Design Library')] class extends Component 
     {{-- Edit / Create Modal --}}
     <flux:modal wire:model="showModal" class="w-full max-w-3xl">
         <flux:heading size="lg" class="mb-6">
-            {{ $editingId ? __('Edit') : __('New') }} {{ $tab === 'rows' ? __('Row') : __('Page Template') }}
+            {{ $editingId ? __('Edit') : __('New') }} {{ $tab === 'rows' ? __('Row') : __('Page Bundle') }}
         </flux:heading>
 
         @if (! app()->isLocal())
@@ -285,17 +311,35 @@ new #[Layout('layouts.app')] #[Title('Design Library')] class extends Component 
 
             <flux:input wire:model="formDescription" label="Description (optional)" />
 
-            <flux:field>
-                <flux:label>Blade Code <span class="text-red-500">*</span></flux:label>
-                <flux:textarea wire:model="formBladeCode" rows="10" class="font-mono text-xs" placeholder="<section>...</section>" />
-                <flux:error name="formBladeCode" />
-            </flux:field>
+            @if ($tab === 'rows')
+                <flux:field>
+                    <flux:label>Blade Code <span class="text-red-500">*</span></flux:label>
+                    <flux:textarea wire:model="formBladeCode" rows="10" class="font-mono text-xs" placeholder="<section>...</section>" />
+                    <flux:error name="formBladeCode" />
+                </flux:field>
 
-            <flux:field>
-                <flux:label>PHP Code to Inject (optional)</flux:label>
-                <flux:textarea wire:model="formPhpCode" rows="5" class="font-mono text-xs" placeholder="public string $heroTitle = '';" />
-                <flux:description>This code will be injected into the Volt component class when the row is inserted into a page.</flux:description>
-            </flux:field>
+                <flux:field>
+                    <flux:label>PHP Code to Inject (optional)</flux:label>
+                    <flux:textarea wire:model="formPhpCode" rows="5" class="font-mono text-xs" placeholder="public string $heroTitle = '';" />
+                    <flux:description>This code will be injected into the Volt component class when the row is inserted into a page.</flux:description>
+                </flux:field>
+            @else
+                <flux:field>
+                    <flux:label>Rows in this bundle</flux:label>
+                    <select wire:model="formRowNames" multiple size="10"
+                        class="block w-full rounded-lg border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 text-sm px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary/50">
+                        @foreach ($this->allRows->groupBy(fn ($r) => $r->category->label()) as $categoryLabel => $categoryRows)
+                            <optgroup label="{{ $categoryLabel }}">
+                                @foreach ($categoryRows as $row)
+                                    @php $templateName = basename($row->source_file, '.blade.php'); @endphp
+                                    <option value="{{ $templateName }}">{{ $row->name }}</option>
+                                @endforeach
+                            </optgroup>
+                        @endforeach
+                    </select>
+                    <flux:description>Hold Cmd/Ctrl to select multiple rows. Order matches selection order.</flux:description>
+                </flux:field>
+            @endif
 
             <div class="flex items-center justify-end gap-3 pt-2">
                 <flux:modal.close>
@@ -456,20 +500,27 @@ new #[Layout('layouts.app')] #[Title('Design Library')] class extends Component 
                     @if ($this->pages->isEmpty())
                         <div class="text-center py-20 rounded-lg border border-dashed border-zinc-300 dark:border-zinc-700">
                             <flux:icon name="document-text" class="size-12 mx-auto mb-3 text-zinc-300 dark:text-zinc-600" />
-                            <flux:heading class="text-zinc-500">No page templates yet</flux:heading>
-                            <flux:text class="mt-1 text-sm">Add page templates manually or sync from your library files.</flux:text>
+                            <flux:heading class="text-zinc-500">No page bundles yet</flux:heading>
+                            <flux:text class="mt-1 text-sm">Create a bundle to quickly insert multiple rows at once.</flux:text>
                             <div class="mt-6 flex justify-center gap-3">
                                 <flux:button wire:click="syncLibrary" variant="outline" size="sm" icon="arrow-path">Sync Library</flux:button>
-                                <flux:button wire:click="openCreateModal" variant="primary" size="sm" icon="plus">Add Page Template</flux:button>
+                                <flux:button wire:click="openCreateModal" variant="primary" size="sm" icon="plus">Add Page</flux:button>
                             </div>
                         </div>
                     @else
                         <div class="grid sm:grid-cols-2 xl:grid-cols-3 gap-4">
                             @foreach ($this->pages as $page)
                                 <div wire:key="page-{{ $page->id }}" class="group rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 overflow-hidden hover:border-primary/40 transition-colors flex flex-col">
-                                    <div class="bg-zinc-950 text-zinc-300 p-3 font-mono text-[10px] leading-relaxed overflow-hidden h-28 relative">
-                                        <span class="opacity-60">{{ Str::limit(strip_tags($page->blade_code), 180) }}</span>
-                                        <div class="absolute inset-x-0 bottom-0 h-8 bg-gradient-to-t from-zinc-950"></div>
+                                    {{-- Row list preview --}}
+                                    <div class="p-3 bg-zinc-50 dark:bg-zinc-800 border-b border-zinc-200 dark:border-zinc-700 min-h-28 flex flex-col justify-center gap-1">
+                                        @forelse ($page->row_names ?? [] as $rowName)
+                                            <div class="flex items-center gap-2 text-xs text-zinc-600 dark:text-zinc-400">
+                                                <flux:icon name="rectangle-stack" class="size-3 shrink-0 text-zinc-400 dark:text-zinc-500" />
+                                                <span class="truncate">{{ $rowName }}</span>
+                                            </div>
+                                        @empty
+                                            <p class="text-xs text-zinc-400 dark:text-zinc-500 italic text-center">No rows defined</p>
+                                        @endforelse
                                     </div>
 
                                     <div class="p-4 flex flex-col flex-1">
