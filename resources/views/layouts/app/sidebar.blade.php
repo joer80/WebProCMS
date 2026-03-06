@@ -18,6 +18,7 @@
                     {{ __('Dashboard') }}
                 </flux:sidebar.item>
                 @if (auth()->user()->isAtLeast(\App\Enums\Role::Manager))
+                    <ui-disclosure-group exclusive>
                     <flux:sidebar.group expandable icon="document-duplicate" heading="{{ __('Content') }}" :expanded="true" class="grid">
                         <flux:sidebar.item icon="document" :href="route('dashboard.pages')" :current="request()->routeIs('dashboard.pages')" wire:navigate>
                             {{ __('Pages') }}
@@ -72,6 +73,7 @@
                             {{ __('Advanced') }}
                         </flux:sidebar.item>
                     </flux:sidebar.group>
+                    </ui-disclosure-group>
                 @endif
             </flux:sidebar.nav>
 
