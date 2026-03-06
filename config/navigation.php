@@ -27,7 +27,6 @@ return [
             'label' => 'Main Navigation',
             'items' => [
             ['label' => 'Blog', 'route' => 'blog.index', 'active' => true],
-            ['label' => 'Contact', 'route' => 'contact', 'active' => true],
             ],
         ],
         [
