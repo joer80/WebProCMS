@@ -14,25 +14,33 @@
             </flux:sidebar.header>
 
             <flux:sidebar.nav>
-                <flux:sidebar.group :heading="__('Platform')" class="grid">
-                    <flux:sidebar.item icon="home" :href="route('dashboard')" :current="request()->routeIs('dashboard')" wire:navigate>
-                        {{ __('Dashboard') }}
-                    </flux:sidebar.item>
-                    @if (auth()->user()->isAtLeast(\App\Enums\Role::Manager))
+                <flux:sidebar.item icon="home" :href="route('dashboard')" :current="request()->routeIs('dashboard')" wire:navigate>
+                    {{ __('Dashboard') }}
+                </flux:sidebar.item>
+                @if (auth()->user()->isAtLeast(\App\Enums\Role::Manager))
+                    <flux:sidebar.group expandable icon="document-duplicate" heading="{{ __('Content') }}" :expanded="true" class="grid">
                         <flux:sidebar.item icon="document" :href="route('dashboard.pages')" :current="request()->routeIs('dashboard.pages')" wire:navigate>
                             {{ __('Pages') }}
                         </flux:sidebar.item>
                         <flux:sidebar.item icon="document-text" :href="route('dashboard.blog.index')" :current="request()->routeIs('dashboard.blog.*')" wire:navigate>
                             {{ __('Blog') }}
                         </flux:sidebar.item>
+                        <flux:sidebar.item icon="photo" :href="route('dashboard.media-library.index')" :current="request()->routeIs('dashboard.media-library.*')" wire:navigate>
+                            {{ __('Media Library') }}
+                        </flux:sidebar.item>
                         <flux:sidebar.item icon="map-pin" :href="route('dashboard.locations.index')" :current="request()->routeIs('dashboard.locations.*')" wire:navigate>
                             {{ __('Locations') }}
                         </flux:sidebar.item>
+                    </flux:sidebar.group>
+                    <flux:sidebar.group expandable icon="wrench-screwdriver" heading="{{ __('Develop') }}" :expanded="request()->routeIs('dashboard.forms.*', 'dashboard.menus', 'dashboard.redirects', 'dashboard.users', 'dashboard.shortcodes.*', 'dashboard.snippets.*', 'dashboard.design-library.*', 'dashboard.tools')" class="grid">
                         <flux:sidebar.item icon="document-check" :href="route('dashboard.forms.index')" :current="request()->routeIs('dashboard.forms.*')" wire:navigate>
                             {{ __('Forms') }}
                         </flux:sidebar.item>
                         <flux:sidebar.item icon="bars-3" :href="route('dashboard.menus')" :current="request()->routeIs('dashboard.menus')" wire:navigate>
                             {{ __('Menus') }}
+                        </flux:sidebar.item>
+                        <flux:sidebar.item icon="arrow-right-circle" :href="route('dashboard.redirects')" :current="request()->routeIs('dashboard.redirects')" wire:navigate>
+                            {{ __('Redirects') }}
                         </flux:sidebar.item>
                         <flux:sidebar.item icon="users" :href="route('dashboard.users')" :current="request()->routeIs('dashboard.users')" wire:navigate>
                             {{ __('Users') }}
@@ -46,15 +54,10 @@
                         <flux:sidebar.item icon="squares-2x2" :href="route('dashboard.design-library.index')" :current="request()->routeIs('dashboard.design-library.*')" wire:navigate>
                             {{ __('Design Library') }}
                         </flux:sidebar.item>
-                        <flux:sidebar.item icon="photo" :href="route('dashboard.media-library.index')" :current="request()->routeIs('dashboard.media-library.*')" wire:navigate>
-                            {{ __('Media Library') }}
+                        <flux:sidebar.item icon="wrench-screwdriver" :href="route('dashboard.tools')" :current="request()->routeIs('dashboard.tools')" wire:navigate>
+                            {{ __('Tools') }}
                         </flux:sidebar.item>
-                        <flux:sidebar.item icon="arrow-right-circle" :href="route('dashboard.redirects')" :current="request()->routeIs('dashboard.redirects')" wire:navigate>
-                            {{ __('Redirects') }}
-                        </flux:sidebar.item>
-                    @endif
-                </flux:sidebar.group>
-                @if (auth()->user()->isAtLeast(\App\Enums\Role::Manager))
+                    </flux:sidebar.group>
                     <flux:sidebar.group expandable icon="cog-6-tooth" heading="{{ __('Settings') }}" :expanded="request()->routeIs('dashboard.settings.*')" class="grid">
                         <flux:sidebar.item :href="route('dashboard.settings.general')" :current="request()->routeIs('dashboard.settings.general')" wire:navigate>
                             {{ __('General') }}
@@ -69,9 +72,6 @@
                             {{ __('Advanced') }}
                         </flux:sidebar.item>
                     </flux:sidebar.group>
-                    <flux:sidebar.item icon="wrench-screwdriver" :href="route('dashboard.tools')" :current="request()->routeIs('dashboard.tools')" wire:navigate>
-                        {{ __('Tools') }}
-                    </flux:sidebar.item>
                 @endif
             </flux:sidebar.nav>
 
