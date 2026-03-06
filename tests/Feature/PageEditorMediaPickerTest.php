@@ -52,6 +52,12 @@ afterEach(function (): void {
         unlink($this->tempFullPath);
     }
 
+    foreach ($this->extraTempPaths ?? [] as $path) {
+        if (file_exists($path)) {
+            unlink($path);
+        }
+    }
+
     foreach (glob(resource_path('views/pages/_editor-previews/*.blade.php')) ?: [] as $file) {
         unlink($file);
     }
@@ -161,6 +167,7 @@ it('syncs edited alt text to all other pages using the same image on save', func
     $otherTemplateName = 'test-other-'.uniqid();
     $otherRowSlug = $otherTemplateName.':'.Str::random(6);
     $otherPath = resource_path('views/pages/⚡'.$otherTemplateName.'.blade.php');
+    $this->extraTempPaths = [$otherPath];
 
     DesignRow::factory()->create([
         'source_file' => 'rows/test/'.$otherTemplateName.'.blade.php',
@@ -204,8 +211,4 @@ BLADE);
 
     $otherOverride = ContentOverride::where('row_slug', $otherRowSlug)->where('key', 'image_alt')->first();
     expect($otherOverride?->value)->toBe('Synced Alt');
-
-    if (file_exists($otherPath)) {
-        unlink($otherPath);
-    }
 });

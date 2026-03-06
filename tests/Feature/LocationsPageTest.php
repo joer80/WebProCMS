@@ -27,7 +27,7 @@ it('shows all locations when no state filter is selected', function (): void {
     Location::factory()->create(['name' => 'GetRows Oklahoma City', 'state' => 'OK']);
 
     Livewire::test('pages::locations')
-        ->assertSet('selectedState', '')
+        ->assertSet('locationsSelectedState', '')
         ->assertSeeText('GetRows Dallas')
         ->assertSeeText('GetRows Houston')
         ->assertSeeText('GetRows Little Rock')
@@ -42,8 +42,8 @@ it('filters locations by state', function (): void {
     Location::factory()->create(['name' => 'GetRows Oklahoma City', 'state' => 'OK']);
 
     Livewire::test('pages::locations')
-        ->call('filterByState', 'TX')
-        ->assertSet('selectedState', 'TX')
+        ->call('filterLocationsByState', 'TX')
+        ->assertSet('locationsSelectedState', 'TX')
         ->assertSeeText('GetRows Dallas')
         ->assertSeeText('GetRows Houston')
         ->assertDontSeeText('GetRows Little Rock')
@@ -56,7 +56,7 @@ it('filters locations to arkansas', function (): void {
     Location::factory()->create(['name' => 'GetRows Dallas', 'state' => 'TX']);
 
     Livewire::test('pages::locations')
-        ->call('filterByState', 'AR')
+        ->call('filterLocationsByState', 'AR')
         ->assertSeeText('GetRows Little Rock')
         ->assertSeeText('GetRows Fayetteville')
         ->assertDontSeeText('GetRows Dallas');
@@ -67,10 +67,10 @@ it('clears the state filter to show all locations', function (): void {
     Location::factory()->create(['name' => 'GetRows Oklahoma City', 'state' => 'OK']);
 
     Livewire::test('pages::locations')
-        ->call('filterByState', 'TX')
+        ->call('filterLocationsByState', 'TX')
         ->assertDontSeeText('GetRows Oklahoma City')
-        ->call('clearFilter')
-        ->assertSet('selectedState', '')
+        ->call('clearLocationsFilter')
+        ->assertSet('locationsSelectedState', '')
         ->assertSeeText('GetRows Oklahoma City');
 });
 

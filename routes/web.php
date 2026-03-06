@@ -38,7 +38,8 @@ Route::middleware([
     // Route::get('blog2', \App\Livewire\Blog2::class)->name('blog2.index');
 
     // new cached pages are inserted here
-    Route::livewire('test2', 'pages::test2')->name('test2');
+        Route::livewire('test-clone-dest-69aaebec41ee6', 'pages::test-clone-dest-69aaebec41ee6')->name('test-clone-dest-69aaebec41ee6');
+        Route::livewire('test-clone-dest-69aaeb7c13aa0', 'pages::test-clone-dest-69aaeb7c13aa0')->name('test-clone-dest-69aaeb7c13aa0');
     Route::livewire('404', 'pages::404')->name('404');
     Route::livewire('test-clone-dest-69a8e3668adb1', 'pages::test-clone-dest-69a8e3668adb1')->name('test-clone-dest-69a8e3668adb1');
     Route::livewire('test-clone-dest-69a8db6f1ddb4', 'pages::test-clone-dest-69a8db6f1ddb4')->name('test-clone-dest-69a8db6f1ddb4');
