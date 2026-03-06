@@ -288,9 +288,8 @@ protected function isAccessible(User $user, ?string $path = null): bool
 
 - Laravel 12 / Livewire 4 Volt / Flux UI Free / Tailwind v4
 - Served by Laravel Herd at `https://webprocms.test`
-- `config/navigation.php` — per-website-type nav/footer config, written at runtime
+- `config/navigation.php` — nav/footer config, written at runtime
 - `routes/web.php` — also written at runtime when pages are created/cloned
-- `config('features.website_type')` — current site type (e.g. `saas`) from `.env WEBSITE_TYPE`
 
 ## Footer Requirement
 
