@@ -50,7 +50,7 @@
                             {{ __('Shortcodes') }}
                         </flux:sidebar.item>
                         <flux:sidebar.item icon="code-bracket-square" :href="route('dashboard.snippets.index')" :current="request()->routeIs('dashboard.snippets.*')" wire:navigate>
-                            {{ __('Snippets') }}
+                            {{ __('Code Snippets') }}
                         </flux:sidebar.item>
                         <flux:sidebar.item icon="squares-2x2" :href="route('dashboard.design-library.index')" :current="request()->routeIs('dashboard.design-library.*')" wire:navigate>
                             {{ __('Design Library') }}
