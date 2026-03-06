@@ -12,7 +12,6 @@ use App\Support\SchemaCache;
 use App\Support\VoltFileService;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
-use Spatie\ResponseCache\Facades\ResponseCache;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\On;
@@ -21,6 +20,7 @@ use Livewire\Attributes\Url;
 use Livewire\Attributes\Validate;
 use Livewire\Component;
 use Livewire\WithFileUploads;
+use Spatie\ResponseCache\Facades\ResponseCache;
 
 new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
 {
@@ -129,6 +129,19 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
 
     /** @var array<string, array<string, string>> */
     public array $rowDesignDefaults = [];
+
+    // Library browse mode state
+    public int $browsingRowIndex = -1;
+
+    public string $browseCategory = '';
+
+    public int $browsePosition = 0;
+
+    /** @var array<int, array{id: int, name: string}> */
+    public array $browseRowOptions = [];
+
+    /** @var array<int, array{value: string, label: string}> */
+    public array $allCategoryOptions = [];
 
     public function mount(): void
     {
@@ -525,6 +538,109 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
         unset($this->libraryRows);
     }
 
+    public function openBrowseMode(int $rowIndex): void
+    {
+        $this->browsingRowIndex = $rowIndex;
+        $row = $this->rows[$rowIndex];
+
+        // Derive template name from the slug (format: templateName:randomId)
+        $templateName = Str::before($row['slug'], ':');
+
+        // Find the matching design row to get its category
+        $designRow = DesignRow::query()
+            ->where('source_file', 'LIKE', '%/'.$templateName.'.blade.php')
+            ->first();
+
+        $this->browseCategory = $designRow?->category?->value ?? RowCategory::cases()[0]->value;
+        $this->loadBrowseRowsForCategory();
+
+        // Set current position to match the active template
+        if ($designRow) {
+            $ids = array_column($this->browseRowOptions, 'id');
+            $pos = array_search($designRow->id, $ids, true);
+            $this->browsePosition = $pos !== false ? (int) $pos : 0;
+        } else {
+            $this->browsePosition = 0;
+        }
+    }
+
+    private function loadBrowseRowsForCategory(): void
+    {
+        // All categories that have rows (for the dropdown)
+        $this->allCategoryOptions = DesignRow::query()
+            ->select('category')
+            ->distinct()
+            ->orderBy('category')
+            ->pluck('category')
+            ->map(fn (mixed $cat) => [
+                'value' => $cat instanceof RowCategory ? $cat->value : (string) $cat,
+                'label' => $cat instanceof RowCategory ? $cat->label() : ucwords(str_replace('-', ' ', (string) $cat)),
+            ])
+            ->values()
+            ->toArray();
+
+        // Rows in the selected category
+        $this->browseRowOptions = DesignRow::query()
+            ->where('category', $this->browseCategory)
+            ->orderBy('sort_order')
+            ->get(['id', 'name'])
+            ->map(fn (DesignRow $r) => ['id' => $r->id, 'name' => $r->name])
+            ->values()
+            ->toArray();
+    }
+
+    public function browseCategoryChange(string $category): void
+    {
+        $this->browseCategory = $category;
+        $this->browsePosition = 0;
+        $this->loadBrowseRowsForCategory();
+
+        if (! empty($this->browseRowOptions)) {
+            $this->applyBrowseRow($this->browseRowOptions[0]['id']);
+        }
+    }
+
+    public function browseRowStep(int $step): void
+    {
+        $count = count($this->browseRowOptions);
+
+        if ($count === 0) {
+            return;
+        }
+
+        $this->browsePosition = ($this->browsePosition + $step + $count) % $count;
+        $this->applyBrowseRow($this->browseRowOptions[$this->browsePosition]['id']);
+    }
+
+    private function applyBrowseRow(int $designRowId): void
+    {
+        if ($this->browsingRowIndex < 0) {
+            return;
+        }
+
+        $designRow = DesignRow::query()->find($designRowId);
+
+        if (! $designRow) {
+            return;
+        }
+
+        $existing = $this->rows[$this->browsingRowIndex];
+        $existingSlug = $existing['slug'];
+
+        $this->rows[$this->browsingRowIndex] = [
+            'slug' => $existingSlug,
+            'name' => $designRow->name,
+            'blade' => str_replace('__SLUG__', $existingSlug, $designRow->blade_code),
+            'shared' => $existing['shared'] ?? false,
+            'hidden' => $existing['hidden'] ?? false,
+        ];
+
+        $this->pushHistory();
+        $this->loadRowDesignValues();
+        $this->isDirty = true;
+        $this->refreshPreview();
+    }
+
     public function insertRow(int $designRowId, int $atIndex): void
     {
         $designRow = DesignRow::query()->find($designRowId);
@@ -877,7 +993,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
         $skipAllSlugs = ['section'];
         $skipTopLevelSlugs = ['card', 'group', 'accordion-item'];
 
-        preg_match_all('/<x-dl\.([\w-]+)((?:"[^"]*"|' . "'[^']*'" . '|[^>])*)\s*\/?' . '>/', $blade, $tagMatches, PREG_SET_ORDER | PREG_OFFSET_CAPTURE);
+        preg_match_all('/<x-dl\.([\w-]+)((?:"[^"]*"|'."'[^']*'".'|[^>])*)\s*\/?'.'>/', $blade, $tagMatches, PREG_SET_ORDER | PREG_OFFSET_CAPTURE);
 
         $allComps = [];
 
@@ -2723,6 +2839,9 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                                             <button type="button" @click.stop="panelMode = panelMode === 'advanced' ? null : 'advanced'"
                                                 :class="panelMode === 'advanced' ? 'text-primary' : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 transition-colors'"
                                                 title="Advanced settings"><flux:icon name="code-bracket" class="size-3.5" /></button>
+                                            <button type="button" @click.stop="panelMode = panelMode === 'browse' ? null : 'browse'; if (panelMode === 'browse') $wire.openBrowseMode({{ $index }})"
+                                                :class="panelMode === 'browse' ? 'text-primary' : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 transition-colors'"
+                                                title="Browse library rows"><flux:icon name="rectangle-stack" class="size-3.5" /></button>
                                         @endif
                                         <flux:switch
                                             :checked="empty($row['hidden'])"
@@ -2842,86 +2961,131 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                                                     </div>
                                                 @endif
                                             </div>
+                                            {{-- Browse mode info --}}
+                                            <div x-show="panelMode === 'browse'" class="px-3 py-2 border-t border-zinc-200 dark:border-zinc-700">
+                                                @if ($browsingRowIndex === $index)
+                                                    <p class="text-[11px] text-zinc-500 dark:text-zinc-400 truncate" title="{{ $browseRowOptions[$browsePosition]['name'] ?? $row['name'] }}">
+                                                        {{ $browseRowOptions[$browsePosition]['name'] ?? $row['name'] }}
+                                                    </p>
+                                                @endif
+                                            </div>
                                         </div>
                                     @endif
 
                                     {{-- Row actions --}}
                                     <div class="relative flex items-center px-2 py-2">
-                                        <div class="flex items-center gap-0.5">
-                                            <flux:button
-                                                wire:click="moveRowUp({{ $index }})"
-                                                variant="ghost"
-                                                size="sm"
-                                                icon="arrow-up"
-                                                :disabled="$index === 0"
-                                                :class="$index === 0 ? 'opacity-15!' : ''"
-                                                title="Move up"
-                                                :loading="false"
-                                            />
-                                            <flux:button
-                                                wire:click="moveRowDown({{ $index }})"
-                                                variant="ghost"
-                                                size="sm"
-                                                icon="arrow-down"
-                                                :disabled="$index === count($rows) - 1"
-                                                :class="$index === count($rows) - 1 ? 'opacity-15!' : ''"
-                                                title="Move down"
-                                                :loading="false"
-                                            />
-                                            
-                                            <flux:icon name="bars-2" class="size-4 text-zinc-400 dark:text-zinc-500 cursor-grab active:cursor-grabbing mx-2" title="Drag to reorder" />
-
-                                        </div>
-                                        <!-- <div class="absolute left-1/2 -translate-x-1/2">
-                                            <flux:icon name="bars-2" class="size-4 text-zinc-400 dark:text-zinc-500 cursor-grab active:cursor-grabbing" title="Drag to reorder" />
-                                        </div> -->
-                                        <div class="flex items-center gap-0.5 ml-auto">
-                                            <flux:button
-                                                wire:click="openLibraryDrawer({{ $index }})"
-                                                variant="ghost"
-                                                size="sm"
-                                                title="Insert row above"
-                                                class="px-1!"
-                                                :loading="false"
-                                            >
-                                                <span class="inline-flex items-center">
-                                                    <flux:icon name="plus" class="size-3" />
-                                                    <flux:icon name="arrow-up" class="size-3" />
-                                                </span>
-                                            </flux:button>
-                                            <flux:button
-                                                wire:click="openLibraryDrawer({{ $index + 1 }})"
-                                                variant="ghost"
-                                                size="sm"
-                                                title="Insert row below"
-                                                class="px-1!"
-                                                :loading="false"
-                                            >
-                                                <span class="inline-flex items-center">
-                                                    <flux:icon name="plus" class="size-3" />
-                                                    <flux:icon name="arrow-down" class="size-3" />
-                                                </span>
-                                            </flux:button>
-                                            @if (empty($row['shared']))
+                                        {{-- Standard action bar --}}
+                                        <div x-show="panelMode !== 'browse'" class="contents">
+                                            <div class="flex items-center gap-0.5">
                                                 <flux:button
-                                                    wire:click="makeRowShared({{ $index }})"
-                                                    wire:confirm="Make this row shared? It will be available to insert on other pages and changes will affect all pages using it."
+                                                    wire:click="moveRowUp({{ $index }})"
                                                     variant="ghost"
                                                     size="sm"
-                                                    icon="share"
-                                                    title="Make shared"
+                                                    icon="arrow-up"
+                                                    :disabled="$index === 0"
+                                                    :class="$index === 0 ? 'opacity-15!' : ''"
+                                                    title="Move up"
+                                                    :loading="false"
                                                 />
+                                                <flux:button
+                                                    wire:click="moveRowDown({{ $index }})"
+                                                    variant="ghost"
+                                                    size="sm"
+                                                    icon="arrow-down"
+                                                    :disabled="$index === count($rows) - 1"
+                                                    :class="$index === count($rows) - 1 ? 'opacity-15!' : ''"
+                                                    title="Move down"
+                                                    :loading="false"
+                                                />
+
+                                                <flux:icon name="bars-2" class="size-4 text-zinc-400 dark:text-zinc-500 cursor-grab active:cursor-grabbing mx-2" title="Drag to reorder" />
+
+                                            </div>
+                                            <div class="flex items-center gap-0.5 ml-auto">
+                                                <flux:button
+                                                    wire:click="openLibraryDrawer({{ $index }})"
+                                                    variant="ghost"
+                                                    size="sm"
+                                                    title="Insert row above"
+                                                    class="px-1!"
+                                                    :loading="false"
+                                                >
+                                                    <span class="inline-flex items-center">
+                                                        <flux:icon name="plus" class="size-3" />
+                                                        <flux:icon name="arrow-up" class="size-3" />
+                                                    </span>
+                                                </flux:button>
+                                                <flux:button
+                                                    wire:click="openLibraryDrawer({{ $index + 1 }})"
+                                                    variant="ghost"
+                                                    size="sm"
+                                                    title="Insert row below"
+                                                    class="px-1!"
+                                                    :loading="false"
+                                                >
+                                                    <span class="inline-flex items-center">
+                                                        <flux:icon name="plus" class="size-3" />
+                                                        <flux:icon name="arrow-down" class="size-3" />
+                                                    </span>
+                                                </flux:button>
+                                                @if (empty($row['shared']))
+                                                    <flux:button
+                                                        wire:click="makeRowShared({{ $index }})"
+                                                        wire:confirm="Make this row shared? It will be available to insert on other pages and changes will affect all pages using it."
+                                                        variant="ghost"
+                                                        size="sm"
+                                                        icon="share"
+                                                        title="Make shared"
+                                                    />
+                                                @endif
+                                                <flux:button
+                                                    wire:click="removeRow({{ $index }})"
+                                                    wire:confirm="Remove this row from the page?"
+                                                    variant="ghost"
+                                                    size="sm"
+                                                    icon="trash"
+                                                    class="text-red-500 dark:text-red-400"
+                                                    title="Remove row"
+                                                    :loading="false"
+                                                />
+                                            </div>
+                                        </div>
+
+                                        {{-- Browse mode action bar --}}
+                                        <div x-show="panelMode === 'browse'" class="flex items-center gap-2 w-full">
+                                            @if ($browsingRowIndex === $index && ! empty($allCategoryOptions))
+                                                <select
+                                                    x-on:change="$wire.browseCategoryChange($event.target.value)"
+                                                    class="flex-1 min-w-0 text-xs rounded-lg border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-900 text-zinc-900 dark:text-white px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition"
+                                                >
+                                                    @foreach ($allCategoryOptions as $cat)
+                                                        <option value="{{ $cat['value'] }}" {{ $browseCategory === $cat['value'] ? 'selected' : '' }}>{{ $cat['label'] }}</option>
+                                                    @endforeach
+                                                </select>
+                                                <div class="flex items-center gap-1 shrink-0">
+                                                    <flux:button
+                                                        wire:click="browseRowStep(-1)"
+                                                        variant="ghost"
+                                                        size="sm"
+                                                        icon="arrow-left"
+                                                        title="Previous row"
+                                                        :loading="false"
+                                                        :disabled="count($browseRowOptions) <= 1"
+                                                    />
+                                                    <span class="text-[11px] text-zinc-500 dark:text-zinc-400 tabular-nums whitespace-nowrap">
+                                                        {{ $browsePosition + 1 }} / {{ count($browseRowOptions) }}
+                                                    </span>
+                                                    <flux:button
+                                                        wire:click="browseRowStep(1)"
+                                                        variant="ghost"
+                                                        size="sm"
+                                                        icon="arrow-right"
+                                                        title="Next row"
+                                                        :loading="false"
+                                                        :disabled="count($browseRowOptions) <= 1"
+                                                    />
+                                                </div>
                                             @endif
-                                            <flux:button
-                                                wire:click="removeRow({{ $index }})"
-                                                wire:confirm="Remove this row from the page?"
-                                                variant="ghost"
-                                                size="sm"
-                                                icon="trash"
-                                                class="text-red-500 dark:text-red-400"
-                                                title="Remove row"
-                                                :loading="false"
-                                            />
                                         </div>
                                     </div>
                                 </div>
