@@ -6,29 +6,6 @@ Route::middleware([
     \Spatie\ResponseCache\Middlewares\CacheResponse::class,
 ])->group(function (): void {
     Route::livewire('/', 'pages::home')->name('home');
-    Route::livewire('about', 'pages::about')->name('about');
-    Route::livewire('services', 'pages::services')->name('services');
-    Route::livewire('services/content-editor', 'pages::services.content-editor')->name('services.content-editor');
-    Route::livewire('locations', 'pages::locations')->name('locations');
-
-    // SaaS pages
-    Route::livewire('features', 'pages::features')->name('features');
-    Route::livewire('pricing', 'pages::pricing')->name('pricing');
-
-    // eCommerce pages
-    Route::livewire('products', 'pages::products')->name('products');
-
-    // Law pages
-    Route::livewire('practice-areas', 'pages::practice-areas')->name('practice-areas');
-
-    // Nonprofit pages
-    Route::livewire('donate', 'pages::donate')->name('donate');
-    Route::livewire('volunteer', 'pages::volunteer')->name('volunteer');
-
-    // Healthcare pages
-    Route::livewire('patients', 'pages::patients')->name('patients');
-    Route::livewire('employers', 'pages::employers')->name('employers');
-    Route::livewire('careers', 'pages::careers')->name('careers');
 
     // Volt version of blog - /resources/views/pages/blog/⚡index.blade.php
     Route::livewire('blog', 'pages::blog.index')->name('blog.index');
@@ -38,6 +15,9 @@ Route::middleware([
     // Route::get('blog2', \App\Livewire\Blog2::class)->name('blog2.index');
 
     // new cached pages are inserted here
+    Route::livewire('test-clone-dest-69ab5bf283d0b', 'pages::test-clone-dest-69ab5bf283d0b')->name('test-clone-dest-69ab5bf283d0b');
+    Route::livewire('about', 'pages::about')->name('about');
+    Route::livewire('test-clone-dest-69ab5ae71a991', 'pages::test-clone-dest-69ab5ae71a991')->name('test-clone-dest-69ab5ae71a991');
     Route::livewire('test-2', 'pages::test-2')->name('test-2');
     Route::livewire('test-clone-dest-69aaebec41ee6', 'pages::test-clone-dest-69aaebec41ee6')->name('test-clone-dest-69aaebec41ee6');
     Route::livewire('test-clone-dest-69aaeb7c13aa0', 'pages::test-clone-dest-69aaeb7c13aa0')->name('test-clone-dest-69aaeb7c13aa0');

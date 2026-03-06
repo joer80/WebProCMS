@@ -25,16 +25,15 @@ it('shows the menus page to manager users', function (): void {
         ->assertSeeText('Menus');
 });
 
-it('loads menus from the active website type config on mount', function (): void {
+it('loads menus from the flat navigation config on mount', function (): void {
     config([
-        'features.website_type' => 'saas',
-        'navigation.saas.menus' => [
+        'navigation.menus' => [
             [
                 'slug' => 'main-navigation',
                 'label' => 'Main Navigation',
                 'items' => [
-                    ['label' => 'Features', 'route' => 'features', 'active' => true],
-                    ['label' => 'Pricing', 'route' => 'pricing', 'active' => true],
+                    ['label' => 'Features', 'url' => '#', 'active' => true],
+                    ['label' => 'Blog', 'route' => 'blog.index', 'active' => true],
                 ],
             ],
         ],
@@ -49,8 +48,8 @@ it('loads menus from the active website type config on mount', function (): void
                 'slug' => 'main-navigation',
                 'label' => 'Main Navigation',
                 'items' => [
-                    ['label' => 'Features', 'route' => 'features', 'active' => true],
-                    ['label' => 'Pricing', 'route' => 'pricing', 'active' => true],
+                    ['label' => 'Features', 'url' => '#', 'active' => true],
+                    ['label' => 'Blog', 'route' => 'blog.index', 'active' => true],
                 ],
             ],
         ]);
@@ -317,7 +316,6 @@ it('saves menus changes to the config file', function (): void {
     $originalContent = file_get_contents($configPath);
 
     config([
-        'features.website_type' => 'saas',
         'navigation' => require $configPath,
     ]);
 
@@ -334,7 +332,7 @@ it('saves menus changes to the config file', function (): void {
             ->call('save');
 
         $written = require $configPath;
-        $mainNav = collect($written['saas']['menus'])->firstWhere('slug', 'main-navigation');
+        $mainNav = collect($written['menus'])->firstWhere('slug', 'main-navigation');
 
         expect($mainNav['items'])->toBe([
             ['label' => 'Test Page', 'route' => 'about', 'active' => true],

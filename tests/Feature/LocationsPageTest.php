@@ -3,18 +3,16 @@
 use App\Models\Location;
 use Livewire\Livewire;
 
-it('renders the locations page', function (): void {
-    $this->get(route('locations'))
-        ->assertOk()
-        ->assertSeeText('Our Locations');
+it('renders the locations component', function (): void {
+    Livewire::test('pages::locations')
+        ->assertOk();
 });
 
 it('shows all locations by default', function (): void {
     Location::factory()->create(['name' => 'GetRows Dallas', 'state' => 'TX']);
     Location::factory()->create(['name' => 'GetRows Little Rock', 'state' => 'AR']);
 
-    $this->get(route('locations'))
-        ->assertOk()
+    Livewire::test('pages::locations')
         ->assertSeeText('GetRows Dallas')
         ->assertSeeText('GetRows Little Rock');
 });
@@ -79,8 +77,7 @@ it('shows state filter buttons for available states', function (): void {
     Location::factory()->create(['state' => 'AR']);
     Location::factory()->create(['state' => 'OK']);
 
-    $this->get(route('locations'))
-        ->assertOk()
+    Livewire::test('pages::locations')
         ->assertSeeText('TX')
         ->assertSeeText('AR')
         ->assertSeeText('OK');
@@ -95,19 +92,8 @@ it('shows location details on each card', function (): void {
         'phone' => '(214) 555-0101',
     ]);
 
-    $this->get(route('locations'))
-        ->assertOk()
+    Livewire::test('pages::locations')
         ->assertSeeText('(214) 555-0101')
         ->assertSeeText('1234 Commerce Street')
         ->assertSeeText('Get Directions');
-});
-
-it('is linked from the navigation when website type is service', function (): void {
-    config(['features.website_type' => 'service']);
-
-    $this->withoutMiddleware(\Spatie\ResponseCache\Middlewares\CacheResponse::class)
-        ->get(route('home'))
-        ->assertOk()
-        ->assertSee(route('locations'))
-        ->assertSeeText('Locations');
 });

@@ -54,7 +54,7 @@ class VoltFileService
      */
     public function buildPageTypeMap(): array
     {
-        $navigation = config('navigation', []);
+        $navigation = config('menu-templates', []);
         $routeTypes = [];
 
         foreach ($navigation as $type => $config) {

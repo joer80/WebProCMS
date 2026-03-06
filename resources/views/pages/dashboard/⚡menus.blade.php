@@ -49,11 +49,10 @@ new #[Layout('layouts.app')] #[Title('Menus')] class extends Component {
 
     public function mount(): void
     {
-        $websiteType = config('features.website_type', 'saas');
-        $this->menus = config("navigation.{$websiteType}.menus", []);
-        $this->footerSlugs = config("navigation.{$websiteType}.footer_slugs", []);
-        $this->showAuthLinks = (bool) config("navigation.{$websiteType}.show_auth_links", false);
-        $this->showAccountInFooter = (bool) config("navigation.{$websiteType}.show_account_in_footer", true);
+        $this->menus = config('navigation.menus', []);
+        $this->footerSlugs = config('navigation.footer_slugs', []);
+        $this->showAuthLinks = (bool) config('navigation.show_auth_links', false);
+        $this->showAccountInFooter = (bool) config('navigation.show_account_in_footer', true);
         $this->syncCurrentMenuInFooter();
     }
 
@@ -288,12 +287,11 @@ new #[Layout('layouts.app')] #[Title('Menus')] class extends Component {
 
     public function save(): void
     {
-        $websiteType = config('features.website_type', 'saas');
         $config = config('navigation');
-        $config[$websiteType]['show_auth_links'] = $this->showAuthLinks;
-        $config[$websiteType]['show_account_in_footer'] = $this->showAccountInFooter;
-        $config[$websiteType]['footer_slugs'] = array_values($this->footerSlugs);
-        $config[$websiteType]['menus'] = array_values($this->menus);
+        $config['show_auth_links'] = $this->showAuthLinks;
+        $config['show_account_in_footer'] = $this->showAccountInFooter;
+        $config['footer_slugs'] = array_values($this->footerSlugs);
+        $config['menus'] = array_values($this->menus);
 
         $configPath = config_path('navigation.php');
         file_put_contents($configPath, $this->buildConfigFileContents($config));
@@ -317,63 +315,33 @@ new #[Layout('layouts.app')] #[Title('Menus')] class extends Component {
         $this->newCustomNewWindow = false;
     }
 
-    /** @param array<string, mixed> $config */
-    private function buildConfigFileContents(array $config): string
-    {
-        $contents = "<?php\n\n";
-        $contents .= "/*\n";
-        $contents .= "|--------------------------------------------------------------------------\n";
-        $contents .= "| Website Type Navigation\n";
-        $contents .= "|--------------------------------------------------------------------------\n";
-        $contents .= "|\n";
-        $contents .= "| Defines the public navigation and footer links for each website type.\n";
-        $contents .= "| Set WEBSITE_TYPE in your .env to activate the appropriate config.\n";
-        $contents .= "|\n";
-        $contents .= "| Each type has:\n";
-        $contents .= "|   show_auth_links  - whether login/register/dashboard appear in the nav\n";
-        $contents .= "|   footer_slugs     - slugs of menus rendered as footer columns (in order)\n";
-        $contents .= "|   menus            - all menus; templates request them by slug\n";
-        $contents .= "|\n";
-        $contents .= "*/\n\n";
-        $contents .= "return [\n\n";
-
-        $typeBlocks = [];
-        foreach ($config as $type => $data) {
-            $typeBlocks[] = $this->formatTypeBlock((string) $type, $data);
-        }
-
-        $contents .= implode("\n\n", $typeBlocks);
-        $contents .= "\n\n];\n";
-
-        return $contents;
-    }
-
     /**
      * @param array{
      *     show_auth_links: bool,
      *     show_account_in_footer: bool,
      *     footer_slugs: array<int, string>,
      *     menus: array<int, array{slug: string, label: string, items: array<int, array<string, mixed>>}>
-     * } $data
+     * } $config
      */
-    private function formatTypeBlock(string $type, array $data): string
+    private function buildConfigFileContents(array $config): string
     {
-        $showAuth = $data['show_auth_links'] ? 'true' : 'false';
-        $showAccountInFooter = ($data['show_account_in_footer'] ?? true) ? 'true' : 'false';
+        $showAuth = ($config['show_auth_links'] ?? false) ? 'true' : 'false';
+        $showAccountInFooter = ($config['show_account_in_footer'] ?? true) ? 'true' : 'false';
 
         $footerSlugItems = array_map(
             fn (string $s): string => "'" . str_replace("'", "\\'", $s) . "'",
-            $data['footer_slugs'] ?? [],
+            $config['footer_slugs'] ?? [],
         );
-        $footerSlugsLine = '        \'footer_slugs\' => [' . implode(', ', $footerSlugItems) . '],';
+        $footerSlugsLine = "    'footer_slugs' => [" . implode(', ', $footerSlugItems) . '],';
 
         $menuBlocks = [];
-        foreach ($data['menus'] ?? [] as $menu) {
+
+        foreach ($config['menus'] ?? [] as $menu) {
             $slug = str_replace("'", "\\'", $menu['slug']);
             $menuLabel = str_replace("'", "\\'", $menu['label']);
 
             $itemLines = array_map(
-                fn (array $item): string => '                ' . $this->formatNavItem($item) . ',',
+                fn (array $item): string => '            ' . $this->formatNavItem($item) . ',',
                 $menu['items'] ?? [],
             );
 
@@ -391,14 +359,30 @@ new #[Layout('layouts.app')] #[Title('Menus')] class extends Component {
         }
 
         $lines = [
-            "    '{$type}' => [",
-            "        'show_auth_links' => {$showAuth},",
-            "        'show_account_in_footer' => {$showAccountInFooter},",
+            "<?php\n",
+            "/*",
+            "|--------------------------------------------------------------------------",
+            "| Navigation",
+            "|--------------------------------------------------------------------------",
+            "|",
+            "| Defines the public navigation and footer links for the site.",
+            "| Edit these menus via the dashboard at /dashboard/menus.",
+            "|",
+            "| Keys:",
+            "|   show_auth_links         - whether login/register/dashboard appear in the nav",
+            "|   show_account_in_footer  - whether an Account column appears in the footer",
+            "|   footer_slugs            - slugs of menus rendered as footer columns (in order)",
+            "|   menus                   - all menus; templates request them by slug",
+            "|",
+            "*/\n",
+            "return [\n",
+            "    'show_auth_links' => {$showAuth},",
+            "    'show_account_in_footer' => {$showAccountInFooter},",
             $footerSlugsLine,
-            "        'menus' => [",
+            "    'menus' => [",
             ...$menuBlocks,
-            "        ],",
-            "    ],",
+            "    ],\n",
+            "];\n",
         ];
 
         return implode("\n", $lines);

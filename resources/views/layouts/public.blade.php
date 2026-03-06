@@ -3,8 +3,7 @@
     use App\Enums\SnippetPlacement;
     use App\Models\Snippet;
 
-    $siteType = config('features.website_type', 'saas');
-    $navConfig = config("navigation.{$siteType}", config('navigation.saas'));
+    $navConfig = config('navigation', []);
     $showAuthLinks = $navConfig['show_auth_links'] ?? false;
     $showAccountInFooter = $navConfig['show_account_in_footer'] ?? true;
     $allMenus = collect($navConfig['menus'] ?? []);

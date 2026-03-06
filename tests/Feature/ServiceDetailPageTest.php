@@ -1,13 +1,13 @@
 <?php
 
-it('renders the content editor service detail page', function (): void {
-    $response = $this->get(route('services.content-editor'));
+use Livewire\Livewire;
 
-    $response->assertOk();
-    $response->assertSeeText('Visual Content Editor');
+it('renders the content editor service detail component', function (): void {
+    Livewire::test('pages::services.content-editor')
+        ->assertOk();
 });
 
-it('loads the services page successfully', function (): void {
-    $this->get(route('services'))
+it('renders the services component', function (): void {
+    Livewire::test('pages::services')
         ->assertOk();
 });

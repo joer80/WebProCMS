@@ -6,6 +6,7 @@ use App\Jobs\IndexDesignLibraryJob;
 use App\Models\DesignPage;
 use App\Models\DesignRow;
 use App\Support\DesignLibraryService;
+use App\Support\VoltFileService;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
@@ -290,6 +291,194 @@ new #[Layout('layouts.app')] #[Title('Design Library')] class extends Component 
         $this->formPhpCode = '';
         $this->formRowNames = [];
     }
+
+    // ── Menus tab ────────────────────────────────────────────────────────────
+
+    public bool $showImportModal = false;
+
+    public string $importTemplateType = '';
+
+    public string $importMode = 'placeholder';
+
+    /** @return array<string, mixed> */
+    #[Computed]
+    public function menuTemplates(): array
+    {
+        return config('menu-templates', []);
+    }
+
+    public function openImportModal(string $type): void
+    {
+        $this->importTemplateType = $type;
+        $this->importMode = 'placeholder';
+        $this->showImportModal = true;
+    }
+
+    public function importMenuTemplate(): void
+    {
+        $template = config("menu-templates.{$this->importTemplateType}");
+
+        if (! $template) {
+            return;
+        }
+
+        $currentConfig = config('navigation');
+        $currentMenus = $currentConfig['menus'] ?? [];
+        $existingSlugs = array_column($currentMenus, 'slug');
+
+        foreach ($template['menus'] ?? [] as $menu) {
+            if (in_array($menu['slug'], $existingSlugs, true)) {
+                continue;
+            }
+
+            $processedItems = [];
+
+            foreach ($menu['items'] ?? [] as $item) {
+                if (! isset($item['route'])) {
+                    $processedItems[] = $item;
+                    continue;
+                }
+
+                if ($this->importMode === 'create' && ! str_contains($item['route'], '.')) {
+                    $slug = $item['route'];
+                    $pageFile = resource_path("views/pages/⚡{$slug}.blade.php");
+
+                    if (! file_exists($pageFile)) {
+                        (new VoltFileService)->createPage($slug, $item['label']);
+                    }
+
+                    $processedItems[] = $item;
+                } elseif ($this->importMode === 'create') {
+                    $routeExists = collect(app('router')->getRoutes()->getRoutesByName())->has($item['route']);
+                    $processedItems[] = $routeExists
+                        ? $item
+                        : array_merge(array_diff_key($item, ['route' => '']), ['url' => '#']);
+                } else {
+                    $processedItems[] = array_merge(array_diff_key($item, ['route' => '']), ['url' => '#']);
+                }
+            }
+
+            $menu['items'] = $processedItems;
+            $currentMenus[] = $menu;
+        }
+
+        // Merge footer slugs from template (add any not already present)
+        $currentFooterSlugs = $currentConfig['footer_slugs'] ?? [];
+
+        foreach ($template['footer_slugs'] ?? [] as $slug) {
+            if (! in_array($slug, $currentFooterSlugs, true)) {
+                $currentFooterSlugs[] = $slug;
+            }
+        }
+
+        $currentConfig['menus'] = array_values($currentMenus);
+        $currentConfig['footer_slugs'] = array_values($currentFooterSlugs);
+        $currentConfig['show_auth_links'] = $template['show_auth_links'] ?? $currentConfig['show_auth_links'];
+        $currentConfig['show_account_in_footer'] = $template['show_account_in_footer'] ?? $currentConfig['show_account_in_footer'];
+
+        $configPath = config_path('navigation.php');
+        file_put_contents($configPath, $this->buildNavigationConfigFile($currentConfig));
+
+        if (function_exists('opcache_invalidate')) {
+            opcache_invalidate($configPath, true);
+        }
+
+        config(['navigation' => $currentConfig]);
+
+        $this->showImportModal = false;
+
+        $this->dispatch('notify', message: 'Navigation imported. Visit the Menus page to review your changes.');
+    }
+
+    /**
+     * @param array{
+     *     show_auth_links: bool,
+     *     show_account_in_footer: bool,
+     *     footer_slugs: array<int, string>,
+     *     menus: array<int, array{slug: string, label: string, items: array<int, array<string, mixed>>}>
+     * } $config
+     */
+    private function buildNavigationConfigFile(array $config): string
+    {
+        $showAuth = ($config['show_auth_links'] ?? false) ? 'true' : 'false';
+        $showAccountInFooter = ($config['show_account_in_footer'] ?? true) ? 'true' : 'false';
+
+        $footerSlugItems = array_map(
+            fn (string $s): string => "'" . str_replace("'", "\\'", $s) . "'",
+            $config['footer_slugs'] ?? [],
+        );
+        $footerSlugsLine = "    'footer_slugs' => [" . implode(', ', $footerSlugItems) . '],';
+
+        $menuBlocks = [];
+
+        foreach ($config['menus'] ?? [] as $menu) {
+            $slug = str_replace("'", "\\'", $menu['slug']);
+            $menuLabel = str_replace("'", "\\'", $menu['label']);
+
+            $itemLines = array_map(
+                fn (array $item): string => '            ' . $this->formatNavItemForConfig($item) . ',',
+                $menu['items'] ?? [],
+            );
+
+            $block = [
+                "        [",
+                "            'slug' => '{$slug}',",
+                "            'label' => '{$menuLabel}',",
+                "            'items' => [",
+                ...$itemLines,
+                "            ],",
+                "        ],",
+            ];
+
+            $menuBlocks = [...$menuBlocks, ...$block];
+        }
+
+        $lines = [
+            "<?php\n",
+            "/*",
+            "|--------------------------------------------------------------------------",
+            "| Navigation",
+            "|--------------------------------------------------------------------------",
+            "|",
+            "| Defines the public navigation and footer links for the site.",
+            "| Edit these menus via the dashboard at /dashboard/menus.",
+            "|",
+            "| Keys:",
+            "|   show_auth_links         - whether login/register/dashboard appear in the nav",
+            "|   show_account_in_footer  - whether an Account column appears in the footer",
+            "|   footer_slugs            - slugs of menus rendered as footer columns (in order)",
+            "|   menus                   - all menus; templates request them by slug",
+            "|",
+            "*/\n",
+            "return [\n",
+            "    'show_auth_links' => {$showAuth},",
+            "    'show_account_in_footer' => {$showAccountInFooter},",
+            $footerSlugsLine,
+            "    'menus' => [",
+            ...$menuBlocks,
+            "    ],\n",
+            "];\n",
+        ];
+
+        return implode("\n", $lines);
+    }
+
+    /** @param array<string, mixed> $item */
+    private function formatNavItemForConfig(array $item): string
+    {
+        $parts = [];
+
+        foreach ($item as $key => $value) {
+            if (is_bool($value)) {
+                $parts[] = "'{$key}' => " . ($value ? 'true' : 'false');
+            } else {
+                $escaped = str_replace("'", "\\'", (string) $value);
+                $parts[] = "'{$key}' => '{$escaped}'";
+            }
+        }
+
+        return '[' . implode(', ', $parts) . ']';
+    }
 }; ?>
 
 <div>
@@ -362,6 +551,51 @@ new #[Layout('layouts.app')] #[Title('Design Library')] class extends Component 
         </form>
     </flux:modal>
 
+    {{-- Import Menu Template Modal --}}
+    <flux:modal wire:model="showImportModal" class="w-full max-w-lg">
+        @php
+            $importTemplate = $importTemplateType ? config("menu-templates.{$importTemplateType}") : null;
+            $importTypeLabel = $importTemplateType ? collect(\App\Enums\PageCategory::cases())->firstWhere(fn ($c) => $c->value === $importTemplateType)?->label() ?? ucfirst($importTemplateType) : '';
+        @endphp
+        <flux:heading size="lg" class="mb-4">{{ __('Import :type Navigation', ['type' => $importTypeLabel]) }}</flux:heading>
+
+        @if ($importTemplate)
+            <div class="mb-5 space-y-3">
+                @foreach ($importTemplate['menus'] ?? [] as $menu)
+                    <div class="rounded-lg border border-zinc-200 dark:border-zinc-700 p-3">
+                        <p class="text-sm font-semibold text-zinc-700 dark:text-zinc-300 mb-1.5">{{ $menu['label'] }}</p>
+                        <ul class="space-y-0.5">
+                            @foreach (array_slice($menu['items'] ?? [], 0, 6) as $item)
+                                <li class="text-xs text-zinc-500 dark:text-zinc-400 flex items-center gap-1.5">
+                                    <span class="size-1 rounded-full bg-zinc-400 shrink-0"></span>
+                                    {{ $item['label'] }}
+                                </li>
+                            @endforeach
+                            @if (count($menu['items'] ?? []) > 6)
+                                <li class="text-xs text-zinc-400 dark:text-zinc-500 italic">+ {{ count($menu['items']) - 6 }} more…</li>
+                            @endif
+                        </ul>
+                    </div>
+                @endforeach
+            </div>
+
+            <flux:radio.group wire:model="importMode" label="{{ __('How should unregistered page links be handled?') }}" class="mb-6">
+                <flux:radio value="placeholder" label="{{ __('Placeholder links (#)') }}" description="{{ __('All items use # as the URL. Edit them in Menus after importing.') }}" />
+                <flux:radio value="create" label="{{ __('Create blank pages') }}" description="{{ __('Missing pages are created automatically and linked. Existing pages are reused.') }}" />
+            </flux:radio.group>
+        @endif
+
+        <div class="flex items-center justify-end gap-3">
+            <flux:modal.close>
+                <flux:button variant="ghost">{{ __('Cancel') }}</flux:button>
+            </flux:modal.close>
+            <flux:button wire:click="importMenuTemplate" variant="primary" wire:loading.attr="disabled">
+                <span wire:loading.remove wire:target="importMenuTemplate">{{ __('Import') }}</span>
+                <span wire:loading wire:target="importMenuTemplate">{{ __('Importing…') }}</span>
+            </flux:button>
+        </div>
+    </flux:modal>
+
     <flux:main>
         {{-- Environment warning --}}
         @if (! app()->isLocal())
@@ -390,9 +624,11 @@ new #[Layout('layouts.app')] #[Title('Design Library')] class extends Component 
                 <flux:button href="{{ route('dashboard.design-library.editor') }}" variant="outline" icon="pencil-square" wire:navigate>
                     {{ __('Page Editor') }}
                 </flux:button>
-                <flux:button wire:click="openCreateModal" variant="primary" icon="plus">
-                    {{ $tab === 'rows' ? __('Add Row') : __('Add Page') }}
-                </flux:button>
+                @if ($tab !== 'menus')
+                    <flux:button wire:click="openCreateModal" variant="primary" icon="plus">
+                        {{ $tab === 'rows' ? __('Add Row') : __('Add Page') }}
+                    </flux:button>
+                @endif
             </div>
         </div>
 
@@ -401,7 +637,11 @@ new #[Layout('layouts.app')] #[Title('Design Library')] class extends Component 
             <aside class="hidden lg:block w-48 shrink-0">
                 <div class="sticky top-20">
                     <flux:heading size="sm" class="mb-3 text-zinc-500 dark:text-zinc-400 uppercase tracking-wider text-xs">
-                        {{ $tab === 'rows' ? __('Categories') : __('Website Type') }}
+                        @if ($tab === 'rows')
+                            {{ __('Categories') }}
+                        @else
+                            {{ __('Website Type') }}
+                        @endif
                     </flux:heading>
                     <nav class="space-y-1">
                         <button
@@ -410,7 +650,12 @@ new #[Layout('layouts.app')] #[Title('Design Library')] class extends Component 
                         >
                             {{ __('All') }}
                         </button>
-                        @foreach ($tab === 'rows' ? $this->rowCategories : $this->pageCategories as $value => $label)
+                        @php
+                            $sidebarItems = $tab === 'rows'
+                                ? $this->rowCategories
+                                : $this->pageCategories;
+                        @endphp
+                        @foreach ($sidebarItems as $value => $label)
                             <button
                                 wire:click="$set('category', '{{ $value }}')"
                                 class="w-full text-left px-3 py-2 rounded-lg text-sm transition-colors {{ $category === $value ? 'bg-primary/10 text-primary font-medium' : 'text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800' }}"
@@ -444,9 +689,75 @@ new #[Layout('layouts.app')] #[Title('Design Library')] class extends Component 
                             {{ $this->pages->total() }}
                         </span>
                     </button>
+                    <button
+                        wire:click="setTab('menus')"
+                        class="px-4 py-2.5 text-sm font-medium border-b-2 transition-colors -mb-px {{ $tab === 'menus' ? 'border-primary text-primary' : 'border-transparent text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200' }}"
+                    >
+                        {{ __('Menus') }}
+                        <span class="ml-1.5 text-xs px-1.5 py-0.5 rounded-full {{ $tab === 'menus' ? 'bg-primary/10 text-primary' : 'bg-zinc-100 dark:bg-zinc-700 text-zinc-500 dark:text-zinc-400' }}">
+                            {{ count($this->menuTemplates) }}
+                        </span>
+                    </button>
                 </div>
 
-                @if ($tab === 'rows')
+                @if ($tab === 'menus')
+                    @php
+                        $visibleTemplates = $category
+                            ? array_filter($this->menuTemplates, fn ($k) => $k === $category, ARRAY_FILTER_USE_KEY)
+                            : $this->menuTemplates;
+                    @endphp
+                    @if (empty($visibleTemplates))
+                        <div class="text-center py-20 rounded-lg border border-dashed border-zinc-300 dark:border-zinc-700">
+                            <flux:icon name="bars-3" class="size-12 mx-auto mb-3 text-zinc-300 dark:text-zinc-600" />
+                            <flux:heading class="text-zinc-500">No templates for this type</flux:heading>
+                        </div>
+                    @else
+                        <div class="mb-4">
+                            <flux:callout variant="info">
+                                <flux:callout.text>Browse suggested navigation menus by website type. Click <strong>Import</strong> to add them to your active navigation. Menus whose slug already exists in your navigation are skipped on import. After importing, visit <a href="{{ route('dashboard.menus') }}" class="underline" wire:navigate>Menus</a> to review.</flux:callout.text>
+                            </flux:callout>
+                        </div>
+                        <div class="grid sm:grid-cols-2 xl:grid-cols-3 gap-4">
+                            @foreach ($visibleTemplates as $typeKey => $template)
+                                @php
+                                    $typeLabel = collect(\App\Enums\PageCategory::cases())->firstWhere(fn ($c) => $c->value === $typeKey)?->label() ?? ucfirst($typeKey);
+                                @endphp
+                                <div wire:key="menu-template-{{ $typeKey }}" class="rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 overflow-hidden hover:border-primary/40 transition-colors flex flex-col">
+                                    <div class="px-4 pt-4 pb-3 border-b border-zinc-100 dark:border-zinc-800 flex items-center justify-between">
+                                        <div>
+                                            <h3 class="font-semibold text-zinc-900 dark:text-white text-sm">{{ $typeLabel }}</h3>
+                                            <p class="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">{{ count($template['menus'] ?? []) }} menu(s)</p>
+                                        </div>
+                                        <flux:badge size="sm">{{ $typeKey }}</flux:badge>
+                                    </div>
+                                    <div class="px-4 py-3 flex-1 space-y-3">
+                                        @foreach ($template['menus'] ?? [] as $menu)
+                                            <div>
+                                                <p class="text-xs font-semibold text-zinc-600 dark:text-zinc-400 uppercase tracking-wide mb-1">{{ $menu['label'] }}</p>
+                                                <ul class="space-y-0.5">
+                                                    @foreach (array_slice($menu['items'] ?? [], 0, 5) as $item)
+                                                        <li class="text-xs text-zinc-500 dark:text-zinc-500 flex items-center gap-1.5">
+                                                            <span class="size-1 rounded-full bg-zinc-300 dark:bg-zinc-600 shrink-0"></span>
+                                                            {{ $item['label'] }}
+                                                        </li>
+                                                    @endforeach
+                                                    @if (count($menu['items'] ?? []) > 5)
+                                                        <li class="text-xs text-zinc-400 dark:text-zinc-600 italic pl-2.5">+ {{ count($menu['items']) - 5 }} more</li>
+                                                    @endif
+                                                </ul>
+                                            </div>
+                                        @endforeach
+                                    </div>
+                                    <div class="px-4 pb-4 pt-3 border-t border-zinc-100 dark:border-zinc-800">
+                                        <flux:button wire:click="openImportModal('{{ $typeKey }}')" variant="primary" size="sm" class="w-full" icon="arrow-down-tray">
+                                            {{ __('Import') }}
+                                        </flux:button>
+                                    </div>
+                                </div>
+                            @endforeach
+                        </div>
+                    @endif
+                @elseif ($tab === 'rows')
                     @if ($this->rows->isEmpty())
                         <div class="text-center py-20 rounded-lg border border-dashed border-zinc-300 dark:border-zinc-700">
                             <flux:icon name="squares-2x2" class="size-12 mx-auto mb-3 text-zinc-300 dark:text-zinc-600" />
@@ -519,7 +830,7 @@ new #[Layout('layouts.app')] #[Title('Design Library')] class extends Component 
                             <div class="mt-6">{{ $this->rows->links() }}</div>
                         @endif
                     @endif
-                @else
+                @elseif ($tab === 'pages')
                     @if ($this->pages->isEmpty())
                         <div class="text-center py-20 rounded-lg border border-dashed border-zinc-300 dark:border-zinc-700">
                             <flux:icon name="document-text" class="size-12 mx-auto mb-3 text-zinc-300 dark:text-zinc-600" />
