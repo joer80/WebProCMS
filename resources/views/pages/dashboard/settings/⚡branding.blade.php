@@ -1,11 +1,15 @@
 <?php
 
+use Illuminate\Support\Facades\Storage;
 use Livewire\Attributes\Layout;
+use Livewire\Attributes\On;
 use Livewire\Attributes\Title;
 use Livewire\Component;
 
 new #[Layout('layouts.app')] #[Title('Branding')] class extends Component {
     public string $logoUrl = '';
+
+    public bool $showMediaPicker = false;
 
     /** @var array<string, string> */
     public array $themeColors = [];
@@ -16,14 +20,21 @@ new #[Layout('layouts.app')] #[Title('Branding')] class extends Component {
         $this->loadThemeColors();
     }
 
-    public function saveLogo(): void
+    public function openMediaPicker(): void
     {
-        $this->validate([
-            'logoUrl' => ['nullable', 'url'],
-        ]);
+        $this->showMediaPicker = true;
+    }
 
+    #[On('media-image-picked')]
+    public function handleMediaImagePicked(string $key, string $path, string $alt = ''): void
+    {
+        if ($key !== 'branding-logo') {
+            return;
+        }
+
+        $this->logoUrl = Storage::url($path);
+        $this->showMediaPicker = false;
         $this->writeBrandingConfig();
-
         $this->dispatch('notify', message: 'Logo saved.');
     }
 
@@ -126,20 +137,19 @@ new #[Layout('layouts.app')] #[Title('Branding')] class extends Component {
 
         <div class="max-w-2xl space-y-4">
             <div class="rounded-lg border border-zinc-200 dark:border-zinc-700 p-6">
-                <div class="flex items-start justify-between gap-6">
-                    <div class="flex-1">
-                        <flux:heading>Logo</flux:heading>
-                        <flux:text class="mt-1">The logo displayed in the site header and sidebar.</flux:text>
-                        <div class="mt-4 space-y-4">
-                            @if ($logoUrl)
-                                <div class="p-3 rounded-md bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 inline-block">
-                                    <img src="{{ $logoUrl }}" alt="Logo preview" class="h-10 w-auto" />
-                                </div>
-                            @endif
-                            <flux:input wire:model="logoUrl" label="Logo URL" placeholder="https://domain.com/storage/logos/logo.svg" description="Copy the URL from your Media Library." />
+                <flux:heading>Logo</flux:heading>
+                <flux:text class="mt-1">The logo displayed in the site header and sidebar.</flux:text>
+
+                <div class="mt-4 space-y-4">
+                    @if ($logoUrl)
+                        <div class="p-3 rounded-md bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 w-fit">
+                            <img src="{{ $logoUrl }}" alt="Logo preview" class="h-10 w-auto" />
                         </div>
-                    </div>
-                    <flux:button wire:click="saveLogo" variant="outline" class="shrink-0">Save</flux:button>
+                    @endif
+
+                    <flux:button variant="outline" icon="photo" wire:click="openMediaPicker">
+                        {{ $logoUrl ? 'Change logo' : 'Pick from Media Library' }}
+                    </flux:button>
                 </div>
             </div>
 
@@ -182,4 +192,15 @@ new #[Layout('layouts.app')] #[Title('Branding')] class extends Component {
             </div>
         </div>
     </flux:main>
+
+    {{-- Media Library Picker Modal --}}
+    <flux:modal wire:model="showMediaPicker" name="branding-logo-picker" class="p-0!" style="max-width: 75vw; width: 75vw;">
+        @if ($showMediaPicker)
+            <livewire:pages::dashboard.media-library.picker
+                field-key="branding-logo"
+                default-category-slug="logos"
+                :key="'branding-logo-picker'"
+            />
+        @endif
+    </flux:modal>
 </div>
