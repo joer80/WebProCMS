@@ -3,9 +3,11 @@
 use App\Enums\PageCategory;
 use App\Enums\Role;
 use App\Enums\RowCategory;
+use App\Jobs\IndexDesignLibraryJob;
 use App\Models\DesignPage;
 use App\Models\DesignRow;
 use App\Models\User;
+use Illuminate\Support\Facades\Bus;
 use Livewire\Livewire;
 
 it('redirects unauthenticated users from the design library', function (): void {
@@ -29,6 +31,8 @@ it('allows manager users to view the design library', function (): void {
 });
 
 it('shows existing design rows', function (): void {
+    Bus::fake([IndexDesignLibraryJob::class]);
+
     $user = User::factory()->create();
     DesignRow::factory()->create(['name' => 'Hero Section', 'source_file' => '']);
 

@@ -48,6 +48,7 @@ it('does not show inactive navigation items', function (): void {
 
 it('shows footer menus from the flat navigation config', function (): void {
     config([
+        'layout.active_footer' => null,
         'navigation.footer_slugs' => ['footer-links'],
         'navigation.menus' => [
             [
