@@ -8,6 +8,7 @@ use App\Models\DesignRow;
 use App\Models\MediaItem;
 use App\Models\SharedRow;
 use App\Support\DesignLibraryService;
+use App\Support\LayoutService;
 use App\Support\RowItemLibrary;
 use App\Support\SchemaCache;
 use App\Support\VoltFileService;
@@ -243,6 +244,12 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
     {
         $this->syncAltRowClasses();
         $this->refreshPreview();
+    }
+
+    #[Computed]
+    public function isLayoutPartial(): bool
+    {
+        return str_contains($this->file ?? '', 'layouts/partials/');
     }
 
     /** @return array<string, string> */
@@ -677,6 +684,9 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
             'blade' => str_replace('__SLUG__', $slug, $designRow->blade_code),
             'shared' => $existing['shared'] ?? false,
             'hidden' => $existing['hidden'] ?? false,
+            // Track which design library template is active so saveFile can
+            // sync active_header / active_footer without changing the slug.
+            'template' => basename($designRow->source_file, '.blade.php'),
         ];
 
         $this->pushHistory();
@@ -1545,9 +1555,34 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                 ->delete();
         }
 
+        $rowsToWrite = $this->rows;
+
+        // When saving a layout partial after a browse (template switched), rewrite
+        // the slug in the file so it reflects the new template name. This keeps
+        // the sidebar label and config in sync on the next load without changing
+        // the in-memory slug (which would collapse the browse panel).
+        if ($this->isLayoutPartial && ! empty($rowsToWrite) && isset($rowsToWrite[0]['template'])) {
+            $firstRow = $rowsToWrite[0];
+            $parts = explode(':', $firstRow['slug'], 2);
+            $type = $parts[1] ?? '';
+            if (in_array($type, ['header', 'footer'])) {
+                $newSlug = $firstRow['template'].':'.$type;
+                $rowsToWrite[0]['slug'] = $newSlug;
+                $rowsToWrite[0]['blade'] = str_replace($firstRow['slug'], $newSlug, $firstRow['blade']);
+                (new LayoutService)->writeConfig(["active_{$type}" => $firstRow['template']]);
+            }
+        } elseif ($this->isLayoutPartial && ! empty($rowsToWrite)) {
+            // No browse — sync config from slug prefix (handles plain saves).
+            $parts = explode(':', $rowsToWrite[0]['slug'], 2);
+            $type = $parts[1] ?? '';
+            if (in_array($type, ['header', 'footer'])) {
+                (new LayoutService)->writeConfig(["active_{$type}" => $parts[0]]);
+            }
+        }
+
         $service = new VoltFileService;
         $fullPath = resource_path('views/'.$this->file);
-        $service->writeFile($fullPath, $service->buildFileContent($this->phpSection, $this->rows));
+        $service->writeFile($fullPath, $service->buildFileContent($this->phpSection, $rowsToWrite));
 
         if ($this->liveUrl) {
             ResponseCache::forget($this->liveUrl);
@@ -2219,8 +2254,8 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
         {{-- Editor toolbar --}}
         <div class="sticky top-0 z-30 bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-700 px-6 py-3 flex items-center gap-3">
             <div class="flex-1 flex items-center gap-3">
-                <flux:tooltip content="Back to Dashboard" position="bottom">
-                    <flux:button href="{{ route('dashboard.pages') }}" variant="outline" size="sm" icon="arrow-left" wire:navigate />
+                <flux:tooltip content="{{ $this->isLayoutPartial ? 'Back to Templates' : 'Back to Pages' }}" position="bottom">
+                    <flux:button href="{{ $this->isLayoutPartial ? route('dashboard.templates') : route('dashboard.pages') }}" variant="outline" size="sm" icon="arrow-left" wire:navigate />
                 </flux:tooltip>
 
                 @if ($liveUrl)
@@ -2229,24 +2264,26 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                     </flux:tooltip>
                 @endif
 
-                <flux:tooltip content="Selected Page">
-                    <flux:select wire:model.live="file" placeholder="Select a page to edit…" size="sm" class="w-48">
-                        <flux:select.option value="">{{ __('Select a page…') }}</flux:select.option>
-                        @foreach ($this->voltFiles as $label => $path)
-                            <flux:select.option value="{{ $path }}">{{ $label }}</flux:select.option>
-                        @endforeach
-                    </flux:select>
-                </flux:tooltip>
-
-                @if ($file)
-                    <flux:tooltip content="Page Settings" position="bottom">
-                        <flux:button variant="outline" size="sm" icon="cog-6-tooth" wire:click="$set('showSeoModal', true)" :loading="false" />
+                @if (! $this->isLayoutPartial)
+                    <flux:tooltip content="Selected Page">
+                        <flux:select wire:model.live="file" placeholder="Select a page to edit…" size="sm" class="w-48">
+                            <flux:select.option value="">{{ __('Select a page…') }}</flux:select.option>
+                            @foreach ($this->voltFiles as $label => $path)
+                                <flux:select.option value="{{ $path }}">{{ $label }}</flux:select.option>
+                            @endforeach
+                        </flux:select>
                     </flux:tooltip>
+
+                    @if ($file)
+                        <flux:tooltip content="Page Settings" position="bottom">
+                            <flux:button variant="outline" size="sm" icon="cog-6-tooth" wire:click="$set('showSeoModal', true)" :loading="false" />
+                        </flux:tooltip>
+                    @endif
                 @endif
             </div>
 
             {{-- Page status badges --}}
-            @if ($file)
+            @if ($file && ! $this->isLayoutPartial)
                 @php
                     $statusTooltips = [
                         'draft'       => 'Saved but not yet visible to the public.',

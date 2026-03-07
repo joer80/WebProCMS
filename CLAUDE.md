@@ -694,6 +694,17 @@ Every row must support custom element IDs and HTML attributes for jump links and
 
 Since these are built into the components, any row built using the standard `x-dl.*` skeleton automatically inherits this support. No extra steps needed — just use `x-dl.section` as the outer wrapper (required on every row) and the `id`/`attrs` fields appear in the Advanced tab automatically.
 
+### Sidebar group structure preference
+
+**Prefer one concern per group.** Each `x-dl.*` component that should appear as its own sidebar card must be a direct child of `x-dl.section` (or inside a plain HTML element), never nested inside another `x-dl.wrapper`. Even a heading and its associated nav/content should be in separate groups.
+
+**How groups form:** Any `x-dl.*` component (wrapper, subheadline, nav, etc.) nested inside another `x-dl.wrapper` has its fields merged into that parent's sidebar card — it does NOT get its own card. Only components that are NOT inside any other `x-dl.*` component's offset range become top-level sidebar cards.
+
+**Avoid nesting `x-dl.wrapper` inside `x-dl.wrapper`** when the intent is separate groups. Instead:
+- Use the `x-dl.section`'s `default-container-classes` for grid layout (e.g. `grid md:grid-cols-4 gap-10`) so column-level wrappers are direct children of section.
+- Use plain `<div>` (no `x-dl.*`) when a structural container is needed but its children should each be their own group.
+- Reserve nested `x-dl.wrapper` only when you explicitly want all inner fields merged into the outer group.
+
 ### Other notes
 
 - Template files only affect newly inserted rows. Existing page blade files have row code copied inline at insert time — update them separately if needed.

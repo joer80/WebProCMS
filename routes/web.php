@@ -15,8 +15,8 @@ Route::middleware([
     // Route::get('blog2', \App\Livewire\Blog2::class)->name('blog2.index');
 
     // new cached pages are inserted here
-        Route::livewire('contact', 'pages::contact')->name('contact');
-        Route::livewire('about', 'pages::about')->name('about');
+    Route::livewire('contact', 'pages::contact')->name('contact');
+    Route::livewire('about', 'pages::about')->name('about');
     Route::livewire('404', 'pages::404')->name('404');
     Route::livewire('test', 'pages::test')->name('test');
 });
@@ -75,6 +75,7 @@ Route::middleware(['auth', 'verified'])->group(function (): void {
         Route::livewire('dashboard/forms/{form}/submissions', 'pages::dashboard.forms.submissions')->name('dashboard.forms.submissions');
 
         Route::livewire('dashboard/tools', 'pages::dashboard.tools')->name('dashboard.tools');
+        Route::livewire('dashboard/templates', 'pages::dashboard.templates')->name('dashboard.templates');
         Route::redirect('dashboard/settings', '/dashboard/settings/general')->name('dashboard.settings');
         Route::livewire('dashboard/settings/general', 'pages::dashboard.settings.general')->name('dashboard.settings.general');
         Route::livewire('dashboard/settings/branding', 'pages::dashboard.settings.branding')->name('dashboard.settings.branding');

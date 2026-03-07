@@ -7,24 +7,12 @@
     tag="footer"
     default-section-classes="py-12 px-6 bg-white dark:bg-zinc-900 border-t border-zinc-200 dark:border-zinc-800"
     default-container-classes="max-w-4xl mx-auto text-center">
-    <x-dl.wrapper slug="__SLUG__" prefix="brand" tag="a"
-        href="/"
-        default-classes="inline-block text-xl font-bold text-zinc-900 dark:text-white mb-6">
-        <x-dl.subheadline slug="__SLUG__" prefix="brand_name" tag="span" default="Your Brand"
-            default-classes="" />
-    </x-dl.wrapper>
-    <x-dl.grid slug="__SLUG__" prefix="nav_links"
-        default-grid-classes="flex flex-wrap items-center justify-center gap-6 mb-8"
-        default-items='[{"label":"Home","url":"/"},{"label":"About","url":"/about"},{"label":"Services","url":"/services"},{"label":"Blog","url":"/blog"},{"label":"Contact","url":"/contact"}]'>
-        @dlItems('__SLUG__', 'nav_links', $navLinks, '[{"label":"Home","url":"/"},{"label":"About","url":"/about"},{"label":"Services","url":"/services"},{"label":"Blog","url":"/blog"},{"label":"Contact","url":"/contact"}]')
-        @foreach ($navLinks as $link)
-            <x-dl.card slug="__SLUG__" prefix="nav_link" tag="a"
-                href="{{ $link['url'] }}"
-                default-classes="text-sm text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition-colors">
-                {{ $link['label'] }}
-            </x-dl.card>
-        @endforeach
-    </x-dl.grid>
+    <x-dl.logo slug="__SLUG__" prefix="logo"
+        default-classes="h-8 w-auto mb-6" />
+    <x-dl.nav slug="__SLUG__" prefix="main_nav"
+        default-menu="main-navigation"
+        default-classes="flex flex-wrap items-center justify-center gap-6 mb-8"
+        default-item-classes="text-sm text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition-colors" />
     <x-dl.grid slug="__SLUG__" prefix="social_links"
         default-grid-classes="flex items-center justify-center gap-4 mb-8"
         default-items='[{"icon":"globe-alt","url":"#"},{"icon":"chat-bubble-oval-left-ellipsis","url":"#"}]'>
@@ -40,10 +28,8 @@
     </x-dl.grid>
     <x-dl.wrapper slug="__SLUG__" prefix="bottom_bar"
         default-classes="flex flex-col sm:flex-row items-center justify-center gap-4 text-xs text-zinc-400">
-        <x-dl.wrapper slug="__SLUG__" prefix="copyright" tag="span"
-            default-classes="">
-            © {{ date('Y') }} All rights reserved.
-        </x-dl.wrapper>
+        <x-dl.subheadline slug="__SLUG__" prefix="copyright" tag="span" :default="'© '.date('Y').' All rights reserved.'"
+            default-classes="" />
         <span>·</span>
         <x-dl.wrapper slug="__SLUG__" prefix="powered_by" tag="span"
             default-classes="">

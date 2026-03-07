@@ -27,7 +27,15 @@ if (in_array($field['type'], ['id', 'attrs'])) {
     @endif
 
     @if ($field['type'] === 'image')
-        @php $currentPath = $contentValues[$field['key']] ?? ''; @endphp
+        @php
+            $currentPath = $contentValues[$field['key']] ?? '';
+            $fallbackToken = $field['fallback_url'] ?? '';
+            $fallbackUrl = match($fallbackToken) {
+                '__branding_logo__' => config('branding.logo_url', ''),
+                '' => '',
+                default => $fallbackToken,
+            };
+        @endphp
         @if ($currentPath)
             <div class="mb-2 relative inline-block">
                 <img
@@ -42,6 +50,15 @@ if (in_array($field['type'], ['id', 'attrs'])) {
                 >
                     <flux:icon name="x-mark" class="size-3" />
                 </button>
+            </div>
+        @elseif ($fallbackUrl)
+            <div class="mb-2">
+                <img
+                    src="{{ $fallbackUrl }}"
+                    alt=""
+                    class="h-12 rounded-lg object-contain border border-zinc-200 dark:border-zinc-700"
+                >
+                <p class="mt-1 text-xs text-zinc-400 dark:text-zinc-500">(Use Branding logo or media library)</p>
             </div>
         @endif
         <button
@@ -228,13 +245,13 @@ if (in_array($field['type'], ['id', 'attrs'])) {
                                     </div>
 
                                     {{-- Modal overlay --}}
-                                    @once('heroicon-modal-icons')
-                                        @php
+                                    @php
+                                        if (! isset($outlineIcons)) {
                                             $allIconsData = require resource_path('heroicons/data.php');
                                             $outlineIcons = array_keys($allIconsData['outline']);
                                             $solidIcons   = array_keys($allIconsData['solid']);
-                                        @endphp
-                                    @endonce
+                                        }
+                                    @endphp
                                     <div
                                         x-show="pickerOpen"
                                         x-transition:enter="transition ease-out duration-100"
@@ -378,6 +395,13 @@ if (in_array($field['type'], ['id', 'attrs'])) {
             <flux:select.option value="">Select a form…</flux:select.option>
             @foreach ($availableForms as $availableForm)
                 <flux:select.option value="{{ $availableForm->id }}">{{ $availableForm->name }}</flux:select.option>
+            @endforeach
+        </flux:select>
+    @elseif (str_ends_with($field['key'], '_menu'))
+        @php $availableMenus = config('navigation.menus', []); @endphp
+        <flux:select wire:model.live="contentValues.{{ $field['key'] }}">
+            @foreach ($availableMenus as $availableMenu)
+                <flux:select.option value="{{ $availableMenu['slug'] }}">{{ $availableMenu['label'] }}</flux:select.option>
             @endforeach
         </flux:select>
     @elseif ($field['type'] === 'note')

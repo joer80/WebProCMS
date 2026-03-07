@@ -230,6 +230,14 @@ class VoltFileService
      */
     private function buildPreviewFileContent(string $phpSection, array $rows): string
     {
+        // Layout partial files (e.g. header/footer) have a comment-only PHP section rather
+        // than a full Volt class. Substitute a minimal valid Volt class so the preview route
+        // can instantiate the component. The partial-preview layout renders the slot directly
+        // without wrapping it in the public site header/footer again.
+        if (! str_contains($phpSection, 'extends Component')) {
+            $phpSection = "<?php\nnew #[\\Livewire\\Attributes\\Layout('layouts.partial-preview')] class extends \\Livewire\\Component { }; ?>";
+        }
+
         $blade = '';
 
         foreach ($rows as $row) {

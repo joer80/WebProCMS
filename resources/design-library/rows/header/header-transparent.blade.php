@@ -7,21 +7,12 @@
     tag="header"
     default-section-classes="absolute top-0 inset-x-0 z-50"
     default-container-classes="max-w-6xl mx-auto px-6 h-20 flex items-center justify-between">
-    <x-dl.wrapper slug="__SLUG__" prefix="brand" tag="a"
-        href="/"
-        default-classes="font-heading text-xl font-bold text-white">
-        <x-dl.subheadline slug="__SLUG__" prefix="brand_name" tag="span" default="Brand"
-            default-classes="" />
-    </x-dl.wrapper>
-    <x-dl.wrapper slug="__SLUG__" prefix="nav" tag="nav"
-        default-classes="hidden md:flex items-center gap-8">
-        <x-dl.wrapper slug="__SLUG__" prefix="link_features" tag="a" href="#"
-            default-classes="text-sm text-white/80 hover:text-white transition-colors">Features</x-dl.wrapper>
-        <x-dl.wrapper slug="__SLUG__" prefix="link_pricing" tag="a" href="#"
-            default-classes="text-sm text-white/80 hover:text-white transition-colors">Pricing</x-dl.wrapper>
-        <x-dl.wrapper slug="__SLUG__" prefix="link_about" tag="a" href="#"
-            default-classes="text-sm text-white/80 hover:text-white transition-colors">About</x-dl.wrapper>
-    </x-dl.wrapper>
+    <x-dl.logo slug="__SLUG__" prefix="logo"
+        default-classes="h-8 w-auto" />
+    <x-dl.nav slug="__SLUG__" prefix="main_nav"
+        default-menu="main-navigation"
+        default-classes="hidden md:flex items-center gap-8"
+        default-item-classes="text-sm text-white/80 hover:text-white transition-colors" />
     <x-dl.link slug="__SLUG__" prefix="primary_cta"
         default-label="Get Started"
         default-url="#"

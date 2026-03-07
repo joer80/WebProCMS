@@ -8,14 +8,9 @@
     default-section-classes="sticky top-0 z-50 bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800"
     default-container-classes="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between"
     x-data="{ megaOpen: false }">
-    <x-dl.wrapper slug="__SLUG__" prefix="brand" tag="a"
-        href="/"
-        default-classes="font-heading text-xl font-bold text-zinc-900 dark:text-white">
-        <x-dl.subheadline slug="__SLUG__" prefix="brand_name" tag="span" default="Brand"
-            default-classes="" />
-    </x-dl.wrapper>
-    <x-dl.wrapper slug="__SLUG__" prefix="nav" tag="nav"
-        default-classes="hidden md:flex items-center gap-8">
+    <x-dl.logo slug="__SLUG__" prefix="logo"
+        default-classes="h-8 w-auto" />
+    <nav class="hidden md:flex items-center gap-8">
         <x-dl.wrapper slug="__SLUG__" prefix="link_products" tag="button"
             default-classes="flex items-center gap-1 text-sm text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition-colors"
             @click="megaOpen = !megaOpen"
@@ -25,11 +20,11 @@
                 default-classes="size-4 transition-transform duration-200"
                 x-bind:class="megaOpen ? 'rotate-180' : ''" />
         </x-dl.wrapper>
-        <x-dl.wrapper slug="__SLUG__" prefix="link_pricing" tag="a" href="#"
-            default-classes="text-sm text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition-colors">Pricing</x-dl.wrapper>
-        <x-dl.wrapper slug="__SLUG__" prefix="link_blog" tag="a" href="#"
-            default-classes="text-sm text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition-colors">Blog</x-dl.wrapper>
-    </x-dl.wrapper>
+        <x-dl.nav slug="__SLUG__" prefix="main_nav"
+            default-menu="main-navigation"
+            default-classes="flex items-center gap-8"
+            default-item-classes="text-sm text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition-colors" />
+    </nav>
     <x-dl.link slug="__SLUG__" prefix="primary_cta"
         default-label="Get Started"
         default-url="#"

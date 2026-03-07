@@ -7,12 +7,8 @@
     tag="footer"
     default-section-classes="py-12 px-6 bg-white dark:bg-zinc-900 border-t border-zinc-200 dark:border-zinc-800"
     default-container-classes="max-w-4xl mx-auto text-center">
-    <x-dl.wrapper slug="__SLUG__" prefix="brand" tag="a"
-        href="/"
-        default-classes="inline-block text-xl font-bold text-zinc-900 dark:text-white mb-2">
-        <x-dl.subheadline slug="__SLUG__" prefix="brand_name" tag="span" default="Your Brand"
-            default-classes="" />
-    </x-dl.wrapper>
+    <x-dl.logo slug="__SLUG__" prefix="logo"
+        default-classes="h-8 w-auto mb-2" />
     <x-dl.subheadline slug="__SLUG__" prefix="tagline" tag="p" default="Follow us for updates and inspiration."
         default-classes="text-zinc-500 dark:text-zinc-400 mb-8" />
     <x-dl.grid slug="__SLUG__" prefix="social_links"
@@ -31,10 +27,8 @@
     </x-dl.grid>
     <x-dl.wrapper slug="__SLUG__" prefix="bottom_bar"
         default-classes="flex flex-col sm:flex-row items-center justify-center gap-4 text-xs text-zinc-400">
-        <x-dl.wrapper slug="__SLUG__" prefix="copyright" tag="span"
-            default-classes="">
-            © {{ date('Y') }} All rights reserved.
-        </x-dl.wrapper>
+        <x-dl.subheadline slug="__SLUG__" prefix="copyright" tag="span" :default="'© '.date('Y').' All rights reserved.'"
+            default-classes="" />
         <span>·</span>
         <x-dl.wrapper slug="__SLUG__" prefix="powered_by" tag="span"
             default-classes="">

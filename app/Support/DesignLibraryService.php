@@ -197,6 +197,10 @@ class DesignLibraryService
                     $entry['message'] = $field['message'];
                 }
 
+                if (isset($field['fallback_url'])) {
+                    $entry['fallback_url'] = $field['fallback_url'];
+                }
+
                 $newFields[] = $entry;
             }
 
