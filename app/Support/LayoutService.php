@@ -157,7 +157,7 @@ PHP;
         $bladeCode = str_replace('__SLUG__', $slug, $bladeCode);
 
         $fileContent = "<?php /** @layout-partial {$type} */ ?>\n"
-            ."<div>\n"
+            ."<div class=\"contents\">\n"
             ."{{-- ROW:start:{$slug} --}}\n"
             .trim($bladeCode)."\n"
             ."{{-- ROW:end:{$slug} --}}\n"

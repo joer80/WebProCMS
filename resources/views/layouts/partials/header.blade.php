@@ -1,11 +1,13 @@
 <?php /** @layout-partial header */ ?>
-<div>
-{{-- ROW:start:header-simple:header --}}
+<div class="contents">{{-- ROW:start:header-simple:header --}}
 <x-dl.section slug="header-simple:header"
     tag="header"
-    x-data="{ mobileOpen: false }"
-    default-section-classes="sticky top-0 z-50 bg-white/80 dark:bg-zinc-900/80 backdrop-blur border-b border-zinc-200 dark:border-zinc-800"
-    default-container-classes="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
+    x-data="{ mobileOpen: false, scrolled: false }"
+    @scroll.window="scrolled = window.scrollY > 20"
+    x-bind:class="scrolled ? 'h-16' : 'h-20'"
+    default-sticky="1"
+    default-section-classes="z-50 bg-white/80 dark:bg-zinc-900/80 backdrop-blur border-b border-zinc-200 dark:border-zinc-800 transition-all duration-300"
+    default-container-classes="max-w-6xl mx-auto px-6 h-full flex items-center justify-between">
     <x-dl.logo slug="header-simple:header" prefix="logo"
         default-classes="h-8 w-auto" />
     <x-dl.nav slug="header-simple:header" prefix="main_nav"

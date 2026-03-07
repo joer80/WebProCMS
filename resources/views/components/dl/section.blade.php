@@ -1,7 +1,11 @@
 @blaze
-@props(['slug', 'tag' => 'section', 'defaultSectionClasses' => 'py-section px-6 bg-white dark:bg-zinc-900', 'defaultContainerClasses' => 'max-w-6xl mx-auto'])
+@props(['slug', 'tag' => 'section', 'defaultSectionClasses' => 'py-section px-6 bg-white dark:bg-zinc-900', 'defaultContainerClasses' => 'max-w-6xl mx-auto', 'defaultSticky' => null])
 @php
 $sectionCls = content($slug, 'section_classes', $defaultSectionClasses);
+if ($defaultSticky !== null) {
+    $isSticky = content($slug, 'toggle_sticky', $defaultSticky ? '1' : '');
+    $sectionCls = ($isSticky ? 'sticky top-0 ' : '') . $sectionCls;
+}
 $containerCls = content($slug, 'section_container_classes', $defaultContainerClasses);
 $sectionId = content($slug, 'section_id', '');
 $sectionAttrs = json_decode(content($slug, 'section_attrs', '[]'), true) ?: [];
