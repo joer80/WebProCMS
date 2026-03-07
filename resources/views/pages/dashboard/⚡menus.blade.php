@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route as RoutesFacade;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
+use Spatie\ResponseCache\Facades\ResponseCache;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
@@ -301,6 +302,8 @@ new #[Layout('layouts.app')] #[Title('Menus')] class extends Component {
         }
 
         config(['navigation' => $config]);
+
+        ResponseCache::clear();
 
         $this->dispatch('notify', message: 'Menu saved.');
     }

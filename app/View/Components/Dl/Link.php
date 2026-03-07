@@ -25,7 +25,7 @@ class Link extends Component
     {
         $prefix = $attrs['prefix'] ?? 'link';
 
-        return [
+        $fields = [
             ['key' => "toggle_{$prefix}", 'default' => '1'],
             ['key' => $prefix, 'default' => $attrs['default-label'] ?? 'View all →'],
             ['key' => "{$prefix}_url", 'default' => $attrs['default-url'] ?? '#'],
@@ -34,6 +34,20 @@ class Link extends Component
             ['key' => "{$prefix}_id", 'default' => '', 'label' => 'Element ID'],
             ['key' => "{$prefix}_attrs", 'default' => '[]', 'label' => 'Custom Attributes'],
         ];
+
+        if (isset($attrs['label-toggle'])) {
+            $fields[0]['label'] = $attrs['label-toggle'];
+        }
+
+        if (isset($attrs['label-text'])) {
+            $fields[1]['label'] = $attrs['label-text'];
+        }
+
+        if (isset($attrs['label-url'])) {
+            $fields[2]['label'] = $attrs['label-url'];
+        }
+
+        return $fields;
     }
 
     public function render(): View

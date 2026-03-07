@@ -675,6 +675,34 @@ Icons stored as `"bolt"` (outline) or `"bolt:solid"` (solid). Use `x-dl.icon` �
 
 `<x-heroicon>` is **public side only** — it is NOT available via `<flux:icon>` on the public layout (Flux only works on the dashboard side). `x-dl.icon` uses `<x-heroicon>` internally.
 
+### Header Row Conventions
+
+When building header rows, use these naming conventions consistently:
+
+**Wrapper prefix:** `header_button` (not `header_end` or `header_actions`) — the `x-dl.wrapper` that holds the right-side CTA(s) and hamburger button.
+
+**Primary CTA link** (`prefix="primary_cta"`): always include these label overrides:
+```blade
+<x-dl.link slug="__SLUG__" prefix="primary_cta"
+    label-toggle="Show Button"
+    label-text="Button Text"
+    label-url="Button Link"
+    ...
+```
+
+**Secondary CTA / login link** (`prefix="secondary_cta"`): always include:
+```blade
+<x-dl.link slug="__SLUG__" prefix="secondary_cta"
+    label-toggle="Show Login"
+    label-text="Login Text"
+    label-url="Login Link"
+    ...
+```
+
+**Mobile panel CTAs** — use the same label overrides as their desktop counterparts (`mobile_cta` → Show Button/Button Text/Button Link, `mobile_login` → Show Login/Login Text/Login Link).
+
+**`x-dl.link` supports `label-toggle`, `label-text`, and `label-url` attrs** to override auto-derived field labels. Use these any time the auto-derived label (e.g. "Primary Cta") would be confusing to an editor.
+
 ### Adding a new row to the design library
 
 1. Create a new `.blade.php` file in the appropriate category folder

@@ -35,9 +35,9 @@ return [
             'slug' => 'footer-company',
             'label' => 'Company',
             'items' => [
-            ['label' => 'About', 'route' => 'about', 'active' => true],
-            ['label' => 'Blog', 'route' => 'blog.index', 'active' => true],
-            ['label' => 'Contact', 'route' => 'contact', 'active' => true],
+            ['label' => 'Service 1', 'route' => '#', 'active' => true],
+            ['label' => 'Service 2', 'route' => '#', 'active' => true],
+            ['label' => 'Service 3', 'route' => '#', 'active' => true],
             ],
         ],
         [
