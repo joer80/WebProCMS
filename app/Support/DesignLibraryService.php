@@ -243,6 +243,10 @@ class DesignLibraryService
             return ['toggle', substr($key, 0, -8)];
         }
 
+        if (str_ends_with($key, '_object_fit')) {
+            return ['object_fit', substr($key, 0, -11)];
+        }
+
         if (str_ends_with($key, '_classes')) {
             return ['classes', substr($key, 0, -8)];
         }

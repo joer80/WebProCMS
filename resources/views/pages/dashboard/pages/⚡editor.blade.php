@@ -662,6 +662,22 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
         $this->applyBrowseRow($slug, $options[$position]['id']);
     }
 
+    public function reloadRowFromLibrary(string $slug): void
+    {
+        $templateName = explode(':', $slug, 2)[0];
+
+        $designRow = DesignRow::query()
+            ->where('source_file', 'like', "%/{$templateName}.blade.php")
+            ->orWhere('source_file', "{$templateName}.blade.php")
+            ->first();
+
+        if (! $designRow) {
+            return;
+        }
+
+        $this->applyBrowseRow($slug, $designRow->id);
+    }
+
     private function applyBrowseRow(string $slug, int $designRowId): void
     {
         $rowIndex = collect($this->rows)->search(fn (array $r) => $r['slug'] === $slug);
@@ -2593,8 +2609,8 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                                             $bodyFields = $headerToggleField
                                                 ? $itemFields->reject(fn ($f) => $f['key'] === $headerToggleField['key'])
                                                 : $itemFields;
-                                            $itemHasContentFields = $bodyFields->contains(fn ($f) => ! in_array($f['type'], ['classes', 'id', 'attrs']));
-                                            $itemHasClassesFields = $bodyFields->contains(fn ($f) => $f['type'] === 'classes');
+                                            $itemHasContentFields = $bodyFields->contains(fn ($f) => ! in_array($f['type'], ['classes', 'object_fit', 'id', 'attrs']));
+                                            $itemHasClassesFields = $bodyFields->contains(fn ($f) => in_array($f['type'], ['classes', 'object_fit']));
                                             $itemHasAdvancedFields = $bodyFields->contains(fn ($f) => in_array($f['type'], ['id', 'attrs']));
                                             $isFirst = $item['index'] === 0;
                                             $isLast = $item['index'] === count($rowItemBlocks) - 1;
@@ -2800,8 +2816,8 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                                                 $bodyFields = $headerToggleField
                                                     ? $compFields->reject(fn ($f) => $f['key'] === $headerToggleField['key'])
                                                     : $compFields;
-                                                $compHasContentFields = $bodyFields->contains(fn ($f) => ! in_array($f['type'], ['classes', 'id', 'attrs']));
-                                                $compHasClassesFields = $bodyFields->contains(fn ($f) => $f['type'] === 'classes');
+                                                $compHasContentFields = $bodyFields->contains(fn ($f) => ! in_array($f['type'], ['classes', 'object_fit', 'id', 'attrs']));
+                                                $compHasClassesFields = $bodyFields->contains(fn ($f) => in_array($f['type'], ['classes', 'object_fit']));
                                                 $compHasAdvancedFields = $bodyFields->contains(fn ($f) => in_array($f['type'], ['id', 'attrs']));
                                                 $isFirst = $comp['index'] === 0;
                                                 $isLast = $comp['index'] === count($dlComponents) - 1;
@@ -3173,9 +3189,19 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                                             <div x-show="panelMode === 'browse'" class="px-3 py-2 border-t border-zinc-200 dark:border-zinc-700">
                                                 @php $bd = $rowBrowseData[$row['slug']] ?? null; @endphp
                                                 @if ($bd)
-                                                    <p class="text-[11px] text-zinc-500 dark:text-zinc-400 truncate" title="{{ $bd['rowOptions'][$bd['position']]['name'] ?? $row['name'] }}">
-                                                        {{ $bd['rowOptions'][$bd['position']]['name'] ?? $row['name'] }}
-                                                    </p>
+                                                    <div class="flex items-center gap-2">
+                                                        <p class="text-[11px] text-zinc-500 dark:text-zinc-400 truncate flex-1" title="{{ $bd['rowOptions'][$bd['position']]['name'] ?? $row['name'] }}">
+                                                            {{ $bd['rowOptions'][$bd['position']]['name'] ?? $row['name'] }}
+                                                        </p>
+                                                        <button
+                                                            type="button"
+                                                            wire:click="reloadRowFromLibrary('{{ $row['slug'] }}')"
+                                                            class="text-zinc-400 dark:text-zinc-500 hover:text-primary transition-colors shrink-0"
+                                                            title="Reload row from design library"
+                                                        >
+                                                            <flux:icon name="arrow-path" class="size-3.5" />
+                                                        </button>
+                                                    </div>
                                                 @endif
                                             </div>
                                         </div>
