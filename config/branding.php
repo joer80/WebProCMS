@@ -2,7 +2,7 @@
 
 return [
 
-    'logo_url' => '/storage/logos/kzZVWQZUWyFuOKrsJZuMmZr2cBUtxleirbQ8bUp8.svg',
+    'logo_url' => '/storage/logos/u0TXvpEIQkCmR5Hjc653aLxeNRcD3aQTjmDAjmHk.svg',
     'body_font' => 'system',
     'heading_font' => 'system',
     'section_spacing' => 'medium',

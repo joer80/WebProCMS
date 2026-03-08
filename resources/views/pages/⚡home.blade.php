@@ -19,29 +19,29 @@ new #[Layout('layouts.public', ['description' => 'WebProCMS is a clean, powerful
             ->get();
     }
 }; ?>
-<div>{{-- ROW:start:hero-centered:6JIvVk --}}
-<x-dl.section slug="hero-centered:6JIvVk"
+<div>{{-- ROW:start:hero-split:tJboRP --}}
+<x-dl.section slug="hero-split:tJboRP"
     default-section-classes="py-section-hero px-6 bg-white dark:bg-zinc-900"
     default-container-classes="max-w-6xl mx-auto grid md:grid-cols-2 gap-12 items-center">
         <div>
-            <x-dl.heading slug="hero-centered:6JIvVk" prefix="headline" default="Build Something Amazing"
+            <x-dl.heading slug="hero-split:tJboRP" prefix="headline" default="Build Something Amazing"
                 default-tag="h1"
                 default-classes="font-heading text-5xl font-bold text-zinc-900 dark:text-white leading-tight" />
-            <x-dl.subheadline slug="hero-centered:6JIvVk" prefix="subheadline" default="Describe your product or service here. Keep it concise and focused on the value you deliver to customers."
+            <x-dl.subheadline slug="hero-split:tJboRP" prefix="subheadline" default="Describe your product or service here. Keep it concise and focused on the value you deliver to customers."
                 default-classes="mt-6 text-lg text-zinc-500 dark:text-zinc-400" />
-            <x-dl.buttons slug="hero-centered:6JIvVk"
+            <x-dl.buttons slug="hero-split:tJboRP"
                 default-wrapper-classes="mt-8 flex flex-wrap gap-4"
                 default-primary-label="Start Free Trial"
                 default-primary-classes="px-6 py-3 bg-primary text-white font-semibold rounded-lg hover:bg-primary/90 transition-colors"
                 default-secondary-label="Watch Demo →"
                 default-secondary-classes="px-6 py-3 text-zinc-600 dark:text-zinc-300 font-semibold hover:text-zinc-900 dark:hover:text-white transition-colors" />
         </div>
-        <x-dl.media slug="hero-centered:6JIvVk"
+        <x-dl.media slug="hero-split:tJboRP"
             default-wrapper-classes="rounded-card overflow-hidden bg-zinc-100 dark:bg-zinc-800 aspect-video flex items-center justify-center"
             default-image-classes="w-full h-full object-cover"
             default-image="https://placehold.co/1200x675" />
 </x-dl.section>
-{{-- ROW:end:hero-centered:6JIvVk --}}
+{{-- ROW:end:hero-split:tJboRP --}}
 
 {{-- ROW:start:content-featured-card-grid:XnaRdV --}}
 <x-dl.section slug="content-featured-card-grid:XnaRdV"
