@@ -24,11 +24,17 @@ class Grid extends Component
     {
         $prefix = $attrs['prefix'] ?? 'items';
 
-        return [
+        $fields = [
             ['key' => "toggle_{$prefix}", 'default' => '1'],
             ['key' => "grid_{$prefix}", 'default' => $attrs['default-items'] ?? '[]'],
             ['key' => "{$prefix}_grid_classes", 'default' => $attrs['default-grid-classes'] ?? 'grid md:grid-cols-3 gap-8'],
         ];
+
+        if (array_key_exists('default-object-fit', $attrs)) {
+            $fields[] = ['key' => "{$prefix}_object_fit", 'default' => $attrs['default-object-fit'] ?? 'cover'];
+        }
+
+        return $fields;
     }
 
     public function render(): View

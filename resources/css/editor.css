@@ -74,3 +74,8 @@ textarea:focus[data-flux-control],
 select:focus[data-flux-control] {
     @apply outline-hidden ring-2 ring-accent ring-offset-2 ring-offset-accent-foreground;
 }
+
+
+@utility none {
+    --tw-none: ; /* No-op utility — use in classes fields to suppress defaults without applying any styles */
+}

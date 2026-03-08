@@ -78,6 +78,7 @@ new #[Layout('layouts.public', ['description' => 'WebProCMS is a clean, powerful
     {{-- Right: three smaller cards stacked vertically --}}
     <x-dl.grid slug="content-featured-card-grid:XnaRdV" prefix="cards"
         default-grid-classes="grid gap-4"
+        default-object-fit="cover"
         default-items='[{"image":"","image_alt":"X-Rays & Lab Work","title":"X-Rays & Lab Work","desc":"On-site diagnostics enable fast answers and treatment, all in one convenient visit."},{"image":"","image_alt":"Wellness & Preventive Care","title":"Wellness & Preventive Care","desc":"Proactive health services from preventive screenings to weight management."},{"image":"","image_alt":"Occupational Medicine","title":"Occupational Medicine","desc":"Comprehensive occupational health services tailored for your workforce."}]'>
         @dlItems('content-featured-card-grid:XnaRdV', 'cards', $cards, '[{"image":"","image_alt":"X-Rays & Lab Work","title":"X-Rays & Lab Work","desc":"On-site diagnostics enable fast answers and treatment, all in one convenient visit."},{"image":"","image_alt":"Wellness & Preventive Care","title":"Wellness & Preventive Care","desc":"Proactive health services from preventive screenings to weight management."},{"image":"","image_alt":"Occupational Medicine","title":"Occupational Medicine","desc":"Comprehensive occupational health services tailored for your workforce."}]')
         @foreach ($cards as $card)
@@ -95,9 +96,9 @@ new #[Layout('layouts.public', ['description' => 'WebProCMS is a clean, powerful
                     </x-dl.wrapper>
                 </x-dl.wrapper>
                 <x-dl.wrapper slug="content-featured-card-grid:XnaRdV" prefix="card_image_wrapper"
-                    default-classes="w-28 shrink-0 overflow-hidden bg-zinc-100 dark:bg-zinc-700">
+                    default-classes="w-28 shrink-0 flex flex-col overflow-hidden bg-zinc-100 dark:bg-zinc-700">
                     @if ($cardImg)
-                        <img src="{{ $cardImg }}" alt="{{ $card['image_alt'] }}" class="w-full h-full object-cover">
+                        <img src="{{ $cardImg }}" alt="{{ $card['image_alt'] }}" class="flex-1 min-h-0 w-full {{ match(content('content-featured-card-grid:XnaRdV', 'cards_object_fit', 'cover')) { 'contain' => 'object-contain', 'fill' => 'object-fill', 'none' => 'object-none', default => 'object-cover' } }}">
                     @else
                         <div class="w-full h-full flex items-center justify-center text-zinc-300 dark:text-zinc-600">
                             <svg xmlns="http://www.w3.org/2000/svg" class="size-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
@@ -117,23 +118,7 @@ new #[Layout('layouts.public', ['description' => 'WebProCMS is a clean, powerful
 </x-dl.section>
 {{-- ROW:end:content-featured-card-grid:XnaRdV --}}
 
-{{-- ROW:start:cta-banner:uWIg5r --}}
-<x-dl.section slug="cta-banner:uWIg5r"
-    default-section-classes="py-section-banner px-6 bg-primary"
-    default-container-classes="max-w-6xl mx-auto grid md:grid-cols-2 gap-8 items-center">
-    <div>
-        <x-dl.heading slug="cta-banner:uWIg5r" prefix="headline" default="Find a Location Near You"
-            default-tag="h2"
-            default-classes="font-heading text-3xl font-bold text-white" />
-        <x-dl.subheadline slug="cta-banner:uWIg5r" prefix="subheadline" default="With locations across the region, quality care is always close by. Walk in today or book online."
-            default-classes="mt-3 text-white/80" />
-    </div>
-    <x-dl.buttons slug="cta-banner:uWIg5r"
-        default-wrapper-classes="flex flex-wrap items-center justify-start md:justify-end gap-4"
-        default-primary-label="Our Locations"
-        default-primary-classes="px-8 py-3 bg-white text-primary font-semibold rounded-lg hover:bg-zinc-100 transition-colors"
-        default-secondary-label="Contact Us"
-        default-secondary-classes="px-8 py-3 border border-white/30 text-white font-semibold rounded-lg hover:bg-white/10 transition-colors" />
-</x-dl.section>
+{{-- ROW:start:cta-banner:uWIg5r:shared=1 --}}
+@include('shared-rows.cta-banner-uWIg5r')
 {{-- ROW:end:cta-banner:uWIg5r --}}
 </div>

@@ -3,6 +3,10 @@
 @php
 $wrapperCls = content($slug, "{$prefix}_wrapper_classes", $defaultWrapperClasses);
 $imageCls = content($slug, "{$prefix}_image_classes", $defaultImageClasses);
+$objectFit = content($slug, "{$prefix}_object_fit", '');
+if ($objectFit) {
+    $imageCls = trim(preg_replace('/\bobject-\S+/', '', $imageCls) . ' object-' . $objectFit);
+}
 $imgSrc = content($slug, "{$prefix}_image", $defaultImage);
 $imgAlt = content($slug, "{$prefix}_image_alt", '');
 @endphp

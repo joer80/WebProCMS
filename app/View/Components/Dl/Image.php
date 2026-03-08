@@ -29,6 +29,7 @@ class Image extends Component
             ['key' => "toggle_{$prefix}", 'default' => '1'],
             ['key' => "{$prefix}_image", 'default' => ''],
             ['key' => "{$prefix}_image_alt", 'default' => ''],
+            ['key' => "{$prefix}_object_fit", 'default' => 'cover'],
             ['key' => "{$prefix}_wrapper_classes", 'default' => $attrs['default-wrapper-classes'] ?? 'rounded-card overflow-hidden aspect-video'],
             ['key' => "{$prefix}_image_classes", 'default' => $attrs['default-image-classes'] ?? 'w-full h-full object-cover'],
         ];
