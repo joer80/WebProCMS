@@ -3,6 +3,8 @@
 @php
 $wrapperCls = content($slug, 'image_wrapper_classes', $defaultWrapperClasses);
 $imageCls = content($slug, 'image_classes', $defaultImageClasses);
+$objectFit = content($slug, 'image_object_fit', 'cover');
+$imageCls = trim(preg_replace('/\bobject-\S+/', '', $imageCls) . ' object-' . $objectFit);
 $imgSrc = content($slug, 'image', $defaultImage);
 $imgAlt = content($slug, 'image_alt', '');
 $imgLazy = content($slug, 'toggle_image_lazy', '');

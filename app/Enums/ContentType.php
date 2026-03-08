@@ -11,6 +11,7 @@ enum ContentType: string
     case Classes = 'classes';
     case Grid = 'grid';
     case FormSelect = 'form_select';
+    case ObjectFit = 'object_fit';
 
     public function label(): string
     {
@@ -22,6 +23,7 @@ enum ContentType: string
             ContentType::Classes => 'Classes',
             ContentType::Grid => 'Grid',
             ContentType::FormSelect => 'Form Select',
+            ContentType::ObjectFit => 'Object Fit',
         };
     }
 }

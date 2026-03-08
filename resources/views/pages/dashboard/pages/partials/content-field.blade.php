@@ -2,7 +2,7 @@
 $effMode = "(groupMode !== null ? groupMode : (advancedMode ? 'advanced' : (designMode ? 'design' : 'content')))";
 if (in_array($field['type'], ['id', 'attrs'])) {
     $fieldShow = "{$effMode} === 'advanced'";
-} elseif ($field['type'] === 'classes') {
+} elseif (in_array($field['type'], ['classes', 'object_fit'])) {
     $fieldShow = "{$effMode} === 'design'";
 } else {
     $fieldShow = "{$effMode} === 'content'";
@@ -403,6 +403,13 @@ if (in_array($field['type'], ['id', 'attrs'])) {
             @foreach ($availableMenus as $availableMenu)
                 <flux:select.option value="{{ $availableMenu['slug'] }}">{{ $availableMenu['label'] }}</flux:select.option>
             @endforeach
+        </flux:select>
+    @elseif ($field['type'] === 'object_fit')
+        <flux:select wire:model.live="contentValues.{{ $field['key'] }}">
+            <flux:select.option value="cover">Cover — crop to fill</flux:select.option>
+            <flux:select.option value="contain">Contain — show whole image</flux:select.option>
+            <flux:select.option value="fill">Fill — stretch to fit</flux:select.option>
+            <flux:select.option value="none">None — original size</flux:select.option>
         </flux:select>
     @elseif ($field['type'] === 'note')
         <div class="rounded-lg bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200 dark:border-zinc-700 px-3 py-2.5 text-xs text-zinc-500 dark:text-zinc-400 leading-relaxed">{!! $field['message'] ?? '' !!}</div>
