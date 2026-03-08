@@ -21,48 +21,40 @@ new #[Layout('layouts.public', ['description' => 'WebProCMS is a clean, powerful
 }; ?>
 <div>{{-- ROW:start:hero-centered:6JIvVk --}}
 <x-dl.section slug="hero-centered:6JIvVk"
-    default-section-classes="py-section-hero px-6 bg-white dark:bg-zinc-900 text-center"
-    default-container-classes="max-w-3xl mx-auto">
-        <x-dl.subheadline slug="hero-centered:6JIvVk" prefix="badge" tag="span" default="Welcome"
-            default-classes="inline-block px-3 py-1 text-xs font-semibold tracking-widest uppercase bg-primary/10 text-primary rounded-full mb-6" />
-        <x-dl.heading slug="hero-centered:6JIvVk" prefix="headline" default="Your Headline Goes Here"
-            default-tag="h1"
-            default-classes="font-heading text-5xl sm:text-6xl font-bold text-zinc-900 dark:text-white leading-tight" />
-        <x-dl.subheadline slug="hero-centered:6JIvVk" prefix="subheadline" default="A compelling subheadline that explains what you do and why it matters to your audience."
-            default-classes="mt-6 text-xl text-zinc-500 dark:text-zinc-400 leading-relaxed" />
-        <x-dl.buttons slug="hero-centered:6JIvVk"
-            default-wrapper-classes="mt-10 flex flex-wrap items-center justify-center gap-4"
-            default-primary-label="Get Started"
-            default-primary-classes="px-6 py-3 bg-primary text-white font-semibold rounded-lg hover:bg-primary/90 transition-colors"
-            default-secondary-label="Learn More"
-            default-secondary-classes="px-6 py-3 border border-zinc-300 dark:border-zinc-600 text-zinc-700 dark:text-zinc-200 font-semibold rounded-lg hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors" />
+    default-section-classes="py-section-hero px-6 bg-white dark:bg-zinc-900"
+    default-container-classes="max-w-6xl mx-auto grid md:grid-cols-2 gap-12 items-center">
+        <div>
+            <x-dl.heading slug="hero-centered:6JIvVk" prefix="headline" default="Build Something Amazing"
+                default-tag="h1"
+                default-classes="font-heading text-5xl font-bold text-zinc-900 dark:text-white leading-tight" />
+            <x-dl.subheadline slug="hero-centered:6JIvVk" prefix="subheadline" default="Describe your product or service here. Keep it concise and focused on the value you deliver to customers."
+                default-classes="mt-6 text-lg text-zinc-500 dark:text-zinc-400" />
+            <x-dl.buttons slug="hero-centered:6JIvVk"
+                default-wrapper-classes="mt-8 flex flex-wrap gap-4"
+                default-primary-label="Start Free Trial"
+                default-primary-classes="px-6 py-3 bg-primary text-white font-semibold rounded-lg hover:bg-primary/90 transition-colors"
+                default-secondary-label="Watch Demo →"
+                default-secondary-classes="px-6 py-3 text-zinc-600 dark:text-zinc-300 font-semibold hover:text-zinc-900 dark:hover:text-white transition-colors" />
+        </div>
+        <x-dl.media slug="hero-centered:6JIvVk"
+            default-wrapper-classes="rounded-card overflow-hidden bg-zinc-100 dark:bg-zinc-800 aspect-video flex items-center justify-center"
+            default-image-classes="w-full h-full object-cover"
+            default-image="https://placehold.co/1200x675" />
 </x-dl.section>
+
 {{-- ROW:end:hero-centered:6JIvVk --}}
 
 {{-- ROW:start:content-two-column:XnaRdV --}}
 <x-dl.section slug="content-two-column:XnaRdV"
     default-section-classes="py-section px-6 bg-white dark:bg-zinc-900"
-    default-container-classes="max-w-6xl mx-auto grid md:grid-cols-2 gap-12 items-center">
-        <div>
-            <x-dl.subheadline slug="content-two-column:XnaRdV" prefix="badge" tag="span" default="Our Story"
-                default-classes="text-sm font-semibold text-primary uppercase tracking-wider" />
-            <x-dl.heading slug="content-two-column:XnaRdV" prefix="headline" default="We Are Building the Future of Work"
-                default-tag="h2"
-                default-classes="font-heading mt-3 text-4xl font-bold text-zinc-900 dark:text-white leading-tight" />
-            <x-dl.subheadline slug="content-two-column:XnaRdV" prefix="body" tag="p" default="Founded in 2020, we have been on a mission to help teams collaborate more effectively. Our platform combines the best of communication, project management, and automation into one seamless experience."
-                default-classes="mt-6 text-zinc-500 dark:text-zinc-400 leading-relaxed" />
-            <x-dl.subheadline slug="content-two-column:XnaRdV" prefix="body_secondary" tag="p" default="Today, we are trusted by over 10,000 companies worldwide, from startups to Fortune 500 enterprises."
-                default-classes="mt-4 text-zinc-500 dark:text-zinc-400 leading-relaxed" />
-            <x-dl.link slug="content-two-column:XnaRdV" prefix="cta"
-                default-label="Learn more about us →"
-                default-url="#"
-                default-classes="mt-8 inline-flex items-center text-primary font-semibold hover:text-primary/80 transition-colors" />
-        </div>
-        <x-dl.media slug="content-two-column:XnaRdV"
-            default-wrapper-classes="rounded-card overflow-hidden bg-zinc-100 dark:bg-zinc-800 aspect-square flex items-center justify-center"
-            default-image-classes="w-full h-full object-cover"
-            default-image="https://placehold.co/800x800" />
+    default-container-classes="max-w-3xl mx-auto">
+    <x-dl.heading slug="content-two-column:XnaRdV" prefix="headline" default="Our Story"
+        default-tag="h2"
+        default-classes="font-heading text-4xl font-bold text-zinc-900 dark:text-white mb-8" />
+    <x-dl.subheadline slug="content-two-column:XnaRdV" prefix="body" tag="div" default="<p>We started with a simple question: why is software so hard to use? After years of watching teams struggle with disconnected tools, we set out to build something better.</p><p>Our platform was born in 2020 from the frustration of trying to coordinate a distributed team across a dozen different apps. We knew there had to be a better way — and we built it.</p><p>Today, we're proud to serve thousands of teams worldwide, from scrappy two-person startups to global enterprises with thousands of employees. Our mission hasn't changed: make great software that works for everyone.</p>"
+        default-classes="prose prose-zinc dark:prose-invert max-w-none text-zinc-600 dark:text-zinc-300 leading-relaxed space-y-4" />
 </x-dl.section>
+
 {{-- ROW:end:content-two-column:XnaRdV --}}
 
 {{-- ROW:start:cta-banner:uWIg5r --}}

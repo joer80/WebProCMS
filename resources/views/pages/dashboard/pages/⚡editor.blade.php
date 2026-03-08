@@ -681,7 +681,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
         $this->rows[$rowIndex] = [
             'slug' => $slug,
             'name' => $designRow->name,
-            'blade' => str_replace('__SLUG__', $slug, $designRow->blade_code),
+            'blade' => str_replace('__SLUG__', $slug, $designRow->bladeCodeFromFile()),
             'shared' => $existing['shared'] ?? false,
             'hidden' => $existing['hidden'] ?? false,
             // Track which design library template is active so saveFile can
@@ -707,13 +707,14 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
         $newRow = [
             'slug' => $slug,
             'name' => $designRow->name,
-            'blade' => str_replace('__SLUG__', $slug, $designRow->blade_code),
+            'blade' => str_replace('__SLUG__', $slug, $designRow->bladeCodeFromFile()),
         ];
 
-        if ($designRow->php_code && $this->phpSection) {
+        $phpCode = $designRow->phpCodeFromFile();
+        if ($phpCode && $this->phpSection) {
             $this->phpSection = (new VoltFileService)->injectPhpCode(
                 $this->phpSection,
-                $designRow->php_code,
+                $phpCode,
                 $slug
             );
         }

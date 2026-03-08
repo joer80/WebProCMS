@@ -15,9 +15,11 @@ Route::middleware([
     // Route::get('blog2', \App\Livewire\Blog2::class)->name('blog2.index');
 
     // new cached pages are inserted here
-        Route::livewire('test-clone-dest-69aca89ca71ba', 'pages::test-clone-dest-69aca89ca71ba')->name('test-clone-dest-69aca89ca71ba');
-        Route::livewire('test-clone-dest-69ac7d3d3fa8d', 'pages::test-clone-dest-69ac7d3d3fa8d')->name('test-clone-dest-69ac7d3d3fa8d');
-        Route::livewire('test-clone-dest-69ac7d004a46c', 'pages::test-clone-dest-69ac7d004a46c')->name('test-clone-dest-69ac7d004a46c');
+    Route::livewire('test-clone-dest-69acb64731ae7', 'pages::test-clone-dest-69acb64731ae7')->name('test-clone-dest-69acb64731ae7');
+    Route::livewire('test-clone-dest-69acb5418f739', 'pages::test-clone-dest-69acb5418f739')->name('test-clone-dest-69acb5418f739');
+    Route::livewire('test-clone-dest-69aca89ca71ba', 'pages::test-clone-dest-69aca89ca71ba')->name('test-clone-dest-69aca89ca71ba');
+    Route::livewire('test-clone-dest-69ac7d3d3fa8d', 'pages::test-clone-dest-69ac7d3d3fa8d')->name('test-clone-dest-69ac7d3d3fa8d');
+    Route::livewire('test-clone-dest-69ac7d004a46c', 'pages::test-clone-dest-69ac7d004a46c')->name('test-clone-dest-69ac7d004a46c');
     Route::livewire('contact', 'pages::contact')->name('contact');
     Route::livewire('about', 'pages::about')->name('about');
     Route::livewire('404', 'pages::404')->name('404');
@@ -101,7 +103,7 @@ Route::middleware(['auth', 'verified'])->group(function (): void {
             if ($type === 'row') {
                 $item = \App\Models\DesignRow::query()->findOrFail($id);
                 $slug = 'preview-row-'.$id;
-                $blade = str_replace('__SLUG__', $slug, $item->blade_code);
+                $blade = str_replace('__SLUG__', $slug, $item->bladeCodeFromFile());
             } else {
                 $item = \App\Models\DesignPage::query()->findOrFail($id);
                 $rowNames = $item->row_names ?? [];
@@ -119,7 +121,7 @@ Route::middleware(['auth', 'verified'])->group(function (): void {
                     }
 
                     $slug = 'preview-page-'.$id.'-'.$i;
-                    $blade = str_replace('__SLUG__', $slug, $row->blade_code);
+                    $blade = str_replace('__SLUG__', $slug, $row->bladeCodeFromFile());
 
                     try {
                         $parts[] = \Illuminate\Support\Facades\Blade::render($blade);

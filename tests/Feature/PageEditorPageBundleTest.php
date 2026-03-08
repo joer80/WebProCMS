@@ -6,6 +6,7 @@ use App\Models\User;
 use Livewire\Livewire;
 
 beforeEach(function (): void {
+    $this->libraryTempPaths = [];
     $this->tempRelativePath = 'pages/test-bundle-'.uniqid().'.blade.php';
     $this->tempFullPath = resource_path('views/'.$this->tempRelativePath);
 
@@ -26,6 +27,12 @@ afterEach(function (): void {
         unlink($this->tempFullPath);
     }
 
+    foreach ($this->libraryTempPaths ?? [] as $path) {
+        if (file_exists($path)) {
+            unlink($path);
+        }
+    }
+
     $previewDir = resource_path('views/pages/_editor-previews');
 
     foreach (glob($previewDir.'/*.blade.php') ?: [] as $file) {
@@ -39,14 +46,20 @@ it('inserts all rows from a page bundle at the given index', function (): void {
     $rowA = DesignRow::factory()->create([
         'name' => 'Hero Row',
         'source_file' => 'rows/hero/bundle-hero-'.uniqid().'.blade.php',
-        'blade_code' => '<section>Hero</section>',
     ]);
+    $pathA = resource_path('design-library/'.$rowA->source_file);
+    @mkdir(dirname($pathA), 0755, true);
+    file_put_contents($pathA, '<section>Hero</section>');
+    $this->libraryTempPaths[] = $pathA;
 
     $rowB = DesignRow::factory()->create([
         'name' => 'Features Row',
         'source_file' => 'rows/features/bundle-features-'.uniqid().'.blade.php',
-        'blade_code' => '<section>Features</section>',
     ]);
+    $pathB = resource_path('design-library/'.$rowB->source_file);
+    @mkdir(dirname($pathB), 0755, true);
+    file_put_contents($pathB, '<section>Features</section>');
+    $this->libraryTempPaths[] = $pathB;
 
     $templateA = basename($rowA->source_file, '.blade.php');
     $templateB = basename($rowB->source_file, '.blade.php');
@@ -75,8 +88,11 @@ it('skips unknown row names gracefully', function (): void {
     $realRow = DesignRow::factory()->create([
         'name' => 'Real Row',
         'source_file' => 'rows/hero/bundle-real-'.uniqid().'.blade.php',
-        'blade_code' => '<section>Real</section>',
     ]);
+    $realPath = resource_path('design-library/'.$realRow->source_file);
+    @mkdir(dirname($realPath), 0755, true);
+    file_put_contents($realPath, '<section>Real</section>');
+    $this->libraryTempPaths[] = $realPath;
 
     $bundle = DesignPage::factory()->create([
         'row_names' => [basename($realRow->source_file, '.blade.php'), 'nonexistent-row'],

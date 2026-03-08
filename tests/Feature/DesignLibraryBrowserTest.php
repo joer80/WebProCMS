@@ -68,7 +68,11 @@ it('validates required fields when creating a row', function (): void {
 
 it('can edit an existing design row', function (): void {
     $user = User::factory()->create();
-    $row = DesignRow::factory()->create(['name' => 'Original Name', 'source_file' => '']);
+    $srcPath = 'rows/content/test-edit-'.uniqid().'.blade.php';
+    $fullPath = resource_path('design-library/'.$srcPath);
+    @mkdir(dirname($fullPath), 0755, true);
+    file_put_contents($fullPath, "{{--\n@name Original Name\n@description Test.\n@sort 99\n--}}\n<section>Original</section>");
+    $row = DesignRow::factory()->create(['name' => 'Original Name', 'source_file' => $srcPath]);
 
     Livewire::actingAs($user)
         ->test('pages::dashboard.design-library.index')
@@ -78,6 +82,8 @@ it('can edit an existing design row', function (): void {
         ->call('save');
 
     expect($row->fresh()->name)->toBe('Updated Name');
+
+    @unlink($fullPath);
 });
 
 it('can delete a design row', function (): void {

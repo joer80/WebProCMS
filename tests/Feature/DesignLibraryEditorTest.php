@@ -162,8 +162,10 @@ it('can insert a row from the library at a given index', function (): void {
     $user = User::factory()->create();
     $designRow = DesignRow::factory()->create([
         'name' => 'Library Row',
-        'blade_code' => '<section>From Library</section>',
     ]);
+    $this->libraryTempPath = resource_path('design-library/'.$designRow->source_file);
+    @mkdir(dirname($this->libraryTempPath), 0755, true);
+    file_put_contents($this->libraryTempPath, '<section>From Library</section>');
 
     $component = Livewire::actingAs($user)
         ->test('pages::dashboard.pages.editor')

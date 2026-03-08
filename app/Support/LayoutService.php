@@ -153,7 +153,8 @@ PHP;
         $name = $this->templateName($row);
         $slug = "{$name}:{$type}";
 
-        $bladeCode = $this->stripFrontmatter($row->blade_code);
+        $sourceFile = resource_path('design-library/'.$row->source_file);
+        $bladeCode = $this->stripFrontmatter(file_get_contents($sourceFile));
         $bladeCode = str_replace('__SLUG__', $slug, $bladeCode);
 
         $fileContent = "<?php /** @layout-partial {$type} */ ?>\n"

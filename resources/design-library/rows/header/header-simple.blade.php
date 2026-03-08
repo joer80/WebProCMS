@@ -16,7 +16,7 @@
     <x-dl.nav slug="__SLUG__" prefix="main_nav"
         default-menu="main-navigation"
         default-classes="hidden md:flex items-center gap-8"
-        default-item-classes="text-sm text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition-colors" />
+        default-item-classes="text-sm uppercase tracking-wide font-medium text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition-colors" />
     <x-dl.wrapper slug="__SLUG__" prefix="header_button"
         default-classes="flex items-center gap-3">
         <x-dl.link slug="__SLUG__" prefix="primary_cta"

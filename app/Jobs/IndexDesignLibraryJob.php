@@ -49,8 +49,6 @@ class IndexDesignLibraryJob implements ShouldQueue
                             'name' => $data['name'],
                             'category' => $category,
                             'description' => $data['description'],
-                            'blade_code' => $data['blade_code'],
-                            'php_code' => $data['php_code'] ?: null,
                             'sort_order' => $data['sort_order'],
                             'schema_fields' => $data['schema_fields'],
                         ]

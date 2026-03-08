@@ -9,7 +9,7 @@ class DesignLibraryService
     /**
      * Parse a design library .blade.php template file into structured data.
      *
-     * @return array{name: string, description: string, sort_order: int, blade_code: string, php_code: string, source_file: string, schema_fields: list<array{key: string, type: string, group: string, default: string, label: string}>, row_names: list<string>}
+     * @return array{name: string, description: string, sort_order: int, source_file: string, schema_fields: list<array{key: string, type: string, group: string, default: string, label: string}>, row_names: list<string>}
      */
     public function parseTemplateFile(string $fullPath): array
     {
@@ -59,8 +59,6 @@ class DesignLibraryService
             'name' => $name ?: basename($fullPath, '.blade.php'),
             'description' => $description,
             'sort_order' => $sortOrder,
-            'blade_code' => $bladeCode,
-            'php_code' => $phpCode,
             'source_file' => $this->relativeSourcePath($fullPath),
             'schema_fields' => $schemaFields,
             'row_names' => $rowNames,

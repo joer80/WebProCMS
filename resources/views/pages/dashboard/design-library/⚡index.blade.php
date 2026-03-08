@@ -138,8 +138,8 @@ new #[Layout('layouts.app')] #[Title('Design Library')] class extends Component 
             $this->formName = $row->name;
             $this->formCategory = $row->category->value;
             $this->formDescription = $row->description ?? '';
-            $this->formBladeCode = $row->blade_code;
-            $this->formPhpCode = $row->php_code ?? '';
+            $this->formBladeCode = $row->bladeCodeFromFile();
+            $this->formPhpCode = $row->phpCodeFromFile();
         } else {
             $page = DesignPage::query()->findOrFail($id);
             $this->formName = $page->name;
@@ -169,35 +169,38 @@ new #[Layout('layouts.app')] #[Title('Design Library')] class extends Component 
         $service = new DesignLibraryService;
 
         if ($this->tab === 'rows') {
-            $data = [
+            $dbData = [
                 'name' => $this->formName,
                 'description' => $this->formDescription ?: null,
-                'blade_code' => $this->formBladeCode,
-                'php_code' => $this->formPhpCode ?: null,
                 'category' => $this->formCategory,
             ];
 
+            $fileData = array_merge($dbData, [
+                'blade_code' => $this->formBladeCode,
+                'php_code' => $this->formPhpCode ?: null,
+            ]);
+
             if ($this->editingId) {
                 $row = DesignRow::query()->findOrFail($this->editingId);
-                $row->update($data);
+                $row->update($dbData);
 
                 // Write back to source file if it exists
                 if ($row->source_file) {
                     $fullPath = $service->fullPath($row->source_file);
                     if (file_exists($fullPath)) {
-                        $service->writeTemplateFile($fullPath, array_merge($data, ['sort_order' => $row->sort_order]));
+                        $service->writeTemplateFile($fullPath, array_merge($fileData, ['sort_order' => $row->sort_order]));
                     }
                 }
 
                 $message = 'Row updated.';
             } else {
                 $slug = $this->formCategory.'-'.now()->format('YmdHis');
-                $data['source_file'] = 'rows/'.$this->formCategory.'/'.$slug.'.blade.php';
-                $data['sort_order'] = 0;
-                $row = DesignRow::query()->create($data);
+                $dbData['source_file'] = 'rows/'.$this->formCategory.'/'.$slug.'.blade.php';
+                $dbData['sort_order'] = 0;
+                $row = DesignRow::query()->create($dbData);
 
                 if (app()->isLocal()) {
-                    $service->writeTemplateFile($service->fullPath($row->source_file), $data);
+                    $service->writeTemplateFile($service->fullPath($row->source_file), array_merge($fileData, ['source_file' => $row->source_file, 'sort_order' => 0]));
                 }
 
                 $message = 'Row created.';

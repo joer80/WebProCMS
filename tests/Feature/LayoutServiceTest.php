@@ -62,7 +62,6 @@ it('activates a header and creates the partial file', function (): void {
     $row = DesignRow::factory()->create([
         'category' => RowCategory::Header,
         'source_file' => 'rows/header/header-simple.blade.php',
-        'blade_code' => '<section>__SLUG__</section>',
     ]);
 
     $service = new LayoutService;
@@ -80,7 +79,6 @@ it('deactivates a header and clears the config', function (): void {
     $row = DesignRow::factory()->create([
         'category' => RowCategory::Header,
         'source_file' => 'rows/header/header-simple.blade.php',
-        'blade_code' => '<section>__SLUG__</section>',
     ]);
 
     $service = new LayoutService;
@@ -95,7 +93,6 @@ it('activates a footer and creates the partial file', function (): void {
     $row = DesignRow::factory()->create([
         'category' => RowCategory::Footer,
         'source_file' => 'rows/footer/footer-simple.blade.php',
-        'blade_code' => '<footer>__SLUG__</footer>',
     ]);
 
     $service = new LayoutService;
