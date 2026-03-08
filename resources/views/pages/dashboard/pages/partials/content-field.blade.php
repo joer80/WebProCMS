@@ -163,6 +163,11 @@ if (in_array($field['type'], ['id', 'attrs'])) {
                         <p class="text-zinc-500 dark:text-zinc-400 mb-1">Site-wide design tokens set in Branding:</p>
                         <code class="block font-mono bg-zinc-100 dark:bg-zinc-700 text-zinc-700 dark:text-zinc-200 px-2 py-1 rounded leading-relaxed">font-heading rounded-card shadow-card<br>py-section &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;— standard rows<br>py-section-banner — compact CTAs<br>py-section-hero &nbsp;&nbsp;— hero sections</code>
                     </div>
+                    <div>
+                        <p class="font-medium text-zinc-600 dark:text-zinc-300 mb-0.5">Remove all styles</p>
+                        <p class="text-zinc-500 dark:text-zinc-400 mb-1">Type <span class="font-mono">none</span> to suppress the default classes and apply no styles:</p>
+                        <code class="block font-mono bg-zinc-100 dark:bg-zinc-700 text-zinc-700 dark:text-zinc-200 px-2 py-1 rounded">none</code>
+                    </div>
                 </div>
             </div>
         </div>
@@ -208,7 +213,7 @@ if (in_array($field['type'], ['id', 'attrs'])) {
                     <div class="flex items-center gap-1.5 px-3 py-2">
                         <button type="button" @click="openItems[idx] = !openItems[idx]" class="flex items-center gap-1.5 flex-1 min-w-0 text-left">
                             <flux:icon name="chevron-right" class="size-4 text-zinc-400 shrink-0 transition-transform duration-150" x-bind:class="openItems[idx] ? 'rotate-90' : ''" />
-                            <span class="text-sm text-zinc-700 dark:text-zinc-200 font-medium truncate" x-text="item.alt || (item.image ? item.image.split('/').pop() : null) || item.title || item.name || item.label || ('Item ' + (idx + 1))"></span>
+                            <span class="text-sm text-zinc-700 dark:text-zinc-200 font-medium truncate" x-text="item.title || item.name || item.label || item.alt || (item.image ? item.image.split('/').pop() : null) || ('Item ' + (idx + 1))"></span>
                         </button>
                         <button
                             type="button"
@@ -406,6 +411,7 @@ if (in_array($field['type'], ['id', 'attrs'])) {
         </flux:select>
     @elseif ($field['type'] === 'object_fit')
         <flux:select wire:model.live="contentValues.{{ $field['key'] }}">
+            <flux:select.option value="">— default —</flux:select.option>
             <flux:select.option value="cover">Cover — crop to fill</flux:select.option>
             <flux:select.option value="contain">Contain — show whole image</flux:select.option>
             <flux:select.option value="fill">Fill — stretch to fit</flux:select.option>

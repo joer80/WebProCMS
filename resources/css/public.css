@@ -67,3 +67,7 @@
         background-color: var(--color-alt-row) !important;
     }
 }
+
+@utility none {
+    /* No-op class — use in classes fields to suppress defaults without applying any styles */
+}

@@ -19,6 +19,7 @@ class Wrapper extends Component
         public string $defaultClasses = '',
         public ?string $defaultFeaturedClasses = null,
         public bool $featured = false,
+        public ?string $defaultObjectFit = null,
     ) {
         $this->isVoid = in_array(strtolower($this->tag), self::VOID_ELEMENTS);
     }
@@ -43,6 +44,10 @@ class Wrapper extends Component
 
         if (array_key_exists('default-featured-classes', $attrs)) {
             $fields[] = ['key' => "{$prefix}_featured_classes", 'default' => $attrs['default-featured-classes']];
+        }
+
+        if (array_key_exists('default-object-fit', $attrs)) {
+            $fields[] = ['key' => "{$prefix}_object_fit", 'default' => $attrs['default-object-fit'] ?? 'cover'];
         }
 
         $fields[] = ['key' => "{$prefix}_id", 'default' => '', 'label' => 'Element ID'];
