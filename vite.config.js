@@ -26,6 +26,7 @@ export default defineConfig({
                 '**/config/business.php',
                 '**/config/seo.php',
                 '**/config/branding.php',
+                '**/config/layout.php',
 
                 //Top level Blade files are written at runtime by the editor. The editor handles its own preview refresh, so Vite watching these causes a full page reload that wipes toast notifications. Subdirectories like dashboard still hot reload in vite.
                 '**/resources/views/pages/⚡*.blade.php',

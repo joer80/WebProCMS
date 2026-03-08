@@ -28,6 +28,16 @@ if (! function_exists('content')) {
             if ($schemaField !== null) {
                 $resolvedType = $type ?? $schemaField['type'];
                 $resolvedDefault = $default ?? $schemaField['default'];
+            } elseif ($type === null) {
+                // SchemaCache miss (stale index) — infer type from key name so image/toggle
+                // fields still render correctly without requiring a re-index.
+                if (str_starts_with($key, 'toggle_') || str_ends_with($key, '_new_tab')) {
+                    $resolvedType = 'toggle';
+                } elseif (str_ends_with($key, '_classes')) {
+                    $resolvedType = 'classes';
+                } elseif (str_ends_with($key, '_image') || $key === 'image') {
+                    $resolvedType = 'image';
+                }
             }
         }
 
@@ -42,7 +52,11 @@ if (! function_exists('content')) {
                     return $resolvedDefault;
                 }
 
-                return match ($resolvedType) {
+                // Prefer the type stored in the draft (set by the editor) over the resolved type.
+                // This handles stale schema caches where SchemaCache returns the wrong type.
+                $effectiveType = $drafts[$draftKey]['type'] ?? $resolvedType;
+
+                return match ($effectiveType) {
                     'image' => Storage::url($draft),
                     'richtext' => ShortcodeProcessor::containsShortcodes($draft) ? ShortcodeProcessor::process($draft) : $draft,
                     'text' => ShortcodeProcessor::containsShortcodes($draft) ? ShortcodeProcessor::processRaw($draft) : $draft,

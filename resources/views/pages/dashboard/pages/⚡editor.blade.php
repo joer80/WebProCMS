@@ -1579,6 +1579,20 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
             if (in_array($type, ['header', 'footer'])) {
                 (new LayoutService)->writeConfig(["active_{$type}" => $parts[0]]);
             }
+        } else {
+            // For regular page rows, rewrite slugs that changed due to template browsing.
+            // $rowsToWrite is a copy so in-memory state (and browse panel) stay intact.
+            foreach ($rowsToWrite as $i => $row) {
+                if (! empty($row['template'])) {
+                    $parts = explode(':', $row['slug'], 2);
+                    $randomId = $parts[1] ?? '';
+                    if ($randomId) {
+                        $newSlug = $row['template'].':'.$randomId;
+                        $rowsToWrite[$i]['slug'] = $newSlug;
+                        $rowsToWrite[$i]['blade'] = str_replace($row['slug'], $newSlug, $row['blade']);
+                    }
+                }
+            }
         }
 
         $service = new VoltFileService;
@@ -3573,7 +3587,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
     </flux:modal>
 
     {{-- Media Library Picker --}}
-    <flux:modal wire:model="showMediaPicker" name="media-picker" class="max-w-3xl! p-0!">
+    <flux:modal wire:model="showMediaPicker" name="media-picker" class="p-0!" style="max-width: 75vw; width: 75vw;">
         @if ($showMediaPicker)
             <livewire:pages::dashboard.media-library.picker
                 :field-key="$mediaPickerKey"
@@ -3583,7 +3597,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
     </flux:modal>
 
     {{-- Gallery Picker (multi-select) --}}
-    <flux:modal wire:model="showGalleryPicker" name="gallery-picker" class="max-w-3xl! p-0!">
+    <flux:modal wire:model="showGalleryPicker" name="gallery-picker" class="p-0!" style="max-width: 75vw; width: 75vw;">
         @if ($showGalleryPicker)
             <livewire:pages::dashboard.media-library.picker
                 :field-key="$pendingGalleryFieldKey"

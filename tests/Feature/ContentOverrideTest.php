@@ -155,6 +155,39 @@ it('issues one query per unique slug', function (): void {
     expect(DB::getQueryLog())->toHaveCount(2);
 });
 
+describe('schema cache miss key-name fallback', function (): void {
+    it('infers image type from key name when schema cache misses', function (): void {
+        Storage::fake('public');
+
+        ContentOverride::create([
+            'row_slug' => 'nonexistent-template:abc123',
+            'key' => 'image',
+            'type' => 'image',
+            'value' => 'hero/photo.jpg',
+        ]);
+
+        // No type passed — SchemaCache will miss for 'nonexistent-template', but key 'image' triggers fallback.
+        $url = content('nonexistent-template:abc123', 'image', '');
+
+        expect($url)->toContain('hero/photo.jpg');
+    });
+
+    it('infers image type from _image suffix key name when schema cache misses', function (): void {
+        Storage::fake('public');
+
+        ContentOverride::create([
+            'row_slug' => 'nonexistent-template:abc123',
+            'key' => 'hero_image',
+            'type' => 'image',
+            'value' => 'hero/banner.jpg',
+        ]);
+
+        $url = content('nonexistent-template:abc123', 'hero_image', '');
+
+        expect($url)->toContain('hero/banner.jpg');
+    });
+});
+
 describe('session draft overrides', function (): void {
     /** Simulate a preview request by setting the route resolver to return the named preview route. */
     function simulatePreviewRequest(): void
@@ -232,6 +265,18 @@ describe('session draft overrides', function (): void {
         simulatePreviewRequest();
 
         expect(content('hero-abc123', 'headline', 'Default'))->toBe('DB Value');
+    });
+
+    it('uses draft type to resolve storage url when schema cache misses', function (): void {
+        Storage::fake('public');
+
+        // Draft stores type='image'; SchemaCache will miss for 'nonexistent-template'.
+        session(['editor_draft_overrides' => ['nonexistent-template:abc123:image' => ['type' => 'image', 'value' => 'hero/draft.jpg']]]);
+
+        simulatePreviewRequest();
+
+        expect(content('nonexistent-template:abc123', 'image', ''))
+            ->toContain('hero/draft.jpg');
     });
 
     it('returns session draft json for grid type on preview request', function (): void {
