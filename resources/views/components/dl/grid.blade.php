@@ -1,3 +1,4 @@
+@blaze
 @props(['slug', 'prefix' => 'items', 'defaultGridClasses' => 'grid md:grid-cols-3 gap-8'])
 @php
 $toggle = content($slug, "toggle_{$prefix}", '1');

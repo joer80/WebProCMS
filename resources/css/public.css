@@ -69,5 +69,5 @@
 }
 
 @utility none {
-    /* No-op class — use in classes fields to suppress defaults without applying any styles */
+    --tw-none: ; /* No-op utility — use in classes fields to suppress defaults without applying any styles */
 }
