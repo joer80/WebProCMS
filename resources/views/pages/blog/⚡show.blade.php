@@ -46,7 +46,11 @@ new #[Layout('layouts.public')] class extends Component {
     }
     // ROW:php:end:blog-post-article:mghMH3
 }; ?>
-<div>{{-- ROW:start:blog-post-article:mghMH3 --}}
+<div>{{-- ROW:start:page-title-banner:EwZBCC:shared=1 --}}
+@include('shared-rows.page-title-banner-EwZBCC')
+{{-- ROW:end:page-title-banner:EwZBCC --}}
+
+{{-- ROW:start:blog-post-article:mghMH3 --}}
 @if(isset($post))
 @push('head')
     <link rel="canonical" href="{{ route('blog.show', $post->slug) }}" />

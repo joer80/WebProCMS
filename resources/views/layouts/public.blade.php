@@ -198,15 +198,40 @@
                     $editorUrl = $pageFile
                         ? route('dashboard.design-library.editor') . '?file=' . urlencode($pageFile)
                         : null;
+
+                    $editPostUrl = null;
+                    if ($routeName === 'blog.show') {
+                        $slug = request()->route('slug');
+                        if ($slug) {
+                            $post = \App\Models\Post::query()->where('slug', $slug)->first();
+                            if ($post) {
+                                $editPostUrl = route('dashboard.blog.edit', $post);
+                            }
+                        }
+                    }
                 @endphp
-                @if($editorUrl)
-                    <a href="{{ $editorUrl }}"
-                       class="fixed bottom-6 right-6 z-50 flex items-center gap-2 rounded-full bg-zinc-900 dark:bg-white px-4 py-2.5 text-sm font-semibold text-white dark:text-zinc-900 shadow-lg hover:bg-zinc-700 dark:hover:bg-zinc-100 transition-colors">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="size-4 shrink-0" viewBox="0 0 20 20" fill="currentColor">
-                            <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
-                        </svg>
-                        Edit Page
-                    </a>
+                @php $isAboveManager = auth()->user()->isAtLeast(\App\Enums\Role::Admin); @endphp
+                @if($editPostUrl || ($editorUrl && $isAboveManager))
+                    <div class="fixed bottom-6 right-6 z-50 flex flex-col items-end gap-2">
+                        @if($editPostUrl)
+                            <a href="{{ $editPostUrl }}"
+                               class="flex items-center gap-2 rounded-full bg-zinc-900 dark:bg-white px-4 py-2.5 text-sm font-semibold text-white dark:text-zinc-900 shadow-lg hover:bg-zinc-700 dark:hover:bg-zinc-100 transition-colors">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="size-4 shrink-0" viewBox="0 0 20 20" fill="currentColor">
+                                    <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
+                                </svg>
+                                Edit Post
+                            </a>
+                        @endif
+                        @if($editorUrl && $isAboveManager)
+                            <a href="{{ $editorUrl }}"
+                               class="flex items-center gap-2 rounded-full bg-zinc-900 dark:bg-white px-4 py-2.5 text-sm font-semibold text-white dark:text-zinc-900 shadow-lg hover:bg-zinc-700 dark:hover:bg-zinc-100 transition-colors">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="size-4 shrink-0" viewBox="0 0 20 20" fill="currentColor">
+                                    <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
+                                </svg>
+                                Edit Page
+                            </a>
+                        @endif
+                    </div>
                 @endif
             @endif
         @endauth
