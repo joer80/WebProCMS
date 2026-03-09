@@ -2056,7 +2056,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
     </flux:modal>
 
     {{-- Library Drawer --}}
-    <flux:modal wire:model="showLibraryDrawer" class="w-full max-w-xl">
+    <flux:modal wire:model="showLibraryDrawer" class="w-full max-w-2xl">
         <flux:heading size="lg" class="mb-4">{{ __('Insert Row') }}</flux:heading>
 
         {{-- Tabs --}}
@@ -2073,8 +2073,15 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
             >
                 {{ __('Row Groups') }}
             </button>
+            <button
+                wire:click="switchLibraryTab('shared')"
+                class="px-4 py-2 text-sm font-medium border-b-2 transition-colors -mb-px {{ $libraryTab === 'shared' ? 'border-primary text-primary' : 'border-transparent text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200' }}"
+            >
+                {{ __('Shared Rows') }}
+            </button>
         </div>
 
+        <div class="min-h-[28rem]">
         @if ($libraryTab === 'rows')
             <div class="flex gap-3 mb-4">
                 <flux:input
@@ -2089,37 +2096,10 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                     @foreach ($this->rowCategories as $value => $label)
                         <flux:select.option value="{{ $value }}">{{ $label }}</flux:select.option>
                     @endforeach
-                    <flux:select.option value="shared">{{ __('Shared Rows') }}</flux:select.option>
                 </flux:select>
             </div>
 
-            @if ($libraryCategory === 'shared')
-                @if ($this->sharedLibraryRows->isEmpty())
-                    <div class="text-center py-12 text-zinc-500 dark:text-zinc-400">
-                        <flux:icon name="share" class="size-10 mx-auto mb-3 opacity-40" />
-                        <p class="text-sm">No shared rows yet.</p>
-                        <p class="text-xs mt-1">Use the "Make Shared" action on any row to share it.</p>
-                    </div>
-                @else
-                    <div class="space-y-2 max-h-96 overflow-y-auto">
-                        @foreach ($this->sharedLibraryRows as $sharedRow)
-                            <div wire:key="shared-{{ $sharedRow->slug }}" class="flex items-center gap-3 p-3 rounded-lg border border-zinc-200 dark:border-zinc-700 hover:border-primary/40 transition-colors">
-                                <div class="flex-1 min-w-0">
-                                    <div class="font-medium text-zinc-900 dark:text-white text-sm truncate">{{ $sharedRow->name }}</div>
-                                    <div class="text-[10px] font-mono text-zinc-400 dark:text-zinc-500 truncate mt-0.5">{{ $sharedRow->slug }}</div>
-                                </div>
-                                <flux:button
-                                    wire:click="insertSharedRow('{{ $sharedRow->slug }}', {{ $insertAtIndex ?? count($rows) }})"
-                                    variant="primary"
-                                    size="sm"
-                                >
-                                    {{ __('Insert') }}
-                                </flux:button>
-                            </div>
-                        @endforeach
-                    </div>
-                @endif
-            @elseif ($this->libraryRows->isEmpty())
+            @if ($this->libraryRows->isEmpty())
                 <div class="text-center py-12 text-zinc-500 dark:text-zinc-400">
                     <flux:icon name="squares-2x2" class="size-10 mx-auto mb-3 opacity-40" />
                     <p class="text-sm">No rows found.</p>
@@ -2140,6 +2120,32 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                             </a>
                             <flux:button
                                 wire:click="insertRow({{ $libRow->id }}, {{ $insertAtIndex ?? count($rows) }})"
+                                variant="primary"
+                                size="sm"
+                            >
+                                {{ __('Insert') }}
+                            </flux:button>
+                        </div>
+                    @endforeach
+                </div>
+            @endif
+        @elseif ($libraryTab === 'shared')
+            @if ($this->sharedLibraryRows->isEmpty())
+                <div class="text-center py-12 text-zinc-500 dark:text-zinc-400">
+                    <flux:icon name="share" class="size-10 mx-auto mb-3 opacity-40" />
+                    <p class="text-sm">No shared rows yet.</p>
+                    <p class="text-xs mt-1">Use the "Make Shared" action on any row to share it.</p>
+                </div>
+            @else
+                <div class="space-y-2 max-h-96 overflow-y-auto">
+                    @foreach ($this->sharedLibraryRows as $sharedRow)
+                        <div wire:key="shared-{{ $sharedRow->slug }}" class="flex items-center gap-3 p-3 rounded-lg border border-zinc-200 dark:border-zinc-700 hover:border-primary/40 transition-colors">
+                            <div class="flex-1 min-w-0">
+                                <div class="font-medium text-zinc-900 dark:text-white text-sm truncate">{{ $sharedRow->name }}</div>
+                                <div class="text-[10px] font-mono text-zinc-400 dark:text-zinc-500 truncate mt-0.5">{{ $sharedRow->slug }}</div>
+                            </div>
+                            <flux:button
+                                wire:click="insertSharedRow('{{ $sharedRow->slug }}', {{ $insertAtIndex ?? count($rows) }})"
                                 variant="primary"
                                 size="sm"
                             >
@@ -2210,6 +2216,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                 </div>
             @endif
         @endif
+        </div>
     </flux:modal>
 
 
