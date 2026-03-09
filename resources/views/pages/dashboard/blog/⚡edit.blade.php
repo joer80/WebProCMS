@@ -313,11 +313,13 @@ new #[Layout('layouts.app')] #[Title('Edit Post')] class extends Component {
                                 <div class="mx-1 h-5 w-px bg-zinc-300 dark:bg-zinc-600"></div>
 
                                 <button type="button" @click="setLink()" :class="active.link ? 'bg-zinc-200 dark:bg-zinc-600' : ''" class="flex h-7 items-center justify-center rounded px-2 text-xs text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-600">Link</button>
-                                <button type="button" @click="cmd().unsetAllMarks().clearNodes().run()" class="ml-auto flex h-7 items-center justify-center rounded px-2 text-xs text-zinc-500 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-600">Clear</button>
+                                <button type="button" @click="cmd().unsetAllMarks().clearNodes().run()" class="flex h-7 items-center justify-center rounded px-2 text-xs text-zinc-500 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-600">Clear</button>
+                                <button type="button" @click="toggleSource()" :class="sourceMode ? 'bg-zinc-200 dark:bg-zinc-600' : ''" class="ml-auto flex h-7 items-center justify-center rounded px-2 text-xs font-mono text-zinc-500 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-600">&lt;/&gt;</button>
                             </div>
 
                             {{-- Editor --}}
-                            <div x-ref="editorEl" class="min-h-120"></div>
+                            <div x-ref="editorEl" class="min-h-120" x-show="!sourceMode"></div>
+                            <textarea x-show="sourceMode" x-model="sourceHtml" class="w-full min-h-120 p-4 font-mono text-sm text-zinc-800 dark:text-zinc-200 bg-white dark:bg-zinc-900 outline-none resize-y border-0"></textarea>
                         </div>
                         <flux:error name="content" />
                     </flux:field>

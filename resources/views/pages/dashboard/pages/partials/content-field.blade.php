@@ -87,8 +87,10 @@ if (in_array($field['type'], ['id', 'attrs'])) {
                 <div class="w-px h-4 bg-zinc-200 dark:bg-zinc-600 mx-0.5"></div>
                 <button type="button" @click="setLink()" :class="active.link ? 'bg-zinc-200 dark:bg-zinc-600' : ''" class="rounded px-1.5 py-0.5 text-xs text-zinc-700 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors" title="Link">Link</button>
                 <button type="button" @click="cmd().unsetAllMarks().clearNodes().run()" class="rounded px-1.5 py-0.5 text-xs text-zinc-700 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors" title="Clear Formatting">✕</button>
+                <button type="button" @click="toggleSource()" :class="sourceMode ? 'bg-zinc-200 dark:bg-zinc-600' : ''" class="ml-auto rounded px-1.5 py-0.5 text-xs font-mono text-zinc-500 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors" title="HTML Source">&lt;/&gt;</button>
             </div>
-            <div x-ref="editorEl" class="sidebar-rich-editor-content"></div>
+            <div x-ref="editorEl" class="sidebar-rich-editor-content" x-show="!sourceMode"></div>
+            <textarea x-show="sourceMode" x-model="sourceHtml" rows="5" class="w-full p-3 font-mono text-xs text-zinc-800 dark:text-zinc-200 bg-white dark:bg-zinc-900 outline-none resize-y border-0"></textarea>
         </div>
     @elseif ($field['type'] === 'classes')
         <div x-data="twAutocomplete('{{ $field['key'] }}')" class="relative">

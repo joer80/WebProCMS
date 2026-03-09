@@ -15,6 +15,8 @@ document.addEventListener('alpine:init', () => {
             active: {},
             headingLevel: '0',
             debounceTimer: null,
+            sourceMode: false,
+            sourceHtml: '',
 
             init() {
                 _editor = new Editor({
@@ -67,6 +69,20 @@ document.addEventListener('alpine:init', () => {
                     _editor.chain().focus().setParagraph().run();
                 } else {
                     _editor.chain().focus().toggleHeading({ level }).run();
+                }
+            },
+
+            toggleSource() {
+                if (!this.sourceMode) {
+                    this.sourceHtml = _editor ? _editor.getHTML() : '';
+                    this.sourceMode = true;
+                } else {
+                    if (_editor) {
+                        _editor.commands.setContent(this.sourceHtml, false);
+                        const html = _editor.getHTML();
+                        this.$wire.set(wireKey, html === '<p></p>' ? '' : html);
+                    }
+                    this.sourceMode = false;
                 }
             },
 
