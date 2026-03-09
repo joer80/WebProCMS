@@ -9,6 +9,7 @@ use Livewire\Livewire;
 
 beforeEach(function (): void {
     $this->user = User::factory()->withRole(Role::Manager)->create();
+    $this->originalRoutes = file_get_contents(base_path('routes/web.php'));
 
     $this->tempRelativePath = 'pages/test-shared-'.uniqid().'.blade.php';
     $this->tempFullPath = resource_path('views/'.$this->tempRelativePath);
@@ -33,6 +34,8 @@ afterEach(function (): void {
     if (isset($this->tempFullPath) && file_exists($this->tempFullPath)) {
         unlink($this->tempFullPath);
     }
+
+    file_put_contents(base_path('routes/web.php'), $this->originalRoutes);
 
     // Clean up any shared-rows files created during tests.
     foreach (glob(resource_path('views/shared-rows/test-*.blade.php')) ?: [] as $file) {
