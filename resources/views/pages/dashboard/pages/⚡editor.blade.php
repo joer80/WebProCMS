@@ -203,7 +203,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
         $storeValue = (string) $value === $default ? '' : (string) $value;
 
         $drafts = session('editor_draft_overrides', []);
-        $type = $fieldKey === 'section_id' ? 'text' : 'classes';
+        $type = in_array($fieldKey, ['section_id', 'section_animation', 'section_animation_delay'], true) ? 'text' : 'classes';
         $drafts[$slug.':'.$fieldKey] = ['type' => $type, 'value' => $storeValue];
         session(['editor_draft_overrides' => $drafts]);
 
@@ -217,7 +217,8 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
         $this->rowDesignValues[$slug][$fieldKey] = $default;
 
         $drafts = session('editor_draft_overrides', []);
-        $drafts[$slug.':'.$fieldKey] = ['type' => 'classes', 'value' => ''];
+        $resetType = in_array($fieldKey, ['section_id', 'section_animation', 'section_animation_delay'], true) ? 'text' : 'classes';
+        $drafts[$slug.':'.$fieldKey] = ['type' => $resetType, 'value' => ''];
         session(['editor_draft_overrides' => $drafts]);
 
         $this->isDirty = true;
@@ -821,7 +822,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
         $row = $this->rows[$index];
         $this->contentFields = array_values(array_filter(
             $this->parseContentFields($row['blade'], $row['slug']),
-            fn ($f) => ! in_array($f['key'], ['section_classes', 'section_container_classes', 'section_id', 'section_attrs'], true)
+            fn ($f) => ! in_array($f['key'], ['section_classes', 'section_container_classes', 'section_id', 'section_attrs', 'section_animation', 'section_animation_delay'], true)
         ));
         $this->pendingImageKey = '';
         $this->pendingImageUpload = null;
@@ -1744,7 +1745,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
             $fields = $this->parseContentFields($row['blade'], $row['slug']);
 
             foreach ($fields as $field) {
-                if (in_array($field['key'], ['section_classes', 'section_container_classes', 'section_id'], true)) {
+                if (in_array($field['key'], ['section_classes', 'section_container_classes', 'section_id', 'section_animation', 'section_animation_delay'], true)) {
                     $this->rowDesignDefaults[$row['slug']][$field['key']] = $field['default'];
                 }
             }
@@ -1764,7 +1765,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
 
         $overrides = ContentOverride::query()
             ->whereIn('row_slug', $slugs)
-            ->whereIn('key', ['section_classes', 'section_container_classes', 'section_no_alt', 'section_id'])
+            ->whereIn('key', ['section_classes', 'section_container_classes', 'section_no_alt', 'section_id', 'section_animation', 'section_animation_delay'])
             ->get()
             ->keyBy(fn (ContentOverride $o) => $o->row_slug.':'.$o->key);
 
@@ -2689,7 +2690,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                                                                         @if ($subgroupToggle)
                                                                             <flux:switch wire:model.live="contentValues.{{ $subgroupToggle['key'] }}" @click.stop />
                                                                         @endif
-                                                                        <flux:icon name="chevron-down" class="size-3.5 transition-transform duration-200" :class="open ? '' : '-rotate-90'" />
+                                                                        <flux:icon name="chevron-down" class="size-3.5 transition-transform duration-200" x-bind:class="open ? '' : '-rotate-90'" />
                                                                     </div>
                                                                 </button>
                                                                 <div x-show="open" x-collapse class="space-y-4 p-3">
@@ -2894,7 +2895,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                                                                             @if ($subgroupToggle)
                                                                                 <flux:switch wire:model.live="contentValues.{{ $subgroupToggle['key'] }}" @click.stop />
                                                                             @endif
-                                                                            <flux:icon name="chevron-down" class="size-3.5 transition-transform duration-200" :class="open ? '' : '-rotate-90'" />
+                                                                            <flux:icon name="chevron-down" class="size-3.5 transition-transform duration-200" x-bind:class="open ? '' : '-rotate-90'" />
                                                                         </div>
                                                                     </button>
                                                                     <div x-show="open" x-collapse class="space-y-4 p-3">
@@ -3094,6 +3095,44 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                                                         title="Exclude this row from the alternating background pattern"
                                                     />
                                                 </div>
+                                                @if (isset($rowDesignDefaults[$row['slug']]['section_animation']))
+                                                    <div class="grid grid-cols-2 gap-2">
+                                                        <div>
+                                                            <div class="flex items-center justify-between mb-1.5">
+                                                                <span class="text-[11px] uppercase tracking-wider font-semibold text-zinc-500 dark:text-zinc-400">Entrance Animation</span>
+                                                            </div>
+                                                            <select
+                                                                wire:model.live="rowDesignValues.{{ $row['slug'] }}.section_animation"
+                                                                class="w-full text-xs rounded-lg border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-900 text-zinc-900 dark:text-white px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition"
+                                                            >
+                                                                <option value="">— None —</option>
+                                                                <option value="fade-up">Fade Up</option>
+                                                                <option value="fade-down">Fade Down</option>
+                                                                <option value="fade-left">Fade Left</option>
+                                                                <option value="fade-right">Fade Right</option>
+                                                                <option value="zoom-in">Zoom In</option>
+                                                                <option value="fade">Fade</option>
+                                                            </select>
+                                                        </div>
+                                                        <div>
+                                                            <div class="flex items-center justify-between mb-1.5">
+                                                                <span class="text-[11px] uppercase tracking-wider font-semibold text-zinc-500 dark:text-zinc-400">Delay</span>
+                                                            </div>
+                                                            <select
+                                                                wire:model.live="rowDesignValues.{{ $row['slug'] }}.section_animation_delay"
+                                                                class="w-full text-xs rounded-lg border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-900 text-zinc-900 dark:text-white px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition"
+                                                            >
+                                                                <option value="">— None —</option>
+                                                                <option value="delay-100">100ms</option>
+                                                                <option value="delay-200">200ms</option>
+                                                                <option value="delay-300">300ms</option>
+                                                                <option value="delay-500">500ms</option>
+                                                                <option value="delay-700">700ms</option>
+                                                                <option value="delay-1000">1000ms</option>
+                                                            </select>
+                                                        </div>
+                                                    </div>
+                                                @endif
                                                 @foreach (['section_classes' => 'Section Classes', 'section_container_classes' => 'Container Classes'] as $fieldKey => $fieldLabel)
                                                     @if (isset($rowDesignDefaults[$row['slug']][$fieldKey]))
                                                         <div>

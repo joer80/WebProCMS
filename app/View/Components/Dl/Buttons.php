@@ -26,6 +26,8 @@ class Buttons extends Component
     {
         return [
             ['key' => 'buttons_wrapper_classes', 'default' => $attrs['default-wrapper-classes'] ?? 'mt-8 flex flex-wrap items-center gap-4', 'group' => 'buttons'],
+            ['key' => 'buttons_animation', 'default' => '', 'label' => 'Animation', 'group' => 'buttons'],
+            ['key' => 'buttons_animation_delay', 'default' => '', 'label' => 'Animation Delay', 'group' => 'buttons'],
             ['key' => 'toggle_primary_button', 'default' => '1', 'group' => 'buttons', 'subgroup' => 'primary_button'],
             ['key' => 'primary_button', 'default' => $attrs['default-primary-label'] ?? 'Get Started', 'group' => 'buttons', 'subgroup' => 'primary_button'],
             ['key' => 'primary_button_classes', 'default' => $attrs['default-primary-classes'] ?? 'px-6 py-3 bg-primary text-white font-semibold rounded-lg hover:bg-primary/90 transition-colors', 'group' => 'buttons', 'subgroup' => 'primary_button'],

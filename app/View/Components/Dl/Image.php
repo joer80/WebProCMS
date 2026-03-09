@@ -31,6 +31,8 @@ class Image extends Component
             ['key' => "{$prefix}_image_alt", 'default' => ''],
             ['key' => "{$prefix}_object_fit", 'default' => 'cover'],
             ['key' => "{$prefix}_wrapper_classes", 'default' => $attrs['default-wrapper-classes'] ?? 'rounded-card overflow-hidden aspect-video'],
+            ['key' => "{$prefix}_animation", 'default' => '', 'label' => 'Animation'],
+            ['key' => "{$prefix}_animation_delay", 'default' => '', 'label' => 'Animation Delay'],
             ['key' => "{$prefix}_image_classes", 'default' => $attrs['default-image-classes'] ?? 'w-full h-full object-cover'],
         ];
     }

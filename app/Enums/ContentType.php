@@ -13,6 +13,8 @@ enum ContentType: string
     case FormSelect = 'form_select';
     case ObjectFit = 'object_fit';
     case BorderRadius = 'border_radius';
+    case Animation = 'animation';
+    case AnimationDelay = 'animation_delay';
 
     public function label(): string
     {
@@ -26,6 +28,8 @@ enum ContentType: string
             ContentType::FormSelect => 'Form Select',
             ContentType::ObjectFit => 'Object Fit',
             ContentType::BorderRadius => 'Border Radius',
+            ContentType::Animation => 'Animation',
+            ContentType::AnimationDelay => 'Animation Delay',
         };
     }
 }

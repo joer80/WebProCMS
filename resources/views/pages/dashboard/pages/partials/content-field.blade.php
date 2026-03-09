@@ -2,7 +2,7 @@
 $effMode = "(groupMode !== null ? groupMode : (advancedMode ? 'advanced' : (designMode ? 'design' : 'content')))";
 if (in_array($field['type'], ['id', 'attrs'])) {
     $fieldShow = "{$effMode} === 'advanced'";
-} elseif (in_array($field['type'], ['classes', 'object_fit', 'border_radius'])) {
+} elseif (in_array($field['type'], ['classes', 'object_fit', 'border_radius', 'animation', 'animation_delay'])) {
     $fieldShow = "{$effMode} === 'design'";
 } else {
     $fieldShow = "{$effMode} === 'content'";
@@ -428,6 +428,26 @@ if (in_array($field['type'], ['id', 'attrs'])) {
             <flux:select.option value="rounded-2xl">Very rounded (2xl)</flux:select.option>
             <flux:select.option value="rounded-3xl">Very very rounded (3xl)</flux:select.option>
             <flux:select.option value="rounded-full">Perfect circle if image is square (Full)</flux:select.option>
+        </flux:select>
+    @elseif ($field['type'] === 'animation')
+        <flux:select wire:model.live="contentValues.{{ $field['key'] }}">
+            <flux:select.option value="">— None —</flux:select.option>
+            <flux:select.option value="fade-up">Fade Up</flux:select.option>
+            <flux:select.option value="fade-down">Fade Down</flux:select.option>
+            <flux:select.option value="fade-left">Fade Left</flux:select.option>
+            <flux:select.option value="fade-right">Fade Right</flux:select.option>
+            <flux:select.option value="zoom-in">Zoom In</flux:select.option>
+            <flux:select.option value="fade">Fade</flux:select.option>
+        </flux:select>
+    @elseif ($field['type'] === 'animation_delay')
+        <flux:select wire:model.live="contentValues.{{ $field['key'] }}">
+            <flux:select.option value="">— None —</flux:select.option>
+            <flux:select.option value="delay-100">100ms</flux:select.option>
+            <flux:select.option value="delay-200">200ms</flux:select.option>
+            <flux:select.option value="delay-300">300ms</flux:select.option>
+            <flux:select.option value="delay-500">500ms</flux:select.option>
+            <flux:select.option value="delay-700">700ms</flux:select.option>
+            <flux:select.option value="delay-1000">1000ms</flux:select.option>
         </flux:select>
     @elseif ($field['type'] === 'note')
         <div class="rounded-lg bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200 dark:border-zinc-700 px-3 py-2.5 text-xs text-zinc-500 dark:text-zinc-400 leading-relaxed">{!! $field['message'] ?? '' !!}</div>

@@ -784,6 +784,8 @@ Any Blade component (including `x-dl.*` and Flux) PHP-evaluates `:class="expr"` 
 
 Exception: `:class="something === {{ $phpVar }} ? ..."` works because the `{{ }}` echo tag makes Blade treat the value as a string with PHP interpolation, not full PHP evaluation — the resulting string is passed as-is to the DOM for Alpine to evaluate.
 
+**View cache masking:** Pre-existing bare `:class` bugs in a Blade file are silently hidden while the compiled view cache is valid. Editing that file invalidates the cache and forces a recompile, which surfaces the error. When modifying any Blade template (especially the editor), scan for bare `:class="expr"` on Blade components and fix them proactively — don't wait for the recompile to expose them.
+
 ### Sidebar Nav (flux:sidebar)
 
 File: `resources/views/layouts/app/sidebar.blade.php`

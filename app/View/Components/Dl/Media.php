@@ -30,6 +30,8 @@ class Media extends Component
             ['key' => 'image_object_fit', 'default' => 'cover'],
             ['key' => 'image_border_radius', 'default' => ''],
             ['key' => 'image_wrapper_classes', 'default' => $attrs['default-wrapper-classes'] ?? 'rounded-card overflow-hidden aspect-video'],
+            ['key' => 'image_animation', 'default' => '', 'label' => 'Animation'],
+            ['key' => 'image_animation_delay', 'default' => '', 'label' => 'Animation Delay'],
             ['key' => 'image_classes', 'default' => $attrs['default-image-classes'] ?? 'w-full h-full object-cover'],
         ];
     }

@@ -26,6 +26,8 @@ class Section extends Component
         $fields = [
             ['key' => 'section_classes', 'default' => $attrs['default-section-classes'] ?? 'py-section px-6 bg-white dark:bg-zinc-900'],
             ['key' => 'section_container_classes', 'default' => $attrs['default-container-classes'] ?? 'max-w-6xl mx-auto'],
+            ['key' => 'section_animation', 'default' => '', 'label' => 'Entrance Animation'],
+            ['key' => 'section_animation_delay', 'default' => '', 'label' => 'Animation Delay'],
             ['key' => 'section_id', 'default' => '', 'label' => 'Section ID'],
             ['key' => 'section_attrs', 'default' => '[]', 'label' => 'Custom Attributes'],
         ];
@@ -35,6 +37,36 @@ class Section extends Component
         }
 
         return $fields;
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    public static function animationPresets(): array
+    {
+        return [
+            'fade-up' => 'animate-in fade-in-0 slide-in-from-bottom-8 duration-700',
+            'fade-down' => 'animate-in fade-in-0 slide-in-from-top-8 duration-700',
+            'fade-left' => 'animate-in fade-in-0 slide-in-from-right-8 duration-700',
+            'fade-right' => 'animate-in fade-in-0 slide-in-from-left-8 duration-700',
+            'zoom-in' => 'animate-in zoom-in-95 fade-in-0 duration-700',
+            'fade' => 'animate-in fade-in-0 duration-700',
+        ];
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    public static function animationDelays(): array
+    {
+        return [
+            'delay-100' => '100ms',
+            'delay-200' => '200ms',
+            'delay-300' => '300ms',
+            'delay-500' => '500ms',
+            'delay-700' => '700ms',
+            'delay-1000' => '1000ms',
+        ];
     }
 
     public function render(): View

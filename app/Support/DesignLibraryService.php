@@ -251,6 +251,14 @@ class DesignLibraryService
             return ['border_radius', substr($key, 0, -14)];
         }
 
+        if (str_ends_with($key, '_animation_delay')) {
+            return ['animation_delay', substr($key, 0, -16)];
+        }
+
+        if (str_ends_with($key, '_animation')) {
+            return ['animation', substr($key, 0, -10)];
+        }
+
         if (str_ends_with($key, '_classes')) {
             return ['classes', substr($key, 0, -8)];
         }

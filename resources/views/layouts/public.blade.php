@@ -194,7 +194,7 @@
             @endif
         @endauth
         @stack('scripts')
-        @fluxScripts
+        @vite('resources/js/public.js')
         <script>
             if (window.self !== window.top) {
                 window.addEventListener('keydown', function(e) {

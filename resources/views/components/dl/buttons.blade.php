@@ -12,8 +12,16 @@ $secondaryLabel = content($slug, 'secondary_button', $defaultSecondaryLabel);
 $secondaryCls = content($slug, 'secondary_button_classes', $defaultSecondaryClasses);
 $secondaryUrl = content($slug, 'secondary_button_url', '#');
 $secondaryNewTab = content($slug, 'secondary_button_new_tab', '');
+$animPreset = content($slug, 'buttons_animation', '');
+$animAttr = '';
+if ($animPreset) {
+    $animPresets = \App\View\Components\Dl\Section::animationPresets();
+    $animDelay = content($slug, 'buttons_animation_delay', '');
+    $animClasses = ($animPresets[$animPreset] ?? '') . ($animDelay ? " {$animDelay}" : '');
+    $animAttr = " x-data=\"{ animated: false }\" x-intersect.once=\"animated = true\" :class=\"animated ? '{$animClasses}' : 'opacity-0'\"";
+}
 @endphp
-<div class="{{ $wrapperCls }}" data-editor-group="buttons">
+{!! "<div class=\"{$wrapperCls}\" data-editor-group=\"buttons\"{$animAttr}>" !!}
     @if($togglePrimary)
     <a
         href="{{ $primaryUrl }}"

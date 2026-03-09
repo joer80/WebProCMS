@@ -14,6 +14,13 @@ foreach ($headingAttrs as $attr) {
         $extraAttrsStr .= ' ' . e($attr['name']) . '="' . e($attr['value'] ?? '') . '"';
     }
 }
+$animPreset = content($slug, "{$prefix}_animation", '');
+if ($animPreset) {
+    $animPresets = \App\View\Components\Dl\Section::animationPresets();
+    $animDelay = content($slug, "{$prefix}_animation_delay", '');
+    $animClasses = ($animPresets[$animPreset] ?? '') . ($animDelay ? " {$animDelay}" : '');
+    $extraAttrsStr .= " x-data=\"{ animated: false }\" x-intersect.once=\"animated = true\" :class=\"animated ? '{$animClasses}' : 'opacity-0'\"";
+}
 @endphp
 @if($toggle)
 {!! "<{$tag}{$extraAttrsStr} class=\"" . e($cls) . "\">" . e($text) . "</{$tag}>" !!}

@@ -15,8 +15,17 @@ foreach ($sectionAttrs as $attr) {
         $extraAttrs[$attr['name']] = $attr['value'] ?? '';
     }
 }
+$animAttr = '';
+$animPreset = content($slug, 'section_animation', '');
+if ($animPreset) {
+    $animPresets = \App\View\Components\Dl\Section::animationPresets();
+    $animDelays = \App\View\Components\Dl\Section::animationDelays();
+    $animDelay = content($slug, 'section_animation_delay', '');
+    $animClasses = ($animPresets[$animPreset] ?? '') . ($animDelay ? " {$animDelay}" : '');
+    $animAttr = " x-data=\"{ animated: false }\" x-intersect.once=\"animated = true\" :class=\"animated ? '{$animClasses}' : 'opacity-0'\"";
+}
 @endphp
-{!! "<{$tag} " . $attributes->merge(array_merge(['class' => $sectionCls], $extraAttrs))->toHtml() . ">" !!}
+{!! "<{$tag} " . $attributes->merge(array_merge(['class' => $sectionCls], $extraAttrs))->toHtml() . $animAttr . ">" !!}
 <div class="{{ $containerCls }}">
     {{ $slot }}
 </div>

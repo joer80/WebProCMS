@@ -12,7 +12,15 @@ foreach ($subAttrsRaw as $attr) {
         $extraAttrs[$attr['name']] = $attr['value'] ?? '';
     }
 }
+$animPreset = content($slug, "{$prefix}_animation", '');
+$animAttr = '';
+if ($animPreset) {
+    $animPresets = \App\View\Components\Dl\Section::animationPresets();
+    $animDelay = content($slug, "{$prefix}_animation_delay", '');
+    $animClasses = ($animPresets[$animPreset] ?? '') . ($animDelay ? " {$animDelay}" : '');
+    $animAttr = " x-data=\"{ animated: false }\" x-intersect.once=\"animated = true\" :class=\"animated ? '{$animClasses}' : 'opacity-0'\"";
+}
 @endphp
 @if($noToggle || $toggle)
-{!! "<{$tag} " . $attributes->merge(array_merge(['class' => $cls], $extraAttrs))->toHtml() . ">" . e($text) . "</{$tag}>" !!}
+{!! "<{$tag} " . $attributes->merge(array_merge(['class' => $cls], $extraAttrs))->toHtml() . $animAttr . ">" . e($text) . "</{$tag}>" !!}
 @endif

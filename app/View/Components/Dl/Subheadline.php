@@ -33,6 +33,8 @@ class Subheadline extends Component
         $fields = array_merge($fields, [
             ['key' => $prefix, 'default' => $attrs['default'] ?? ''],
             ['key' => "{$prefix}_classes", 'default' => $attrs['default-classes'] ?? 'mt-4 text-lg text-zinc-500 dark:text-zinc-400'],
+            ['key' => "{$prefix}_animation", 'default' => '', 'label' => 'Animation'],
+            ['key' => "{$prefix}_animation_delay", 'default' => '', 'label' => 'Animation Delay'],
             ['key' => "{$prefix}_id", 'default' => '', 'label' => 'Element ID'],
             ['key' => "{$prefix}_attrs", 'default' => '[]', 'label' => 'Custom Attributes'],
         ]);
