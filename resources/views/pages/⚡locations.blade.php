@@ -34,69 +34,140 @@ new #[Layout('layouts.public')] #[Title('Locations')] class extends Component {
     {
         $this->locationsSelectedState = '';
     }
+
+    // ROW:php:start:locations-grid:EeeFub
+    public string $locationsSelectedState = '';
+    
+    #[\Livewire\Attributes\Computed]
+    public function locationsFiltered(): \Illuminate\Database\Eloquent\Collection
+    {
+        return \App\Models\Location::query()
+            ->when($this->locationsSelectedState !== '', fn ($q) => $q->where('state', $this->locationsSelectedState))
+            ->orderBy('name')
+            ->get();
+    }
+    
+    #[\Livewire\Attributes\Computed]
+    public function locationsAvailableStates(): array
+    {
+        return \App\Models\Location::query()
+            ->distinct()
+            ->orderBy('state')
+            ->pluck('state')
+            ->all();
+    }
+    
+    public function filterLocationsByState(string $state): void
+    {
+        $this->locationsSelectedState = $state;
+    }
+    
+    public function clearLocationsFilter(): void
+    {
+        $this->locationsSelectedState = '';
+    }
+    // ROW:php:end:locations-grid:EeeFub
 }; ?>
+<div>{{-- ROW:start:locations-grid:EeeFub --}}
+<x-dl.section slug="locations-grid:EeeFub"
+    default-section-classes="py-section px-6 bg-white dark:bg-zinc-900"
+    default-container-classes="max-w-6xl mx-auto">
+    <x-dl.heading slug="locations-grid:EeeFub" prefix="headline" default="Our Locations"
+        default-tag="h2"
+        default-classes="font-heading text-4xl font-bold text-zinc-900 dark:text-white mb-4" />
+    <x-dl.subheadline slug="locations-grid:EeeFub" prefix="subheadline" default="Find a location near you."
+        default-classes="text-zinc-500 dark:text-zinc-400 leading-normal mb-10" />
 
-<div>
-    <div class="mb-10">
-        <h1 class="text-4xl font-semibold leading-tight mb-4">Our Locations</h1>
-        <p class="text-[#706f6c] dark:text-[#A1A09A] leading-normal">
-            Find a location near you.
-        </p>
-    </div>
-
-    {{-- State filter --}}
-    <div class="flex flex-wrap items-center gap-2 mb-8">
-        <button
+    <x-dl.wrapper slug="locations-grid:EeeFub" prefix="filter_wrapper" default-classes="flex flex-wrap items-center gap-2 mb-8">
+        <x-dl.wrapper slug="locations-grid:EeeFub" prefix="filter_button" tag="button"
             wire:click="clearLocationsFilter"
-            class="inline-block px-4 py-1.5 text-sm rounded-sm border transition-all {{ $locationsSelectedState === '' ? 'bg-[#1b1b18] dark:bg-[#EDEDEC] text-white dark:text-[#1b1b18] border-transparent' : 'border-[#19140035] dark:border-[#3E3E3A] text-[#1b1b18] dark:text-[#EDEDEC] hover:border-[#1915014a] dark:hover:border-[#62605b]' }}"
-        >
+            x-bind:class="$wire.locationsSelectedState === '' ? 'bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 border-transparent' : 'border-zinc-300 dark:border-zinc-700 text-zinc-800 dark:text-zinc-200 hover:border-zinc-400'"
+            default-classes="inline-block px-4 py-1.5 text-sm rounded-sm border transition-all">
             All
-        </button>
-
-        @foreach ($this->availableStates as $state)
-            <button
-                wire:click="filterLocationsByState('{{ $state }}')"
-                class="inline-block px-4 py-1.5 text-sm rounded-sm border transition-all {{ $locationsSelectedState === $state ? 'bg-[#1b1b18] dark:bg-[#EDEDEC] text-white dark:text-[#1b1b18] border-transparent' : 'border-[#19140035] dark:border-[#3E3E3A] text-[#1b1b18] dark:text-[#EDEDEC] hover:border-[#1915014a] dark:hover:border-[#62605b]' }}"
-            >
-                {{ $state }}
-            </button>
+        </x-dl.wrapper>
+        @foreach ($this->locationsAvailableStates as $locState)
+            <x-dl.wrapper slug="locations-grid:EeeFub" prefix="filter_button" tag="button"
+                wire:click="filterLocationsByState('{{ $locState }}')"
+                x-bind:class="$wire.locationsSelectedState === '{{ $locState }}' ? 'bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 border-transparent' : 'border-zinc-300 dark:border-zinc-700 text-zinc-800 dark:text-zinc-200 hover:border-zinc-400'"
+                default-classes="inline-block px-4 py-1.5 text-sm rounded-sm border transition-all">
+                {{ \App\Support\States::fullName($locState) }}
+            </x-dl.wrapper>
         @endforeach
-    </div>
+    </x-dl.wrapper>
 
-    {{-- Location grid --}}
-    @if ($this->filteredLocations->isNotEmpty())
-        <div class="grid sm:grid-cols-3 gap-6">
-            @foreach ($this->filteredLocations as $location)
-                <div wire:key="location-{{ $location->id }}" class="bg-white dark:bg-[#161615] rounded-lg shadow-[inset_0px_0px_0px_1px_rgba(26,26,0,0.16)] dark:shadow-[inset_0px_0px_0px_1px_#fffaed2d] overflow-hidden">
+    @if ($this->locationsFiltered->isNotEmpty())
+        <x-dl.wrapper slug="locations-grid:EeeFub" prefix="locations_grid" default-classes="grid sm:grid-cols-3 gap-6"
+            note="Content is pulled from the <a href='/dashboard/locations' class='text-primary underline hover:text-primary/80'>Locations</a> page.">
+            @foreach ($this->locationsFiltered as $location)
+                <x-dl.card slug="locations-grid:EeeFub" prefix="location_card"
+                    default-classes="bg-white dark:bg-zinc-800 rounded-card border border-zinc-200 dark:border-zinc-700 shadow-card overflow-hidden">
                     @if ($location->photoUrl())
-                        <img
+                        <x-dl.wrapper slug="locations-grid:EeeFub" prefix="location_image" tag="img"
                             src="{{ $location->photoUrl() }}"
                             alt="{{ $location->name }}"
-                            class="w-full h-48 object-cover"
-                        />
+                            default-classes="w-full h-48 object-cover" />
                     @endif
-                    <div class="p-5">
-                        <h2 class="font-semibold text-base mb-3">{{ $location->name }}</h2>
-                        <address class="not-italic text-sm text-[#706f6c] dark:text-[#A1A09A] space-y-1 mb-4">
+                    <x-dl.group slug="locations-grid:EeeFub" prefix="card_content" default-classes="p-5">
+                        <x-dl.wrapper slug="locations-grid:EeeFub" prefix="location_name" tag="h3"
+                            default-classes="font-semibold text-base text-zinc-900 dark:text-white mb-3">
+                            {{ $location->name }}
+                        </x-dl.wrapper>
+                        <x-dl.wrapper slug="locations-grid:EeeFub" prefix="location_details"
+                            default-classes="space-y-1.5 text-sm text-zinc-500 dark:text-zinc-400 mb-5">
                             <p>{{ $location->address }}</p>
                             <p>{{ $location->city }}, {{ $location->state }} {{ $location->zip }}</p>
-                            @if ($location->phone)
-                                <p>{{ $location->phone }}</p>
-                            @endif
-                        </address>
-                        <a
+                            <p>{{ $location->phone }}</p>
+                        </x-dl.wrapper>
+                        <x-dl.wrapper slug="locations-grid:EeeFub" prefix="directions_link" tag="a"
                             href="https://maps.google.com/?q={{ urlencode($location->address.', '.$location->city.', '.$location->state.' '.$location->zip) }}"
                             target="_blank"
                             rel="noopener noreferrer"
-                            class="inline-block px-4 py-1.5 text-sm rounded-sm border border-[#19140035] dark:border-[#3E3E3A] text-[#1b1b18] dark:text-[#EDEDEC] hover:border-[#1915014a] dark:hover:border-[#62605b] transition-all"
-                        >
+                            default-classes="inline-block px-4 py-1.5 text-sm border border-zinc-300 dark:border-zinc-600 hover:border-zinc-400 text-zinc-800 dark:text-zinc-200 rounded-sm transition-all">
                             Get Directions
-                        </a>
-                    </div>
-                </div>
+                        </x-dl.wrapper>
+                    </x-dl.group>
+                </x-dl.card>
             @endforeach
-        </div>
+        </x-dl.wrapper>
     @else
-        <p class="text-[#706f6c] dark:text-[#A1A09A]">No locations found.</p>
+        <x-dl.subheadline slug="locations-grid:EeeFub" prefix="empty_state" no-toggle
+            default="No locations found for the selected state."
+            default-classes="text-zinc-500 dark:text-zinc-400 text-sm" />
     @endif
+</x-dl.section>
+{{--
+@php
+public string $locationsSelectedState = '';
+
+#[\Livewire\Attributes\Computed]
+public function locationsFiltered(): \Illuminate\Database\Eloquent\Collection
+{
+    return \App\Models\Location::query()
+        ->when($this->locationsSelectedState !== '', fn ($q) => $q->where('state', $this->locationsSelectedState))
+        ->orderBy('name')
+        ->get();
+}
+
+#[\Livewire\Attributes\Computed]
+public function locationsAvailableStates(): array
+{
+    return \App\Models\Location::query()
+        ->distinct()
+        ->orderBy('state')
+        ->pluck('state')
+        ->all();
+}
+
+public function filterLocationsByState(string $state): void
+{
+    $this->locationsSelectedState = $state;
+}
+
+public function clearLocationsFilter(): void
+{
+    $this->locationsSelectedState = '';
+}
+--}}
+
+{{-- ROW:end:locations-grid:EeeFub --}}
 </div>

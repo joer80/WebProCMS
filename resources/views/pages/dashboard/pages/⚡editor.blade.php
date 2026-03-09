@@ -73,6 +73,8 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
 
     public bool $isCachedPage = true;
 
+    public string $pageName = '';
+
     public string $seoTitle = '';
 
     public string $seoDescription = '';
@@ -2027,6 +2029,9 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
 
     private function parseSeoFromPhpSection(): void
     {
+        preg_match("/public string \\\$pageName = '([^']*)';/", $this->phpSection, $pageNameMatch);
+        $this->pageName = $pageNameMatch[1] ?? '';
+
         preg_match("/#\[Title\('([^']*)'\)\]/", $this->phpSection, $titleMatch);
         $this->seoTitle = $titleMatch[1] ?? '';
 
@@ -2095,6 +2100,22 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
             $newLayout,
             $this->phpSection
         );
+
+        $escapedPageName = str_replace("'", "\'", $this->pageName);
+
+        if (preg_match("/public string \\\$pageName = '[^']*';/", $this->phpSection)) {
+            $this->phpSection = preg_replace_callback(
+                "/public string \\\$pageName = '[^']*';/",
+                fn ($m) => "public string \$pageName = '{$escapedPageName}';",
+                $this->phpSection
+            );
+        } else {
+            $this->phpSection = preg_replace_callback(
+                '/(new #\[.+?\] class extends Component\s*\{)/s',
+                fn ($m) => $m[1]."\n    public string \$pageName = '{$escapedPageName}';",
+                $this->phpSection
+            );
+        }
 
         $service = new VoltFileService;
         $accessibleStatuses = ['published', 'unlisted'];
@@ -3667,6 +3688,16 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                 </button>
 
                 <div x-show="basicOpen" x-transition class="mt-3 pl-4 border-l-2 border-zinc-200 dark:border-zinc-700 space-y-4">
+                    {{-- Page Name --}}
+                    @if (preg_match('#^pages/(?!dashboard/).*⚡[^/]+\.blade\.php$#u', $file))
+                        <flux:input
+                            label="Page Name"
+                            wire:model="pageName"
+                            placeholder="About Us"
+                            description="Shown in the page title banner row. Separate from the SEO title — can be shorter or longer."
+                        />
+                    @endif
+
                     {{-- Visibility / Status --}}
                     <flux:field>
                         <flux:label>Status</flux:label>
@@ -3790,6 +3821,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
             </div>
 
             {{-- Advanced --}}
+            @if (preg_match('#^pages/⚡[^/]+\.blade\.php$#u', $file))
             <div x-data="{ advancedOpen: false }" x-on:open-settings-section.window="advancedOpen = ($event.detail === 'advanced')" class="pt-4 border-t border-zinc-200 dark:border-zinc-700">
                 <button
                     type="button"
@@ -3806,39 +3838,38 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                 </button>
 
                 <div x-show="advancedOpen" x-transition class="mt-3 pl-4 border-l-2 border-zinc-200 dark:border-zinc-700 space-y-4">
-                    @if (preg_match('#^pages/⚡[^/]+\.blade\.php$#u', $file))
-                        {{-- Cache --}}
+                    {{-- Cache --}}
+                    <flux:switch
+                        label="Cache response"
+                        :description="'Full-page cache this page for ' . \Carbon\CarbonInterval::seconds(config('responsecache.cache_lifetime_in_seconds'))->cascade()->forHumans() . ' for unauthenticated visitors. Disable for pages with dynamic or user-specific content.'"
+                        wire:model="isCachedPage"
+                    />
+
+                    {{-- Login Required --}}
+                    <div x-data>
                         <flux:switch
-                            label="Cache response"
-                            :description="'Full-page cache this page for ' . \Carbon\CarbonInterval::seconds(config('responsecache.cache_lifetime_in_seconds'))->cascade()->forHumans() . ' for unauthenticated visitors. Disable for pages with dynamic or user-specific content.'"
-                            wire:model="isCachedPage"
+                            label="Require login"
+                            description="Only authenticated users can access this page."
+                            wire:model.live="requiresLogin"
                         />
 
-                        {{-- Login Required --}}
-                        <div x-data>
-                            <flux:switch
-                                label="Require login"
-                                description="Only authenticated users can access this page."
-                                wire:model.live="requiresLogin"
-                            />
-
-                            <div x-show="$wire.requiresLogin" x-transition class="mt-3">
-                                <flux:field>
-                                    <flux:label>Required role</flux:label>
-                                    <flux:select wire:model="requiredRole">
-                                        <flux:select.option value="">Any logged-in user</flux:select.option>
-                                        <flux:select.option value="manager">Manager or above</flux:select.option>
-                                        <flux:select.option value="admin">Admin or above</flux:select.option>
-                                        <flux:select.option value="super">Super only</flux:select.option>
-                                    </flux:select>
-                                    <flux:description>Restrict access to users with at least this role.</flux:description>
-                                    <flux:error name="requiredRole" />
-                                </flux:field>
-                            </div>
+                        <div x-show="$wire.requiresLogin" x-transition class="mt-3">
+                            <flux:field>
+                                <flux:label>Required role</flux:label>
+                                <flux:select wire:model="requiredRole">
+                                    <flux:select.option value="">Any logged-in user</flux:select.option>
+                                    <flux:select.option value="manager">Manager or above</flux:select.option>
+                                    <flux:select.option value="admin">Admin or above</flux:select.option>
+                                    <flux:select.option value="super">Super only</flux:select.option>
+                                </flux:select>
+                                <flux:description>Restrict access to users with at least this role.</flux:description>
+                                <flux:error name="requiredRole" />
+                            </flux:field>
                         </div>
-                    @endif
+                    </div>
                 </div>
             </div>
+            @endif
 
             {{-- Redirect --}}
             <div x-data="{ redirectOpen: false }" x-on:open-settings-section.window="redirectOpen = ($event.detail === 'redirect')" class="pt-4 border-t border-zinc-200 dark:border-zinc-700">

@@ -24,6 +24,7 @@ enum RowCategory: string
     case Pricing = 'pricing';
     case Slider = 'slider';
     case SocialProof = 'social-proof';
+    case PageTitle = 'page-title';
 
     public function label(): string
     {

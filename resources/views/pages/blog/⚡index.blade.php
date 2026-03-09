@@ -5,6 +5,7 @@ use Livewire\Attributes\Title;
 use Livewire\Component;
 
 new #[Layout('layouts.public', ['description' => 'Read our latest articles, insights, and updates.'])] #[Title('Blog')] class extends Component {
+    public string $pageName = 'Blog';
     // ROW:php:start:blog-posts-index:4ZGUOg
     use \Livewire\WithPagination;
 
@@ -52,7 +53,11 @@ new #[Layout('layouts.public', ['description' => 'Read our latest articles, insi
     }
     // ROW:php:end:blog-posts-index:4ZGUOg
 }; ?>
-<div>{{-- ROW:start:blog-posts-index:4ZGUOg --}}
+<div>{{-- ROW:start:page-title-banner:EwZBCC:shared=1 --}}
+@include('shared-rows.page-title-banner-EwZBCC')
+{{-- ROW:end:page-title-banner:EwZBCC --}}
+
+{{-- ROW:start:blog-posts-index:4ZGUOg --}}
 <x-dl.section slug="blog-posts-index:4ZGUOg"
     default-section-classes="py-section px-6 bg-white dark:bg-zinc-900"
     default-container-classes="max-w-6xl mx-auto">
