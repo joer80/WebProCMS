@@ -2718,6 +2718,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                                             @set-group-open.window="open = $event.detail.value"
                                             @set-group-mode.window="groupMode = null"
                                             @open-group.window="open = ($event.detail.group === '{{ $item['prefix'] }}')"
+                                            @sidebar-item-opened.window="if ($event.detail.index !== {{ $item['index'] }}) open = false"
                                             draggable="true"
                                             @dragstart="dragging = {{ $item['index'] }}"
                                             @dragover.prevent="over = {{ $item['index'] }}"
@@ -2730,20 +2731,21 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                                             }"
                                         >
                                             {{-- Card header: click to expand/collapse --}}
-                                            <div class="flex items-center gap-2 px-3 py-2 bg-zinc-100 dark:bg-zinc-700/50 cursor-pointer select-none" @click="open = !open">
+                                            @php $itemAccordionIndex = $item['index']; @endphp
+                                            <div class="flex items-center gap-2 px-3 py-2 bg-zinc-100 dark:bg-zinc-700/50 cursor-pointer select-none" @click="open = !open; if (open) $dispatch('sidebar-item-opened', { index: {{ $itemAccordionIndex }} })">
                                                 <span class="text-sm font-medium text-zinc-800 dark:text-zinc-200 flex-1 truncate">{{ $item['name'] }}</span>
                                                 @if ($itemHasContentFields)
-                                                    <button type="button" @click.stop="const isActive = groupMode !== null ? groupMode === 'content' : (!designMode && !advancedMode); if (isActive && open) { open = false; } else { groupMode = 'content'; open = true; }"
+                                                    <button type="button" @click.stop="const isActive = groupMode !== null ? groupMode === 'content' : (!designMode && !advancedMode); if (isActive && open) { open = false; } else { groupMode = 'content'; open = true; $dispatch('sidebar-item-opened', { index: {{ $itemAccordionIndex }} }); }"
                                                         :class="(groupMode !== null ? groupMode === 'content' : (!designMode && !advancedMode)) ? 'text-zinc-300 dark:text-zinc-600' : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 transition-colors'"
                                                         title="Content"><flux:icon name="document-text" class="size-3.5" /></button>
                                                 @endif
                                                 @if ($itemHasClassesFields)
-                                                    <button type="button" @click.stop="const isActive = groupMode !== null ? groupMode === 'design' : (designMode && !advancedMode); if (isActive && open) { open = false; } else { groupMode = 'design'; open = true; }"
+                                                    <button type="button" @click.stop="const isActive = groupMode !== null ? groupMode === 'design' : (designMode && !advancedMode); if (isActive && open) { open = false; } else { groupMode = 'design'; open = true; $dispatch('sidebar-item-opened', { index: {{ $itemAccordionIndex }} }); }"
                                                         :class="(groupMode !== null ? groupMode === 'design' : (designMode && !advancedMode)) ? 'text-zinc-300 dark:text-zinc-600' : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 transition-colors'"
                                                         title="Design"><flux:icon name="paint-brush" class="size-3.5" /></button>
                                                 @endif
                                                 @if ($itemHasAdvancedFields)
-                                                    <button type="button" @click.stop="const isActive = groupMode !== null ? groupMode === 'advanced' : advancedMode; if (isActive && open) { open = false; } else { groupMode = 'advanced'; open = true; }"
+                                                    <button type="button" @click.stop="const isActive = groupMode !== null ? groupMode === 'advanced' : advancedMode; if (isActive && open) { open = false; } else { groupMode = 'advanced'; open = true; $dispatch('sidebar-item-opened', { index: {{ $itemAccordionIndex }} }); }"
                                                         :class="(groupMode !== null ? groupMode === 'advanced' : advancedMode) ? 'text-zinc-300 dark:text-zinc-600' : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 transition-colors'"
                                                         title="Advanced"><flux:icon name="code-bracket" class="size-3.5" /></button>
                                                 @endif

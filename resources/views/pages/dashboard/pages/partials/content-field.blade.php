@@ -211,7 +211,7 @@ if (in_array($field['type'], ['id', 'attrs'])) {
                 <div class="rounded-lg border border-zinc-200 dark:border-zinc-700 overflow-hidden">
                     {{-- Collapsed header --}}
                     <div class="flex items-center gap-1.5 px-3 py-2">
-                        <button type="button" @click="openItems[idx] = !openItems[idx]" class="flex items-center gap-1.5 flex-1 min-w-0 text-left">
+                        <button type="button" @click="const wasOpen = openItems[idx]; openItems = {}; openItems[idx] = !wasOpen" class="flex items-center gap-1.5 flex-1 min-w-0 text-left">
                             <flux:icon name="chevron-right" class="size-4 text-zinc-400 shrink-0 transition-transform duration-150" x-bind:class="openItems[idx] ? 'rotate-90' : ''" />
                             <span class="text-sm text-zinc-700 dark:text-zinc-200 font-medium truncate" x-text="item.title || item.name || item.label || item.alt || (item.image ? item.image.split('/').pop() : null) || ('Item ' + (idx + 1))"></span>
                         </button>
