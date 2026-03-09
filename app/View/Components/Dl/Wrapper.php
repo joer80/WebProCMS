@@ -20,6 +20,7 @@ class Wrapper extends Component
         public ?string $defaultFeaturedClasses = null,
         public bool $featured = false,
         public ?string $defaultObjectFit = null,
+        public ?string $defaultToggle = null,
     ) {
         $this->isVoid = in_array(strtolower($this->tag), self::VOID_ELEMENTS);
     }
@@ -35,6 +36,10 @@ class Wrapper extends Component
         $prefix = $attrs['prefix'] ?? 'wrapper';
 
         $fields = [];
+
+        if (array_key_exists('default-toggle', $attrs)) {
+            $fields[] = ['key' => "toggle_{$prefix}", 'default' => $attrs['default-toggle'] ?? '1'];
+        }
 
         if (! empty($attrs['note'])) {
             $fields[] = ['key' => "{$prefix}_note", 'type' => 'note', 'message' => $attrs['note'], 'default' => '', 'label' => 'Info'];

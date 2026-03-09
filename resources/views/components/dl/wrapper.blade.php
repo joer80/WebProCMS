@@ -1,6 +1,7 @@
-@props(['slug', 'prefix' => 'wrapper', 'tag' => 'div', 'defaultClasses' => '', 'defaultFeaturedClasses' => null, 'featured' => false, 'defaultObjectFit' => null])
+@props(['slug', 'prefix' => 'wrapper', 'tag' => 'div', 'defaultClasses' => '', 'defaultFeaturedClasses' => null, 'featured' => false, 'defaultObjectFit' => null, 'defaultToggle' => null])
 @php
 $isVoid = in_array(strtolower($tag), ['area', 'base', 'br', 'col', 'embed', 'hr', 'img', 'input', 'link', 'meta', 'param', 'source', 'track', 'wbr']);
+$toggle = $defaultToggle !== null ? content($slug, "toggle_{$prefix}", $defaultToggle) : null;
 $cls = content($slug, "{$prefix}_classes", $defaultClasses);
 $activeCls = $cls;
 if ($defaultFeaturedClasses !== null) {
@@ -20,10 +21,12 @@ foreach ($wrapperAttrsRaw as $attr) {
     }
 }
 @endphp
+@if($toggle === null || $toggle)
 @if($isVoid)
 {!! "<{$tag} " . $attributes->merge(array_merge(['class' => $activeCls], $extraAttrs))->toHtml() . " />" !!}
 @else
 {!! "<{$tag} " . $attributes->merge(array_merge(['class' => $activeCls], $extraAttrs))->toHtml() . ">" !!}
 {{ $slot }}
 {!! "</{$tag}>" !!}
+@endif
 @endif

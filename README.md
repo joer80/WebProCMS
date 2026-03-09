@@ -111,6 +111,29 @@ Forge does **not** start a queue worker automatically. Without one, background j
 
 Also confirm your production `.env` has `QUEUE_CONNECTION=database` (or whichever driver you're using).
 
+### CSS Builds & the Page Editor
+
+When a client edits CSS classes via the page editor (e.g. changing a background color, overlay opacity, or layout classes), the system automatically:
+
+1. Writes the new class value back into the relevant blade file (shared row file or page blade file) so Tailwind's scanner can detect it
+2. Dispatches a `RebuildAssets` queue job that runs `npm run build` on the server
+
+**This requires Node.js and npm to be installed on the production server.** Without them, the `RebuildAssets` job will fail silently and the new CSS classes won't appear until a manual deploy.
+
+To verify Node.js is available on your Forge server:
+```bash
+node -v
+npm -v
+```
+
+If not installed, add it via your server's provisioning or run:
+```bash
+curl -fsSL https://deb.nodesource.com/setup_lts.x | sudo -E bash -
+sudo apt-get install -y nodejs
+```
+
+**Locally**, this job does not fire — the `npm run dev` watcher (started by `composer run dev`) detects blade file changes and recompiles automatically.
+
 ---
 
 ### Deploying with Laravel Forge

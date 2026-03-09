@@ -57,7 +57,10 @@
       "Bash(sed -i '' 's/@name Rich Text$/@name Rich Text Block/' /Users/joepersonal/Sites/WebProCMS/resources/design-library/rows/content/content-richtext.blade.php)",
       "Bash(sed -i '' 's/@name Stats$/@name Stats Row/' /Users/joepersonal/Sites/WebProCMS/resources/design-library/rows/content/content-stats.blade.php)",
       "Bash(awk 'NR>=2840 && NR<=2870' /Users/joepersonal/Sites/WebProCMS/resources/views/pages/dashboard/pages/⚡editor.blade.php)",
-      "Bash(awk 'NR>=2895 && NR<=2930' /Users/joepersonal/Sites/WebProCMS/resources/views/pages/dashboard/pages/⚡editor.blade.php)"
+      "Bash(awk 'NR>=2895 && NR<=2930' /Users/joepersonal/Sites/WebProCMS/resources/views/pages/dashboard/pages/⚡editor.blade.php)",
+      "Bash(curl -sk https://webprocms.test/blog)",
+      "Bash(curl -sk -o /tmp/blog.html https://webprocms.test/blog)",
+      "Read(//tmp/**)"
     ]
   },
   "defaultMode": "acceptEdits"

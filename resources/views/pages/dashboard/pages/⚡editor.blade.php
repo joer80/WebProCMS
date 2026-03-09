@@ -128,6 +128,8 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
 
     public int $pendingGridItemIndex = 0;
 
+    public ?int $pendingRemoveRowIndex = null;
+
     public string $pendingGridItemSubKey = '';
 
     public bool $showGalleryPicker = false;
@@ -1472,6 +1474,33 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
         }
 
         session()->forget('editor_draft_overrides');
+
+        $hasClassesChange = false;
+        $syncer = new \App\Support\BladeClassSyncer;
+
+        foreach ($drafts as $draftKey => $draft) {
+            if ($draft['type'] !== 'classes' || $draft['value'] === '') {
+                continue;
+            }
+
+            $hasClassesChange = true;
+            $lastColon = strrpos($draftKey, ':');
+            $slug = substr($draftKey, 0, $lastColon);
+            $key = substr($draftKey, $lastColon + 1);
+
+            if (isset($sharedSlugs[$slug])) {
+                $filename = str_replace(':', '-', $slug);
+                $bladeFile = resource_path('views/shared-rows/'.$filename.'.blade.php');
+            } else {
+                $bladeFile = resource_path('views/'.$this->file);
+            }
+
+            $syncer->sync($bladeFile, $slug, $key, $draft['value']);
+        }
+
+        if ($hasClassesChange && app()->isProduction()) {
+            \App\Jobs\RebuildAssets::dispatch();
+        }
     }
 
     public function setPendingImageKey(string $key): void
@@ -3394,7 +3423,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                                                                 <span class="text-[11px] uppercase tracking-wider font-semibold text-zinc-500 dark:text-zinc-400">{{ $fieldLabel }}</span>
                                                                 <button wire:click="resetRowDesignField('{{ $row['slug'] }}', '{{ $fieldKey }}')" type="button" class="text-xs text-zinc-400 dark:text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 transition-colors">Reset</button>
                                                             </div>
-                                                            <div x-data="{ ...twAutocomplete('{{ $row['slug'] }}_{{ $fieldKey }}'), showHelp: false }" class="relative">
+                                                            <div x-data="twAutocomplete('{{ $row['slug'] }}_{{ $fieldKey }}')" class="relative">
                                                                 <textarea
                                                                     x-ref="input"
                                                                     wire:model.live.debounce.400ms="rowDesignValues.{{ $row['slug'] }}.{{ $fieldKey }}"
@@ -3426,42 +3455,13 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                                                                 <div class="flex items-center gap-1.5 mt-1">
                                                                     <p class="text-xs text-zinc-400 dark:text-zinc-500">Tailwind CSS classes. Tab or Enter to complete.</p>
                                                                     <button
-                                                                        @click="showHelp = !showHelp"
+                                                                        @click="$flux.modal('tailwind-css-help').show()"
                                                                         type="button"
-                                                                        :class="showHelp ? 'text-primary' : 'text-zinc-400 dark:text-zinc-500 hover:text-zinc-600 dark:hover:text-zinc-300'"
-                                                                        class="transition-colors shrink-0"
-                                                                        title="Tips"
+                                                                        class="text-zinc-400 dark:text-zinc-500 hover:text-zinc-600 dark:hover:text-zinc-300 transition-colors shrink-0"
+                                                                        title="Tailwind CSS reference"
                                                                     >
                                                                         <flux:icon name="question-mark-circle" class="size-3.5" />
                                                                     </button>
-                                                                </div>
-                                                                <div
-                                                                    x-show="showHelp"
-                                                                    x-transition:enter="transition ease-out duration-100"
-                                                                    x-transition:enter-start="opacity-0 -translate-y-1"
-                                                                    x-transition:enter-end="opacity-100 translate-y-0"
-                                                                    class="mt-1 p-3 rounded-lg bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200 dark:border-zinc-700 text-xs space-y-3"
-                                                                >
-                                                                    <div>
-                                                                        <p class="font-medium text-zinc-600 dark:text-zinc-300 mb-0.5">Theme colors</p>
-                                                                        <code class="block font-mono bg-zinc-100 dark:bg-zinc-700 text-zinc-700 dark:text-zinc-200 px-2 py-1 rounded">text-primary bg-primary border-primary</code>
-                                                                    </div>
-                                                                    <div>
-                                                                        <p class="font-medium text-zinc-600 dark:text-zinc-300 mb-0.5">Section spacing tokens</p>
-                                                                        <code class="block font-mono bg-zinc-100 dark:bg-zinc-700 text-zinc-700 dark:text-zinc-200 px-2 py-1 rounded leading-relaxed">py-section &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;— standard rows<br>py-section-banner — compact CTAs<br>py-section-hero &nbsp;&nbsp;— hero sections</code>
-                                                                    </div>
-                                                                    <div>
-                                                                        <p class="font-medium text-zinc-600 dark:text-zinc-300 mb-0.5">Other tokens</p>
-                                                                        <code class="block font-mono bg-zinc-100 dark:bg-zinc-700 text-zinc-700 dark:text-zinc-200 px-2 py-1 rounded">font-heading rounded-card shadow-card</code>
-                                                                    </div>
-                                                                    <div>
-                                                                        <p class="font-medium text-zinc-600 dark:text-zinc-300 mb-0.5">Arbitrary values</p>
-                                                                        <code class="block font-mono bg-zinc-100 dark:bg-zinc-700 text-zinc-700 dark:text-zinc-200 px-2 py-1 rounded">text-[1.25rem] w-[320px] mt-[10px]</code>
-                                                                    </div>
-                                                                    <div>
-                                                                        <p class="font-medium text-zinc-600 dark:text-zinc-300 mb-0.5">Responsive &amp; dark mode</p>
-                                                                        <code class="block font-mono bg-zinc-100 dark:bg-zinc-700 text-zinc-700 dark:text-zinc-200 px-2 py-1 rounded">bg-white dark:bg-zinc-900 md:px-12</code>
-                                                                    </div>
                                                                 </div>
                                                             </div>
                                                         </div>
@@ -3586,8 +3586,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                                                     />
                                                 @endif
                                                 <flux:button
-                                                    wire:click="removeRow({{ $index }})"
-                                                    wire:confirm="Remove this row from the page?"
+                                                    x-on:click="$wire.set('pendingRemoveRowIndex', {{ $index }}); $flux.modal('confirm-remove-row').show()"
                                                     variant="ghost"
                                                     size="sm"
                                                     icon="trash"
@@ -3959,6 +3958,94 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                 :key="'gallery-picker-'.$pendingGalleryFieldKey"
             />
         @endif
+    </flux:modal>
+
+    <flux:modal name="tailwind-css-help" class="w-full" style="max-width: 75vw;">
+        <flux:heading size="lg">Tailwind CSS Reference</flux:heading>
+        <flux:text class="mt-1 mb-6">Quick reference for writing classes in the editor. Tab or Enter to autocomplete.</flux:text>
+
+        <div class="grid grid-cols-3 gap-6 text-sm">
+            {{-- Column 1: Responsive & Variants --}}
+            <div class="space-y-5">
+                <div>
+                    <p class="font-semibold text-zinc-700 dark:text-zinc-200 mb-1">Responsive</p>
+                    <p class="text-xs text-zinc-500 dark:text-zinc-400 mb-1.5">Apply at a breakpoint and up:</p>
+                    <code class="block font-mono text-xs bg-zinc-100 dark:bg-zinc-700 text-zinc-700 dark:text-zinc-200 px-2 py-1.5 rounded">text-sm md:text-lg lg:text-xl</code>
+                </div>
+                <div>
+                    <p class="font-semibold text-zinc-700 dark:text-zinc-200 mb-1">Dark mode</p>
+                    <p class="text-xs text-zinc-500 dark:text-zinc-400 mb-1.5">Prefix with <span class="font-mono">dark:</span>:</p>
+                    <code class="block font-mono text-xs bg-zinc-100 dark:bg-zinc-700 text-zinc-700 dark:text-zinc-200 px-2 py-1.5 rounded">bg-white dark:bg-zinc-900</code>
+                </div>
+                <div>
+                    <p class="font-semibold text-zinc-700 dark:text-zinc-200 mb-1">Hover &amp; state</p>
+                    <p class="text-xs text-zinc-500 dark:text-zinc-400 mb-1.5">Prefix with <span class="font-mono">hover:</span>, <span class="font-mono">focus:</span>, etc.:</p>
+                    <code class="block font-mono text-xs bg-zinc-100 dark:bg-zinc-700 text-zinc-700 dark:text-zinc-200 px-2 py-1.5 rounded">hover:opacity-80 hover:scale-105</code>
+                </div>
+                <div>
+                    <p class="font-semibold text-zinc-700 dark:text-zinc-200 mb-1">Force override</p>
+                    <p class="text-xs text-zinc-500 dark:text-zinc-400 mb-1.5">Prefix with <span class="font-mono">!</span> to mark important:</p>
+                    <code class="block font-mono text-xs bg-zinc-100 dark:bg-zinc-700 text-zinc-700 dark:text-zinc-200 px-2 py-1.5 rounded">!text-center !mt-0</code>
+                </div>
+            </div>
+
+            {{-- Column 2: Colors & Tokens --}}
+            <div class="space-y-5">
+                <div>
+                    <p class="font-semibold text-zinc-700 dark:text-zinc-200 mb-1">Theme colors</p>
+                    <p class="text-xs text-zinc-500 dark:text-zinc-400 mb-1.5">Your brand colors from Branding settings:</p>
+                    <code class="block font-mono text-xs bg-zinc-100 dark:bg-zinc-700 text-zinc-700 dark:text-zinc-200 px-2 py-1.5 rounded">text-primary bg-primary border-primary</code>
+                </div>
+                <div>
+                    <p class="font-semibold text-zinc-700 dark:text-zinc-200 mb-1">Section spacing</p>
+                    <p class="text-xs text-zinc-500 dark:text-zinc-400 mb-1.5">Controlled together via Branding:</p>
+                    <code class="block font-mono text-xs bg-zinc-100 dark:bg-zinc-700 text-zinc-700 dark:text-zinc-200 px-2 py-1.5 rounded leading-relaxed">py-section &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;standard rows<br>py-section-banner compact CTAs<br>py-section-hero &nbsp;&nbsp;hero sections</code>
+                </div>
+                <div>
+                    <p class="font-semibold text-zinc-700 dark:text-zinc-200 mb-1">Other tokens</p>
+                    <p class="text-xs text-zinc-500 dark:text-zinc-400 mb-1.5">Site-wide design tokens:</p>
+                    <code class="block font-mono text-xs bg-zinc-100 dark:bg-zinc-700 text-zinc-700 dark:text-zinc-200 px-2 py-1.5 rounded">font-heading rounded-card shadow-card</code>
+                </div>
+            </div>
+
+            {{-- Column 3: Special cases --}}
+            <div class="space-y-5">
+                <div>
+                    <p class="font-semibold text-zinc-700 dark:text-zinc-200 mb-1">Background overlays</p>
+                    <p class="text-xs text-zinc-500 dark:text-zinc-400 mb-1.5">Semi-transparent overlays for banners:</p>
+                    <code class="block font-mono text-xs bg-zinc-100 dark:bg-zinc-700 text-zinc-700 dark:text-zinc-200 px-2 py-1.5 rounded leading-relaxed">bg-black/50<br>bg-zinc-900/80<br>bg-zinc-600/80<br>bg-[#6b6b6b]/90</code>
+                </div>
+                <div>
+                    <p class="font-semibold text-zinc-700 dark:text-zinc-200 mb-1">Arbitrary values</p>
+                    <p class="text-xs text-zinc-500 dark:text-zinc-400 mb-1.5">Hardcode any value in square brackets:</p>
+                    <code class="block font-mono text-xs bg-zinc-100 dark:bg-zinc-700 text-zinc-700 dark:text-zinc-200 px-2 py-1.5 rounded">text-[1.25rem] w-[320px]</code>
+                </div>
+                <div>
+                    <p class="font-semibold text-zinc-700 dark:text-zinc-200 mb-1">Remove all styles</p>
+                    <p class="text-xs text-zinc-500 dark:text-zinc-400 mb-1.5">Type <span class="font-mono">none</span> to apply no classes:</p>
+                    <code class="block font-mono text-xs bg-zinc-100 dark:bg-zinc-700 text-zinc-700 dark:text-zinc-200 px-2 py-1.5 rounded">none</code>
+                </div>
+            </div>
+        </div>
+
+        <div class="mt-6 flex justify-end">
+            <flux:modal.close>
+                <flux:button>Close</flux:button>
+            </flux:modal.close>
+        </div>
+    </flux:modal>
+
+    <flux:modal name="confirm-remove-row" class="w-full max-w-sm">
+        <flux:heading size="lg">Remove row?</flux:heading>
+        <flux:text class="mt-2">This will remove the row from the page. Any saved content for this row will also be deleted.</flux:text>
+        <div class="mt-6 flex justify-end gap-3">
+            <flux:modal.close>
+                <flux:button variant="ghost">Cancel</flux:button>
+            </flux:modal.close>
+            <flux:modal.close>
+                <flux:button variant="danger" wire:click="removeRow($pendingRemoveRowIndex)">Remove</flux:button>
+            </flux:modal.close>
+        </div>
     </flux:modal>
 
 </div>

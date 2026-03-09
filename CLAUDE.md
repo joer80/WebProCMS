@@ -53,6 +53,13 @@ This project has domain-specific skills available. You MUST activate the relevan
 
 - If the user doesn't see a frontend change reflected in the UI, it could mean they need to run `npm run build`, `npm run dev`, or `composer run dev`. Ask them.
 
+## CSS Build System (Local vs Production)
+
+When a `classes` type field is saved via the page editor, `BladeClassSyncer` (`app/Support/BladeClassSyncer.php`) automatically writes the new value back into the corresponding blade file (shared row file or page blade file) so Tailwind's scanner can detect it at build time.
+
+- **Local:** `BladeClassSyncer` writes the class to the blade file; `npm run dev` (running via `composer run dev`) detects the file change and recompiles CSS automatically. The `RebuildAssets` job does NOT fire locally.
+- **Production:** `BladeClassSyncer` writes the class to the blade file, then the `RebuildAssets` job (`app/Jobs/RebuildAssets.php`) is dispatched. It runs `npm run build` on the server via the queue worker. **Node.js and npm must be installed on the production server** for this to work. The job is unique with a 30-second dedup window so rapid saves collapse into one build.
+
 ## Documentation Files
 
 - You must only create documentation files if explicitly requested by the user.

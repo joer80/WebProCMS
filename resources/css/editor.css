@@ -4,6 +4,7 @@
 @source '../views/layouts/editor.blade.php';
 @source '../views/pages/dashboard/design-library/⚡editor.blade.php';
 @source '../design-library/**/*.blade.php';
+@source '../views/shared-rows/**/*.blade.php';
 @source '../../app/View/Components/Dl/*.php';
 @source '../../vendor/livewire/flux-pro/stubs/**/*.blade.php';
 @source '../../vendor/livewire/flux/stubs/**/*.blade.php';

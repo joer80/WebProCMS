@@ -54,7 +54,16 @@ new #[Layout('layouts.public', ['description' => 'Read our latest articles, insi
     // ROW:php:end:blog-posts-index:4ZGUOg
 }; ?>
 <div>{{-- ROW:start:page-title-banner:EwZBCC:shared=1 --}}
-@include('shared-rows.page-title-banner-EwZBCC')
+<x-dl.section slug="page-title-banner:EwZBCC"
+    default-section-classes="relative py-section-banner px-6 bg-zinc-800 bg-cover bg-center"
+    default-container-classes="max-w-6xl mx-auto">
+    <x-dl.wrapper slug="page-title-banner:EwZBCC" prefix="overlay" tag="div"
+        default-toggle="1"
+        default-classes="absolute inset-0 bg-black/50" />
+    <x-dl.heading slug="page-title-banner:EwZBCC" prefix="headline" default="{{ $pageName ?? 'Page Title' }}"
+        default-tag="h1"
+        default-classes="relative z-10 font-heading text-4xl sm:text-5xl font-bold text-white" />
+</x-dl.section>
 {{-- ROW:end:page-title-banner:EwZBCC --}}
 
 {{-- ROW:start:blog-posts-index:4ZGUOg --}}
