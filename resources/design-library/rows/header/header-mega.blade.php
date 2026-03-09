@@ -5,9 +5,12 @@
 --}}
 <x-dl.section slug="__SLUG__"
     tag="header"
-    default-section-classes="sticky top-0 z-50 bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800"
-    default-container-classes="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between"
-    x-data="{ megaOpen: false, mobileOpen: false }">
+    x-data="{ megaOpen: false, mobileOpen: false, scrolled: false }"
+    @scroll.window="scrolled = window.scrollY > 20"
+    x-bind:class="scrolled ? 'h-16' : 'h-20'"
+    default-sticky="1"
+    default-section-classes="z-50 bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800 transition-all duration-300"
+    default-container-classes="max-w-6xl mx-auto px-6 h-full flex items-center justify-between">
     <x-dl.logo slug="__SLUG__" prefix="logo"
         default-classes="h-8 w-auto" />
     <nav class="hidden md:flex items-center gap-8">
@@ -48,7 +51,7 @@
         x-transition:enter-end="opacity-100 translate-y-0"
         @click.outside="megaOpen = false"
         style="display:none;"
-        class="absolute top-16 left-0 right-0 border-b border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-lg">
+        class="absolute top-full left-0 right-0 border-b border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-lg">
         <x-dl.wrapper slug="__SLUG__" prefix="mega_panel"
             default-classes="max-w-6xl mx-auto px-6 py-8 grid md:grid-cols-3 gap-6">
             <x-dl.grid slug="__SLUG__" prefix="mega_items"

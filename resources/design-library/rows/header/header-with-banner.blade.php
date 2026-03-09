@@ -6,7 +6,8 @@
 <x-dl.section slug="__SLUG__"
     tag="header"
     x-data="{ mobileOpen: false }"
-    default-section-classes="sticky top-0 z-50"
+    default-sticky="1"
+    default-section-classes="z-50"
     default-container-classes="">
     <x-dl.wrapper slug="__SLUG__" prefix="announcement_bar"
         default-classes="bg-primary py-2 px-6 text-center text-sm text-white font-medium">
