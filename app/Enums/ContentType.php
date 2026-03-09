@@ -12,6 +12,7 @@ enum ContentType: string
     case Grid = 'grid';
     case FormSelect = 'form_select';
     case ObjectFit = 'object_fit';
+    case BorderRadius = 'border_radius';
 
     public function label(): string
     {
@@ -24,6 +25,7 @@ enum ContentType: string
             ContentType::Grid => 'Grid',
             ContentType::FormSelect => 'Form Select',
             ContentType::ObjectFit => 'Object Fit',
+            ContentType::BorderRadius => 'Border Radius',
         };
     }
 }

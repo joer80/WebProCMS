@@ -7,6 +7,10 @@ $objectFit = content($slug, 'image_object_fit', '');
 if ($objectFit) {
     $imageCls = trim(preg_replace('/\bobject-\S+/', '', $imageCls) . ' object-' . $objectFit);
 }
+$borderRadius = content($slug, 'image_border_radius', '');
+if ($borderRadius) {
+    $wrapperCls = preg_replace('/\s+/', ' ', trim(preg_replace('/\brounded(-\w+)?\b/', '', $wrapperCls) . ' ' . $borderRadius));
+}
 $imgSrc = content($slug, 'image', $defaultImage);
 $imgAlt = content($slug, 'image_alt', '');
 $imgLazy = content($slug, 'toggle_image_lazy', '');

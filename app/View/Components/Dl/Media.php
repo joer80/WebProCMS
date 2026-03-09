@@ -28,6 +28,7 @@ class Media extends Component
             ['key' => 'image_alt', 'default' => ''],
             ['key' => 'toggle_image_lazy', 'default' => '', 'label' => 'Lazy Load'],
             ['key' => 'image_object_fit', 'default' => 'cover'],
+            ['key' => 'image_border_radius', 'default' => ''],
             ['key' => 'image_wrapper_classes', 'default' => $attrs['default-wrapper-classes'] ?? 'rounded-card overflow-hidden aspect-video'],
             ['key' => 'image_classes', 'default' => $attrs['default-image-classes'] ?? 'w-full h-full object-cover'],
         ];

@@ -247,6 +247,10 @@ class DesignLibraryService
             return ['object_fit', substr($key, 0, -11)];
         }
 
+        if (str_ends_with($key, '_border_radius')) {
+            return ['border_radius', substr($key, 0, -14)];
+        }
+
         if (str_ends_with($key, '_classes')) {
             return ['classes', substr($key, 0, -8)];
         }

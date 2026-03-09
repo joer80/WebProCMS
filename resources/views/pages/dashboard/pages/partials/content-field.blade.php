@@ -2,7 +2,7 @@
 $effMode = "(groupMode !== null ? groupMode : (advancedMode ? 'advanced' : (designMode ? 'design' : 'content')))";
 if (in_array($field['type'], ['id', 'attrs'])) {
     $fieldShow = "{$effMode} === 'advanced'";
-} elseif (in_array($field['type'], ['classes', 'object_fit'])) {
+} elseif (in_array($field['type'], ['classes', 'object_fit', 'border_radius'])) {
     $fieldShow = "{$effMode} === 'design'";
 } else {
     $fieldShow = "{$effMode} === 'content'";
@@ -416,6 +416,18 @@ if (in_array($field['type'], ['id', 'attrs'])) {
             <flux:select.option value="contain">Contain — show whole image</flux:select.option>
             <flux:select.option value="fill">Fill — stretch to fit</flux:select.option>
             <flux:select.option value="none">None — original size</flux:select.option>
+        </flux:select>
+    @elseif ($field['type'] === 'border_radius')
+        <flux:select wire:model.live="contentValues.{{ $field['key'] }}">
+            <flux:select.option value="">— default —</flux:select.option>
+            <flux:select.option value="rounded-sm">Slight rounding (sm)</flux:select.option>
+            <flux:select.option value="rounded">Default rounding</flux:select.option>
+            <flux:select.option value="rounded-md">Medium rounding (md)</flux:select.option>
+            <flux:select.option value="rounded-lg">Large rounding (lg)</flux:select.option>
+            <flux:select.option value="rounded-xl">Extra large rounding (xl)</flux:select.option>
+            <flux:select.option value="rounded-2xl">Very rounded (2xl)</flux:select.option>
+            <flux:select.option value="rounded-3xl">Very very rounded (3xl)</flux:select.option>
+            <flux:select.option value="rounded-full">Perfect circle if image is square (Full)</flux:select.option>
         </flux:select>
     @elseif ($field['type'] === 'note')
         <div class="rounded-lg bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200 dark:border-zinc-700 px-3 py-2.5 text-xs text-zinc-500 dark:text-zinc-400 leading-relaxed">{!! $field['message'] ?? '' !!}</div>
