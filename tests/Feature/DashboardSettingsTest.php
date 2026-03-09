@@ -437,6 +437,49 @@ it('validates that section spacing uses a valid size keyword', function (): void
         ->assertHasErrors(['sectionSpacing']);
 });
 
+// ── Design — Alt Rows ───────────────────────────────────────────────────────────
+
+it('loads alt_rows_start from branding config on mount', function (): void {
+    config(['branding.alt_rows_enabled' => true, 'branding.alt_rows_start' => 'odd']);
+
+    $user = User::factory()->create();
+
+    Livewire::actingAs($user)
+        ->test('pages::dashboard.settings.design')
+        ->assertSet('altRowsEnabled', true)
+        ->assertSet('altRowsStart', 'odd');
+});
+
+it('saves alt_rows_start to branding config', function (): void {
+    $brandingPath = config_path('branding.php');
+    $originalBranding = file_get_contents($brandingPath);
+
+    config(['branding.alt_rows_enabled' => true, 'branding.alt_rows_start' => 'even']);
+
+    $user = User::factory()->create();
+
+    Livewire::actingAs($user)
+        ->test('pages::dashboard.settings.design')
+        ->set('altRowsStart', 'odd')
+        ->call('saveAltRows')
+        ->assertDispatched('notify', message: 'Alt row setting saved.');
+
+    expect(config('branding.alt_rows_start'))->toBe('odd');
+
+    file_put_contents($brandingPath, $originalBranding);
+    opcache_invalidate($brandingPath, true);
+});
+
+it('rejects invalid alt_rows_start values', function (): void {
+    $user = User::factory()->create();
+
+    Livewire::actingAs($user)
+        ->test('pages::dashboard.settings.design')
+        ->set('altRowsStart', 'invalid')
+        ->call('saveAltRows')
+        ->assertHasErrors(['altRowsStart']);
+});
+
 // ── Advanced ────────────────────────────────────────────────────────────────────
 
 it('writes RESPONSE_CACHE_DRIVER and RESPONSE_CACHE_LIFETIME to .env and dispatches a notification', function (): void {

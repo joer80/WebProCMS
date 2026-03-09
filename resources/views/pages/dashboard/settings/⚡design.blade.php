@@ -13,14 +13,21 @@ new #[Layout('layouts.app')] #[Title('Design')] class extends Component {
 
     public bool $altRowsEnabled = true;
 
+    public string $altRowsStart = 'even';
+
     public function mount(): void
     {
         $this->altRowsEnabled = (bool) config('branding.alt_rows_enabled', true);
+        $this->altRowsStart = config('branding.alt_rows_start', 'even');
         $this->loadTypography();
     }
 
     public function saveAltRows(): void
     {
+        $this->validate([
+            'altRowsStart' => ['required', 'string', 'in:even,odd'],
+        ]);
+
         $this->writeBrandingConfig();
 
         $this->dispatch('notify', message: 'Alt row setting saved.');
@@ -89,6 +96,7 @@ new #[Layout('layouts.app')] #[Title('Design')] class extends Component {
             "    'heading_font' => '{$e($this->headingFont)}',",
             "    'section_spacing' => '{$e($this->sectionSpacing)}',",
             "    'alt_rows_enabled' => {$altRowsPhp},",
+            "    'alt_rows_start' => '{$e($this->altRowsStart)}',",
             '',
             '];',
             '',
@@ -103,6 +111,7 @@ new #[Layout('layouts.app')] #[Title('Design')] class extends Component {
             'branding.heading_font' => $this->headingFont,
             'branding.section_spacing' => $this->sectionSpacing,
             'branding.alt_rows_enabled' => $this->altRowsEnabled,
+            'branding.alt_rows_start' => $this->altRowsStart,
         ]);
     }
 
@@ -140,9 +149,24 @@ new #[Layout('layouts.app')] #[Title('Design')] class extends Component {
                 <div class="flex items-start justify-between gap-6">
                     <div class="flex-1">
                         <flux:heading>Alt Row Backgrounds</flux:heading>
-                        <flux:text class="mt-1">Apply an alternating background color to every other section across all pages by default. Individual pages and rows can override this setting.</flux:text>
-                        <div class="mt-4">
+                        <flux:text class="mt-1">Apply an alternating background color to every other section across all pages by default. Individual pages and rows can override this setting. The alt row color (<code class="text-xs font-mono">--color-alt-row</code>) is configured on the <flux:link href="{{ route('dashboard.settings.branding') }}">Branding</flux:link> page.</flux:text>
+                        <div class="mt-4 space-y-4">
                             <flux:switch wire:model="altRowsEnabled" label="Enable alt row backgrounds site-wide" />
+                            @if ($altRowsEnabled)
+                                <div>
+                                    <flux:label>Start alternating on</flux:label>
+                                    <flux:text class="mt-1 text-xs text-zinc-500">Choose which row receives the first alt background. Use "2nd row" when your first row is white; use "1st row" when your first row already matches your alt background color so you don't get two consecutive matching rows.</flux:text>
+                                    <div class="mt-2 flex gap-2">
+                                        @foreach (['even' => '2nd row (default)', 'odd' => '1st row'] as $value => $label)
+                                            <button
+                                                type="button"
+                                                wire:click="$set('altRowsStart', '{{ $value }}')"
+                                                class="px-4 py-2 rounded-lg border text-sm font-medium transition-colors {{ $altRowsStart === $value ? 'bg-primary text-white border-primary' : 'bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 border-zinc-300 dark:border-zinc-600 hover:border-zinc-400' }}"
+                                            >{{ $label }}</button>
+                                        @endforeach
+                                    </div>
+                                </div>
+                            @endif
                         </div>
                     </div>
                     <flux:button wire:click="saveAltRows" variant="outline" class="shrink-0">Save</flux:button>

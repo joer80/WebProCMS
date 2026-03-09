@@ -1831,6 +1831,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
         $altClass = 'row-alt';
         $drafts = session('editor_draft_overrides', []);
         $changed = false;
+        $altRowsStart = config('branding.alt_rows_start', 'even');
 
         foreach ($this->rows as $index => $row) {
             $slug = $row['slug'];
@@ -1841,12 +1842,21 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
 
             $current = $this->rowDesignValues[$slug]['section_classes'] ?? '';
             $classList = array_values(array_filter(preg_split('/\s+/', trim($current))));
-            $isEven = $index % 2 === 1;
-            $noAlt = ! $this->altRowsEnabled || ($this->rowDesignValues[$slug]['section_no_alt'] ?? '') === '1';
 
-            if ($isEven && ! $noAlt && ! in_array($altClass, $classList, true)) {
+            // Determine which position index receives alt coloring
+            $shouldAlt = $altRowsStart === 'odd' ? ($index % 2 === 0) : ($index % 2 === 1);
+
+            // Never override rows that have a colored/non-white background (e.g. CTAs with bg-primary)
+            $classesWithoutAlt = array_filter($classList, fn ($c) => $c !== $altClass);
+            $hasColoredBg = $this->rowHasColoredBackground(implode(' ', $classesWithoutAlt));
+
+            $noAlt = ! $this->altRowsEnabled
+                || ($this->rowDesignValues[$slug]['section_no_alt'] ?? '') === '1'
+                || $hasColoredBg;
+
+            if ($shouldAlt && ! $noAlt && ! in_array($altClass, $classList, true)) {
                 $classList[] = $altClass;
-            } elseif (! $isEven || $noAlt) {
+            } elseif (! $shouldAlt || $noAlt) {
                 $classList = array_values(array_filter($classList, fn ($c) => $c !== $altClass));
             }
 
@@ -1864,6 +1874,32 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
         if ($changed) {
             session(['editor_draft_overrides' => $drafts]);
         }
+    }
+
+    /**
+     * Returns true when the given class string contains a non-neutral background color.
+     * Neutral backgrounds (white, near-white) can receive the alt row color.
+     * Colored backgrounds (bg-primary, dark zinc, brand colors) should not be overridden.
+     * Only matches unprefixed bg-* classes (ignores dark:bg-*, hover:bg-*, etc.).
+     */
+    private function rowHasColoredBackground(string $classes): bool
+    {
+        $neutralBgs = ['bg-white', 'bg-zinc-50', 'bg-gray-50', 'bg-slate-50', 'bg-neutral-50', 'bg-transparent'];
+
+        preg_match_all('/(?:^|\s)(bg-[\w-]+)/', $classes, $matches);
+        $bgClasses = $matches[1] ?? [];
+
+        if (empty($bgClasses)) {
+            return false;
+        }
+
+        foreach ($bgClasses as $bgClass) {
+            if (! in_array($bgClass, $neutralBgs, true)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**
