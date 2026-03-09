@@ -1,5 +1,5 @@
 {{--
-@name Content - Stats
+@name Stats Row
 @description Row of large statistics with number, label, and optional description.
 @sort 20
 --}}

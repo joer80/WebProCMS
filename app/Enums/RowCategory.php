@@ -27,6 +27,10 @@ enum RowCategory: string
 
     public function label(): string
     {
-        return ucwords(str_replace('-', ' ', $this->value));
+        return match ($this) {
+            self::Cta => 'CTA',
+            self::Faqs => 'FAQs',
+            default => ucwords(str_replace('-', ' ', $this->value)),
+        };
     }
 }

@@ -1,5 +1,5 @@
 {{--
-@name Content - Two Column
+@name Two Column Text & Image
 @description Two-column content section with text and image placeholder.
 @sort 10
 --}}

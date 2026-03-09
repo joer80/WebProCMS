@@ -1,5 +1,5 @@
 {{--
-@name Content - Image Cards
+@name Cards Grid with Images
 @description Centered heading and subheadline above a grid of image cards, each with a title and description.
 @sort 25
 --}}

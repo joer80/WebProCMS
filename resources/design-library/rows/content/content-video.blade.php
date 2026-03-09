@@ -1,5 +1,5 @@
 {{--
-@name Content - Video
+@name Video Embed
 @description Video embed section with heading and subheadline.
 @sort 60
 --}}

@@ -1,5 +1,5 @@
 {{--
-@name Content - Team Grid
+@name Team Member Grid
 @description Team member cards with photo, name, role, and optional bio.
 @sort 40
 --}}

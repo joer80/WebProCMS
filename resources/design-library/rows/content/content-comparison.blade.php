@@ -1,5 +1,5 @@
 {{--
-@name Content - Before & After
+@name Before & After
 @description Side-by-side before and after comparison panels.
 @sort 90
 --}}

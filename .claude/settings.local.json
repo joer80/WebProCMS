@@ -44,7 +44,20 @@
       "Bash(curl -sk --cookie \"laravel_session=\" https://webprocms.test)",
       "Bash(curl -s https://webprocms.test/ --insecure)",
       "Bash(curl -sk https://webprocms.test/)",
-      "Bash(curl -sk http://webprocms.test/)"
+      "Bash(curl -sk http://webprocms.test/)",
+      "Bash(xargs perl -i -p -e 's/^\\(\\\\s*\\\\@name \\)\\(.+?\\) - \\(.+\\)$/$1$3/')",
+      "Bash(sed -i '' 's/@name Centered$/@name Centered Text \\\\& CTA/' /Users/joepersonal/Sites/WebProCMS/resources/design-library/rows/content/content-centered.blade.php)",
+      "Bash(sed -i '' 's/@name Image Cards$/@name Cards Grid with Images/' /Users/joepersonal/Sites/WebProCMS/resources/design-library/rows/content/content-image-cards.blade.php)",
+      "Bash(sed -i '' 's/@name Logo Cloud$/@name Logo Cloud/' /Users/joepersonal/Sites/WebProCMS/resources/design-library/rows/content/content-logos.blade.php)",
+      "Bash(sed -i '' 's/@name Video$/@name Video Embed/' /Users/joepersonal/Sites/WebProCMS/resources/design-library/rows/content/content-video.blade.php)",
+      "Bash(sed -i '' 's/@name Team Grid$/@name Team Member Grid/' /Users/joepersonal/Sites/WebProCMS/resources/design-library/rows/content/content-team.blade.php)",
+      "Bash(sed -i '' 's/@name Timeline$/@name Milestone Timeline/' /Users/joepersonal/Sites/WebProCMS/resources/design-library/rows/content/content-timeline.blade.php)",
+      "Bash(sed -i '' 's/@name Split Feature List$/@name Text \\\\& CTA with Image Cards/' /Users/joepersonal/Sites/WebProCMS/resources/design-library/rows/content/content-split-list.blade.php)",
+      "Bash(sed -i '' 's/@name Two Column$/@name Two Column Text \\\\& Image/' /Users/joepersonal/Sites/WebProCMS/resources/design-library/rows/content/content-two-column.blade.php)",
+      "Bash(sed -i '' 's/@name Rich Text$/@name Rich Text Block/' /Users/joepersonal/Sites/WebProCMS/resources/design-library/rows/content/content-richtext.blade.php)",
+      "Bash(sed -i '' 's/@name Stats$/@name Stats Row/' /Users/joepersonal/Sites/WebProCMS/resources/design-library/rows/content/content-stats.blade.php)",
+      "Bash(awk 'NR>=2840 && NR<=2870' /Users/joepersonal/Sites/WebProCMS/resources/views/pages/dashboard/pages/⚡editor.blade.php)",
+      "Bash(awk 'NR>=2895 && NR<=2930' /Users/joepersonal/Sites/WebProCMS/resources/views/pages/dashboard/pages/⚡editor.blade.php)"
     ]
   },
   "defaultMode": "acceptEdits"

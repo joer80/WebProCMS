@@ -1,5 +1,5 @@
 {{--
-@name Content - Logo Cloud
+@name Logo Cloud
 @description Horizontal row of company logos or partner brands.
 @sort 50
 --}}

@@ -1,5 +1,5 @@
 {{--
-@name Content - Split Feature List
+@name Text & CTA with Image Cards
 @description Two-column section with heading and CTA on the left, and a stacked list of cards with thumbnail images on the right.
 @sort 15
 --}}

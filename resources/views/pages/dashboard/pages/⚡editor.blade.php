@@ -55,7 +55,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
 
     public string $librarySearch = '';
 
-    public string $libraryCategory = '';
+    public string $libraryCategory = 'content';
 
     public string $libraryPageCategory = '';
 
@@ -564,7 +564,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
         $this->insertAtIndex = $atIndex;
         $this->libraryTab = 'rows';
         $this->librarySearch = '';
-        $this->libraryCategory = '';
+        $this->libraryCategory = 'content';
         $this->libraryPageCategory = '';
         $this->showLibraryDrawer = true;
         unset($this->libraryRows, $this->libraryPages);
@@ -574,7 +574,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
     {
         $this->libraryTab = $tab;
         $this->librarySearch = '';
-        $this->libraryCategory = '';
+        $this->libraryCategory = 'content';
         $this->libraryPageCategory = '';
         unset($this->libraryRows, $this->libraryPages);
     }
@@ -665,6 +665,19 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
         $position = (($this->rowBrowseData[$slug]['position'] ?? 0) + $step + $count) % $count;
         $this->rowBrowseData[$slug]['position'] = $position;
         $this->applyBrowseRow($slug, $options[$position]['id']);
+    }
+
+    public function browseRowJump(string $slug, int $rowId): void
+    {
+        $options = $this->rowBrowseData[$slug]['rowOptions'] ?? [];
+        $position = array_search($rowId, array_column($options, 'id'), true);
+
+        if ($position === false) {
+            return;
+        }
+
+        $this->rowBrowseData[$slug]['position'] = (int) $position;
+        $this->applyBrowseRow($slug, $rowId);
     }
 
     public function reloadRowFromLibrary(string $slug): void
@@ -2860,17 +2873,18 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                                             x-data="{ open: false, groupMode: null }"
                                             @set-group-open.window="open = $event.detail.value"
                                             @set-group-mode.window="groupMode = null"
+                                            @sidebar-group-opened.window="if ($event.detail.slug === '{{ $rows[$editingRowIndex]['slug'] }}' && $event.detail.id !== 'row-settings') open = false"
                                             class="mb-2 rounded-lg border border-zinc-200 dark:border-zinc-700 overflow-hidden"
                                         >
-                                            <div class="flex items-center gap-2 px-3 py-2 bg-zinc-100 dark:bg-zinc-700/50 cursor-pointer select-none" @click="open = !open">
+                                            <div class="flex items-center gap-2 px-3 py-2 bg-zinc-100 dark:bg-zinc-700/50 cursor-pointer select-none" @click="open = !open; if (open) $dispatch('sidebar-group-opened', { slug: '{{ $rows[$editingRowIndex]['slug'] }}', id: 'row-settings' })">
                                                 <span class="text-sm font-medium text-zinc-800 dark:text-zinc-200 flex-1 truncate">Row Settings</span>
                                                 @if ($orphanHasClassesFields)
-                                                    <button type="button" @click.stop="const isActive = groupMode !== null ? groupMode === 'design' : (designMode && !advancedMode); if (isActive && open) { open = false; } else { groupMode = 'design'; open = true; }"
+                                                    <button type="button" @click.stop="const isActive = groupMode !== null ? groupMode === 'design' : (designMode && !advancedMode); if (isActive && open) { open = false; } else { groupMode = 'design'; open = true; $dispatch('sidebar-group-opened', { slug: '{{ $rows[$editingRowIndex]['slug'] }}', id: 'row-settings' }); }"
                                                         :class="(groupMode !== null ? groupMode === 'design' : (designMode && !advancedMode)) ? 'text-zinc-300 dark:text-zinc-600' : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 transition-colors'"
                                                         title="Design"><flux:icon name="paint-brush" class="size-3.5" /></button>
                                                 @endif
                                                 @if ($orphanHasAdvancedFields)
-                                                    <button type="button" @click.stop="const isActive = groupMode !== null ? groupMode === 'advanced' : advancedMode; if (isActive && open) { open = false; } else { groupMode = 'advanced'; open = true; }"
+                                                    <button type="button" @click.stop="const isActive = groupMode !== null ? groupMode === 'advanced' : advancedMode; if (isActive && open) { open = false; } else { groupMode = 'advanced'; open = true; $dispatch('sidebar-group-opened', { slug: '{{ $rows[$editingRowIndex]['slug'] }}', id: 'row-settings' }); }"
                                                         :class="(groupMode !== null ? groupMode === 'advanced' : advancedMode) ? 'text-zinc-300 dark:text-zinc-600' : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 transition-colors'"
                                                         title="Advanced"><flux:icon name="code-bracket" class="size-3.5" /></button>
                                                 @endif
@@ -2912,6 +2926,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                                                 @set-group-open.window="open = $event.detail.value"
                                                 @set-group-mode.window="groupMode = null"
                                                 @open-group.window="open = ($event.detail.group === '{{ $comp['attrs']['prefix'] ?? $comp['slug'] }}')"
+                                                @sidebar-group-opened.window="if ($event.detail.slug === '{{ $rows[$editingRowIndex]['slug'] }}' && $event.detail.id !== '{{ $comp['attrs']['prefix'] ?? $comp['slug'] }}') open = false"
                                                 draggable="true"
                                                 @dragstart="dragging = {{ $comp['index'] }}"
                                                 @dragover.prevent="over = {{ $comp['index'] }}"
@@ -2923,20 +2938,21 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                                                     'border-bottom': over === {{ $comp['index'] }} && dragging !== null && dragging < {{ $comp['index'] }} ? '2px solid var(--color-primary)' : ''
                                                 }"
                                             >
-                                                <div class="flex items-center gap-2 px-3 py-2 bg-zinc-100 dark:bg-zinc-700/50 cursor-pointer select-none" @click="if ({{ $compHasContentFields ? 'true' : 'false' }} || designMode || advancedMode || groupMode !== null) { open = !open; }">
+                                                @php $compAccordionId = $comp['attrs']['prefix'] ?? $comp['slug']; $compAccordionSlug = $rows[$editingRowIndex]['slug']; @endphp
+                                                <div class="flex items-center gap-2 px-3 py-2 bg-zinc-100 dark:bg-zinc-700/50 cursor-pointer select-none" @click="if ({{ $compHasContentFields ? 'true' : 'false' }} || designMode || advancedMode || groupMode !== null) { open = !open; if (open) $dispatch('sidebar-group-opened', { slug: '{{ $compAccordionSlug }}', id: '{{ $compAccordionId }}' }); }">
                                                     <span class="text-sm font-medium text-zinc-800 dark:text-zinc-200 flex-1 truncate">{{ $comp['name'] }}</span>
                                                     @if ($compHasContentFields)
-                                                        <button type="button" @click.stop="const isActive = groupMode !== null ? groupMode === 'content' : (!designMode && !advancedMode); if (isActive && open) { open = false; } else { groupMode = 'content'; open = true; }"
+                                                        <button type="button" @click.stop="const isActive = groupMode !== null ? groupMode === 'content' : (!designMode && !advancedMode); if (isActive && open) { open = false; } else { groupMode = 'content'; open = true; $dispatch('sidebar-group-opened', { slug: '{{ $compAccordionSlug }}', id: '{{ $compAccordionId }}' }); }"
                                                             :class="(groupMode !== null ? groupMode === 'content' : (!designMode && !advancedMode)) ? 'text-zinc-300 dark:text-zinc-600' : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 transition-colors'"
                                                             title="Content"><flux:icon name="document-text" class="size-3.5" /></button>
                                                     @endif
                                                     @if ($compHasClassesFields)
-                                                        <button type="button" @click.stop="const isActive = groupMode !== null ? groupMode === 'design' : (designMode && !advancedMode); if (isActive && open) { open = false; } else { groupMode = 'design'; open = true; }"
+                                                        <button type="button" @click.stop="const isActive = groupMode !== null ? groupMode === 'design' : (designMode && !advancedMode); if (isActive && open) { open = false; } else { groupMode = 'design'; open = true; $dispatch('sidebar-group-opened', { slug: '{{ $compAccordionSlug }}', id: '{{ $compAccordionId }}' }); }"
                                                             :class="(groupMode !== null ? groupMode === 'design' : (designMode && !advancedMode)) ? 'text-zinc-300 dark:text-zinc-600' : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 transition-colors'"
                                                             title="Design"><flux:icon name="paint-brush" class="size-3.5" /></button>
                                                     @endif
                                                     @if ($compHasAdvancedFields)
-                                                        <button type="button" @click.stop="const isActive = groupMode !== null ? groupMode === 'advanced' : advancedMode; if (isActive && open) { open = false; } else { groupMode = 'advanced'; open = true; }"
+                                                        <button type="button" @click.stop="const isActive = groupMode !== null ? groupMode === 'advanced' : advancedMode; if (isActive && open) { open = false; } else { groupMode = 'advanced'; open = true; $dispatch('sidebar-group-opened', { slug: '{{ $compAccordionSlug }}', id: '{{ $compAccordionId }}' }); }"
                                                             :class="(groupMode !== null ? groupMode === 'advanced' : advancedMode) ? 'text-zinc-300 dark:text-zinc-600' : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 transition-colors'"
                                                             title="Advanced"><flux:icon name="code-bracket" class="size-3.5" /></button>
                                                     @endif
@@ -3514,13 +3530,21 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                                             @if ($bd)
                                                 <select
                                                     x-on:change="$wire.browseCategoryChange('{{ $row['slug'] }}', $event.target.value)"
-                                                    class="flex-1 min-w-0 text-xs rounded-lg border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-900 text-zinc-900 dark:text-white px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition"
+                                                    class="w-28 shrink-0 text-xs rounded-lg border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-900 text-zinc-900 dark:text-white px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition"
                                                 >
                                                     @foreach ($bd['categoryOptions'] as $cat)
                                                         <option value="{{ $cat['value'] }}" {{ $bd['category'] === $cat['value'] ? 'selected' : '' }}>{{ $cat['label'] }}</option>
                                                     @endforeach
                                                 </select>
-                                                <div class="flex items-center gap-1 shrink-0">
+                                                <div class="flex items-center gap-1 flex-1 min-w-0">
+                                                    <select
+                                                        x-on:change="$wire.browseRowJump('{{ $row['slug'] }}', parseInt($event.target.value))"
+                                                        class="flex-1 min-w-0 text-xs rounded-lg border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-900 text-zinc-900 dark:text-white px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition"
+                                                    >
+                                                        @foreach ($bd['rowOptions'] as $i => $opt)
+                                                            <option value="{{ $opt['id'] }}" {{ $bd['position'] === $i ? 'selected' : '' }}>{{ $opt['name'] }}</option>
+                                                        @endforeach
+                                                    </select>
                                                     <flux:button
                                                         wire:click="browseRowStep('{{ $row['slug'] }}', -1)"
                                                         variant="ghost"
@@ -3530,9 +3554,6 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                                                         :loading="false"
                                                         :disabled="count($bd['rowOptions']) <= 1"
                                                     />
-                                                    <span class="text-[11px] text-zinc-500 dark:text-zinc-400 tabular-nums whitespace-nowrap">
-                                                        {{ $bd['position'] + 1 }} / {{ count($bd['rowOptions']) }}
-                                                    </span>
                                                     <flux:button
                                                         wire:click="browseRowStep('{{ $row['slug'] }}', 1)"
                                                         variant="ghost"

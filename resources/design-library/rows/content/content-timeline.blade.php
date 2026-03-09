@@ -1,5 +1,5 @@
 {{--
-@name Content - Timeline
+@name Milestone Timeline
 @description Vertical timeline with year, title, and description for milestones.
 @sort 30
 --}}

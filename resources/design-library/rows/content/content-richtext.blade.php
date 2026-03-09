@@ -1,5 +1,5 @@
 {{--
-@name Content - Rich Text
+@name Rich Text Block
 @description Full-width centered rich text content area for long-form content.
 @sort 70
 --}}

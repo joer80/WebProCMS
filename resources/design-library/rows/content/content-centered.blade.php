@@ -1,5 +1,5 @@
 {{--
-@name Content - Centered
+@name Centered Text & CTA
 @description Centered content block with heading, description, and optional CTA.
 @sort 80
 --}}
