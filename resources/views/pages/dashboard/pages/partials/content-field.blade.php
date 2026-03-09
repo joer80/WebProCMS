@@ -72,12 +72,24 @@ if (in_array($field['type'], ['id', 'attrs'])) {
             </span>
         </button>
     @elseif ($field['type'] === 'richtext')
-        <flux:textarea
-            wire:model.live.debounce.400ms="contentValues.{{ $field['key'] }}"
-            rows="4"
-            placeholder="{{ $field['default'] }}"
-        />
-        <flux:text class="text-xs text-zinc-400 mt-1">HTML is supported.</flux:text>
+        <div wire:ignore
+             x-data="richEditor(@js($contentValues[$field['key']] ?? $field['default'] ?? ''), 'contentValues.{{ $field['key'] }}')"
+             class="overflow-hidden rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900">
+            {{-- Compact toolbar --}}
+            <div class="flex flex-wrap items-center gap-0.5 border-b border-zinc-200 dark:border-zinc-700 px-1.5 py-1">
+                <button type="button" @click="cmd().toggleBold().run()" :class="active.bold ? 'bg-zinc-200 dark:bg-zinc-600' : ''" class="rounded px-1.5 py-0.5 text-xs font-bold text-zinc-700 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors" title="Bold">B</button>
+                <button type="button" @click="cmd().toggleItalic().run()" :class="active.italic ? 'bg-zinc-200 dark:bg-zinc-600' : ''" class="rounded px-1.5 py-0.5 text-xs italic text-zinc-700 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors" title="Italic">I</button>
+                <button type="button" @click="cmd().toggleUnderline().run()" :class="active.underline ? 'bg-zinc-200 dark:bg-zinc-600' : ''" class="rounded px-1.5 py-0.5 text-xs underline text-zinc-700 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors" title="Underline">U</button>
+                <button type="button" @click="cmd().toggleStrike().run()" :class="active.strike ? 'bg-zinc-200 dark:bg-zinc-600' : ''" class="rounded px-1.5 py-0.5 text-xs line-through text-zinc-700 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors" title="Strikethrough">S</button>
+                <div class="w-px h-4 bg-zinc-200 dark:bg-zinc-600 mx-0.5"></div>
+                <button type="button" @click="cmd().toggleBulletList().run()" :class="active.bulletList ? 'bg-zinc-200 dark:bg-zinc-600' : ''" class="rounded px-1.5 py-0.5 text-xs text-zinc-700 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors" title="Bullet List">• List</button>
+                <button type="button" @click="cmd().toggleOrderedList().run()" :class="active.orderedList ? 'bg-zinc-200 dark:bg-zinc-600' : ''" class="rounded px-1.5 py-0.5 text-xs text-zinc-700 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors" title="Ordered List">1. List</button>
+                <div class="w-px h-4 bg-zinc-200 dark:bg-zinc-600 mx-0.5"></div>
+                <button type="button" @click="setLink()" :class="active.link ? 'bg-zinc-200 dark:bg-zinc-600' : ''" class="rounded px-1.5 py-0.5 text-xs text-zinc-700 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors" title="Link">Link</button>
+                <button type="button" @click="cmd().unsetAllMarks().clearNodes().run()" class="rounded px-1.5 py-0.5 text-xs text-zinc-700 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors" title="Clear Formatting">✕</button>
+            </div>
+            <div x-ref="editorEl" class="sidebar-rich-editor-content"></div>
+        </div>
     @elseif ($field['type'] === 'classes')
         <div x-data="twAutocomplete('{{ $field['key'] }}')" class="relative">
             <textarea

@@ -6,7 +6,7 @@ import Link from '@tiptap/extension-link';
 import Image from '@tiptap/extension-image';
 
 document.addEventListener('alpine:init', () => {
-    Alpine.data('richEditor', (initialContent) => {
+    Alpine.data('richEditor', (initialContent, wireKey = 'content') => {
         // Stored outside Alpine's reactive scope to avoid Proxy wrapping,
         // which corrupts ProseMirror transactions.
         let _editor = null;
@@ -34,7 +34,7 @@ document.addEventListener('alpine:init', () => {
                         clearTimeout(this.debounceTimer);
                         this.debounceTimer = setTimeout(() => {
                             const html = editor.getHTML();
-                            this.$wire.set('content', html === '<p></p>' ? '' : html);
+                            this.$wire.set(wireKey, html === '<p></p>' ? '' : html);
                         }, 500);
                     },
                     onSelectionUpdate: ({ editor }) => this.syncState(editor),
