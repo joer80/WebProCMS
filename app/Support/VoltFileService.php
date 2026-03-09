@@ -217,18 +217,21 @@ class VoltFileService
      * Write the current editor state to the preview temp file without touching the real file.
      *
      * @param  list<array{slug: string, name: string, blade: string}>  $rows
+     * @param  array<string, string>  $previewContext  e.g. ['slug' => 'my-post']
      */
-    public function writePreviewFile(string $phpSection, array $rows, string $relativePath): void
+    public function writePreviewFile(string $phpSection, array $rows, string $relativePath, array $previewContext = []): void
     {
-        $this->writeFile($this->previewFilePath($relativePath), $this->buildPreviewFileContent($phpSection, $rows));
+        $this->writeFile($this->previewFilePath($relativePath), $this->buildPreviewFileContent($phpSection, $rows, $previewContext));
     }
 
     /**
      * Build preview-only file content: wraps each row in a data-editor-row div
      * and injects a postMessage script so the editor iframe can detect row clicks.
      * Hidden rows are omitted entirely from the preview.
+     *
+     * @param  array<string, string>  $previewContext  Route param values to inject into the mount method
      */
-    private function buildPreviewFileContent(string $phpSection, array $rows): string
+    private function buildPreviewFileContent(string $phpSection, array $rows, array $previewContext = []): string
     {
         // Layout partial files (e.g. header/footer) have a comment-only PHP section rather
         // than a full Volt class. Substitute a minimal valid Volt class so the preview route
@@ -236,13 +239,37 @@ class VoltFileService
         // without wrapping it in the public site header/footer again.
         if (! str_contains($phpSection, 'extends Component')) {
             $phpSection = "<?php\nnew #[\\Livewire\\Attributes\\Layout('layouts.partial-preview')] class extends \\Livewire\\Component { }; ?>";
-        } elseif (preg_match('/public function mount\([^)]*(?:string|int|float)\s+\$\w+/', $phpSection)) {
-            // Mount requires scalar route parameters (e.g. string $slug) that the preview
-            // route cannot resolve from the container. Replace with a minimal class that
-            // preserves the page layout so the preview iframe still renders the rows.
-            preg_match('/#\[Layout\([\'"]([^\'"]+)[\'"]\)\]/', $phpSection, $layoutMatch);
-            $layout = $layoutMatch[1] ?? 'layouts.public';
-            $phpSection = "<?php\nnew #[\\Livewire\\Attributes\\Layout('{$layout}')] class extends \\Livewire\\Component { }; ?>";
+        } elseif (preg_match('/public function mount\(([^)]*)\)/', $phpSection, $mountMatch)) {
+            $mountSignature = $mountMatch[1];
+            preg_match_all('/\$(\w+)/', $mountSignature, $paramMatches);
+            $paramNames = $paramMatches[1] ?? [];
+
+            // Build injections for any mount params that have a matching context value.
+            $injections = [];
+            foreach ($paramNames as $paramName) {
+                if (isset($previewContext[$paramName])) {
+                    $escaped = addslashes($previewContext[$paramName]);
+                    $injections[] = "\$${paramName} = '{$escaped}';";
+                }
+            }
+
+            if (! empty($injections)) {
+                // Remove all params from the mount signature so the preview route can
+                // call mount() without any arguments, then inject hardcoded values.
+                $phpSection = preg_replace('/public function mount\([^)]*\)/', 'public function mount()', $phpSection);
+                $injection = implode("\n        ", $injections);
+                $phpSection = preg_replace(
+                    '/(public function mount\(\)(?:\s*:\s*\w+)?\s*\{)/',
+                    "$1\n        {$injection}",
+                    $phpSection
+                );
+            } else {
+                // Mount requires scalar route parameters that the preview route cannot
+                // resolve. Replace with a minimal class that preserves the layout.
+                preg_match('/#\[Layout\([\'"]([^\'"]+)[\'"]\)\]/', $phpSection, $layoutMatch);
+                $layout = $layoutMatch[1] ?? 'layouts.public';
+                $phpSection = "<?php\nnew #[\\Livewire\\Attributes\\Layout('{$layout}')] class extends \\Livewire\\Component { }; ?>";
+            }
         }
 
         $blade = '';

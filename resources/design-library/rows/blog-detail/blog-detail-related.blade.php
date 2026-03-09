@@ -18,7 +18,10 @@
                     <x-dl.wrapper slug="__SLUG__" prefix="post_image_wrapper"
                         default-classes="rounded-card overflow-hidden aspect-video bg-zinc-100 dark:bg-zinc-800 mb-4">
                         @if ($post->featured_image)
-                            <img src="{{ \Illuminate\Support\Facades\Storage::url($post->featured_image) }}" alt="{{ $post->featured_image_alt }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
+                            <x-dl.wrapper slug="__SLUG__" prefix="post_img" tag="img"
+                                src="{{ \Illuminate\Support\Facades\Storage::url($post->featured_image) }}"
+                                alt="{{ $post->featured_image_alt }}"
+                                default-classes="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
                         @else
                             <div class="w-full h-full flex items-center justify-center text-zinc-400 text-sm">No image</div>
                         @endif

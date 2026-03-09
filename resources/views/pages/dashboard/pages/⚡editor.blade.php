@@ -31,6 +31,12 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
     #[Url]
     public string $file = '';
 
+    #[Url]
+    public string $previewContext = '';
+
+    /** @var array<string, string> value => label for the "Preview as" dropdown */
+    public array $previewContextOptions = [];
+
     public string $phpSection = '';
 
     /** @var array<int, array{slug: string, name: string, blade: string}> */
@@ -372,6 +378,12 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
         $this->showContentEditor = false;
         $this->editingRowIndex = null;
 
+        $this->loadPreviewContextOptions();
+        $this->refreshPreview();
+    }
+
+    public function updatedPreviewContext(): void
+    {
         $this->refreshPreview();
     }
 
@@ -2196,6 +2208,46 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
         $this->phpSection = $service->removePhpCode($this->phpSection, 'page-auth');
     }
 
+    /**
+     * Populate $previewContextOptions for files that require route parameters.
+     * When options are available, auto-selects the first if none is already chosen.
+     */
+    private function loadPreviewContextOptions(): void
+    {
+        $this->previewContextOptions = [];
+
+        if ($this->file === 'pages/blog/⚡show.blade.php') {
+            $this->previewContextOptions = \App\Models\Post::query()
+                ->orderByDesc('published_at')
+                ->limit(50)
+                ->pluck('title', 'slug')
+                ->all();
+
+            if (! $this->previewContext || ! isset($this->previewContextOptions[$this->previewContext])) {
+                $this->previewContext = array_key_first($this->previewContextOptions) ?? '';
+            }
+
+            return;
+        }
+
+        // No context options for this file — clear any stale selection.
+        $this->previewContext = '';
+    }
+
+    /**
+     * Resolve the previewContext string into a keyed array for the mount injector.
+     *
+     * @return array<string, string>
+     */
+    private function resolvePreviewContext(): array
+    {
+        if ($this->file === 'pages/blog/⚡show.blade.php' && $this->previewContext) {
+            return ['slug' => $this->previewContext];
+        }
+
+        return [];
+    }
+
     private function refreshPreview(): void
     {
         try {
@@ -2203,7 +2255,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
             // Strip behavior blocks so the preview iframe always renders the page content.
             $previewPhpSection = $service->removePhpCode($this->phpSection, 'page-status-abort');
             $previewPhpSection = $service->removePhpCode($previewPhpSection, 'page-redirect');
-            $service->writePreviewFile($previewPhpSection, $this->rows, $this->file);
+            $service->writePreviewFile($previewPhpSection, $this->rows, $this->file, $this->resolvePreviewContext());
         } catch (\Throwable) {
             // Preview write failed; continue without updating the iframe.
         }
@@ -2486,6 +2538,16 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                             @endforeach
                         </flux:select>
                     </flux:tooltip>
+
+                    @if ($previewContextOptions)
+                        <flux:tooltip content="Preview as" position="bottom">
+                            <flux:select wire:model.live="previewContext" size="sm" class="w-52">
+                                @foreach ($previewContextOptions as $value => $label)
+                                    <flux:select.option value="{{ $value }}">{{ $label }}</flux:select.option>
+                                @endforeach
+                            </flux:select>
+                        </flux:tooltip>
+                    @endif
 
                     @if ($file)
                         <flux:tooltip content="Page Settings" position="bottom">

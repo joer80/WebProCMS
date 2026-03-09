@@ -83,8 +83,7 @@
     </x-dl.wrapper>
 
     {{-- Article --}}
-    <x-dl.wrapper slug="__SLUG__" prefix="article" tag="article"
-        default-classes="">
+    <article>
         <x-dl.wrapper slug="__SLUG__" prefix="post_title" tag="h1"
             default-classes="text-4xl font-semibold leading-tight mb-4">
             {{ $post->title ?? 'Post Title' }}
@@ -117,18 +116,17 @@
             <x-dl.wrapper slug="__SLUG__" prefix="cta_buttons"
                 default-classes="mt-8 flex flex-wrap gap-3">
                 @foreach ($post->cta_buttons as $button)
-                    <a
+                    <x-dl.wrapper slug="__SLUG__" prefix="cta_button_link" tag="a"
                         href="{{ $button['url'] }}"
                         target="{{ $button['target'] ?? '_self' }}"
-                        @if (($button['target'] ?? '_self') === '_blank') rel="noopener noreferrer" @endif
-                        class="inline-flex items-center px-6 py-3 bg-zinc-900 dark:bg-zinc-100 text-zinc-100 dark:text-zinc-900 rounded-lg font-medium hover:opacity-90 transition-opacity"
-                    >
+                        rel="{{ ($button['target'] ?? '_self') === '_blank' ? 'noopener noreferrer' : '' }}"
+                        default-classes="inline-flex items-center px-6 py-3 bg-zinc-900 dark:bg-zinc-100 text-zinc-100 dark:text-zinc-900 rounded-lg font-medium hover:opacity-90 transition-opacity">
                         {{ $button['text'] }}
-                    </a>
+                    </x-dl.wrapper>
                 @endforeach
             </x-dl.wrapper>
         @endif
-    </x-dl.wrapper>
+    </article>
 
     {{-- Gallery --}}
     @if (isset($post) && $post->gallery_images)
@@ -146,16 +144,15 @@
             @keydown.escape.window="if (isOpen) close()"
             @keydown.arrow-left.window="if (isOpen) prev()"
             @keydown.arrow-right.window="if (isOpen) next()">
-            <div
-                class="grid gap-3"
-                style="grid-template-columns: repeat({{ $post->gallery_columns ?? 4 }}, minmax(0, 1fr))"
-            >
+            <x-dl.wrapper slug="__SLUG__" prefix="gallery_grid" tag="div"
+                default-classes="grid gap-3"
+                style="grid-template-columns: repeat({{ $post->gallery_columns ?? 4 }}, minmax(0, 1fr))">
                 @foreach ($post->galleryImagesData() as $index => $image)
                     <button type="button" @click="open({{ $index }})" class="aspect-square overflow-hidden rounded-lg focus:outline-none focus:ring-2 focus:ring-zinc-900 dark:focus:ring-zinc-100 focus:ring-offset-2">
                         <img src="{{ $image['url'] }}" alt="{{ $image['alt'] ?: 'Gallery photo ' . ($index + 1) }}" class="w-full h-full object-cover hover:scale-105 transition-transform duration-200" />
                     </button>
                 @endforeach
-            </div>
+            </x-dl.wrapper>
             {{-- Lightbox --}}
             <div x-show="isOpen" x-cloak class="fixed inset-0 z-50 flex items-center justify-center bg-black/90" @click.self="close()">
                 <button type="button" @click="close()" class="absolute top-4 right-4 text-white/80 hover:text-white transition-colors p-2" aria-label="Close">

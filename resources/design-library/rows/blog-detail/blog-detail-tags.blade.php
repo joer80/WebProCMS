@@ -6,8 +6,7 @@
 <x-dl.section slug="__SLUG__"
     default-section-classes="py-8 px-6 bg-white dark:bg-zinc-900"
     default-container-classes="max-w-3xl mx-auto">
-    <x-dl.wrapper slug="__SLUG__" prefix="tags_row"
-        default-classes="flex flex-wrap items-center gap-3">
+    <div class="flex flex-wrap items-center gap-3">
         <x-dl.wrapper slug="__SLUG__" prefix="tags_label" tag="span"
             default-classes="text-sm font-semibold text-zinc-500 dark:text-zinc-400 mr-1">
             Tags:
@@ -23,5 +22,5 @@
                 </x-dl.card>
             @endforeach
         </x-dl.grid>
-    </x-dl.wrapper>
+    </div>
 </x-dl.section>
