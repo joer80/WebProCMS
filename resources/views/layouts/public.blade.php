@@ -210,8 +210,11 @@
                         }
                     }
                 @endphp
-                @php $isAboveManager = auth()->user()->isAtLeast(\App\Enums\Role::Admin); @endphp
-                @if($editPostUrl || ($editorUrl && $isAboveManager))
+                @php
+                    $isAboveManager = auth()->user()->isAtLeast(\App\Enums\Role::Admin);
+                    $canEditPage = $editorUrl && ($isAboveManager || $routeName !== 'blog.show');
+                @endphp
+                @if($editPostUrl || $canEditPage)
                     <div class="fixed bottom-6 right-6 z-50 flex flex-col items-end gap-2">
                         @if($editPostUrl)
                             <a href="{{ $editPostUrl }}"
@@ -222,7 +225,7 @@
                                 Edit Post
                             </a>
                         @endif
-                        @if($editorUrl && $isAboveManager)
+                        @if($canEditPage)
                             <a href="{{ $editorUrl }}"
                                class="flex items-center gap-2 rounded-full bg-zinc-900 dark:bg-white px-4 py-2.5 text-sm font-semibold text-white dark:text-zinc-900 shadow-lg hover:bg-zinc-700 dark:hover:bg-zinc-100 transition-colors">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="size-4 shrink-0" viewBox="0 0 20 20" fill="currentColor">
