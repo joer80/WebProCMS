@@ -4105,7 +4105,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                 <flux:button variant="ghost">Cancel</flux:button>
             </flux:modal.close>
             <flux:modal.close>
-                <flux:button variant="danger" wire:click="removeRow($pendingRemoveRowIndex)">Remove</flux:button>
+                <flux:button variant="danger" wire:click="removeRow($wire.pendingRemoveRowIndex)">Remove</flux:button>
             </flux:modal.close>
         </div>
     </flux:modal>
