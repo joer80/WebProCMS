@@ -38,13 +38,10 @@
 </x-dl.section>
 {{--
 @php
-use App\Models\Post;
-use Livewire\Attributes\Computed;
-
-#[Computed]
+#[\Livewire\Attributes\Computed]
 public function relatedPosts(): \Illuminate\Database\Eloquent\Collection
 {
-    return Post::query()
+    return \App\Models\Post::query()
         ->with('category')
         ->where('status', 'published')
         ->latest('published_at')

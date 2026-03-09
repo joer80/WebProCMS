@@ -61,13 +61,10 @@
 </x-dl.section>
 {{--
 @php
-use App\Models\Post;
-use Livewire\Attributes\Computed;
-
-#[Computed]
+#[\Livewire\Attributes\Computed]
 public function recentPosts(): \Illuminate\Database\Eloquent\Collection
 {
-    return Post::query()
+    return \App\Models\Post::query()
         ->with(['category', 'author'])
         ->where('status', 'published')
         ->latest('published_at')
