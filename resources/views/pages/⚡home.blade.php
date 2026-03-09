@@ -117,7 +117,6 @@ new #[Layout('layouts.public', ['description' => 'WebProCMS is a clean, powerful
         @endforeach
     </x-dl.grid>
 </x-dl.section>
-
 {{-- ROW:end:content-featured-card-grid-2:fogk2Z --}}
 
 {{-- ROW:start:content-featured-card-grid-3:G1if6H --}}
@@ -194,7 +193,6 @@ new #[Layout('layouts.public', ['description' => 'WebProCMS is a clean, powerful
         @endforeach
     </x-dl.grid>
 </x-dl.section>
-
 {{-- ROW:end:content-featured-card-grid-3:G1if6H --}}
 
 {{-- ROW:start:content-two-column:mq54WD --}}

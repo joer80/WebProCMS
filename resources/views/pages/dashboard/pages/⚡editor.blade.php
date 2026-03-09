@@ -426,6 +426,18 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
         $this->refreshPreview();
     }
 
+    public function renameRow(int $index, string $name): void
+    {
+        $trimmed = trim($name);
+        if ($trimmed === '' || $trimmed === ($this->rows[$index]['name'] ?? '')) {
+            return;
+        }
+
+        $this->rows[$index]['name'] = $trimmed;
+        $this->pushHistory();
+        $this->isDirty = true;
+    }
+
     public function removeRow(int $index): void
     {
         $slug = $this->rows[$index]['slug'] ?? null;
@@ -3122,7 +3134,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                                 <div
                                     wire:key="row-item-{{ $row['slug'] }}"
                                     data-row-sidebar-index="{{ $index }}"
-                                    x-data="{ panelMode: null }"
+                                    x-data="{ panelMode: null, renamingRow: false, rowNameDraft: '' }"
                                     @collapse-all-rows.window="panelMode = null"
                                     @expand-all-rows.window="panelMode = 'design'"
                                     @expand-all-advanced.window="panelMode = 'advanced'"
@@ -3145,7 +3157,22 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                                     <div class="flex items-center gap-2 px-3 py-2 bg-zinc-100 dark:bg-zinc-700/50">
                                         <div class="flex-1 min-w-0">
                                             <div class="flex items-center gap-1.5">
-                                                <div class="text-sm font-medium text-zinc-800 dark:text-zinc-200 truncate">{{ $row['name'] }}</div>
+                                                <div x-show="!renamingRow"
+                                                    class="text-sm font-medium text-zinc-800 dark:text-zinc-200 truncate cursor-pointer hover:text-primary transition-colors"
+                                                    title="Click to rename"
+                                                    @click.stop="renamingRow = true; rowNameDraft = '{{ addslashes($row['name']) }}'; $nextTick(() => $refs.rowNameInput_{{ $index }}.select())"
+                                                >{{ $row['name'] }}</div>
+                                                <input
+                                                    x-show="renamingRow"
+                                                    x-ref="rowNameInput_{{ $index }}"
+                                                    x-model="rowNameDraft"
+                                                    type="text"
+                                                    class="text-sm font-medium text-zinc-800 dark:text-zinc-200 bg-white dark:bg-zinc-800 border border-primary rounded px-1 py-0 w-full min-w-0 focus:outline-none focus:ring-1 focus:ring-primary"
+                                                    @click.stop
+                                                    @keydown.enter.stop="$wire.renameRow({{ $index }}, rowNameDraft); renamingRow = false"
+                                                    @keydown.escape.stop="renamingRow = false"
+                                                    @blur="$wire.renameRow({{ $index }}, rowNameDraft); renamingRow = false"
+                                                />
                                                 @if (! empty($row['shared']))
                                                     <flux:badge size="sm" color="blue" class="shrink-0">Shared</flux:badge>
                                                 @endif
