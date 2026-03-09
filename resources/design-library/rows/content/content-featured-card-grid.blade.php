@@ -48,7 +48,7 @@
             @php $cardImg = !empty($card['image']) ? (str_starts_with($card['image'], 'http') ? $card['image'] : \Illuminate\Support\Facades\Storage::url($card['image'])) : null; @endphp
             <x-dl.card slug="__SLUG__" prefix="card"
                 default-classes="rounded-card overflow-hidden bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 shadow-sm flex">
-                <x-dl.wrapper slug="__SLUG__" prefix="card_body" default-classes="flex-1 p-4 flex flex-col">
+                <x-dl.wrapper slug="__SLUG__" prefix="card_body" default-classes="flex-1 p-4 flex flex-col min-w-0">
                     <x-dl.wrapper slug="__SLUG__" prefix="card_title" tag="h3"
                         default-classes="font-heading text-base font-bold text-zinc-900 dark:text-white mb-1">
                         {{ $card['title'] }}
@@ -63,9 +63,9 @@
                     </x-dl.wrapper>
                 </x-dl.wrapper>
                 <x-dl.wrapper slug="__SLUG__" prefix="card_image_wrapper"
-                    default-classes="w-28 shrink-0 flex flex-col overflow-hidden bg-zinc-100 dark:bg-zinc-700">
+                    default-classes="w-36 shrink-0 overflow-hidden bg-zinc-100 dark:bg-zinc-700">
                     @if ($cardImg)
-                        <img src="{{ $cardImg }}" alt="{{ $card['image_alt'] }}" class="flex-1 min-h-0 w-full {{ match(content('__SLUG__', 'cards_object_fit', 'cover')) { 'contain' => 'object-contain', 'fill' => 'object-fill', 'none' => 'object-none', default => 'object-cover' } }}">
+                        <img src="{{ $cardImg }}" alt="{{ $card['image_alt'] }}" class="w-full h-full {{ match(content('__SLUG__', 'cards_object_fit', 'cover')) { 'contain' => 'object-contain', 'fill' => 'object-fill', 'none' => 'object-none', default => 'object-cover' } }}">
                     @else
                         <div class="w-full h-full flex items-center justify-center text-zinc-300 dark:text-zinc-600">
                             <svg xmlns="http://www.w3.org/2000/svg" class="size-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>

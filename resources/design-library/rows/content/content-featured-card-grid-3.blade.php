@@ -1,7 +1,7 @@
 {{--
-@name Featured Card Grid 2
-@description Centered heading above a large featured card (image on top, text below) on the left with three smaller image cards stacked on the right.
-@sort 27
+@name Featured Card Grid 3
+@description Centered heading above a large featured card (16:9 image on top, text below) on the left with four smaller image cards stacked on the right.
+@sort 28
 --}}
 <x-dl.section slug="__SLUG__"
     default-section-classes="py-section px-6 bg-white dark:bg-zinc-900"
@@ -12,15 +12,15 @@
     <x-dl.subheadline slug="__SLUG__" prefix="subheadline" default="Whether you're treating an urgent issue, need diagnostic testing, or focusing on long-term wellness, we provide comprehensive services all under one roof."
         default-classes="mt-4 mb-4 text-lg text-zinc-500 dark:text-zinc-400 text-center max-w-3xl mx-auto md:col-span-2" />
 
-    {{-- Left: card with image on top, text content below --}}
+    {{-- Left: card with image on top (16:9), text content below --}}
     <x-dl.wrapper slug="__SLUG__" prefix="featured_card"
         default-classes="rounded-card overflow-hidden bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 shadow-sm flex flex-col">
         @php $hasFeaturedImg = (bool) content('__SLUG__', 'featured_image_image', ''); @endphp
         <x-dl.image slug="__SLUG__" prefix="featured_image"
-            default-wrapper-classes="w-full aspect-3/1 overflow-hidden bg-zinc-100 dark:bg-zinc-700"
+            default-wrapper-classes="w-full aspect-video overflow-hidden bg-zinc-100 dark:bg-zinc-700"
             default-image-classes="w-full h-full object-cover" />
         @if (!$hasFeaturedImg)
-            <div class="w-full aspect-3/1 bg-zinc-100 dark:bg-zinc-700 flex items-center justify-center text-zinc-300 dark:text-zinc-600">
+            <div class="w-full aspect-video bg-zinc-100 dark:bg-zinc-700 flex items-center justify-center text-zinc-300 dark:text-zinc-600">
                 <svg xmlns="http://www.w3.org/2000/svg" class="size-16" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
             </div>
         @endif
@@ -38,12 +38,12 @@
         </x-dl.wrapper>
     </x-dl.wrapper>
 
-    {{-- Right: three smaller cards stacked vertically --}}
+    {{-- Right: four smaller cards stacked vertically --}}
     <x-dl.grid slug="__SLUG__" prefix="cards"
         default-grid-classes="grid gap-4"
         default-object-fit="cover"
-        default-items='[{"image":"","image_alt":"X-Rays & Lab Work","title":"X-Rays & Lab Work","desc":"On-site diagnostics enable fast answers and treatment, all in one convenient visit.","link":"#","link_label":"Learn More →"},{"image":"","image_alt":"Wellness & Preventive Care","title":"Wellness & Preventive Care","desc":"Proactive health services from preventive screenings to weight management.","link":"#","link_label":"Learn More →"},{"image":"","image_alt":"Occupational Medicine","title":"Occupational Medicine","desc":"Comprehensive occupational health services tailored for your workforce.","link":"#","link_label":"Learn More →"}]'>
-        @dlItems('__SLUG__', 'cards', $cards, '[{"image":"","image_alt":"X-Rays & Lab Work","title":"X-Rays & Lab Work","desc":"On-site diagnostics enable fast answers and treatment, all in one convenient visit.","link":"#","link_label":"Learn More →"},{"image":"","image_alt":"Wellness & Preventive Care","title":"Wellness & Preventive Care","desc":"Proactive health services from preventive screenings to weight management.","link":"#","link_label":"Learn More →"},{"image":"","image_alt":"Occupational Medicine","title":"Occupational Medicine","desc":"Comprehensive occupational health services tailored for your workforce.","link":"#","link_label":"Learn More →"}]')
+        default-items='[{"image":"","image_alt":"X-Rays & Lab Work","title":"X-Rays & Lab Work","desc":"On-site diagnostics enable fast answers and treatment, all in one convenient visit.","link":"#","link_label":"Learn More →"},{"image":"","image_alt":"Wellness & Preventive Care","title":"Wellness & Preventive Care","desc":"Proactive health services from preventive screenings to weight management.","link":"#","link_label":"Learn More →"},{"image":"","image_alt":"Occupational Medicine","title":"Occupational Medicine","desc":"Comprehensive occupational health services tailored for your workforce.","link":"#","link_label":"Learn More →"},{"image":"","image_alt":"Physical Therapy","title":"Physical Therapy","desc":"Personalized rehabilitation programs to restore strength, mobility, and function.","link":"#","link_label":"Learn More →"}]'>
+        @dlItems('__SLUG__', 'cards', $cards, '[{"image":"","image_alt":"X-Rays & Lab Work","title":"X-Rays & Lab Work","desc":"On-site diagnostics enable fast answers and treatment, all in one convenient visit.","link":"#","link_label":"Learn More →"},{"image":"","image_alt":"Wellness & Preventive Care","title":"Wellness & Preventive Care","desc":"Proactive health services from preventive screenings to weight management.","link":"#","link_label":"Learn More →"},{"image":"","image_alt":"Occupational Medicine","title":"Occupational Medicine","desc":"Comprehensive occupational health services tailored for your workforce.","link":"#","link_label":"Learn More →"},{"image":"","image_alt":"Physical Therapy","title":"Physical Therapy","desc":"Personalized rehabilitation programs to restore strength, mobility, and function.","link":"#","link_label":"Learn More →"}]')
         @foreach ($cards as $card)
             @php $cardImg = !empty($card['image']) ? (str_starts_with($card['image'], 'http') ? $card['image'] : \Illuminate\Support\Facades\Storage::url($card['image'])) : null; @endphp
             <x-dl.card slug="__SLUG__" prefix="card"
