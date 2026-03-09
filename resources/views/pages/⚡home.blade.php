@@ -67,7 +67,7 @@ new #[Layout('layouts.public', ['description' => 'WebProCMS is a clean, powerful
         @endif
         <x-dl.group slug="content-featured-card-grid:XnaRdV" prefix="featured_content"
             default-classes="relative z-10 p-8">
-            <x-dl.heading slug="content-featured-card-grid:XnaRdV" prefix="featured_title" default="Illness &amp; Injury"
+            <x-dl.heading slug="content-featured-card-grid:XnaRdV" prefix="featured_title" default="Illness & Injury"
                 default-tag="h3"
                 default-classes="font-heading text-2xl font-bold text-white mb-3" />
             <x-dl.subheadline slug="content-featured-card-grid:XnaRdV" prefix="featured_desc" default="Walk in for fast treatment of common illnesses and injuries. Most major insurance plans welcome, plus affordable self-pay options."
