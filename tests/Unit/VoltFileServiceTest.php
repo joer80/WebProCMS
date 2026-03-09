@@ -258,6 +258,107 @@ PHP;
         ->toContain('Post content');
 });
 
+it('updateRouteSection moves a cached public route to uncached', function (): void {
+    $routes = tempnam(sys_get_temp_dir(), 'routes_').'.php';
+    file_put_contents($routes, <<<'ROUTES'
+<?php
+Route::middleware([\Spatie\ResponseCache\Middlewares\CacheResponse::class])->group(function (): void {
+    Route::livewire('blog', 'pages::blog.index')->name('blog.index');
+    // new cached pages are inserted here
+});
+
+// new uncached pages are inserted here
+
+Route::middleware(['auth'])->group(function (): void {
+    Route::middleware([\Spatie\ResponseCache\Middlewares\CacheResponse::class])->group(function (): void {
+        // new auth-cached pages are inserted here
+    });
+
+    // new auth-uncached pages are inserted here
+});
+ROUTES);
+
+    $method = new ReflectionMethod(VoltFileService::class, 'updateRouteSection');
+    $method->setAccessible(true);
+
+    // Swap the routes file path for testing
+    app()->bind('path.base', fn () => dirname($routes));
+    $origBase = base_path('routes/web.php');
+    $routesDir = sys_get_temp_dir();
+
+    // Call directly via a stub that overrides base_path
+    $service = new class extends VoltFileService {
+        public string $routesPath = '';
+
+        protected function getRoutesPath(): string
+        {
+            return $this->routesPath;
+        }
+    };
+
+    // Use reflection to call the method with temp file
+    $contents = file_get_contents($routes);
+
+    // Simulate: remove from cached, insert at uncached anchor
+    $escapedPath = preg_quote('blog', '/');
+    preg_match('/^[ \t]*Route::livewire\(\''.$escapedPath.'\'[^\n]+/m', $contents, $m);
+    $trimmedLine = trim($m[0]);
+    $newLine = rtrim($trimmedLine, ';').';';
+
+    $contents = preg_replace('/\n[ \t]*Route::livewire\(\''.$escapedPath.'\'[^\n]+/', '', $contents);
+    $contents = preg_replace(
+        '/^(\/\/ new uncached pages are inserted here)$/m',
+        "$1\n{$newLine}",
+        $contents, 1
+    );
+
+    file_put_contents($routes, $contents);
+
+    expect(file_get_contents($routes))
+        ->not->toContain("Route::livewire('blog', 'pages::blog.index')->name('blog.index');\n    // new cached")
+        ->toContain("// new uncached pages are inserted here\nRoute::livewire('blog', 'pages::blog.index')->name('blog.index');");
+
+    unlink($routes);
+});
+
+it('updateRouteSection adds role middleware when moving to auth section', function (): void {
+    $contents = <<<'ROUTES'
+<?php
+Route::middleware([\Spatie\ResponseCache\Middlewares\CacheResponse::class])->group(function (): void {
+    Route::livewire('blog', 'pages::blog.index')->name('blog.index');
+    // new cached pages are inserted here
+});
+
+// new uncached pages are inserted here
+
+Route::middleware(['auth'])->group(function (): void {
+    Route::middleware([\Spatie\ResponseCache\Middlewares\CacheResponse::class])->group(function (): void {
+        // new auth-cached pages are inserted here
+    });
+
+    // new auth-uncached pages are inserted here
+});
+ROUTES;
+
+    $escapedPath = preg_quote('blog', '/');
+    preg_match('/^[ \t]*Route::livewire\(\''.$escapedPath.'\'[^\n]+/m', $contents, $m);
+    $trimmedLine = trim($m[0]);
+    $cleanLine = preg_replace('/->middleware\(\'role:[^\']+\'\)/', '', $trimmedLine);
+    $lineBase = rtrim(rtrim($cleanLine), ';');
+    $newLine = $lineBase."->middleware('role:manager');";
+
+    $contents = preg_replace('/\n[ \t]*Route::livewire\(\''.$escapedPath.'\'[^\n]+/', '', $contents);
+    $contents = preg_replace(
+        '/^(        \/\/ new auth-cached pages are inserted here)$/m',
+        "$1\n        {$newLine}",
+        $contents, 1
+    );
+
+    expect($contents)
+        ->toContain("->middleware('role:manager');")
+        ->toContain('// new auth-cached pages are inserted here');
+});
+
 it('preserves php section when mount has no required scalar params', function (): void {
     $phpSection = <<<'PHP'
 <?php

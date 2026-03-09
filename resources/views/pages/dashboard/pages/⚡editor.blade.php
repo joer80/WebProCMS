@@ -344,14 +344,16 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
         $this->createSlugRedirect = false;
         $this->slugRedirectType = '301';
 
-        if ($this->pageSlug) {
-            $this->requiresLogin = $service->isAuthRoute($this->pageSlug);
+        $routeKey = $this->pageSlug ?: $service->getRoutePathForFile($relativePath);
+
+        if ($routeKey) {
+            $this->requiresLogin = $service->isAuthRoute($routeKey);
 
             if ($this->requiresLogin) {
-                $this->isCachedPage = $service->isAuthRouteCached($this->pageSlug);
-                $this->requiredRole = $service->getRouteAuthRole($this->pageSlug);
+                $this->isCachedPage = $service->isAuthRouteCached($routeKey);
+                $this->requiredRole = $service->getRouteAuthRole($routeKey);
             } else {
-                $this->isCachedPage = $service->isRouteCached($this->pageSlug);
+                $this->isCachedPage = $service->isRouteCached($routeKey);
                 $this->requiredRole = '';
             }
         } else {
@@ -1950,6 +1952,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
     public function saveSeoSettings(): void
     {
         $isPublicPage = (bool) preg_match('#^pages/⚡[^/]+\.blade\.php$#u', $this->file);
+        $isSubdirPublicPage = ! $isPublicPage && (bool) preg_match('#^pages/(?!dashboard/).*⚡[^/]+\.blade\.php$#u', $this->file);
 
         $rules = ['pageStatus' => 'required|in:draft,published,unlisted,unpublished'];
 
@@ -2020,6 +2023,27 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
             $this->originalPageSlug = $this->pageSlug;
             $this->createSlugRedirect = false;
             $this->slugRedirectType = '301';
+        }
+
+        if ($isSubdirPublicPage) {
+            $service = new VoltFileService;
+            $routePath = $service->getRoutePathForFile($this->file);
+
+            if ($routePath) {
+                $currentlyAuth = $service->isAuthRoute($routePath);
+                $currentRole = $currentlyAuth ? $service->getRouteAuthRole($routePath) : '';
+                $currentlyCached = $currentlyAuth
+                    ? $service->isAuthRouteCached($routePath)
+                    : $service->isRouteCached($routePath);
+
+                $routeChanged = $currentlyAuth !== $this->requiresLogin
+                    || $currentlyCached !== $this->isCachedPage
+                    || $currentRole !== $this->requiredRole;
+
+                if ($routeChanged) {
+                    $service->updateRouteSection($routePath, $this->isCachedPage, $this->requiresLogin, $this->requiredRole);
+                }
+            }
         }
 
         $this->updatePhpSectionWithSeo();
@@ -3821,7 +3845,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
             </div>
 
             {{-- Advanced --}}
-            @if (preg_match('#^pages/⚡[^/]+\.blade\.php$#u', $file))
+            @if (preg_match('#^pages/(?!dashboard/).*⚡[^/]+\.blade\.php$#u', $file))
             <div x-data="{ advancedOpen: false }" x-on:open-settings-section.window="advancedOpen = ($event.detail === 'advanced')" class="pt-4 border-t border-zinc-200 dark:border-zinc-700">
                 <button
                     type="button"

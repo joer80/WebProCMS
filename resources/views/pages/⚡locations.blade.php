@@ -6,35 +6,7 @@ use Livewire\Attributes\Title;
 use Livewire\Component;
 
 new #[Layout('layouts.public')] #[Title('Locations')] class extends Component {
-    public string $locationsSelectedState = '';
-
-    /** @return \Illuminate\Database\Eloquent\Collection<int, Location> */
-    public function getFilteredLocationsProperty(): \Illuminate\Database\Eloquent\Collection
-    {
-        return Location::query()
-            ->when($this->locationsSelectedState, fn ($q) => $q->where('state', $this->locationsSelectedState))
-            ->orderBy('name')
-            ->get();
-    }
-
-    /** @return list<string> */
-    public function getAvailableStatesProperty(): array
-    {
-        $states = Location::query()->distinct()->orderBy('state')->pluck('state')->all();
-
-        return $states;
-    }
-
-    public function filterLocationsByState(string $state): void
-    {
-        $this->locationsSelectedState = $state;
-    }
-
-    public function clearLocationsFilter(): void
-    {
-        $this->locationsSelectedState = '';
-    }
-
+    public string $pageName = 'Locations';
     // ROW:php:start:locations-grid:EeeFub
     public string $locationsSelectedState = '';
     
@@ -68,7 +40,11 @@ new #[Layout('layouts.public')] #[Title('Locations')] class extends Component {
     }
     // ROW:php:end:locations-grid:EeeFub
 }; ?>
-<div>{{-- ROW:start:locations-grid:EeeFub --}}
+<div>{{-- ROW:start:page-title-banner:EwZBCC:shared=1 --}}
+@include('shared-rows.page-title-banner-EwZBCC')
+{{-- ROW:end:page-title-banner:EwZBCC --}}
+
+{{-- ROW:start:locations-grid:EeeFub --}}
 <x-dl.section slug="locations-grid:EeeFub"
     default-section-classes="py-section px-6 bg-white dark:bg-zinc-900"
     default-container-classes="max-w-6xl mx-auto">
@@ -168,6 +144,5 @@ public function clearLocationsFilter(): void
     $this->locationsSelectedState = '';
 }
 --}}
-
 {{-- ROW:end:locations-grid:EeeFub --}}
 </div>

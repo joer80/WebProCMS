@@ -853,6 +853,91 @@ JS;
     }
 
     /**
+     * Find the route URI for a given volt file's relative view path by looking up
+     * its Livewire component ID in the registered routes.
+     * e.g. "pages/blog/⚡index.blade.php" -> "blog"
+     */
+    public function getRoutePathForFile(string $relativePath): ?string
+    {
+        $componentId = $this->pathToViewId($relativePath);
+
+        foreach (app('router')->getRoutes() as $route) {
+            $action = $route->getAction();
+            $viewKey = $action['livewire_component'] ?? null;
+
+            if ($viewKey === $componentId) {
+                return $route->uri();
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Move an existing route line to the correct section (cached/uncached, public/auth)
+     * without modifying its component name or route name. Optionally updates role middleware.
+     * Used for non-standard pages (e.g. blog) whose route line cannot be regenerated from scratch.
+     */
+    public function updateRouteSection(string $routePath, bool $cached, bool $requiresLogin, string $role = ''): void
+    {
+        $routesPath = base_path('routes/web.php');
+        $contents = file_get_contents($routesPath);
+        $escapedPath = preg_quote($routePath, '/');
+
+        if (! preg_match('/^[ \t]*Route::livewire\(\''.$escapedPath.'\'[^\n]+/m', $contents, $m)) {
+            return;
+        }
+
+        $trimmedLine = trim($m[0]);
+
+        // Strip any existing role middleware, then re-add if needed
+        $cleanLine = preg_replace('/->middleware\(\'role:[^\']+\'\)/', '', $trimmedLine);
+        $lineBase = rtrim(rtrim($cleanLine), ';');
+
+        if ($requiresLogin && $role !== '') {
+            $newLine = $lineBase."->middleware('role:{$role}');";
+        } else {
+            $newLine = $lineBase.';';
+        }
+
+        // Remove the existing line
+        $contents = preg_replace('/\n[ \t]*Route::livewire\(\''.$escapedPath.'\'[^\n]+/', '', $contents);
+
+        // Insert into the correct section
+        if ($requiresLogin) {
+            if ($cached) {
+                $contents = preg_replace(
+                    '/^(        \/\/ new auth-cached pages are inserted here)$/m',
+                    "$1\n        {$newLine}",
+                    $contents, 1
+                );
+            } else {
+                $contents = preg_replace(
+                    '/^(    \/\/ new auth-uncached pages are inserted here)$/m',
+                    "$1\n    {$newLine}",
+                    $contents, 1
+                );
+            }
+        } else {
+            if ($cached) {
+                $contents = preg_replace(
+                    '/^(    \/\/ new cached pages are inserted here)$/m',
+                    "$1\n    {$newLine}",
+                    $contents, 1
+                );
+            } else {
+                $contents = preg_replace(
+                    '/^(\/\/ new uncached pages are inserted here)$/m',
+                    "$1\n{$newLine}",
+                    $contents, 1
+                );
+            }
+        }
+
+        file_put_contents($routesPath, $contents);
+    }
+
+    /**
      * Determine whether a public page's route is inside the cache middleware group.
      * Returns true if cached (or if the route/anchor cannot be found).
      */
