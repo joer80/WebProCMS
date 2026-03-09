@@ -28,21 +28,19 @@
         </x-dl.group>
         <x-dl.group slug="__SLUG__" prefix="category_pills"
             default-classes="flex flex-wrap items-center gap-2">
-            <button
+            <x-dl.wrapper slug="__SLUG__" prefix="filter_all_button" tag="button"
                 wire:click="filterByCategory(null)"
                 :class="$categorySlug === null ? 'bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 border-transparent' : 'border-zinc-200 dark:border-zinc-700 text-zinc-900 dark:text-zinc-100 hover:border-zinc-400 dark:hover:border-zinc-500'"
-                class="inline-block px-4 py-1.5 text-sm rounded-sm border transition-all"
-            >
+                default-classes="inline-block px-4 py-1.5 text-sm rounded-sm border transition-all">
                 All
-            </button>
+            </x-dl.wrapper>
             @foreach ($this->blogCategories as $category)
-                <button
+                <x-dl.wrapper slug="__SLUG__" prefix="filter_button" tag="button"
                     wire:click="filterByCategory('{{ $category->slug }}')"
                     :class="$categorySlug === '{{ $category->slug }}' ? 'bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 border-transparent' : 'border-zinc-200 dark:border-zinc-700 text-zinc-900 dark:text-zinc-100 hover:border-zinc-400 dark:hover:border-zinc-500'"
-                    class="inline-block px-4 py-1.5 text-sm rounded-sm border transition-all"
-                >
+                    default-classes="inline-block px-4 py-1.5 text-sm rounded-sm border transition-all">
                     {{ $category->name }}
-                </button>
+                </x-dl.wrapper>
             @endforeach
         </x-dl.group>
     </x-dl.wrapper>
@@ -60,8 +58,7 @@
     @else
         {{-- Post grid --}}
         <x-dl.wrapper slug="__SLUG__" prefix="posts_grid"
-            default-classes="grid sm:grid-cols-2 lg:grid-cols-3 gap-6"
-            note="Posts are managed from the <a href='/dashboard/blog' class='text-primary underline hover:text-primary/80'>Blog</a> page.">
+            default-classes="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
             @foreach ($this->blogPosts as $post)
                 <x-dl.card slug="__SLUG__" prefix="post_card" tag="a"
                     wire:key="post-{{ $post->id }}"
@@ -69,7 +66,10 @@
                     href="{{ route('blog.show', $post->slug) }}"
                     default-classes="group block bg-white dark:bg-zinc-900 rounded-lg shadow-[inset_0px_0px_0px_1px_rgba(26,26,0,0.16)] dark:shadow-[inset_0px_0px_0px_1px_#fffaed2d] overflow-hidden hover:shadow-[inset_0px_0px_0px_1px_rgba(26,26,0,0.3)] dark:hover:shadow-[inset_0px_0px_0px_1px_#fffaed50] transition-shadow">
                     @if ($post->featured_image)
-                        <img src="{{ $post->featuredImageUrl() }}" alt="{{ $post->title }}" class="w-full h-44 object-cover" />
+                        <x-dl.wrapper slug="__SLUG__" prefix="post_img" tag="img"
+                            src="{{ $post->featuredImageUrl() }}"
+                            alt="{{ $post->title }}"
+                            default-classes="w-full h-44 object-cover" />
                     @endif
                     <x-dl.group slug="__SLUG__" prefix="card_body"
                         default-classes="p-6 flex flex-col">
@@ -92,7 +92,10 @@
                         @endif
                         <x-dl.wrapper slug="__SLUG__" prefix="post_footer"
                             default-classes="mt-auto pt-4 border-t border-zinc-200 dark:border-zinc-700">
-                            <span class="text-xs text-zinc-500 dark:text-zinc-400">{{ $post->published_at?->format('M j, Y') }}</span>
+                            <x-dl.wrapper slug="__SLUG__" prefix="post_date" tag="span"
+                                default-classes="text-xs text-zinc-500 dark:text-zinc-400">
+                                {{ $post->published_at?->format('M j, Y') }}
+                            </x-dl.wrapper>
                         </x-dl.wrapper>
                     </x-dl.group>
                 </x-dl.card>

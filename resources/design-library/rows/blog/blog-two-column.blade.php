@@ -6,22 +6,17 @@
 <x-dl.section slug="__SLUG__"
     default-section-classes="py-section px-6 bg-white dark:bg-zinc-900"
     default-container-classes="max-w-5xl mx-auto">
-    <x-dl.wrapper slug="__SLUG__" prefix="header_wrapper"
-        default-classes="flex items-center justify-between mb-12">
-        <div>
-            <x-dl.heading slug="__SLUG__" prefix="headline" default="From the Blog"
-                default-tag="h2"
-                default-classes="font-heading text-4xl font-bold text-zinc-900 dark:text-white" />
-            <x-dl.subheadline slug="__SLUG__" prefix="subheadline" default="Insights, tutorials, and updates."
-                default-classes="mt-2 text-zinc-500 dark:text-zinc-400" />
-        </div>
-        <x-dl.link slug="__SLUG__" prefix="view_all"
-            default-label="All posts →"
-            default-url="/blog"
-            default-classes="text-primary font-semibold hover:text-primary/80 transition-colors text-sm shrink-0" />
-    </x-dl.wrapper>
+    <x-dl.heading slug="__SLUG__" prefix="headline" default="From the Blog"
+        default-tag="h2"
+        default-classes="font-heading text-4xl font-bold text-zinc-900 dark:text-white" />
+    <x-dl.subheadline slug="__SLUG__" prefix="subheadline" default="Insights, tutorials, and updates."
+        default-classes="mt-2 text-zinc-500 dark:text-zinc-400 mb-10" />
+    <x-dl.link slug="__SLUG__" prefix="view_all"
+        default-label="All posts →"
+        default-url="/blog"
+        default-classes="text-primary font-semibold hover:text-primary/80 transition-colors text-sm shrink-0" />
     <x-dl.wrapper slug="__SLUG__" prefix="posts_grid"
-        default-classes="grid md:grid-cols-2 gap-10">
+        default-classes="grid md:grid-cols-2 gap-10 mt-8">
         @foreach ($this->recentPosts ?? [] as $post)
             <x-dl.card slug="__SLUG__" prefix="post_card" tag="article"
                 default-classes="group">
@@ -29,7 +24,10 @@
                     <x-dl.wrapper slug="__SLUG__" prefix="post_image_wrapper"
                         default-classes="rounded-card overflow-hidden bg-zinc-100 dark:bg-zinc-800 aspect-video mb-5">
                         @if ($post->featured_image)
-                            <img src="{{ \Illuminate\Support\Facades\Storage::url($post->featured_image) }}" alt="{{ $post->featured_image_alt }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
+                            <x-dl.wrapper slug="__SLUG__" prefix="post_img" tag="img"
+                                src="{{ \Illuminate\Support\Facades\Storage::url($post->featured_image) }}"
+                                alt="{{ $post->featured_image_alt }}"
+                                default-classes="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
                         @else
                             <div class="w-full h-full flex items-center justify-center text-zinc-400 text-sm">No image</div>
                         @endif

@@ -6,8 +6,7 @@
 <x-dl.section slug="__SLUG__"
     default-section-classes="py-section px-6 bg-zinc-900"
     default-container-classes="max-w-6xl mx-auto">
-    <x-dl.wrapper slug="__SLUG__" prefix="header_wrapper"
-        default-classes="flex items-center justify-between mb-12">
+    <div class="flex items-center justify-between mb-12">
         <x-dl.heading slug="__SLUG__" prefix="headline" default="From the Blog"
             default-tag="h2"
             default-classes="font-heading text-4xl font-bold text-white" />
@@ -15,7 +14,7 @@
             default-label="View all →"
             default-url="/blog"
             default-classes="text-primary font-semibold hover:text-primary/80 transition-colors text-sm" />
-    </x-dl.wrapper>
+    </div>
     <x-dl.wrapper slug="__SLUG__" prefix="posts_grid"
         default-classes="grid md:grid-cols-3 gap-8">
         @foreach ($this->recentPosts ?? [] as $post)
@@ -25,7 +24,10 @@
                     <x-dl.wrapper slug="__SLUG__" prefix="post_image_wrapper"
                         default-classes="aspect-video overflow-hidden bg-zinc-700">
                         @if ($post->featured_image)
-                            <img src="{{ \Illuminate\Support\Facades\Storage::url($post->featured_image) }}" alt="{{ $post->featured_image_alt }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
+                            <x-dl.wrapper slug="__SLUG__" prefix="post_img" tag="img"
+                                src="{{ \Illuminate\Support\Facades\Storage::url($post->featured_image) }}"
+                                alt="{{ $post->featured_image_alt }}"
+                                default-classes="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
                         @else
                             <div class="w-full h-full flex items-center justify-center text-zinc-500 text-sm">No image</div>
                         @endif

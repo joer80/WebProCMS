@@ -15,7 +15,7 @@
     @if ($featured)
         <x-dl.wrapper slug="__SLUG__" prefix="featured_card"
             default-classes="grid md:grid-cols-2 gap-8 rounded-card overflow-hidden border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900"
-            note="Content is pulled from the <a href='/dashboard/locations' class='text-primary underline hover:text-primary/80'>Locations</a> page.">
+            >
             @if ($featured->photoUrl())
                 <x-dl.wrapper slug="__SLUG__" prefix="featured_image"
                     default-classes="aspect-auto md:aspect-auto overflow-hidden bg-zinc-100 dark:bg-zinc-800 min-h-64">

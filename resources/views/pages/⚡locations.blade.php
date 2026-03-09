@@ -72,8 +72,7 @@ new #[Layout('layouts.public')] #[Title('Locations')] class extends Component {
     </x-dl.wrapper>
 
     @if ($this->locationsFiltered->isNotEmpty())
-        <x-dl.wrapper slug="locations-grid:EeeFub" prefix="locations_grid" default-classes="grid sm:grid-cols-3 gap-6"
-            note="Content is pulled from the <a href='/dashboard/locations' class='text-primary underline hover:text-primary/80'>Locations</a> page.">
+        <x-dl.wrapper slug="locations-grid:EeeFub" prefix="locations_grid" default-classes="grid sm:grid-cols-3 gap-6">
             @foreach ($this->locationsFiltered as $location)
                 <x-dl.card slug="locations-grid:EeeFub" prefix="location_card"
                     default-classes="bg-white dark:bg-zinc-800 rounded-card border border-zinc-200 dark:border-zinc-700 shadow-card overflow-hidden">

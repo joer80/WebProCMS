@@ -16,7 +16,7 @@
         @if ($this->locationsFiltered->isNotEmpty())
             <x-dl.wrapper slug="__SLUG__" prefix="list_panel"
                 default-classes="space-y-4 overflow-y-auto max-h-[600px] pr-2"
-                note="Content is pulled from the <a href='/dashboard/locations' class='text-primary underline hover:text-primary/80'>Locations</a> page.">
+                >
                 @foreach ($this->locationsFiltered as $location)
                     <x-dl.card slug="__SLUG__" prefix="location_card"
                         default-classes="p-4 rounded-card border border-zinc-200 dark:border-zinc-700 hover:border-primary transition-colors cursor-pointer">

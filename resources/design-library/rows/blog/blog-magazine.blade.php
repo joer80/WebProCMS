@@ -6,8 +6,7 @@
 <x-dl.section slug="__SLUG__"
     default-section-classes="py-section px-6 bg-white dark:bg-zinc-900"
     default-container-classes="max-w-6xl mx-auto">
-    <x-dl.wrapper slug="__SLUG__" prefix="header_wrapper"
-        default-classes="flex items-center justify-between mb-12">
+    <div class="flex items-center justify-between mb-12">
         <x-dl.heading slug="__SLUG__" prefix="headline" default="The Latest"
             default-tag="h2"
             default-classes="font-heading text-4xl font-bold text-zinc-900 dark:text-white" />
@@ -15,10 +14,9 @@
             default-label="View all →"
             default-url="/blog"
             default-classes="text-primary font-semibold hover:text-primary/80 transition-colors text-sm" />
-    </x-dl.wrapper>
+    </div>
     @php $featuredPost = ($this->recentPosts ?? collect())->first(); $sidebarPosts = ($this->recentPosts ?? collect())->skip(1); @endphp
-    <x-dl.wrapper slug="__SLUG__" prefix="magazine_grid"
-        default-classes="grid md:grid-cols-3 gap-8">
+    <div class="grid md:grid-cols-3 gap-8">
         <x-dl.wrapper slug="__SLUG__" prefix="featured_column"
             default-classes="md:col-span-2">
             @if ($featuredPost)
@@ -28,7 +26,10 @@
                         <x-dl.wrapper slug="__SLUG__" prefix="featured_image"
                             default-classes="rounded-card overflow-hidden aspect-video bg-zinc-100 dark:bg-zinc-800 mb-5">
                             @if ($featuredPost->featured_image)
-                                <img src="{{ \Illuminate\Support\Facades\Storage::url($featuredPost->featured_image) }}" alt="{{ $featuredPost->featured_image_alt }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
+                                <x-dl.wrapper slug="__SLUG__" prefix="featured_img" tag="img"
+                                    src="{{ \Illuminate\Support\Facades\Storage::url($featuredPost->featured_image) }}"
+                                    alt="{{ $featuredPost->featured_image_alt }}"
+                                    default-classes="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
                             @else
                                 <div class="w-full h-full flex items-center justify-center text-zinc-400">No image</div>
                             @endif
@@ -75,7 +76,7 @@
                 </x-dl.card>
             @endforeach
         </x-dl.wrapper>
-    </x-dl.wrapper>
+    </div>
 </x-dl.section>
 {{--
 @php

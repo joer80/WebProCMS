@@ -6,8 +6,7 @@
 <x-dl.section slug="__SLUG__"
     default-section-classes="py-section px-6 bg-white dark:bg-zinc-900"
     default-container-classes="max-w-6xl mx-auto grid lg:grid-cols-3 gap-12">
-    <x-dl.wrapper slug="__SLUG__" prefix="main_column"
-        default-classes="lg:col-span-2">
+    <div class="lg:col-span-2">
         <x-dl.heading slug="__SLUG__" prefix="headline" default="All Posts"
             default-tag="h2"
             default-classes="font-heading text-3xl font-bold text-zinc-900 dark:text-white mb-8" />
@@ -20,7 +19,10 @@
                         <x-dl.wrapper slug="__SLUG__" prefix="post_image_wrapper"
                             default-classes="rounded-card overflow-hidden aspect-video bg-zinc-100 dark:bg-zinc-800 mb-4">
                             @if ($post->featured_image)
-                                <img src="{{ \Illuminate\Support\Facades\Storage::url($post->featured_image) }}" alt="{{ $post->featured_image_alt }}" class="w-full h-full object-cover">
+                                <x-dl.wrapper slug="__SLUG__" prefix="post_img" tag="img"
+                                    src="{{ \Illuminate\Support\Facades\Storage::url($post->featured_image) }}"
+                                    alt="{{ $post->featured_image_alt }}"
+                                    default-classes="w-full h-full object-cover" />
                             @else
                                 <div class="w-full h-full flex items-center justify-center text-zinc-400 text-sm">No image</div>
                             @endif
@@ -37,9 +39,8 @@
                 </x-dl.card>
             @endforeach
         </x-dl.wrapper>
-    </x-dl.wrapper>
-    <x-dl.wrapper slug="__SLUG__" prefix="sidebar"
-        default-classes="space-y-10">
+    </div>
+    <div class="space-y-10">
         <div>
             <x-dl.wrapper slug="__SLUG__" prefix="sidebar_heading" tag="h3"
                 default-classes="font-heading font-bold text-zinc-900 dark:text-white mb-4 pb-2 border-b border-zinc-200 dark:border-zinc-700">
@@ -88,7 +89,7 @@
                 @endforeach
             </x-dl.grid>
         </div>
-    </x-dl.wrapper>
+    </div>
 </x-dl.section>
 {{--
 @php
