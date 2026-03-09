@@ -231,3 +231,46 @@ it('does not write :shared=1 flag for regular rows', function (): void {
 
     expect($content)->not->toContain(':shared=1');
 });
+
+it('replaces php section with minimal class when mount has required scalar route params', function (): void {
+    $phpSection = <<<'PHP'
+<?php
+use Livewire\Attributes\Layout;
+use Livewire\Component;
+new #[Layout('layouts.public')] class extends Component {
+    public \App\Models\Post $post;
+    public function mount(string $slug): void
+    {
+        $this->post = \App\Models\Post::query()->where('slug', $slug)->firstOrFail();
+    }
+}; ?>
+PHP;
+    $rows = [['slug' => 'blog-post:abc123', 'name' => 'Post', 'blade' => '<div>Post content</div>', 'hidden' => false]];
+
+    $method = new ReflectionMethod(VoltFileService::class, 'buildPreviewFileContent');
+    $result = $method->invoke($this->service, $phpSection, $rows);
+
+    expect($result)
+        ->toContain('layouts.public')
+        ->toContain('extends \\Livewire\\Component')
+        ->not->toContain('mount(string $slug)')
+        ->not->toContain('Post $post')
+        ->toContain('Post content');
+});
+
+it('preserves php section when mount has no required scalar params', function (): void {
+    $phpSection = <<<'PHP'
+<?php
+use Livewire\Attributes\Layout;
+use Livewire\Component;
+new #[Layout('layouts.public')] class extends Component {
+    public function mount(): void {}
+}; ?>
+PHP;
+    $rows = [];
+
+    $method = new ReflectionMethod(VoltFileService::class, 'buildPreviewFileContent');
+    $result = $method->invoke($this->service, $phpSection, $rows);
+
+    expect($result)->toContain('public function mount(): void {}');
+});

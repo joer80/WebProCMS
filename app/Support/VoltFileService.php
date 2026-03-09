@@ -236,6 +236,13 @@ class VoltFileService
         // without wrapping it in the public site header/footer again.
         if (! str_contains($phpSection, 'extends Component')) {
             $phpSection = "<?php\nnew #[\\Livewire\\Attributes\\Layout('layouts.partial-preview')] class extends \\Livewire\\Component { }; ?>";
+        } elseif (preg_match('/public function mount\([^)]*(?:string|int|float)\s+\$\w+/', $phpSection)) {
+            // Mount requires scalar route parameters (e.g. string $slug) that the preview
+            // route cannot resolve from the container. Replace with a minimal class that
+            // preserves the page layout so the preview iframe still renders the rows.
+            preg_match('/#\[Layout\([\'"]([^\'"]+)[\'"]\)\]/', $phpSection, $layoutMatch);
+            $layout = $layoutMatch[1] ?? 'layouts.public';
+            $phpSection = "<?php\nnew #[\\Livewire\\Attributes\\Layout('{$layout}')] class extends \\Livewire\\Component { }; ?>";
         }
 
         $blade = '';
