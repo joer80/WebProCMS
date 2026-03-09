@@ -275,7 +275,50 @@ new #[Layout('layouts.app')] #[Title('Edit Post')] class extends Component {
 
                     <flux:field>
                         <flux:label>Content</flux:label>
-                        <flux:textarea wire:model="content" rows="20" placeholder="Write your post content here…" />
+                        <div
+                            wire:ignore
+                            x-data="richEditor(@js($content))"
+                            class="overflow-hidden rounded-lg border border-zinc-200 dark:border-zinc-700"
+                        >
+                            {{-- Toolbar --}}
+                            <div class="flex flex-wrap items-center gap-px border-b border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 p-1.5">
+                                <select
+                                    :value="headingLevel"
+                                    @change="setHeading($event.target.value)"
+                                    class="h-7 rounded border-0 bg-transparent text-xs text-zinc-700 dark:text-zinc-300 focus:ring-0 cursor-pointer pr-6"
+                                >
+                                    <option value="0">Normal</option>
+                                    <option value="1">Heading 1</option>
+                                    <option value="2">Heading 2</option>
+                                    <option value="3">Heading 3</option>
+                                </select>
+
+                                <div class="mx-1 h-5 w-px bg-zinc-300 dark:bg-zinc-600"></div>
+
+                                <button type="button" @click="cmd().toggleBold().run()" :class="active.bold ? 'bg-zinc-200 dark:bg-zinc-600' : ''" class="flex h-7 w-7 items-center justify-center rounded text-sm font-bold text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-600">B</button>
+                                <button type="button" @click="cmd().toggleItalic().run()" :class="active.italic ? 'bg-zinc-200 dark:bg-zinc-600' : ''" class="flex h-7 w-7 items-center justify-center rounded text-sm italic text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-600">I</button>
+                                <button type="button" @click="cmd().toggleUnderline().run()" :class="active.underline ? 'bg-zinc-200 dark:bg-zinc-600' : ''" class="flex h-7 w-7 items-center justify-center rounded text-sm underline text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-600">U</button>
+                                <button type="button" @click="cmd().toggleStrike().run()" :class="active.strike ? 'bg-zinc-200 dark:bg-zinc-600' : ''" class="flex h-7 w-7 items-center justify-center rounded text-sm line-through text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-600">S</button>
+
+                                <div class="mx-1 h-5 w-px bg-zinc-300 dark:bg-zinc-600"></div>
+
+                                <button type="button" @click="cmd().toggleBlockquote().run()" :class="active.blockquote ? 'bg-zinc-200 dark:bg-zinc-600' : ''" class="flex h-7 items-center justify-center rounded px-2 text-xs text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-600 font-mono">&ldquo;</button>
+                                <button type="button" @click="cmd().toggleCodeBlock().run()" :class="active.codeBlock ? 'bg-zinc-200 dark:bg-zinc-600' : ''" class="flex h-7 items-center justify-center rounded px-2 text-xs text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-600 font-mono">&lt;/&gt;</button>
+
+                                <div class="mx-1 h-5 w-px bg-zinc-300 dark:bg-zinc-600"></div>
+
+                                <button type="button" @click="cmd().toggleBulletList().run()" :class="active.bulletList ? 'bg-zinc-200 dark:bg-zinc-600' : ''" class="flex h-7 items-center justify-center rounded px-2 text-xs text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-600">• List</button>
+                                <button type="button" @click="cmd().toggleOrderedList().run()" :class="active.orderedList ? 'bg-zinc-200 dark:bg-zinc-600' : ''" class="flex h-7 items-center justify-center rounded px-2 text-xs text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-600">1. List</button>
+
+                                <div class="mx-1 h-5 w-px bg-zinc-300 dark:bg-zinc-600"></div>
+
+                                <button type="button" @click="setLink()" :class="active.link ? 'bg-zinc-200 dark:bg-zinc-600' : ''" class="flex h-7 items-center justify-center rounded px-2 text-xs text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-600">Link</button>
+                                <button type="button" @click="cmd().unsetAllMarks().clearNodes().run()" class="ml-auto flex h-7 items-center justify-center rounded px-2 text-xs text-zinc-500 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-600">Clear</button>
+                            </div>
+
+                            {{-- Editor --}}
+                            <div x-ref="editorEl" class="min-h-120"></div>
+                        </div>
                         <flux:error name="content" />
                     </flux:field>
 

@@ -23,7 +23,8 @@ new #[Layout('layouts.public')] class extends Component {
 
     public function getProcessedContentProperty(): string
     {
-        return \App\Support\ShortcodeProcessor::process($this->post->content);
+        // Content is HTML (from the rich text editor) — use processRaw so tags aren't escaped.
+        return \App\Support\ShortcodeProcessor::processRaw($this->post->content);
     }
 
     public function getProcessedExcerptProperty(): ?string
@@ -156,7 +157,7 @@ new #[Layout('layouts.public')] class extends Component {
         @endif
 
         <x-dl.wrapper slug="blog-post-article:mghMH3" prefix="article_content"
-            default-classes="leading-relaxed text-zinc-900 dark:text-zinc-100 whitespace-pre-wrap">
+            default-classes="leading-relaxed text-zinc-900 dark:text-zinc-100 blog-content">
             {!! $this->processedContent ?? '' !!}
         </x-dl.wrapper>
 
