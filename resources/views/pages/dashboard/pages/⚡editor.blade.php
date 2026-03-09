@@ -2315,12 +2315,12 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
             showAllBreakpoints: false,
             activePreview: 'a',
             setWidth(w) { this.previewWidth = this.previewWidth === w ? null : w; },
-            selectRowBySlug(slug) {
+            selectRowBySlug(slug, openEditor = true) {
                 const rows = $wire.rows;
                 const index = rows.findIndex(r => r.slug === slug);
                 if (index !== -1) {
                     $dispatch('row-selected', { index: index });
-                    $wire.openContentEditor(index);
+                    if (openEditor) { $wire.openContentEditor(index); }
                     $nextTick(() => {
                         const el = document.querySelector('[data-row-sidebar-index=\'' + index + '\']');
                         if (el) { el.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); }
@@ -2372,7 +2372,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
             if ($event.data && $event.data.editorRowSlug) {
                 if ($event.data.editorGroup) { $dispatch('pending-group', { group: $event.data.editorGroup }); }
                 if ($event.data.editorSubgroup) { $dispatch('pending-subgroup', { subgroup: $event.data.editorSubgroup }); }
-                selectRowBySlug($event.data.editorRowSlug);
+                selectRowBySlug($event.data.editorRowSlug, !!$event.data.editorGroup);
             }
             else if ($event.origin === window.location.origin && $event.data && $event.data.type === 'editor-save-page' && $wire.file) { $wire.saveFile(); }
         "
