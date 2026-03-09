@@ -15,18 +15,12 @@ Route::middleware([
     // Route::get('blog2', \App\Livewire\Blog2::class)->name('blog2.index');
 
     // new cached pages are inserted here
-    Route::livewire('test-clone-dest-69acb64731ae7', 'pages::test-clone-dest-69acb64731ae7')->name('test-clone-dest-69acb64731ae7');
-    Route::livewire('test-clone-dest-69acb5418f739', 'pages::test-clone-dest-69acb5418f739')->name('test-clone-dest-69acb5418f739');
-    Route::livewire('test-clone-dest-69aca89ca71ba', 'pages::test-clone-dest-69aca89ca71ba')->name('test-clone-dest-69aca89ca71ba');
-    Route::livewire('test-clone-dest-69ac7d3d3fa8d', 'pages::test-clone-dest-69ac7d3d3fa8d')->name('test-clone-dest-69ac7d3d3fa8d');
-    Route::livewire('test-clone-dest-69ac7d004a46c', 'pages::test-clone-dest-69ac7d004a46c')->name('test-clone-dest-69ac7d004a46c');
     Route::livewire('contact', 'pages::contact')->name('contact');
     Route::livewire('about', 'pages::about')->name('about');
     Route::livewire('404', 'pages::404')->name('404');
     Route::livewire('test', 'pages::test')->name('test');
     Route::livewire('locations', 'pages::locations')->name('locations');
     Route::livewire('services', 'pages::services')->name('services');
-    Route::livewire('services/content-editor', 'pages::services.content-editor')->name('services.content-editor');
 });
 
 // new uncached pages are inserted here

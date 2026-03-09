@@ -26,7 +26,7 @@ class VoltFileService
             $relative = str_replace(resource_path('views').'/', '', $fullPath);
             $label = $this->labelFromPath($relative);
 
-            if (str_contains($relative, 'pages/auth/') || str_contains($relative, 'pages/blog/')) {
+            if (str_contains($relative, 'pages/auth/')) {
                 continue;
             }
 
@@ -391,11 +391,10 @@ JS;
             $viewKey = $action['view'] ?? $action['livewire_component'] ?? null;
 
             if ($viewKey) {
-                $viewId = str_replace('.', '::', $viewKey);
                 $name = $route->getName();
 
                 if ($name) {
-                    $map[$viewId] = $name;
+                    $map[$viewKey] = $name;
                 }
             }
         }
@@ -438,6 +437,12 @@ JS;
     {
         $name = basename($relativePath, '.blade.php');
         $name = str_replace('⚡', '', $name);
+
+        $parentDir = basename(dirname($relativePath));
+
+        if ($parentDir !== 'pages' && $parentDir !== '.') {
+            $name = $parentDir.' '.$name;
+        }
 
         return ucwords(str_replace(['-', '_'], ' ', $name));
     }

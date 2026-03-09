@@ -1,52 +1,8 @@
-<?php
-
-use Livewire\Attributes\Layout;
-use Livewire\Component;
-
-new #[Layout('layouts.public')] class extends Component {
-    // ROW:php:start:blog-post-article:mghMH3
-    public \App\Models\Post $post;
-
-    public function mount(string $slug): void
-    {
-        $this->post = \App\Models\Post::query()
-            ->accessible()
-            ->with('category')
-            ->where('slug', $slug)
-            ->firstOrFail();
-    }
-
-    public function title(): string
-    {
-        return $this->post->meta_title ?: ($this->post->title . ' — ' . config('app.name'));
-    }
-
-    public function getProcessedContentProperty(): string
-    {
-        return \App\Support\ShortcodeProcessor::process($this->post->content);
-    }
-
-    public function getProcessedExcerptProperty(): ?string
-    {
-        return $this->post->excerpt ? \App\Support\ShortcodeProcessor::process($this->post->excerpt) : null;
-    }
-
-    public function getNextBlogPostProperty(): ?\App\Models\Post
-    {
-        return \App\Models\Post::query()
-            ->accessible()
-            ->where('published_at', '>', $this->post->published_at)
-            ->orWhere(function ($query): void {
-                $query->where('published_at', $this->post->published_at)
-                    ->where('id', '>', $this->post->id);
-            })
-            ->orderBy('published_at')
-            ->orderBy('id')
-            ->first();
-    }
-    // ROW:php:end:blog-post-article:mghMH3
-}; ?>
-<div>{{-- ROW:start:blog-post-article:mghMH3 --}}
+{{--
+@name Blog Detail - Article
+@description Full blog post article with SEO meta, breadcrumb, content, gallery, and navigation.
+@sort 5
+--}}
 @if(isset($post))
 @push('head')
     <link rel="canonical" href="{{ route('blog.show', $post->slug) }}" />
@@ -110,12 +66,12 @@ new #[Layout('layouts.public')] class extends Component {
 @endpush
 @endif
 
-<x-dl.section slug="blog-post-article:mghMH3"
+<x-dl.section slug="__SLUG__"
     default-section-classes="py-section px-6 bg-white dark:bg-zinc-900"
     default-container-classes="max-w-3xl mx-auto">
 
     {{-- Breadcrumb --}}
-    <x-dl.wrapper slug="blog-post-article:mghMH3" prefix="breadcrumb" tag="nav"
+    <x-dl.wrapper slug="__SLUG__" prefix="breadcrumb" tag="nav"
         default-classes="mb-8 flex items-center gap-2 text-sm text-zinc-500 dark:text-zinc-400">
         <a href="{{ route('blog.index') }}" class="hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors">Blog</a>
         <span>/</span>
@@ -127,38 +83,38 @@ new #[Layout('layouts.public')] class extends Component {
     </x-dl.wrapper>
 
     {{-- Article --}}
-    <x-dl.wrapper slug="blog-post-article:mghMH3" prefix="article" tag="article"
+    <x-dl.wrapper slug="__SLUG__" prefix="article" tag="article"
         default-classes="">
-        <x-dl.wrapper slug="blog-post-article:mghMH3" prefix="post_title" tag="h1"
+        <x-dl.wrapper slug="__SLUG__" prefix="post_title" tag="h1"
             default-classes="text-4xl font-semibold leading-tight mb-4">
             {{ $post->title ?? 'Post Title' }}
         </x-dl.wrapper>
-        <x-dl.wrapper slug="blog-post-article:mghMH3" prefix="post_date" tag="p"
+        <x-dl.wrapper slug="__SLUG__" prefix="post_date" tag="p"
             default-classes="text-sm text-zinc-500 dark:text-zinc-400 mb-8">
             {{ ($post->published_at ?? now())->format('F j, Y') }}
         </x-dl.wrapper>
 
         @if (isset($post) && $post->featured_image)
-            <x-dl.wrapper slug="blog-post-article:mghMH3" prefix="featured_image" tag="img"
+            <x-dl.wrapper slug="__SLUG__" prefix="featured_image" tag="img"
                 src="{{ $post->featuredImageUrl() }}"
                 alt="{{ $post->featured_image_alt ?? $post->title }}"
                 default-classes="w-full rounded-lg object-cover max-h-96 mb-8" />
         @endif
 
         @if (isset($post) && $post->excerpt)
-            <x-dl.wrapper slug="blog-post-article:mghMH3" prefix="excerpt" tag="p"
+            <x-dl.wrapper slug="__SLUG__" prefix="excerpt" tag="p"
                 default-classes="text-lg text-zinc-500 dark:text-zinc-400 leading-relaxed mb-8 border-l-2 border-zinc-200 dark:border-zinc-700 pl-4">
                 {!! $this->processedExcerpt ?? '' !!}
             </x-dl.wrapper>
         @endif
 
-        <x-dl.wrapper slug="blog-post-article:mghMH3" prefix="article_content"
+        <x-dl.wrapper slug="__SLUG__" prefix="article_content"
             default-classes="leading-relaxed text-zinc-900 dark:text-zinc-100 whitespace-pre-wrap">
             {!! $this->processedContent ?? '' !!}
         </x-dl.wrapper>
 
         @if (isset($post) && $post->cta_buttons)
-            <x-dl.wrapper slug="blog-post-article:mghMH3" prefix="cta_buttons"
+            <x-dl.wrapper slug="__SLUG__" prefix="cta_buttons"
                 default-classes="mt-8 flex flex-wrap gap-3">
                 @foreach ($post->cta_buttons as $button)
                     <a
@@ -176,7 +132,7 @@ new #[Layout('layouts.public')] class extends Component {
 
     {{-- Gallery --}}
     @if (isset($post) && $post->gallery_images)
-        <x-dl.wrapper slug="blog-post-article:mghMH3" prefix="gallery"
+        <x-dl.wrapper slug="__SLUG__" prefix="gallery"
             default-classes="mt-10"
             x-data="{
                 images: @js($post->galleryImagesData()),
@@ -222,7 +178,7 @@ new #[Layout('layouts.public')] class extends Component {
     @endif
 
     {{-- Post navigation --}}
-    <x-dl.wrapper slug="blog-post-article:mghMH3" prefix="post_nav"
+    <x-dl.wrapper slug="__SLUG__" prefix="post_nav"
         default-classes="mt-12 pt-8 border-t border-zinc-200 dark:border-zinc-700 flex items-center justify-between gap-4">
         <a href="{{ route('blog.index') }}" class="inline-flex items-center gap-2 text-sm text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors">
             <svg xmlns="http://www.w3.org/2000/svg" class="size-4" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M11.78 5.22a.75.75 0 0 1 0 1.06L8.06 10l3.72 3.72a.75.75 0 1 1-1.06 1.06l-4.25-4.25a.75.75 0 0 1 0-1.06l4.25-4.25a.75.75 0 0 1 1.06 0Z" clip-rule="evenodd" /></svg>
@@ -237,5 +193,45 @@ new #[Layout('layouts.public')] class extends Component {
     </x-dl.wrapper>
 
 </x-dl.section>
-{{-- ROW:end:blog-post-article:mghMH3 --}}
-</div>
+{{--
+@php
+public \App\Models\Post $post;
+
+public function mount(string $slug): void
+{
+    $this->post = \App\Models\Post::query()
+        ->accessible()
+        ->with('category')
+        ->where('slug', $slug)
+        ->firstOrFail();
+}
+
+public function title(): string
+{
+    return $this->post->meta_title ?: ($this->post->title . ' — ' . config('app.name'));
+}
+
+public function getProcessedContentProperty(): string
+{
+    return \App\Support\ShortcodeProcessor::process($this->post->content);
+}
+
+public function getProcessedExcerptProperty(): ?string
+{
+    return $this->post->excerpt ? \App\Support\ShortcodeProcessor::process($this->post->excerpt) : null;
+}
+
+public function getNextBlogPostProperty(): ?\App\Models\Post
+{
+    return \App\Models\Post::query()
+        ->accessible()
+        ->where('published_at', '>', $this->post->published_at)
+        ->orWhere(function ($query): void {
+            $query->where('published_at', $this->post->published_at)
+                ->where('id', '>', $this->post->id);
+        })
+        ->orderBy('published_at')
+        ->orderBy('id')
+        ->first();
+}
+--}}

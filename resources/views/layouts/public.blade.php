@@ -177,8 +177,25 @@
             @if(auth()->user()->isAtLeast(\App\Enums\Role::Manager))
                 @php
                     $routeName = Route::currentRouteName();
-                    $pageFile = "pages/⚡{$routeName}.blade.php";
-                    $editorUrl = $routeName && file_exists(resource_path("views/{$pageFile}"))
+                    $pageFile = null;
+                    if ($routeName) {
+                        // Check flat path first (e.g. pages/⚡about.blade.php)
+                        $flatFile = "pages/⚡{$routeName}.blade.php";
+                        if (file_exists(resource_path("views/{$flatFile}"))) {
+                            $pageFile = $flatFile;
+                        } else {
+                            // Check subdirectory path (e.g. blog.index → pages/blog/⚡index.blade.php)
+                            $parts = explode('.', $routeName);
+                            $last = array_pop($parts);
+                            if ($parts) {
+                                $subFile = 'pages/' . implode('/', $parts) . '/⚡' . $last . '.blade.php';
+                                if (file_exists(resource_path("views/{$subFile}"))) {
+                                    $pageFile = $subFile;
+                                }
+                            }
+                        }
+                    }
+                    $editorUrl = $pageFile
                         ? route('dashboard.design-library.editor') . '?file=' . urlencode($pageFile)
                         : null;
                 @endphp
