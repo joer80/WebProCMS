@@ -120,6 +120,8 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
 
     public string $mediaPickerKey = '';
 
+    public string $mediaPickerCategorySlug = '';
+
     public string $pendingGridItemFieldKey = '';
 
     public int $pendingGridItemIndex = 0;
@@ -203,7 +205,8 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
         $storeValue = (string) $value === $default ? '' : (string) $value;
 
         $drafts = session('editor_draft_overrides', []);
-        $type = in_array($fieldKey, ['section_id', 'section_animation', 'section_animation_delay'], true) ? 'text' : 'classes';
+        $textKeys = ['section_id', 'section_animation', 'section_animation_delay', 'section_bg_position', 'section_bg_size', 'section_bg_repeat'];
+        $type = in_array($fieldKey, $textKeys, true) ? 'text' : 'classes';
         $drafts[$slug.':'.$fieldKey] = ['type' => $type, 'value' => $storeValue];
         session(['editor_draft_overrides' => $drafts]);
 
@@ -217,7 +220,8 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
         $this->rowDesignValues[$slug][$fieldKey] = $default;
 
         $drafts = session('editor_draft_overrides', []);
-        $resetType = in_array($fieldKey, ['section_id', 'section_animation', 'section_animation_delay'], true) ? 'text' : 'classes';
+        $textKeys = ['section_id', 'section_animation', 'section_animation_delay', 'section_bg_position', 'section_bg_size', 'section_bg_repeat'];
+        $resetType = $fieldKey === 'section_bg_image' ? 'image' : (in_array($fieldKey, $textKeys, true) ? 'text' : 'classes');
         $drafts[$slug.':'.$fieldKey] = ['type' => $resetType, 'value' => ''];
         session(['editor_draft_overrides' => $drafts]);
 
@@ -822,7 +826,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
         $row = $this->rows[$index];
         $this->contentFields = array_values(array_filter(
             $this->parseContentFields($row['blade'], $row['slug']),
-            fn ($f) => ! in_array($f['key'], ['section_classes', 'section_container_classes', 'section_id', 'section_attrs', 'section_animation', 'section_animation_delay'], true)
+            fn ($f) => ! in_array($f['key'], ['section_classes', 'section_container_classes', 'section_id', 'section_attrs', 'section_animation', 'section_animation_delay', 'section_bg_image', 'section_bg_position', 'section_bg_size', 'section_bg_repeat'], true)
         ));
         $this->pendingImageKey = '';
         $this->pendingImageUpload = null;
@@ -1461,7 +1465,27 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
     public function openMediaPicker(string $key): void
     {
         $this->mediaPickerKey = $key;
+        $this->mediaPickerCategorySlug = $key === 'section_bg_image' ? 'backgrounds' : '';
         $this->showMediaPicker = true;
+    }
+
+    public function openRowDesignImagePicker(string $slug): void
+    {
+        $this->mediaPickerKey = 'row-design-bg:'.$slug;
+        $this->mediaPickerCategorySlug = 'backgrounds';
+        $this->showMediaPicker = true;
+    }
+
+    public function removeRowDesignImage(string $slug): void
+    {
+        $this->rowDesignValues[$slug]['section_bg_image'] = '';
+
+        $drafts = session('editor_draft_overrides', []);
+        $drafts[$slug.':section_bg_image'] = ['type' => 'image', 'value' => ''];
+        session(['editor_draft_overrides' => $drafts]);
+
+        $this->isDirty = true;
+        $this->refreshPreview();
     }
 
     public function openGridItemMediaPicker(string $fieldKey, int $idx, string $subKey): void
@@ -1503,6 +1527,21 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
     #[On('media-image-picked')]
     public function handleMediaImagePicked(string $key, string $path, string $alt = ''): void
     {
+        if (str_starts_with($key, 'row-design-bg:')) {
+            $slug = substr($key, 14);
+            $this->rowDesignValues[$slug]['section_bg_image'] = $path;
+
+            $drafts = session('editor_draft_overrides', []);
+            $drafts[$slug.':section_bg_image'] = ['type' => 'image', 'value' => $path];
+            session(['editor_draft_overrides' => $drafts]);
+
+            $this->showMediaPicker = false;
+            $this->isDirty = true;
+            $this->refreshPreview();
+
+            return;
+        }
+
         if ($key === 'grid-item' && $this->pendingGridItemFieldKey) {
             $fieldKey = $this->pendingGridItemFieldKey;
             $items = json_decode($this->contentValues[$fieldKey] ?? '[]', true) ?: [];
@@ -1745,7 +1784,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
             $fields = $this->parseContentFields($row['blade'], $row['slug']);
 
             foreach ($fields as $field) {
-                if (in_array($field['key'], ['section_classes', 'section_container_classes', 'section_id', 'section_animation', 'section_animation_delay'], true)) {
+                if (in_array($field['key'], ['section_classes', 'section_container_classes', 'section_id', 'section_animation', 'section_animation_delay', 'section_bg_image', 'section_bg_position', 'section_bg_size', 'section_bg_repeat'], true)) {
                     $this->rowDesignDefaults[$row['slug']][$field['key']] = $field['default'];
                 }
             }
@@ -1765,7 +1804,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
 
         $overrides = ContentOverride::query()
             ->whereIn('row_slug', $slugs)
-            ->whereIn('key', ['section_classes', 'section_container_classes', 'section_no_alt', 'section_id', 'section_animation', 'section_animation_delay'])
+            ->whereIn('key', ['section_classes', 'section_container_classes', 'section_no_alt', 'section_id', 'section_animation', 'section_animation_delay', 'section_bg_image', 'section_bg_position', 'section_bg_size', 'section_bg_repeat'])
             ->get()
             ->keyBy(fn (ContentOverride $o) => $o->row_slug.':'.$o->key);
 
@@ -2824,8 +2863,8 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                                                 $bodyFields = $headerToggleField
                                                     ? $compFields->reject(fn ($f) => $f['key'] === $headerToggleField['key'])
                                                     : $compFields;
-                                                $compHasContentFields = $bodyFields->contains(fn ($f) => ! in_array($f['type'], ['classes', 'object_fit', 'id', 'attrs']));
-                                                $compHasClassesFields = $bodyFields->contains(fn ($f) => in_array($f['type'], ['classes', 'object_fit']));
+                                                $compHasContentFields = $bodyFields->contains(fn ($f) => ! in_array($f['type'], ['classes', 'object_fit', 'border_radius', 'bg_position', 'bg_size', 'bg_repeat', 'id', 'attrs']));
+                                                $compHasClassesFields = $bodyFields->contains(fn ($f) => in_array($f['type'], ['classes', 'object_fit', 'border_radius', 'bg_position', 'bg_size', 'bg_repeat']));
                                                 $compHasAdvancedFields = $bodyFields->contains(fn ($f) => in_array($f['type'], ['id', 'attrs']));
                                                 $isFirst = $comp['index'] === 0;
                                                 $isLast = $comp['index'] === count($dlComponents) - 1;
@@ -3048,23 +3087,20 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                                         'border-bottom': over === {{ $index }} && dragging !== null && dragging < {{ $index }} ? '2px solid var(--color-primary)' : ''
                                     }"
                                 >
-                                    {{-- Row header: name + 3 mode icons + visibility toggle --}}
+                                    {{-- Row header: name + mode icons + visibility toggle --}}
                                     <div class="flex items-center gap-2 px-3 py-2 bg-zinc-100 dark:bg-zinc-700/50">
-                                        <button
-                                            wire:click="openContentEditor({{ $index }})"
-                                            class="flex-1 min-w-0 text-left hover:opacity-75 transition-opacity"
-                                        >
+                                        <div class="flex-1 min-w-0">
                                             <div class="flex items-center gap-1.5">
                                                 <div class="text-sm font-medium text-zinc-800 dark:text-zinc-200 truncate">{{ $row['name'] }}</div>
                                                 @if (! empty($row['shared']))
                                                     <flux:badge size="sm" color="blue" class="shrink-0">Shared</flux:badge>
                                                 @endif
                                             </div>
-                                        </button>
+                                        </div>
                                         @if (isset($rowDesignDefaults[$row['slug']]))
-                                            <button type="button" @click.stop="$wire.openContentEditor({{ $index }})"
-                                                :class="editorOpen && {{ $editingRowIndex ?? -1 }} === {{ $index }} ? 'text-primary' : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 transition-colors'"
-                                                title="Edit content"><flux:icon name="document-text" class="size-3.5" /></button>
+                                            <button type="button" @click.stop="panelMode = panelMode === 'content' ? null : 'content'"
+                                                :class="panelMode === 'content' ? 'text-primary' : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 transition-colors'"
+                                                title="Background image"><flux:icon name="document-text" class="size-3.5" /></button>
                                             <button type="button" @click.stop="panelMode = panelMode === 'design' ? null : 'design'"
                                                 :class="panelMode === 'design' ? 'text-primary' : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 transition-colors'"
                                                 title="Edit section styles"><flux:icon name="paint-brush" class="size-3.5" /></button>
@@ -3085,54 +3121,146 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                                     {{-- Inline panel: design mode (classes) or advanced mode (section id) --}}
                                     @if (isset($rowDesignDefaults[$row['slug']]))
                                         <div x-show="panelMode !== null" x-collapse class="border-t border-zinc-200 dark:border-zinc-700">
+                                            {{-- Content mode: background image --}}
+                                            <div x-show="panelMode === 'content'" class="p-3 space-y-2">
+                                                <span class="text-[11px] uppercase tracking-wider font-semibold text-zinc-500 dark:text-zinc-400 block">Background Image</span>
+                                                @if (($rowDesignValues[$row['slug']]['section_bg_image'] ?? '') !== '')
+                                                    <div class="relative inline-block">
+                                                        <img
+                                                            src="{{ \Illuminate\Support\Facades\Storage::url($rowDesignValues[$row['slug']]['section_bg_image']) }}"
+                                                            alt=""
+                                                            class="h-24 w-full rounded-lg object-cover border border-zinc-200 dark:border-zinc-700"
+                                                        >
+                                                        <button
+                                                            wire:click="removeRowDesignImage('{{ $row['slug'] }}')"
+                                                            class="absolute -top-2 -right-2 size-5 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600"
+                                                            title="Remove background image"
+                                                        >
+                                                            <flux:icon name="x-mark" class="size-3" />
+                                                        </button>
+                                                    </div>
+                                                @endif
+                                                <button
+                                                    wire:click="openRowDesignImagePicker('{{ $row['slug'] }}')"
+                                                    type="button"
+                                                    class="flex items-center gap-3 px-4 py-3 w-full border-2 border-dashed border-zinc-300 dark:border-zinc-600 rounded-lg cursor-pointer hover:border-primary transition-colors"
+                                                >
+                                                    <flux:icon name="photo" class="size-5 text-zinc-400 shrink-0" />
+                                                    <span class="text-sm text-zinc-500 dark:text-zinc-400">
+                                                        {{ ($rowDesignValues[$row['slug']]['section_bg_image'] ?? '') ? 'Replace image…' : 'Pick from Media Library…' }}
+                                                    </span>
+                                                </button>
+                                            </div>
                                             {{-- Design mode --}}
                                             <div x-show="panelMode === 'design'" class="p-3 space-y-3">
-                                                <div class="flex items-center justify-between">
-                                                    <span class="text-[11px] uppercase tracking-wider font-semibold text-zinc-500 dark:text-zinc-400">Disable Alt Row Background</span>
-                                                    <flux:switch
-                                                        :checked="($rowDesignValues[$row['slug']]['section_no_alt'] ?? '') === '1'"
-                                                        wire:click="toggleNoAltRow('{{ $row['slug'] }}')"
-                                                        title="Exclude this row from the alternating background pattern"
-                                                    />
+                                                <div x-data="{ rowSettingsOpen: false }">
+                                                    <button type="button" @click="rowSettingsOpen = !rowSettingsOpen" class="flex items-center gap-1.5 w-full text-left">
+                                                        <flux:icon name="chevron-right" class="size-3 text-zinc-400 shrink-0 transition-transform duration-150" x-bind:class="rowSettingsOpen ? 'rotate-90' : ''" />
+                                                        <span class="text-[11px] uppercase tracking-wider font-semibold text-zinc-500 dark:text-zinc-400">Row Settings</span>
+                                                    </button>
+                                                    <div x-show="rowSettingsOpen" x-collapse class="mt-2 pl-3">
+                                                        <div class="flex items-center justify-between">
+                                                            <span class="text-[11px] uppercase tracking-wider font-semibold text-zinc-500 dark:text-zinc-400">Disable Alt Row Background</span>
+                                                            <flux:switch
+                                                                :checked="($rowDesignValues[$row['slug']]['section_no_alt'] ?? '') === '1'"
+                                                                wire:click="toggleNoAltRow('{{ $row['slug'] }}')"
+                                                                title="Exclude this row from the alternating background pattern"
+                                                            />
+                                                        </div>
+                                                    </div>
                                                 </div>
                                                 @if (isset($rowDesignDefaults[$row['slug']]['section_animation']))
-                                                    <div class="grid grid-cols-2 gap-2">
-                                                        <div>
-                                                            <div class="flex items-center justify-between mb-1.5">
-                                                                <span class="text-[11px] uppercase tracking-wider font-semibold text-zinc-500 dark:text-zinc-400">Entrance Animation</span>
+                                                    <div x-data="{ animOpen: false }">
+                                                        <button type="button" @click="animOpen = !animOpen" class="flex items-center gap-1.5 w-full text-left">
+                                                            <flux:icon name="chevron-right" class="size-3 text-zinc-400 shrink-0 transition-transform duration-150" x-bind:class="animOpen ? 'rotate-90' : ''" />
+                                                            <span class="text-[11px] uppercase tracking-wider font-semibold text-zinc-500 dark:text-zinc-400">Animation</span>
+                                                        </button>
+                                                        <div x-show="animOpen" x-collapse class="mt-2 pl-3">
+                                                            <div class="grid grid-cols-2 gap-2">
+                                                                <div>
+                                                                    <span class="text-[10px] uppercase font-semibold text-zinc-400 dark:text-zinc-500 mb-1 block">Entrance</span>
+                                                                    <select
+                                                                        wire:model.live="rowDesignValues.{{ $row['slug'] }}.section_animation"
+                                                                        class="w-full text-xs rounded-lg border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-900 text-zinc-900 dark:text-white px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition"
+                                                                    >
+                                                                        <option value="">— None —</option>
+                                                                        <option value="fade-up">Fade Up</option>
+                                                                        <option value="fade-down">Fade Down</option>
+                                                                        <option value="fade-left">Fade Left</option>
+                                                                        <option value="fade-right">Fade Right</option>
+                                                                        <option value="zoom-in">Zoom In</option>
+                                                                        <option value="fade">Fade</option>
+                                                                    </select>
+                                                                </div>
+                                                                <div>
+                                                                    <span class="text-[10px] uppercase font-semibold text-zinc-400 dark:text-zinc-500 mb-1 block">Delay</span>
+                                                                    <select
+                                                                        wire:model.live="rowDesignValues.{{ $row['slug'] }}.section_animation_delay"
+                                                                        class="w-full text-xs rounded-lg border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-900 text-zinc-900 dark:text-white px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition"
+                                                                    >
+                                                                        <option value="">— None —</option>
+                                                                        <option value="delay-100">100ms</option>
+                                                                        <option value="delay-200">200ms</option>
+                                                                        <option value="delay-300">300ms</option>
+                                                                        <option value="delay-500">500ms</option>
+                                                                        <option value="delay-700">700ms</option>
+                                                                        <option value="delay-1000">1000ms</option>
+                                                                    </select>
+                                                                </div>
                                                             </div>
-                                                            <select
-                                                                wire:model.live="rowDesignValues.{{ $row['slug'] }}.section_animation"
-                                                                class="w-full text-xs rounded-lg border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-900 text-zinc-900 dark:text-white px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition"
-                                                            >
-                                                                <option value="">— None —</option>
-                                                                <option value="fade-up">Fade Up</option>
-                                                                <option value="fade-down">Fade Down</option>
-                                                                <option value="fade-left">Fade Left</option>
-                                                                <option value="fade-right">Fade Right</option>
-                                                                <option value="zoom-in">Zoom In</option>
-                                                                <option value="fade">Fade</option>
-                                                            </select>
-                                                        </div>
-                                                        <div>
-                                                            <div class="flex items-center justify-between mb-1.5">
-                                                                <span class="text-[11px] uppercase tracking-wider font-semibold text-zinc-500 dark:text-zinc-400">Delay</span>
-                                                            </div>
-                                                            <select
-                                                                wire:model.live="rowDesignValues.{{ $row['slug'] }}.section_animation_delay"
-                                                                class="w-full text-xs rounded-lg border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-900 text-zinc-900 dark:text-white px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition"
-                                                            >
-                                                                <option value="">— None —</option>
-                                                                <option value="delay-100">100ms</option>
-                                                                <option value="delay-200">200ms</option>
-                                                                <option value="delay-300">300ms</option>
-                                                                <option value="delay-500">500ms</option>
-                                                                <option value="delay-700">700ms</option>
-                                                                <option value="delay-1000">1000ms</option>
-                                                            </select>
                                                         </div>
                                                     </div>
                                                 @endif
+                                                {{-- Background options collapsible group --}}
+                                                <div x-data="{ bgOpen: false }">
+                                                    <button type="button" @click="bgOpen = !bgOpen" class="flex items-center gap-1.5 w-full text-left">
+                                                        <flux:icon name="chevron-right" class="size-3 text-zinc-400 shrink-0 transition-transform duration-150" x-bind:class="bgOpen ? 'rotate-90' : ''" />
+                                                        <span class="text-[11px] uppercase tracking-wider font-semibold text-zinc-500 dark:text-zinc-400">Background Options</span>
+                                                    </button>
+                                                    <div x-show="bgOpen" x-collapse class="mt-2 space-y-2 pl-3">
+                                                        @foreach (['section_bg_position' => 'Position', 'section_bg_size' => 'Size', 'section_bg_repeat' => 'Repeat'] as $bgKey => $bgLabel)
+                                                            @if (isset($rowDesignDefaults[$row['slug']][$bgKey]))
+                                                                <div>
+                                                                    <span class="text-[10px] uppercase font-semibold text-zinc-400 dark:text-zinc-500 mb-1 block">{{ $bgLabel }}</span>
+                                                                    <select
+                                                                        wire:model.live="rowDesignValues.{{ $row['slug'] }}.{{ $bgKey }}"
+                                                                        class="w-full text-xs rounded-lg border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-900 text-zinc-900 dark:text-white px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition"
+                                                                    >
+                                                                        @if ($bgKey === 'section_bg_position')
+                                                                            <option value="">— default —</option>
+                                                                            <option value="center">Center</option>
+                                                                            <option value="top">Top</option>
+                                                                            <option value="bottom">Bottom</option>
+                                                                            <option value="left">Left</option>
+                                                                            <option value="right">Right</option>
+                                                                            <option value="left-top">Top Left</option>
+                                                                            <option value="left-bottom">Bottom Left</option>
+                                                                            <option value="right-top">Top Right</option>
+                                                                            <option value="right-bottom">Bottom Right</option>
+                                                                        @elseif ($bgKey === 'section_bg_size')
+                                                                            <option value="">— default —</option>
+                                                                            <option value="cover">Cover — scale to fill</option>
+                                                                            <option value="contain">Contain — show whole image</option>
+                                                                            <option value="auto">Auto — original size</option>
+                                                                        @else
+                                                                            <option value="">— default —</option>
+                                                                            <option value="no-repeat">No Repeat</option>
+                                                                            <option value="repeat">Repeat (tile)</option>
+                                                                            <option value="repeat-x">Repeat Horizontally</option>
+                                                                            <option value="repeat-y">Repeat Vertically</option>
+                                                                        @endif
+                                                                    </select>
+                                                                </div>
+                                                            @endif
+                                                        @endforeach
+                                                    </div>
+                                                </div>
+                                                <div x-data="{ classesOpen: false }">
+                                                    <button type="button" @click="classesOpen = !classesOpen" class="flex items-center gap-1.5 w-full text-left">
+                                                        <flux:icon name="chevron-right" class="size-3 text-zinc-400 shrink-0 transition-transform duration-150" x-bind:class="classesOpen ? 'rotate-90' : ''" />
+                                                        <span class="text-[11px] uppercase tracking-wider font-semibold text-zinc-500 dark:text-zinc-400">Classes</span>
+                                                    </button>
+                                                    <div x-show="classesOpen" x-collapse class="mt-2 pl-3 space-y-3">
                                                 @foreach (['section_classes' => 'Section Classes', 'section_container_classes' => 'Container Classes'] as $fieldKey => $fieldLabel)
                                                     @if (isset($rowDesignDefaults[$row['slug']][$fieldKey]))
                                                         <div>
@@ -3213,6 +3341,8 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                                                         </div>
                                                     @endif
                                                 @endforeach
+                                                    </div>
+                                                </div>
                                             </div>
                                             {{-- Advanced mode --}}
                                             <div x-show="panelMode === 'advanced'" class="p-3 space-y-3">
@@ -3280,6 +3410,16 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                                                 />
 
                                                 <flux:icon name="bars-2" class="size-4 text-zinc-400 dark:text-zinc-500 cursor-grab active:cursor-grabbing mx-2" title="Drag to reorder" />
+
+                                                <button
+                                                    type="button"
+                                                    wire:click="openContentEditor({{ $index }})"
+                                                    title="Edit row content"
+                                                    :class="editorOpen && {{ $editingRowIndex ?? -1 }} === {{ $index }} ? 'text-primary' : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 transition-colors'"
+                                                    class="p-1 rounded hover:bg-zinc-100 dark:hover:bg-zinc-700"
+                                                >
+                                                    <flux:icon name="pencil-square" class="size-4" />
+                                                </button>
 
                                             </div>
                                             <div class="flex items-center gap-0.5 ml-auto">
@@ -3663,6 +3803,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
         @if ($showMediaPicker)
             <livewire:pages::dashboard.media-library.picker
                 :field-key="$mediaPickerKey"
+                :default-category-slug="$mediaPickerCategorySlug"
                 :key="'media-picker-'.$mediaPickerKey"
             />
         @endif

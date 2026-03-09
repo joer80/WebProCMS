@@ -28,6 +28,10 @@ class Section extends Component
             ['key' => 'section_container_classes', 'default' => $attrs['default-container-classes'] ?? 'max-w-6xl mx-auto'],
             ['key' => 'section_animation', 'default' => '', 'label' => 'Entrance Animation'],
             ['key' => 'section_animation_delay', 'default' => '', 'label' => 'Animation Delay'],
+            ['key' => 'section_bg_image', 'default' => '', 'label' => 'Background Image'],
+            ['key' => 'section_bg_position', 'default' => '', 'label' => 'Background Position'],
+            ['key' => 'section_bg_size', 'default' => '', 'label' => 'Background Size'],
+            ['key' => 'section_bg_repeat', 'default' => '', 'label' => 'Background Repeat'],
             ['key' => 'section_id', 'default' => '', 'label' => 'Section ID'],
             ['key' => 'section_attrs', 'default' => '[]', 'label' => 'Custom Attributes'],
         ];

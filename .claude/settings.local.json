@@ -41,7 +41,10 @@
       "Bash(xargs -I{} basename {} .blade.php)",
       "WebFetch(domain:hce.webprogo.com)",
       "Bash(curl -sk https://webprocms.test)",
-      "Bash(curl -sk --cookie \"laravel_session=\" https://webprocms.test)"
+      "Bash(curl -sk --cookie \"laravel_session=\" https://webprocms.test)",
+      "Bash(curl -s https://webprocms.test/ --insecure)",
+      "Bash(curl -sk https://webprocms.test/)",
+      "Bash(curl -sk http://webprocms.test/)"
     ]
   },
   "defaultMode": "acceptEdits"

@@ -24,6 +24,25 @@ if ($animPreset) {
     $animClasses = ($animPresets[$animPreset] ?? '') . ($animDelay ? " {$animDelay}" : '');
     $animAttr = " x-data=\"{ animated: false }\" x-intersect.once=\"animated = true\" :class=\"animated ? '{$animClasses}' : 'opacity-0'\"";
 }
+$bgPosition = content($slug, 'section_bg_position', '');
+if ($bgPosition) {
+    $sectionCls = trim(preg_replace('/\bbg-(?:left-top|left-bottom|right-top|right-bottom|center|top|bottom|left|right)\b/', '', $sectionCls));
+    $sectionCls = trim(preg_replace('/\s+/', ' ', $sectionCls . ' bg-' . $bgPosition));
+}
+$bgSize = content($slug, 'section_bg_size', '');
+if ($bgSize) {
+    $sectionCls = trim(preg_replace('/\bbg-(?:auto|cover|contain)\b/', '', $sectionCls));
+    $sectionCls = trim(preg_replace('/\s+/', ' ', $sectionCls . ' bg-' . $bgSize));
+}
+$bgRepeat = content($slug, 'section_bg_repeat', '');
+if ($bgRepeat) {
+    $sectionCls = trim(preg_replace('/\bbg-(?:no-repeat|repeat-x|repeat-y|repeat-round|repeat-space|repeat)\b/', '', $sectionCls));
+    $sectionCls = trim(preg_replace('/\s+/', ' ', $sectionCls . ' bg-' . $bgRepeat));
+}
+$bgImagePath = content($slug, 'section_bg_image', '');
+if ($bgImagePath) {
+    $extraAttrs['style'] = "background-image: url('{$bgImagePath}')";
+}
 @endphp
 {!! "<{$tag} " . $attributes->merge(array_merge(['class' => $sectionCls], $extraAttrs))->toHtml() . $animAttr . ">" !!}
 <div class="{{ $containerCls }}">

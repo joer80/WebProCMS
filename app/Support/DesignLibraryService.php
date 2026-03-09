@@ -259,6 +259,18 @@ class DesignLibraryService
             return ['animation', substr($key, 0, -10)];
         }
 
+        if (str_ends_with($key, '_bg_position')) {
+            return ['bg_position', substr($key, 0, -12)];
+        }
+
+        if (str_ends_with($key, '_bg_size')) {
+            return ['bg_size', substr($key, 0, -8)];
+        }
+
+        if (str_ends_with($key, '_bg_repeat')) {
+            return ['bg_repeat', substr($key, 0, -10)];
+        }
+
         if (str_ends_with($key, '_classes')) {
             return ['classes', substr($key, 0, -8)];
         }

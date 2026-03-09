@@ -112,7 +112,7 @@ new #[Layout('layouts.app')] #[Title('Design')] class extends Component {
         return match ($size) {
             'small' => ['section' => '4rem', 'banner' => '3rem', 'hero' => '5rem'],
             'large' => ['section' => '6rem', 'banner' => '5rem', 'hero' => '7rem'],
-            default => ['section' => '5rem', 'banner' => '4rem', 'hero' => '6rem'],
+            default => ['section' => '5rem', 'banner' => '3rem', 'hero' => '6rem'],
         };
     }
 

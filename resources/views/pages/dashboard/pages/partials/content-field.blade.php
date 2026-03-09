@@ -2,7 +2,7 @@
 $effMode = "(groupMode !== null ? groupMode : (advancedMode ? 'advanced' : (designMode ? 'design' : 'content')))";
 if (in_array($field['type'], ['id', 'attrs'])) {
     $fieldShow = "{$effMode} === 'advanced'";
-} elseif (in_array($field['type'], ['classes', 'object_fit', 'border_radius', 'animation', 'animation_delay'])) {
+} elseif (in_array($field['type'], ['classes', 'object_fit', 'border_radius', 'animation', 'animation_delay', 'bg_position', 'bg_size', 'bg_repeat'])) {
     $fieldShow = "{$effMode} === 'design'";
 } else {
     $fieldShow = "{$effMode} === 'content'";
@@ -448,6 +448,34 @@ if (in_array($field['type'], ['id', 'attrs'])) {
             <flux:select.option value="delay-500">500ms</flux:select.option>
             <flux:select.option value="delay-700">700ms</flux:select.option>
             <flux:select.option value="delay-1000">1000ms</flux:select.option>
+        </flux:select>
+    @elseif ($field['type'] === 'bg_position')
+        <flux:select wire:model.live="contentValues.{{ $field['key'] }}">
+            <flux:select.option value="">— default —</flux:select.option>
+            <flux:select.option value="center">Center</flux:select.option>
+            <flux:select.option value="top">Top</flux:select.option>
+            <flux:select.option value="bottom">Bottom</flux:select.option>
+            <flux:select.option value="left">Left</flux:select.option>
+            <flux:select.option value="right">Right</flux:select.option>
+            <flux:select.option value="left-top">Top Left</flux:select.option>
+            <flux:select.option value="left-bottom">Bottom Left</flux:select.option>
+            <flux:select.option value="right-top">Top Right</flux:select.option>
+            <flux:select.option value="right-bottom">Bottom Right</flux:select.option>
+        </flux:select>
+    @elseif ($field['type'] === 'bg_size')
+        <flux:select wire:model.live="contentValues.{{ $field['key'] }}">
+            <flux:select.option value="">— default —</flux:select.option>
+            <flux:select.option value="cover">Cover — scale to fill</flux:select.option>
+            <flux:select.option value="contain">Contain — show whole image</flux:select.option>
+            <flux:select.option value="auto">Auto — original size</flux:select.option>
+        </flux:select>
+    @elseif ($field['type'] === 'bg_repeat')
+        <flux:select wire:model.live="contentValues.{{ $field['key'] }}">
+            <flux:select.option value="">— default —</flux:select.option>
+            <flux:select.option value="no-repeat">No Repeat</flux:select.option>
+            <flux:select.option value="repeat">Repeat (tile)</flux:select.option>
+            <flux:select.option value="repeat-x">Repeat Horizontally</flux:select.option>
+            <flux:select.option value="repeat-y">Repeat Vertically</flux:select.option>
         </flux:select>
     @elseif ($field['type'] === 'note')
         <div class="rounded-lg bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200 dark:border-zinc-700 px-3 py-2.5 text-xs text-zinc-500 dark:text-zinc-400 leading-relaxed">{!! $field['message'] ?? '' !!}</div>
