@@ -28,4 +28,28 @@ return [
     */
     'npm_path' => env('NPM_PATH', 'npm'),
 
+    /*
+    |--------------------------------------------------------------------------
+    | Releases API URL
+    |--------------------------------------------------------------------------
+    |
+    | The URL to check for available CMS updates. Should return JSON with a
+    | "version" key (e.g. "1.0.1") and optional "notes" key. Also supports
+    | GitHub Releases API format using "tag_name" (e.g. "v1.0.1").
+    |
+    | Example: https://api.github.com/repos/your-org/webprocms/releases/latest
+    |
+    */
+    'releases_api_url' => env('CMS_RELEASES_API_URL', ''),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Git Branch
+    |--------------------------------------------------------------------------
+    |
+    | The git branch to pull from when running a CMS update.
+    |
+    */
+    'git_branch' => env('CMS_GIT_BRANCH', 'main'),
+
 ];

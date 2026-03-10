@@ -307,6 +307,17 @@ protected function isAccessible(User $user, ?string $path = null): bool
 - Served by Laravel Herd at `https://webprocms.test`
 - `config/navigation.php` — nav/footer config, written at runtime
 - `routes/web.php` — also written at runtime when pages are created/cloned
+- `VERSION` — current installed version (plain text); read by the Tools page, written by `UpdateCmsJob` after a successful update
+
+## CMS Update System
+
+Updates are triggered from **Dashboard → Tools → CMS Update**. Key files:
+
+- `app/Jobs/UpdateCmsJob.php` — queued job; runs `git pull`, `composer install`, `migrate`, `npm run build`, then config/route cache (prod only); writes result to `Setting::update_status` and `Setting::update_log`
+- `resources/views/pages/dashboard/⚡tools.blade.php` — hosts the update card with check/apply UI
+- `config/cms.php` keys: `releases_api_url` (`CMS_RELEASES_API_URL`) and `git_branch` (`CMS_GIT_BRANCH`)
+
+The releases API must return `{"version":"1.0.1","notes":"..."}`. GitHub Releases API format (`tag_name`) is also supported.
 
 ## Footer Requirement
 

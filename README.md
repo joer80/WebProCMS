@@ -111,6 +111,37 @@ Forge does **not** start a queue worker automatically. Without one, background j
 
 Also confirm your production `.env` has `QUEUE_CONNECTION=database` (or whichever driver you're using).
 
+### CMS Updates
+
+Updates can be triggered directly from **Dashboard → Tools → CMS Update**. The update card shows the current installed version, checks for available updates against a configurable releases API, and lets you apply them with a single click.
+
+#### How it works
+
+1. Click **Check for Updates** — makes an HTTP request to `CMS_RELEASES_API_URL` and compares the returned version against the local `VERSION` file
+2. If a newer version is available, **Update Now** appears
+3. Clicking it dispatches `UpdateCmsJob` (queued), which runs:
+   - `git pull origin <CMS_GIT_BRANCH>`
+   - `composer install --no-dev --optimize-autoloader`
+   - `php artisan migrate --force`
+   - `npm run build`
+   - `php artisan config:cache` + `route:cache` (production only)
+4. The card polls every 3 seconds while the job runs and shows the full command log on completion or failure
+
+#### Configuration
+
+Add these to your production `.env`:
+
+```env
+CMS_RELEASES_API_URL=https://api.github.com/repos/your-org/webprocms/releases/latest
+CMS_GIT_BRANCH=main
+```
+
+The releases API must return JSON with a `version` key (e.g. `"1.0.1"`) and optional `notes` key. The GitHub Releases API format is also supported — the `v` prefix on `tag_name` is stripped automatically.
+
+> **Requires the queue worker to be running.** The update job is dispatched to the queue — without a worker, clicking "Update Now" will dispatch the job but it will never execute.
+
+---
+
 ### CSS Builds & the Page Editor
 
 #### Editor preview (JIT)
