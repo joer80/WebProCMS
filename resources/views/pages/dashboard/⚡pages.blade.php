@@ -274,8 +274,8 @@ new #[Layout('layouts.app')] #[Title('Pages')] #[Lazy] class extends Component {
                                     @foreach ($files as $label => $path)
                                         <tr wire:key="page-{{ md5($path) }}" class="bg-white dark:bg-zinc-900 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors">
                                             <td class="px-4 py-3">
-                                                <div class="font-medium text-zinc-900 dark:text-zinc-100">{{ $label }}</div>
-                                                <div class="text-xs text-zinc-400 dark:text-zinc-500 font-mono mt-0.5">{{ $path }}</div>
+                                                <a href="{{ route('dashboard.design-library.editor') . '?file=' . urlencode($path) }}" class="font-medium text-zinc-900 dark:text-zinc-100 hover:text-primary transition-colors">{{ $label }}</a>
+                                                <a href="{{ route('dashboard.design-library.editor') . '?file=' . urlencode($path) }}" class="block text-xs text-zinc-400 dark:text-zinc-500 font-mono mt-0.5 hover:text-primary transition-colors">{{ $path }}</a>
                                             </td>
                                             <td class="px-4 py-3 text-right">
                                                 <div class="flex items-center justify-end gap-2">
@@ -285,19 +285,17 @@ new #[Layout('layouts.app')] #[Title('Pages')] #[Lazy] class extends Component {
                                                         <flux:button wire:click="cancelDelete" variant="ghost" size="sm">Cancel</flux:button>
                                                     @else
                                                         <flux:button
-                                                            href="{{ route('dashboard.design-library.editor') . '?file=' . urlencode($path) }}"
-                                                            variant="outline"
-                                                            size="sm"
-                                                            icon="pencil-square"
-                                                        >
-                                                            Edit
-                                                        </flux:button>
-                                                        <flux:button
                                                             href="{{ $this->getPageUrl($path) }}"
                                                             variant="outline"
                                                             size="sm"
-                                                            icon="eye"
+                                                            icon="arrow-top-right-on-square"
                                                             target="_blank"
+                                                        />
+                                                        <flux:button
+                                                            href="{{ route('dashboard.design-library.editor') . '?file=' . urlencode($path) }}"
+                                                            variant="outline"
+                                                            size="sm"
+                                                            icon="pencil"
                                                         />
                                                         @if (auth()->user()->isAtLeast(Role::Manager))
                                                             <flux:button wire:click="openCloneModal('{{ $path }}', '{{ $label }}')" variant="outline" size="sm" icon="document-duplicate" />
@@ -345,13 +343,13 @@ new #[Layout('layouts.app')] #[Title('Pages')] #[Lazy] class extends Component {
                                             href="{{ route('dashboard.design-library.editor') . '?file=' . urlencode($page['path']) }}"
                                             variant="ghost"
                                             size="sm"
-                                            icon="pencil-square"
+                                            icon="pencil"
                                         />
                                         <flux:button
                                             href="{{ $this->getPageUrl($page['path']) }}"
                                             variant="ghost"
                                             size="sm"
-                                            icon="eye"
+                                            icon="arrow-top-right-on-square"
                                             target="_blank"
                                         />
                                     </div>
