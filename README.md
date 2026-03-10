@@ -116,7 +116,9 @@ Also confirm your production `.env` has `QUEUE_CONNECTION=database` (or whicheve
 When a client edits CSS classes via the page editor (e.g. changing a background color, overlay opacity, or layout classes), the system automatically:
 
 1. Writes the new class value back into the relevant blade file (shared row file or page blade file) so Tailwind's scanner can detect it
-2. Dispatches a `RebuildAssets` queue job that runs `npm run build` on the server
+2. Dispatches a `RebuildAssets` job that runs `npm run build:public` on the server
+
+`npm run build:public` only recompiles the public CSS/JS bundle (skipping the dashboard and editor bundles), making it significantly faster than a full `npm run build`.
 
 **This requires Node.js and npm to be installed on the production server.** Without them, the `RebuildAssets` job will fail silently and the new CSS classes won't appear until a manual deploy.
 
@@ -132,7 +134,17 @@ curl -fsSL https://deb.nodesource.com/setup_lts.x | sudo -E bash -
 sudo apt-get install -y nodejs
 ```
 
-**Locally**, this job does not fire — the `npm run dev` watcher (started by `composer run dev`) detects blade file changes and recompiles automatically.
+**Locally**, this job does not fire by default — the `npm run dev` watcher (started by `composer run dev`) detects blade file changes and recompiles automatically.
+
+Alternatively, you can enable **local asset rebuilding** in **Dashboard → Advanced Settings → Asset Rebuilding**. When toggled on, the job runs `npm run build:public` synchronously on page save (no queue worker needed). The build completes in under a second, so the save feels instant and the preview reflects the updated CSS immediately on refresh.
+
+If your local npm is managed by **nvm** or **Laravel Herd**, PHP-spawned processes won't inherit your shell's PATH and npm/node won't be found. Set `NPM_PATH` in `.env` to the full path to the npm binary:
+
+```
+NPM_PATH="/Users/yourname/Library/Application Support/Herd/config/nvm/versions/node/v22.0.0/bin/npm"
+```
+
+The job automatically adds that directory to `PATH` so `node` is also available. You can find the correct path by running `which npm` in your terminal.
 
 ---
 
@@ -187,7 +199,8 @@ location ~* ^/build/ {
 |---|---|
 | `composer run dev` | Start the dev server (Vite + queue + logs) |
 | `npm run dev` | Start Vite asset watcher only |
-| `npm run build` | Build assets for production |
+| `npm run build` | Build all asset bundles (app, public, editor) |
+| `npm run build:public` | Build the public bundle only — faster; used by the page editor on save |
 | `php artisan tinker` | Interactive PHP REPL with app context |
 | `php artisan pail` | Tail application logs in the terminal |
 

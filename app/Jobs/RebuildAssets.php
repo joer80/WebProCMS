@@ -15,7 +15,14 @@ class RebuildAssets implements ShouldBeUnique, ShouldQueue
 
     public function handle(): void
     {
-        $process = new Process(['npm', 'run', 'build'], base_path());
+        $npm = config('cms.npm_path', 'npm');
+
+        $nodeBinDir = dirname($npm);
+        $systemPath = getenv('PATH') ?: '/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin';
+        $env = ['PATH' => $nodeBinDir.':'.$systemPath];
+
+        $process = new Process([$npm, 'run', 'build:public'], base_path(), $env);
+
         $process->setTimeout(120);
         $process->run();
     }
