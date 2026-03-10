@@ -842,3 +842,51 @@ This avoids both issues: `"'[^']*'"` is a double-quoted string containing single
 ### Bulk Design Library Row Edits
 
 When asked to update many design library rows at once (e.g. "make all classes editable"), **skip directly to a single Task subagent call** (subagent_type: `general-purpose`). Do NOT attempt Read → Write/Edit in the main context — context compression causes the "File has not been read yet" error on Write/Edit even after successful reads. The subagent has fresh context, reads and writes files without that issue, and handles all files in one shot. Provide the full list of files and required changes in the prompt.
+
+### Tiptap Rich Text Editor (Alpine + Livewire)
+
+Tiptap (`@tiptap/core`, `@tiptap/starter-kit`) is the rich text editor used in this project. These rules must be followed every time Tiptap is integrated:
+
+**1. Never store the Editor instance as a reactive Alpine property.**
+Alpine wraps `this.editor = new Editor(...)` in a Proxy, which corrupts ProseMirror transactions ("Applying a mismatched transaction" error). Always store the instance in a closure variable and expose commands via methods:
+
+```js
+Alpine.data('richEditor', (initialContent) => {
+    let _editor = null; // closure — NOT reactive
+
+    return {
+        active: {},
+        headingLevel: '0',
+        init() {
+            _editor = new Editor({ ... });
+        },
+        cmd() {
+            return _editor.chain().focus();
+        },
+        destroy() {
+            _editor?.destroy();
+            _editor = null;
+        },
+    };
+});
+```
+
+**2. `Alpine.data` calls `init()` and `destroy()` automatically.** Never add `x-init="init()"` or `x-destroy="destroy()"` to the element — it causes double initialisation, duplicate Tiptap extensions, and mismatched transaction errors.
+
+**3. Exclude extensions from StarterKit that you add separately.** `StarterKit` is the base; Link and Underline are added individually so they can be configured. Prevent the "Duplicate extension names" warning:
+
+```js
+StarterKit.configure({ link: false, underline: false }),
+Underline,
+Link.configure({ openOnClick: false }),
+```
+
+**4. Toolbar buttons go through `cmd()`, not inline chain calls.** Keep `_editor` out of the template entirely — call methods defined on the Alpine data object instead:
+
+```html
+<button type="button" @click="cmd().toggleBold().run()">B</button>
+```
+
+**5. Always use `wire:ignore` on the editor wrapper.** Livewire morphdom must never touch the Tiptap container.
+
+**6. Content stored by Tiptap is HTML.** Any PHP that previously ran plain text through `ShortcodeProcessor::process()` (which HTML-escapes non-shortcode chunks) must switch to `ShortcodeProcessor::processRaw()`. Render with `{!! !!}` in Blade.

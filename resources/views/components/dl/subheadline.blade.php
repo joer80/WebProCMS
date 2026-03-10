@@ -22,5 +22,8 @@ if ($animPreset) {
 }
 @endphp
 @if($noToggle || $toggle)
-{!! "<{$tag} " . $attributes->merge(array_merge(['class' => $cls], $extraAttrs))->toHtml() . $animAttr . ">" . e($text) . "</{$tag}>" !!}
+@php
+$renderedText = preg_replace('/^<p>(.*)<\/p>$/s', '$1', trim($text));
+@endphp
+{!! "<{$tag} " . $attributes->merge(array_merge(['class' => $cls], $extraAttrs))->toHtml() . $animAttr . ">" . $renderedText . "</{$tag}>" !!}
 @endif

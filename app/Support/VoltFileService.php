@@ -263,7 +263,7 @@ class VoltFileService
                     "$1\n        {$injection}",
                     $phpSection
                 );
-            } else {
+            } elseif (! empty($paramNames)) {
                 // Mount requires scalar route parameters that the preview route cannot
                 // resolve. Replace with a minimal class that preserves the layout.
                 preg_match('/#\[Layout\([\'"]([^\'"]+)[\'"]\)\]/', $phpSection, $layoutMatch);
