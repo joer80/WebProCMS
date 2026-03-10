@@ -53,12 +53,20 @@ This project has domain-specific skills available. You MUST activate the relevan
 
 - If the user doesn't see a frontend change reflected in the UI, it could mean they need to run `npm run build`, `npm run dev`, or `composer run dev`. Ask them.
 
-## CSS Build System (Local vs Production)
+## CSS Build System (Editor Preview vs Live Site)
 
-When a `classes` type field is saved via the page editor, `BladeClassSyncer` (`app/Support/BladeClassSyncer.php`) automatically writes the new value back into the corresponding blade file (shared row file or page blade file) so Tailwind's scanner can detect it at build time.
+### Editor preview — Tailwind Play CDN (JIT)
 
-- **Local (default):** `BladeClassSyncer` writes the class to the blade file; `npm run dev` (running via `composer run dev`) detects the file change and recompiles CSS automatically. The `RebuildAssets` job does NOT fire locally.
-- **Local (toggle on):** If `REBUILD_ASSETS_LOCALLY=true` in `.env` (set via Dashboard → Advanced Settings → Asset Rebuilding), the `RebuildAssets` job fires via `dispatchSync()` — no queue worker needed. It runs `npm run build:public` synchronously (~800ms), so the save response waits for completion and the preview reflects the change immediately on refresh. The job auto-detects npm for Herd and nvm installs (globs common paths). Set `NPM_PATH` in `.env` only if auto-detection fails.
+The editor preview iframe loads `@tailwindcss/browser@4` (Tailwind's browser CDN) instead of the compiled `public.css`. The CDN scans the live DOM and generates CSS on the fly, so any class typed into a classes field appears instantly — including classes never used on the site before. No build step needed while editing.
+
+The CDN is injected only on the `design-library.preview` route (in `partials/tailwind-cdn-preview.blade.php`). The live public site always uses the compiled bundle. Theme tokens from `public.css` (`@theme`, `@custom-variant`, `@utility`, `@layer`) are injected into the CDN via a `<style type="text/tailwindcss">` block; `@import`, `@plugin`, and file-based `@source` directives are stripped.
+
+### Live site — compiled CSS on save
+
+When a `classes` type field is saved, `BladeClassSyncer` (`app/Support/BladeClassSyncer.php`) writes the new value back into the corresponding blade file so Tailwind's scanner can detect it at build time.
+
+- **Local (default — rebuild on save):** `REBUILD_ASSETS_LOCALLY` defaults to `true`. On every save with a classes change, `RebuildAssets` fires via `defer()` + `dispatchSync()` — **no queue worker or `composer run dev` needed**. The save response is instant; the build runs after the response is sent (~1s). The job auto-detects npm for Herd and nvm installs (globs common paths). Set `NPM_PATH` in `.env` only if auto-detection fails.
+- **Local (toggle off):** Set `REBUILD_ASSETS_LOCALLY=false` (or via Dashboard → Advanced Settings) to disable on-save rebuilds and use `npm run dev` via `composer run dev` instead.
 - **Production:** `BladeClassSyncer` writes the class to the blade file, then the `RebuildAssets` job (`app/Jobs/RebuildAssets.php`) is dispatched to the queue. It runs `npm run build:public` on the server via the queue worker. **Node.js and npm must be installed on the production server** for this to work. The job is unique with a 30-second dedup window so rapid saves collapse into one build.
 - **`npm run build:public`** (`vite.public.config.js`) — builds only `public.css` and `public.js`, merging updated entries back into `manifest.json` without removing dashboard/editor entries. Use `npm run build` for a full rebuild of all three bundles.
 

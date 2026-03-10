@@ -113,10 +113,18 @@ Also confirm your production `.env` has `QUEUE_CONNECTION=database` (or whicheve
 
 ### CSS Builds & the Page Editor
 
-When a client edits CSS classes via the page editor (e.g. changing a background color, overlay opacity, or layout classes), the system automatically:
+#### Editor preview (JIT)
 
-1. Writes the new class value back into the relevant blade file (shared row file or page blade file) so Tailwind's scanner can detect it
-2. Dispatches a `RebuildAssets` job that runs `npm run build:public` on the server
+The editor preview uses the **Tailwind Play CDN** (`@tailwindcss/browser@4`) instead of the compiled `public.css`. This means any Tailwind class you type into a classes field appears instantly in the preview — including classes that have never been used on the site before. No build step is required to see styling changes while editing.
+
+The CDN is injected only into the editor preview iframe; the live public site always uses the compiled bundle.
+
+#### Live site (compiled CSS on save)
+
+When you save a page, the system automatically:
+
+1. Writes the new class value back into the relevant blade file so Tailwind's scanner can detect it
+2. Dispatches a `RebuildAssets` job that runs `npm run build:public`
 
 `npm run build:public` only recompiles the public CSS/JS bundle (skipping the dashboard and editor bundles), making it significantly faster than a full `npm run build`.
 
@@ -134,9 +142,9 @@ curl -fsSL https://deb.nodesource.com/setup_lts.x | sudo -E bash -
 sudo apt-get install -y nodejs
 ```
 
-**Locally**, this job does not fire by default — the `npm run dev` watcher (started by `composer run dev`) detects blade file changes and recompiles automatically.
+**Locally**, `REBUILD_ASSETS_LOCALLY` defaults to `true` so the on-save rebuild works out of the box — **no `composer run dev` or queue worker required**. The `RebuildAssets` job runs after the save response is sent (non-blocking via `defer()`), so the save feels instant and the build (~1s) happens in the background.
 
-Alternatively, you can enable **local asset rebuilding** in **Dashboard → Advanced Settings → Asset Rebuilding**. When toggled on, the job runs `npm run build:public` synchronously on page save (no queue worker needed). The build completes in under a second, so the save feels instant and the preview reflects the updated CSS immediately on refresh.
+You can disable this in **Dashboard → Advanced Settings → Asset Rebuilding** if you prefer to use `composer run dev` instead.
 
 The job auto-detects npm for **nvm** and **Laravel Herd** installs — no extra configuration needed. If auto-detection ever fails, you can override by setting `NPM_PATH` in `.env` to the full path returned by `which npm`.
 

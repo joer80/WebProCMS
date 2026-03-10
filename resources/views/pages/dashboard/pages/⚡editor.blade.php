@@ -1514,7 +1514,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
             if (app()->isProduction()) {
                 \App\Jobs\RebuildAssets::dispatch();
             } else {
-                \App\Jobs\RebuildAssets::dispatchSync();
+                defer(fn () => \App\Jobs\RebuildAssets::dispatchSync());
             }
         }
     }

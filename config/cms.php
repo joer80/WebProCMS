@@ -7,12 +7,12 @@ return [
     | Rebuild Assets Locally
     |--------------------------------------------------------------------------
     |
-    | When enabled, the RebuildAssets job will also fire in non-production
-    | environments when a page is saved with class changes. Useful for local
-    | development when you are not running `composer run dev`.
+    | When enabled, the RebuildAssets job fires in non-production environments
+    | when a page is saved with class changes. Runs via defer() so the save
+    | response is instant. Defaults to true so composer run dev is not required.
     |
     */
-    'rebuild_assets_locally' => env('REBUILD_ASSETS_LOCALLY', false),
+    'rebuild_assets_locally' => env('REBUILD_ASSETS_LOCALLY', true),
 
     /*
     |--------------------------------------------------------------------------
