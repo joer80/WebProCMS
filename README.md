@@ -120,7 +120,7 @@ Updates can be triggered directly from **Dashboard → Tools → CMS Update**. T
 1. Click **Check for Updates** — makes an HTTP request to `CMS_RELEASES_API_URL` and compares the returned version against the local `VERSION` file
 2. If a newer version is available, **Update Now** appears
 3. Clicking it dispatches `UpdateCmsJob` (queued), which runs:
-   - `git pull origin <CMS_GIT_BRANCH>`
+   - `git fetch origin <CMS_GIT_BRANCH>` + `git merge --ff-only` (safe — fails cleanly if histories have diverged)
    - `composer install --no-dev --optimize-autoloader`
    - `php artisan migrate --force`
    - `npm run build`
@@ -139,6 +139,26 @@ CMS_GIT_BRANCH=main
 The releases API must return JSON with a `version` key (e.g. `"1.0.1"`) and optional `notes` key. The GitHub Releases API format is also supported — the `v` prefix on `tag_name` is stripped automatically.
 
 > **Requires the queue worker to be running.** The update job is dispatched to the queue — without a worker, clicking "Update Now" will dispatch the job but it will never execute.
+
+#### If the update fails due to a merge conflict
+
+The update uses `git merge --ff-only`, which refuses to proceed if your local branch has diverged from the upstream (e.g. you edited a CMS core file directly on the server). The site is left untouched — no broken files.
+
+The error log in the dashboard will show the exact commands to run. SSH into the server and choose one:
+
+```bash
+cd /path/to/site
+
+# Option A — merge and resolve conflicts manually
+git merge origin/main
+
+# Option B — discard local changes and force to upstream (destructive)
+git reset --hard origin/main
+```
+
+After resolving, click **Update Now** again.
+
+To avoid this situation: don't edit CMS core files directly on the server. Make changes locally, commit to the client's fork, then update.
 
 ---
 
@@ -401,6 +421,21 @@ All page routes (features, pricing, products, practice-areas, donate, volunteer,
 | Primary brand colors & font | `resources/css/app.css` — `@theme` block |
 | Business name | `APP_NAME` in `.env` |
 | Business contact info (phone, email, address, hours) | `.env` → `BUSINESS_PHONE`, `BUSINESS_EMAIL`, etc. (config: `config/business.php`) |
+
+## Route Files
+
+Two route files — never cross-contaminate them:
+
+| File | Purpose |
+|---|---|
+| `routes/web.php` | **Client zone** — public-facing page routes only. Written at runtime when pages are created/cloned. Will differ between client installs. |
+| `routes/cms.php` | **CMS core** — all dashboard, settings, and design-editor routes. Never modified per-client. Delivered cleanly via `git pull`. |
+
+**Rule:** Any route you add for a dashboard feature, admin tool, or CMS-level functionality goes in `routes/cms.php`. Public site pages (contact, about, services, etc.) go in `routes/web.php`. This separation is what allows clients to receive CMS updates without merge conflicts.
+
+`routes/settings.php` (user profile, password, 2FA) is required from `routes/cms.php` and is also CMS core.
+
+---
 
 ## View Structure
 

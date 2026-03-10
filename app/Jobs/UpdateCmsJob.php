@@ -20,7 +20,9 @@ class UpdateCmsJob implements ShouldBeUnique, ShouldQueue
     {
         $log = [];
 
-        $this->runProcess(['git', 'pull', 'origin', config('cms.git_branch', 'main')], $log);
+        $branch = config('cms.git_branch', 'main');
+        $this->runProcess(['git', 'fetch', 'origin', $branch], $log);
+        $this->runProcess(['git', 'merge', '--ff-only', 'origin/'.$branch], $log);
 
         $this->runProcess(['composer', 'install', '--no-dev', '--no-interaction', '--optimize-autoloader'], $log);
 
@@ -47,8 +49,12 @@ class UpdateCmsJob implements ShouldBeUnique, ShouldQueue
 
     public function failed(\Throwable $exception): void
     {
+        $mergeHint = str_contains($exception->getMessage(), 'ff-only') || str_contains($exception->getMessage(), 'merge')
+            ? "\n\n--- How to resolve ---\nYour local branch has diverged from the upstream. SSH into the server and run:\n\n  cd ".base_path()."\n  git status\n  git diff HEAD..origin/".config('cms.git_branch', 'main')." --name-only\n\nThen either:\n  git merge origin/".config('cms.git_branch', 'main')."   # merge and resolve conflicts manually\n  git reset --hard origin/".config('cms.git_branch', 'main')."  # discard local changes and force update (destructive)\n\nAfter resolving, click Update Now again."
+            : '';
+
         Setting::set('update_status', 'failed');
-        Setting::set('update_log', Setting::get('update_log', '')."\n\nFailed: ".$exception->getMessage());
+        Setting::set('update_log', Setting::get('update_log', '')."\n\nFailed: ".$exception->getMessage().$mergeHint);
     }
 
     private function runProcess(array $command, array &$log, array $env = []): void

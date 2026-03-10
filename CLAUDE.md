@@ -306,7 +306,8 @@ protected function isAccessible(User $user, ?string $path = null): bool
 - Laravel 12 / Livewire 4 Volt / Flux UI Free / Tailwind v4
 - Served by Laravel Herd at `https://webprocms.test`
 - `config/navigation.php` — nav/footer config, written at runtime
-- `routes/web.php` — also written at runtime when pages are created/cloned
+- `routes/web.php` — **client zone**: only public page routes; written at runtime when pages are created/cloned — **never add CMS/dashboard routes here**
+- `routes/cms.php` — **CMS core**: all dashboard, settings, and design-editor routes; never modified per-client; loaded via `bootstrap/app.php` `then` callback — **always add new dashboard/admin routes here**
 - `VERSION` — current installed version (plain text); read by the Tools page, written by `UpdateCmsJob` after a successful update
 
 ## CMS Update System
