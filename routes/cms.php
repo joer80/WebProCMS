@@ -107,6 +107,16 @@ Route::middleware(['auth', 'verified'])->group(function (): void {
         Route::livewire('dashboard/pages/editor', 'pages::dashboard.pages.editor')->name('dashboard.design-library.editor');
 
         Route::livewire('dashboard/media-library', 'pages::dashboard.media-library.index')->name('dashboard.media-library.index');
+
+        // Content Types (Develop group)
+        Route::livewire('dashboard/content-types', 'pages::dashboard.content-types.index')->name('dashboard.content-types.index');
+        Route::livewire('dashboard/content-types/create', 'pages::dashboard.content-types.create')->name('dashboard.content-types.create');
+        Route::livewire('dashboard/content-types/{contentTypeId}/edit', 'pages::dashboard.content-types.edit')->name('dashboard.content-types.edit');
+
+        // Content Items (Content group — dynamic per type)
+        Route::livewire('dashboard/content/{typeSlug}', 'pages::dashboard.content.index')->name('dashboard.content.index');
+        Route::livewire('dashboard/content/{typeSlug}/create', 'pages::dashboard.content.create')->name('dashboard.content.create');
+        Route::livewire('dashboard/content/{typeSlug}/{itemId}/edit', 'pages::dashboard.content.edit')->name('dashboard.content.edit');
     });
 });
 

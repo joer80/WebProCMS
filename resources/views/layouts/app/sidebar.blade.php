@@ -23,6 +23,15 @@
                         <flux:sidebar.item icon="document" :href="route('dashboard.pages')" :current="request()->routeIs('dashboard.pages')" wire:navigate>
                             {{ __('Pages') }}
                         </flux:sidebar.item>
+                        @foreach (\App\Models\ContentTypeDefinition::allOrdered() as $contentType)
+                            <flux:sidebar.item
+                                :icon="$contentType->icon"
+                                :href="route('dashboard.content.index', $contentType->slug)"
+                                :current="request()->routeIs('dashboard.content.*') && request()->route('typeSlug') === $contentType->slug"
+                                wire:navigate>
+                                {{ $contentType->name }}
+                            </flux:sidebar.item>
+                        @endforeach
                         <flux:sidebar.item icon="document-text" :href="route('dashboard.blog.index')" :current="request()->routeIs('dashboard.blog.*')" wire:navigate>
                             {{ __('Blog') }}
                         </flux:sidebar.item>
@@ -33,7 +42,10 @@
                             {{ __('Locations') }}
                         </flux:sidebar.item>
                     </flux:sidebar.group>
-                    <flux:sidebar.group expandable icon="wrench-screwdriver" heading="{{ __('Develop') }}" :expanded="request()->routeIs('dashboard.forms.*', 'dashboard.menus', 'dashboard.redirects', 'dashboard.users', 'dashboard.shortcodes.*', 'dashboard.snippets.*', 'dashboard.design-library.*', 'dashboard.tools', 'dashboard.templates')" class="grid">
+                    <flux:sidebar.group expandable icon="wrench-screwdriver" heading="{{ __('Develop') }}" :expanded="request()->routeIs('dashboard.forms.*', 'dashboard.menus', 'dashboard.redirects', 'dashboard.users', 'dashboard.shortcodes.*', 'dashboard.snippets.*', 'dashboard.design-library.*', 'dashboard.tools', 'dashboard.templates', 'dashboard.content-types.*')" class="grid">
+                        <flux:sidebar.item icon="rectangle-group" :href="route('dashboard.content-types.index')" :current="request()->routeIs('dashboard.content-types.*')" wire:navigate>
+                            {{ __('Content Types') }}
+                        </flux:sidebar.item>
                         <flux:sidebar.item icon="document-check" :href="route('dashboard.forms.index')" :current="request()->routeIs('dashboard.forms.*')" wire:navigate>
                             {{ __('Forms') }}
                         </flux:sidebar.item>
