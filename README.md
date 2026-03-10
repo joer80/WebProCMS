@@ -138,13 +138,7 @@ sudo apt-get install -y nodejs
 
 Alternatively, you can enable **local asset rebuilding** in **Dashboard → Advanced Settings → Asset Rebuilding**. When toggled on, the job runs `npm run build:public` synchronously on page save (no queue worker needed). The build completes in under a second, so the save feels instant and the preview reflects the updated CSS immediately on refresh.
 
-If your local npm is managed by **nvm** or **Laravel Herd**, PHP-spawned processes won't inherit your shell's PATH and npm/node won't be found. Set `NPM_PATH` in `.env` to the full path to the npm binary:
-
-```
-NPM_PATH="/Users/yourname/Library/Application Support/Herd/config/nvm/versions/node/v22.0.0/bin/npm"
-```
-
-The job automatically adds that directory to `PATH` so `node` is also available. You can find the correct path by running `which npm` in your terminal.
+The job auto-detects npm for **nvm** and **Laravel Herd** installs — no extra configuration needed. If auto-detection ever fails, you can override by setting `NPM_PATH` in `.env` to the full path returned by `which npm`.
 
 ---
 
