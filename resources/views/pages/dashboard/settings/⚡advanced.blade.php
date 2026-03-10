@@ -50,6 +50,8 @@ new #[Layout('layouts.app')] #[Title('Advanced Settings')] class extends Compone
 
     public bool $envWritable = false;
 
+    public bool $rebuildAssetsLocally = false;
+
     public function mount(): void
     {
         $this->envWritable = is_writable(base_path('.env'));
@@ -77,6 +79,8 @@ new #[Layout('layouts.app')] #[Title('Advanced Settings')] class extends Compone
         $this->redisPassword = config('database.redis.default.password') ?? '';
 
         $this->memcachedHost = config('cache.stores.memcached.servers.0.host', '127.0.0.1');
+
+        $this->rebuildAssetsLocally = (bool) config('cms.rebuild_assets_locally');
     }
 
     public function saveMailSettings(): void
@@ -257,6 +261,17 @@ new #[Layout('layouts.app')] #[Title('Advanced Settings')] class extends Compone
         }
 
         $this->dispatch('notify', message: 'Memcached settings saved.');
+    }
+
+    public function saveRebuildAssetsLocally(): void
+    {
+        if (! $this->envWritable) {
+            return;
+        }
+
+        $this->writeEnvValue('REBUILD_ASSETS_LOCALLY', $this->rebuildAssetsLocally ? 'true' : 'false', 'rebuild-assets');
+
+        $this->dispatch('notify', message: 'Settings saved.');
     }
 
     public function clearSessions(): void
@@ -551,6 +566,20 @@ new #[Layout('layouts.app')] #[Title('Advanced Settings')] class extends Compone
                         </div>
                     </div>
                     <flux:button wire:click="saveMemcachedSettings" variant="outline" :disabled="! $envWritable" class="shrink-0">Save</flux:button>
+                </div>
+            </div>
+
+            {{-- Asset Rebuilding --}}
+            <div class="rounded-lg border border-zinc-200 dark:border-zinc-700 p-6">
+                <div class="flex items-start justify-between gap-6">
+                    <div class="flex-1">
+                        <flux:heading>Asset Rebuilding</flux:heading>
+                        <flux:text class="mt-1">When enabled, CSS is automatically recompiled on page save in non-production environments — so you don't need to run <code>composer run dev</code> while editing.</flux:text>
+                        <div class="mt-4">
+                            <flux:switch wire:model="rebuildAssetsLocally" label="Rebuild assets locally on page save" :disabled="! $envWritable" />
+                        </div>
+                    </div>
+                    <flux:button wire:click="saveRebuildAssetsLocally" variant="outline" :disabled="! $envWritable" class="shrink-0">Save</flux:button>
                 </div>
             </div>
 

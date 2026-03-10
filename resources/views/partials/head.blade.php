@@ -45,7 +45,12 @@
 @endforeach
 @endif
 
-@vite([$cssBundle ?? 'resources/css/app.css', 'resources/js/app.js'])
+@if (($cssBundle ?? null) === 'resources/css/public.css' && request()->routeIs('design-library.preview'))
+    @include('partials.tailwind-cdn-preview')
+    @vite(['resources/js/app.js'])
+@else
+    @vite([$cssBundle ?? 'resources/css/app.css', 'resources/js/app.js'])
+@endif
 @fluxAppearance
 <script>localStorage.setItem('flux.appearance','light');document.documentElement.classList.remove('dark')</script>
 @stack('head')

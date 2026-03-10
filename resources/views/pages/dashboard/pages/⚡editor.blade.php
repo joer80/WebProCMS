@@ -1510,8 +1510,12 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
             $syncer->sync($bladeFile, $slug, $key, $draft['value']);
         }
 
-        if ($hasClassesChange && app()->isProduction()) {
-            \App\Jobs\RebuildAssets::dispatch();
+        if ($hasClassesChange && (app()->isProduction() || config('cms.rebuild_assets_locally'))) {
+            if (app()->isProduction()) {
+                \App\Jobs\RebuildAssets::dispatch();
+            } else {
+                defer(fn () => \App\Jobs\RebuildAssets::dispatchSync());
+            }
         }
     }
 
