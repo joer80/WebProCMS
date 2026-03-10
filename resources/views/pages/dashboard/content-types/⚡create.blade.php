@@ -218,6 +218,8 @@ new #[Layout('layouts.app')] #[Title('New Content Type')] class extends Componen
                                                     <flux:select.option value="checkbox">Checkbox (single)</flux:select.option>
                                                     <flux:select.option value="checkboxes">Checkboxes (multiple)</flux:select.option>
                                                     <flux:select.option value="oembed">oEmbed URL</flux:select.option>
+                                                    <flux:select.option value="file">File Upload (single)</flux:select.option>
+                                                    <flux:select.option value="files">File Upload (multiple)</flux:select.option>
                                                 </flux:select>
                                                 <flux:error name="fields.{{ $index }}.type" />
                                             </flux:field>

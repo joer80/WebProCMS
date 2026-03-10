@@ -24,6 +24,9 @@ new #[Layout('layouts.app')] #[Title('New Item')] class extends Component {
     /** @var array<string, mixed> Temporary Livewire upload properties for image fields */
     public array $imageUploads = [];
 
+    /** @var array<string, mixed> Temporary Livewire upload properties for file fields */
+    public array $fileUploads = [];
+
     /** @var array<string, array<int, array{path: string, alt: string}>> Gallery state keyed by field name */
     public array $galleryData = [];
 
@@ -46,9 +49,69 @@ new #[Layout('layouts.app')] #[Title('New Item')] class extends Component {
                 default => '',
             };
 
+            if ($type === 'file') {
+                $this->formData[$name] = '';
+            }
+
             if ($type === 'gallery') {
                 $this->galleryData[$name] = [];
             }
+        }
+    }
+
+    public function uploadFile(string $fieldName): void
+    {
+        $upload = $this->fileUploads[$fieldName] ?? null;
+
+        if (! $upload) {
+            return;
+        }
+
+        $this->validate(["fileUploads.{$fieldName}" => 'nullable|file|max:51200|mimes:pdf,doc,docx,xls,xlsx,ppt,pptx,csv,txt,zip,rar']);
+
+        $path = $upload->storeAs('content/files', $upload->getClientOriginalName(), 'public');
+
+        $this->formData[$fieldName] = ['path' => $path, 'name' => $upload->getClientOriginalName()];
+        $this->fileUploads[$fieldName] = null;
+    }
+
+    public function removeFile(string $fieldName): void
+    {
+        $file = $this->formData[$fieldName] ?? null;
+
+        if (is_array($file) && ! empty($file['path'])) {
+            Storage::disk('public')->delete($file['path']);
+        }
+
+        $this->formData[$fieldName] = '';
+    }
+
+    public function addMultiFile(string $fieldName): void
+    {
+        $upload = $this->fileUploads[$fieldName] ?? null;
+
+        if (! $upload) {
+            return;
+        }
+
+        $this->validate(["fileUploads.{$fieldName}" => 'nullable|file|max:51200|mimes:pdf,doc,docx,xls,xlsx,ppt,pptx,csv,txt,zip,rar']);
+
+        $path = $upload->storeAs('content/files', $upload->getClientOriginalName(), 'public');
+
+        $current = is_array($this->formData[$fieldName]) ? $this->formData[$fieldName] : [];
+        $current[] = ['path' => $path, 'name' => $upload->getClientOriginalName()];
+        $this->formData[$fieldName] = $current;
+        $this->fileUploads[$fieldName] = null;
+    }
+
+    public function removeMultiFile(string $fieldName, int $index): void
+    {
+        $files = is_array($this->formData[$fieldName]) ? $this->formData[$fieldName] : [];
+
+        if (isset($files[$index])) {
+            Storage::disk('public')->delete($files[$index]['path']);
+            array_splice($files, $index, 1);
+            $this->formData[$fieldName] = array_values($files);
         }
     }
 
@@ -119,7 +182,7 @@ new #[Layout('layouts.app')] #[Title('New Item')] class extends Component {
             $required = $field['required'] ?? false;
             $type = $field['type'] ?? 'text';
 
-            if (in_array($type, ['image', 'gallery'])) {
+            if (in_array($type, ['image', 'gallery', 'file', 'files'])) {
                 continue;
             }
 
@@ -477,6 +540,88 @@ new #[Layout('layouts.app')] #[Title('New Item')] class extends Component {
                                             @change="handleFile($event)"
                                             accept="image/*"
                                             :disabled="uploading"
+                                            class="block w-full text-sm text-zinc-600 dark:text-zinc-400 file:mr-3 file:py-1.5 file:px-3 file:rounded-sm file:border file:border-zinc-300 dark:file:border-zinc-600 file:text-sm file:font-medium file:bg-zinc-50 dark:file:bg-zinc-800 file:text-zinc-700 dark:file:text-zinc-300 hover:file:bg-zinc-100 dark:hover:file:bg-zinc-700 transition-colors disabled:opacity-50"
+                                        />
+                                        <span x-show="uploading" class="text-xs text-zinc-500 dark:text-zinc-400 shrink-0">Uploading…</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                        @elseif ($fieldType === 'file')
+                            <div class="rounded-lg border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-900 p-4 space-y-3">
+                                <flux:label>
+                                    {{ $fieldLabel }}
+                                    @if (!$fieldRequired)
+                                        <flux:badge size="sm" variant="outline" class="ml-1">Optional</flux:badge>
+                                    @endif
+                                </flux:label>
+
+                                @if (!empty($formData[$fieldName]) && is_array($formData[$fieldName]))
+                                    <div class="flex items-center gap-3 rounded-md border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-3 py-2">
+                                        <flux:icon name="paper-clip" class="size-4 text-zinc-400 shrink-0" />
+                                        <a href="{{ Storage::disk('public')->url($formData[$fieldName]['path']) }}" target="_blank" class="text-sm text-primary hover:underline flex-1 truncate">{{ $formData[$fieldName]['name'] }}</a>
+                                        <button type="button" wire:click="removeFile('{{ $fieldName }}')" wire:confirm="Remove this file?" class="text-xs text-red-500 hover:text-red-700 shrink-0">Remove</button>
+                                    </div>
+                                @endif
+
+                                <div x-data="{ uploading: false }">
+                                    <div class="flex items-center gap-3">
+                                        <input
+                                            type="file"
+                                            :disabled="uploading"
+                                            accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.csv,.txt,.zip,.rar"
+                                            @change="
+                                                const file = $event.target.files[0];
+                                                if (!file) return;
+                                                uploading = true;
+                                                $wire.upload('fileUploads.{{ $fieldName }}', file, () => {
+                                                    $wire.call('uploadFile', '{{ $fieldName }}').then(() => { uploading = false; $event.target.value = ''; });
+                                                });
+                                            "
+                                            class="block w-full text-sm text-zinc-600 dark:text-zinc-400 file:mr-3 file:py-1.5 file:px-3 file:rounded-sm file:border file:border-zinc-300 dark:file:border-zinc-600 file:text-sm file:font-medium file:bg-zinc-50 dark:file:bg-zinc-800 file:text-zinc-700 dark:file:text-zinc-300 hover:file:bg-zinc-100 dark:hover:file:bg-zinc-700 transition-colors disabled:opacity-50"
+                                        />
+                                        <span x-show="uploading" class="text-xs text-zinc-500 dark:text-zinc-400 shrink-0">Uploading…</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                        @elseif ($fieldType === 'files')
+                            <div class="rounded-lg border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-900 p-4 space-y-3">
+                                <flux:label>
+                                    {{ $fieldLabel }}
+                                    @if (!$fieldRequired)
+                                        <flux:badge size="sm" variant="outline" class="ml-1">Optional</flux:badge>
+                                    @endif
+                                </flux:label>
+
+                                @if (!empty($formData[$fieldName]) && is_array($formData[$fieldName]))
+                                    <div class="space-y-2">
+                                        @foreach ($formData[$fieldName] as $fIndex => $fItem)
+                                            <div wire:key="file-{{ $fieldName }}-{{ $fIndex }}" class="flex items-center gap-3 rounded-md border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-3 py-2">
+                                                <flux:icon name="paper-clip" class="size-4 text-zinc-400 shrink-0" />
+                                                <a href="{{ Storage::disk('public')->url($fItem['path']) }}" target="_blank" class="text-sm text-primary hover:underline flex-1 truncate">{{ $fItem['name'] }}</a>
+                                                <button type="button" wire:click="removeMultiFile('{{ $fieldName }}', {{ $fIndex }})" wire:confirm="Remove this file?" class="text-xs text-red-500 hover:text-red-700 shrink-0">Remove</button>
+                                            </div>
+                                        @endforeach
+                                    </div>
+                                @else
+                                    <p class="text-sm text-center text-zinc-400 dark:text-zinc-500 py-1">No files yet.</p>
+                                @endif
+
+                                <div x-data="{ uploading: false }">
+                                    <div class="flex items-center gap-3">
+                                        <input
+                                            type="file"
+                                            :disabled="uploading"
+                                            accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.csv,.txt,.zip,.rar"
+                                            @change="
+                                                const file = $event.target.files[0];
+                                                if (!file) return;
+                                                uploading = true;
+                                                $wire.upload('fileUploads.{{ $fieldName }}', file, () => {
+                                                    $wire.call('addMultiFile', '{{ $fieldName }}').then(() => { uploading = false; $event.target.value = ''; });
+                                                });
+                                            "
                                             class="block w-full text-sm text-zinc-600 dark:text-zinc-400 file:mr-3 file:py-1.5 file:px-3 file:rounded-sm file:border file:border-zinc-300 dark:file:border-zinc-600 file:text-sm file:font-medium file:bg-zinc-50 dark:file:bg-zinc-800 file:text-zinc-700 dark:file:text-zinc-300 hover:file:bg-zinc-100 dark:hover:file:bg-zinc-700 transition-colors disabled:opacity-50"
                                         />
                                         <span x-show="uploading" class="text-xs text-zinc-500 dark:text-zinc-400 shrink-0">Uploading…</span>
