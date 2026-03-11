@@ -3299,11 +3299,19 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                                     <div class="flex items-center gap-2 px-3 py-2 bg-zinc-100 dark:bg-zinc-700/50">
                                         <div class="flex-1 min-w-0">
                                             <div class="flex items-center gap-1.5">
-                                                <div x-show="!renamingRow"
-                                                    class="text-sm font-medium text-zinc-800 dark:text-zinc-200 truncate cursor-pointer hover:text-primary transition-colors"
-                                                    title="Click to rename"
-                                                    @click.stop="renamingRow = true; rowNameDraft = '{{ addslashes($row['name']) }}'; $nextTick(() => $refs.rowNameInput_{{ $index }}.select())"
-                                                >{{ $row['name'] }}</div>
+                                                <div x-show="!renamingRow" class="group flex items-center gap-1 min-w-0 flex-1">
+                                                    <span
+                                                        class="text-sm font-medium text-zinc-800 dark:text-zinc-200 truncate cursor-pointer hover:text-primary transition-colors"
+                                                        title="Click to edit content"
+                                                        @click.stop="$wire.openContentEditor({{ $index }})"
+                                                    >{{ $row['name'] }}</span>
+                                                    <button
+                                                        type="button"
+                                                        class="shrink-0 opacity-0 group-hover:opacity-100 transition-opacity p-0.5 rounded text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200"
+                                                        title="Rename row"
+                                                        @click.stop="renamingRow = true; rowNameDraft = '{{ addslashes($row['name']) }}'; $nextTick(() => $refs.rowNameInput_{{ $index }}.select())"
+                                                    ><flux:icon name="pencil" class="size-3" /></button>
+                                                </div>
                                                 <input
                                                     x-show="renamingRow"
                                                     x-ref="rowNameInput_{{ $index }}"
@@ -3604,16 +3612,6 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                                                 />
 
                                                 <flux:icon name="bars-2" class="size-4 text-zinc-400 dark:text-zinc-500 cursor-grab active:cursor-grabbing mx-2" title="Drag to reorder" />
-
-                                                <button
-                                                    type="button"
-                                                    wire:click="openContentEditor({{ $index }})"
-                                                    title="Edit row content"
-                                                    :class="editorOpen && {{ $editingRowIndex ?? -1 }} === {{ $index }} ? 'text-primary' : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 transition-colors'"
-                                                    class="p-1 rounded hover:bg-zinc-100 dark:hover:bg-zinc-700"
-                                                >
-                                                    <flux:icon name="pencil-square" class="size-4" />
-                                                </button>
 
                                             </div>
                                             <div class="flex items-center gap-0.5 ml-auto">
