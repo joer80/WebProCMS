@@ -7,6 +7,7 @@ if (in_array($field['type'], ['id', 'attrs'])) {
 } else {
     $fieldShow = "{$effMode} === 'content'";
 }
+$showShortcodeBtn = ($field['type'] === 'text' && ! str_ends_with($field['key'], '_url') && ! str_ends_with($field['key'], '_htag')) || $field['key'] === 'subheadline';
 @endphp
 <div wire:key="field-{{ str_replace(':', '-', $field['slug']) }}-{{ $field['key'] }}" x-show="{{ $fieldShow }}">
     @if ($field['type'] === 'classes')
@@ -18,6 +19,13 @@ if (in_array($field['type'], ['id', 'attrs'])) {
         <div class="flex items-center justify-between mb-1.5">
             <flux:label class="text-zinc-500 dark:text-zinc-400">{{ $field['label'] }}</flux:label>
             <div class="flex items-center gap-2">
+                @if ($showShortcodeBtn || $field['type'] === 'richtext')
+                    <button type="button"
+                        onclick="window.dispatchEvent(new CustomEvent('open-shortcode-picker', { detail: { fieldKey: '{{ $field['key'] }}' }, bubbles: true }))"
+                        class="text-zinc-400 dark:text-zinc-500 hover:text-primary dark:hover:text-primary transition-colors"
+                        title="Insert shortcode"
+                    ><flux:icon name="bolt" class="size-3.5" /></button>
+                @endif
                 @if ($field['type'] === 'grid')
                     <button wire:click="clearGridItems('{{ $field['key'] }}')" type="button" class="text-xs text-zinc-400 dark:text-zinc-500 hover:text-red-500 dark:hover:text-red-400 transition-colors">Remove All</button>
                 @endif
@@ -74,6 +82,7 @@ if (in_array($field['type'], ['id', 'attrs'])) {
     @elseif ($field['type'] === 'richtext')
         <div wire:ignore
              x-data="richEditor(@js($contentValues[$field['key']] ?? $field['default'] ?? ''), 'contentValues.{{ $field['key'] }}')"
+             x-on:shortcode-picked.window="if ($event.detail.fieldKey === '{{ $field['key'] }}') cmd().insertContent($event.detail.shortcode).run()"
              class="overflow-hidden rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900">
             {{-- Compact toolbar --}}
             <div class="flex flex-wrap items-center gap-0.5 border-b border-zinc-200 dark:border-zinc-700 px-1.5 py-1">
@@ -87,6 +96,7 @@ if (in_array($field['type'], ['id', 'attrs'])) {
                 <div class="w-px h-4 bg-zinc-200 dark:bg-zinc-600 mx-0.5"></div>
                 <button type="button" @click="setLink()" :class="active.link ? 'bg-zinc-200 dark:bg-zinc-600' : ''" class="rounded px-1.5 py-0.5 text-xs text-zinc-700 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors" title="Link">Link</button>
                 <button type="button" @click="cmd().unsetAllMarks().clearNodes().run()" class="rounded px-1.5 py-0.5 text-xs text-zinc-700 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors" title="Clear Formatting">✕</button>
+                <button type="button" @click="$dispatch('open-shortcode-picker', { fieldKey: '{{ $field['key'] }}' })" class="rounded px-1.5 py-0.5 text-zinc-400 dark:text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors" title="Insert shortcode"><flux:icon name="bolt" class="size-3.5" /></button>
                 <button type="button" @click="toggleSource()" :class="sourceMode ? 'bg-zinc-200 dark:bg-zinc-600' : ''" class="ml-auto rounded px-1.5 py-0.5 text-xs font-mono text-zinc-500 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors" title="HTML Source">&lt;/&gt;</button>
             </div>
             <div x-ref="editorEl" class="sidebar-rich-editor-content" x-show="!sourceMode"></div>
@@ -346,11 +356,26 @@ if (in_array($field['type'], ['id', 'attrs'])) {
             placeholder="{{ $field['default'] ?: 'https://' }}"
         />
     @elseif ($field['key'] === 'subheadline')
-        <flux:textarea
-            wire:model.live.debounce.400ms="contentValues.{{ $field['key'] }}"
-            rows="3"
-            placeholder="{{ $field['default'] }}"
-        />
+        <div x-data
+            x-on:shortcode-picked.window="
+                if ($event.detail.fieldKey === '{{ $field['key'] }}') {
+                    const el = $el.querySelector('textarea');
+                    const sc = $event.detail.shortcode;
+                    const start = el.selectionStart;
+                    const end = el.selectionEnd;
+                    const val = el.value;
+                    el.value = val.slice(0, start) + sc + val.slice(end);
+                    el.dispatchEvent(new Event('input', { bubbles: true }));
+                    el.focus();
+                    el.setSelectionRange(start + sc.length, start + sc.length);
+                }
+            ">
+            <flux:textarea
+                wire:model.live.debounce.400ms="contentValues.{{ $field['key'] }}"
+                rows="3"
+                placeholder="{{ $field['default'] }}"
+            />
+        </div>
     @elseif ($field['type'] === 'id')
         <flux:input
             wire:model.live.debounce.400ms="contentValues.{{ $field['key'] }}"
@@ -520,9 +545,24 @@ if (in_array($field['type'], ['id', 'attrs'])) {
             </button>
         </div>
     @else
-        <flux:input
-            wire:model.live.debounce.400ms="contentValues.{{ $field['key'] }}"
-            placeholder="{{ $field['default'] }}"
-        />
+        <div x-data
+            x-on:shortcode-picked.window="
+                if ($event.detail.fieldKey === '{{ $field['key'] }}') {
+                    const el = $el.querySelector('input');
+                    const sc = $event.detail.shortcode;
+                    const start = el.selectionStart;
+                    const end = el.selectionEnd;
+                    const val = el.value;
+                    el.value = val.slice(0, start) + sc + val.slice(end);
+                    el.dispatchEvent(new Event('input', { bubbles: true }));
+                    el.focus();
+                    el.setSelectionRange(start + sc.length, start + sc.length);
+                }
+            ">
+            <flux:input
+                wire:model.live.debounce.400ms="contentValues.{{ $field['key'] }}"
+                placeholder="{{ $field['default'] }}"
+            />
+        </div>
     @endif
 </div>

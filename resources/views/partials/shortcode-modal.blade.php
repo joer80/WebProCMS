@@ -11,16 +11,15 @@
 <div
     x-data="{
         open: false,
-        copied: null,
+        targetFieldKey: null,
         sections: { system: true, user: true, types: {} },
-        copy(tag) {
-            navigator.clipboard.writeText(tag).then(() => {
-                this.copied = tag;
-                setTimeout(() => { this.copied = null; }, 1500);
-            });
+        pick(tag) {
+            window.dispatchEvent(new CustomEvent('shortcode-picked', { detail: { fieldKey: this.targetFieldKey, shortcode: tag }, bubbles: true }));
+            this.open = false;
+            this.targetFieldKey = null;
         }
     }"
-    @open-shortcode-modal.window="open = true"
+    @open-shortcode-picker.window="open = true; targetFieldKey = $event.detail.fieldKey"
     x-show="open"
     x-cloak
     class="fixed inset-0 z-50 flex items-start justify-center pt-16 px-4"
@@ -35,8 +34,8 @@
         {{-- Header --}}
         <div class="flex items-center justify-between px-5 py-4 border-b border-zinc-200 dark:border-zinc-700 shrink-0">
             <div>
-                <h2 class="text-base font-semibold text-zinc-900 dark:text-zinc-100">Shortcode Reference</h2>
-                <p class="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">Click any shortcode to copy it, then paste into any text or richtext field.</p>
+                <h2 class="text-base font-semibold text-zinc-900 dark:text-zinc-100">Insert Shortcode</h2>
+                <p class="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">Click a shortcode to insert it into the field.</p>
             </div>
             <button type="button" @click="open = false" class="text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 transition-colors">
                 <svg xmlns="http://www.w3.org/2000/svg" class="size-5" viewBox="0 0 20 20" fill="currentColor"><path d="M6.28 5.22a.75.75 0 0 0-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 1 0 1.06 1.06L10 11.06l3.72 3.72a.75.75 0 1 0 1.06-1.06L11.06 10l3.72-3.72a.75.75 0 0 0-1.06-1.06L10 8.94 6.28 5.22Z"/></svg>
@@ -58,14 +57,15 @@
                     @foreach ($systemShortcodes as $tag => $info)
                         @php $shortcode = '[[' . $tag . ']]'; @endphp
                         <button type="button"
-                            @click="copy('{{ $shortcode }}')"
+                            @click="pick('{{ $shortcode }}')"
                             class="w-full flex items-center justify-between gap-3 px-5 py-2 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors text-left group">
                             <div>
                                 <span class="font-mono text-sm text-primary">{{ $shortcode }}</span>
                                 <span class="block text-xs text-zinc-500 dark:text-zinc-400">{{ $info['label'] }}</span>
                             </div>
-                            <span x-show="copied === '{{ $shortcode }}'" class="text-xs text-green-600 dark:text-green-400 shrink-0">Copied!</span>
-                            <svg x-show="copied !== '{{ $shortcode }}'" xmlns="http://www.w3.org/2000/svg" class="size-4 text-zinc-300 dark:text-zinc-600 group-hover:text-zinc-500 transition-colors shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15.666 3.888A2.25 2.25 0 0 0 13.5 2.25h-3c-1.03 0-1.9.693-2.166 1.638m7.332 0c.055.194.084.4.084.612v0a.75.75 0 0 1-.75.75H9a.75.75 0 0 1-.75-.75v0c0-.212.03-.418.084-.612m7.332 0c.646.049 1.288.11 1.927.184 1.1.128 1.907 1.077 1.907 2.185V19.5a2.25 2.25 0 0 1-2.25 2.25H6.75A2.25 2.25 0 0 1 4.5 19.5V6.257c0-1.108.806-2.057 1.907-2.185a48.208 48.208 0 0 1 1.927-.184" /></svg>
+                            <svg xmlns="http://www.w3.org/2000/svg" class="size-4 text-zinc-300 dark:text-zinc-600 group-hover:text-zinc-500 transition-colors shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m0 0-6-6m6 6 6-6" />
+                            </svg>
                         </button>
                     @endforeach
                 </div>
@@ -84,14 +84,15 @@
                         @foreach ($userShortcodes as $shortcode)
                             @php $tag = '[[' . $shortcode->tag . ']]'; @endphp
                             <button type="button"
-                                @click="copy('{{ $tag }}')"
+                                @click="pick('{{ $tag }}')"
                                 class="w-full flex items-center justify-between gap-3 px-5 py-2 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors text-left group">
                                 <div>
                                     <span class="font-mono text-sm text-primary">{{ $tag }}</span>
                                     <span class="block text-xs text-zinc-500 dark:text-zinc-400">{{ ucfirst($shortcode->type) }}</span>
                                 </div>
-                                <span x-show="copied === '{{ $tag }}'" class="text-xs text-green-600 dark:text-green-400 shrink-0">Copied!</span>
-                                <svg x-show="copied !== '{{ $tag }}'" xmlns="http://www.w3.org/2000/svg" class="size-4 text-zinc-300 dark:text-zinc-600 group-hover:text-zinc-500 transition-colors shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15.666 3.888A2.25 2.25 0 0 0 13.5 2.25h-3c-1.03 0-1.9.693-2.166 1.638m7.332 0c.055.194.084.4.084.612v0a.75.75 0 0 1-.75.75H9a.75.75 0 0 1-.75-.75v0c0-.212.03-.418.084-.612m7.332 0c.646.049 1.288.11 1.927.184 1.1.128 1.907 1.077 1.907 2.185V19.5a2.25 2.25 0 0 1-2.25 2.25H6.75A2.25 2.25 0 0 1 4.5 19.5V6.257c0-1.108.806-2.057 1.907-2.185a48.208 48.208 0 0 1 1.927-.184" /></svg>
+                                <svg xmlns="http://www.w3.org/2000/svg" class="size-4 text-zinc-300 dark:text-zinc-600 group-hover:text-zinc-500 transition-colors shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m0 0-6-6m6 6 6-6" />
+                                </svg>
                             </button>
                         @endforeach
                     </div>
@@ -116,14 +117,15 @@
                             @foreach ($type->fields as $field)
                                 @php $tag = '[[field:' . $field['name'] . ']]'; @endphp
                                 <button type="button"
-                                    @click="copy('{{ $tag }}')"
+                                    @click="pick('{{ $tag }}')"
                                     class="w-full flex items-center justify-between gap-3 px-5 py-2 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors text-left group">
                                     <div>
                                         <span class="font-mono text-sm text-primary">{{ $tag }}</span>
                                         <span class="block text-xs text-zinc-500 dark:text-zinc-400">{{ $field['label'] }} &middot; {{ $field['type'] }}</span>
                                     </div>
-                                    <span x-show="copied === '{{ $tag }}'" class="text-xs text-green-600 dark:text-green-400 shrink-0">Copied!</span>
-                                    <svg x-show="copied !== '{{ $tag }}'" xmlns="http://www.w3.org/2000/svg" class="size-4 text-zinc-300 dark:text-zinc-600 group-hover:text-zinc-500 transition-colors shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15.666 3.888A2.25 2.25 0 0 0 13.5 2.25h-3c-1.03 0-1.9.693-2.166 1.638m7.332 0c.055.194.084.4.084.612v0a.75.75 0 0 1-.75.75H9a.75.75 0 0 1-.75-.75v0c0-.212.03-.418.084-.612m7.332 0c.646.049 1.288.11 1.927.184 1.1.128 1.907 1.077 1.907 2.185V19.5a2.25 2.25 0 0 1-2.25 2.25H6.75A2.25 2.25 0 0 1 4.5 19.5V6.257c0-1.108.806-2.057 1.907-2.185a48.208 48.208 0 0 1 1.927-.184" /></svg>
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="size-4 text-zinc-300 dark:text-zinc-600 group-hover:text-zinc-500 transition-colors shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m0 0-6-6m6 6 6-6" />
+                                    </svg>
                                 </button>
                             @endforeach
                         </div>
