@@ -1729,9 +1729,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
         $fullPath = resource_path('views/'.$this->file);
         $service->writeFile($fullPath, $service->buildFileContent($this->phpSection, $rowsToWrite));
 
-        if ($this->liveUrl) {
-            ResponseCache::forget($this->liveUrl);
-        }
+        ResponseCache::clear();
 
         $this->isDirty = false;
         $this->savedHistoryIndex = $this->historyIndex;
