@@ -7,6 +7,25 @@ use Illuminate\Database\Eloquent\Collection;
 
 class ShortcodeProcessor
 {
+    /** @var array<string, mixed>|null Current content item field data for [[field:key]] resolution */
+    private static ?array $itemContext = null;
+
+    /**
+     * Set the current content item's field data so [[field:key]] shortcodes resolve correctly.
+     * Call this in the Volt component's mount() before the page renders.
+     *
+     * @param  array<string, mixed>  $data
+     */
+    public static function setItemContext(array $data): void
+    {
+        self::$itemContext = $data;
+    }
+
+    public static function clearItemContext(): void
+    {
+        self::$itemContext = null;
+    }
+
     /**
      * Load active shortcodes, cached for the duration of the request (once() resets between tests).
      *
@@ -32,13 +51,21 @@ class ShortcodeProcessor
         /** @var Collection<string, Shortcode> $shortcodes */
         $shortcodes = self::getShortcodes();
 
-        $parts = preg_split('/(\[\[[\w-]+\]\])/', $content, -1, PREG_SPLIT_DELIM_CAPTURE) ?: [];
+        $parts = preg_split('/(\[\[[\w-]+(?::[\w_-]+)?\]\])/', $content, -1, PREG_SPLIT_DELIM_CAPTURE) ?: [];
 
         $result = '';
 
         foreach ($parts as $part) {
-            if (preg_match('/^\[\[([\w-]+)\]\]$/', $part, $matches)) {
+            if (preg_match('/^\[\[([\w-]+(?::[\w_-]+)?)\]\]$/', $part, $matches)) {
                 $tag = $matches[1];
+
+                if (str_starts_with($tag, 'field:') && self::$itemContext !== null) {
+                    $fieldKey = substr($tag, 6);
+                    $result .= e((string) (self::$itemContext[$fieldKey] ?? ''));
+
+                    continue;
+                }
+
                 $shortcode = $shortcodes->get($tag);
 
                 if ($shortcode) {
@@ -70,13 +97,21 @@ class ShortcodeProcessor
         /** @var Collection<string, Shortcode> $shortcodes */
         $shortcodes = self::getShortcodes();
 
-        $parts = preg_split('/(\[\[[\w-]+\]\])/', $content, -1, PREG_SPLIT_DELIM_CAPTURE) ?: [];
+        $parts = preg_split('/(\[\[[\w-]+(?::[\w_-]+)?\]\])/', $content, -1, PREG_SPLIT_DELIM_CAPTURE) ?: [];
 
         $result = '';
 
         foreach ($parts as $part) {
-            if (preg_match('/^\[\[([\w-]+)\]\]$/', $part, $matches)) {
+            if (preg_match('/^\[\[([\w-]+(?::[\w_-]+)?)\]\]$/', $part, $matches)) {
                 $tag = $matches[1];
+
+                if (str_starts_with($tag, 'field:') && self::$itemContext !== null) {
+                    $fieldKey = substr($tag, 6);
+                    $result .= (string) (self::$itemContext[$fieldKey] ?? '');
+
+                    continue;
+                }
+
                 $shortcode = $shortcodes->get($tag);
 
                 if ($shortcode) {
@@ -100,7 +135,7 @@ class ShortcodeProcessor
      */
     public static function containsShortcodes(string $content): bool
     {
-        return (bool) preg_match('/\[\[[\w-]+\]\]/', $content);
+        return (bool) preg_match('/\[\[[\w-]+(?::[\w_-]+)?\]\]/', $content);
     }
 
     private static function evaluatePhpCode(string $code): string

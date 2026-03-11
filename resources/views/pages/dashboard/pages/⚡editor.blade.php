@@ -2559,6 +2559,12 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                         </flux:tooltip>
                     @endif
                 @endif
+
+                <flux:tooltip content="Shortcode Reference" position="bottom">
+                    <flux:button variant="outline" size="sm" icon="code-bracket"
+                        x-data
+                        @click="$dispatch('open-shortcode-modal')" />
+                </flux:tooltip>
             </div>
 
             {{-- Page status badges --}}
@@ -3754,6 +3760,9 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
             </div>
         @endif
     </div>
+
+    {{-- Shortcode Reference modal --}}
+    @include('partials.shortcode-modal')
 
     {{-- SEO / Page Settings modal --}}
     <flux:modal wire:model="showSeoModal" class="w-full max-w-lg">

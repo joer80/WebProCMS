@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\ContentTypeDefinition;
+use App\Support\ContentTypePageGenerator;
 use Illuminate\Support\Str;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
@@ -80,7 +81,7 @@ new #[Layout('layouts.app')] #[Title('New Content Type')] class extends Componen
             'fields.*.name' => 'required|string|max:255',
         ]);
 
-        ContentTypeDefinition::create([
+        $typeDef = ContentTypeDefinition::create([
             'name' => $this->name,
             'slug' => $this->slug,
             'singular' => $this->singular,
@@ -88,6 +89,8 @@ new #[Layout('layouts.app')] #[Title('New Content Type')] class extends Componen
             'fields' => $this->fields,
             'sort_order' => 0,
         ]);
+
+        (new ContentTypePageGenerator)->generate($typeDef);
 
         $this->redirect(route('dashboard.content-types.index'), navigate: true);
     }

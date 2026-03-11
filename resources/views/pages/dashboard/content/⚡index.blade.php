@@ -83,6 +83,15 @@ new #[Layout('layouts.app')] #[Title('Content')] class extends Component {
                                 </td>
                                 <td class="px-4 py-3">
                                     <div class="flex items-center justify-end gap-2">
+                                        @if (Route::has($typeSlug . '.show'))
+                                            <flux:button
+                                                href="{{ route($typeSlug . '.show', $item->id) }}"
+                                                variant="ghost"
+                                                size="sm"
+                                                icon="arrow-top-right-on-square"
+                                                target="_blank"
+                                            />
+                                        @endif
                                         <flux:button
                                             href="{{ route('dashboard.content.edit', [$typeSlug, $item->id]) }}"
                                             variant="ghost"

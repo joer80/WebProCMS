@@ -58,7 +58,7 @@ if (! function_exists('content')) {
 
                 return match ($effectiveType) {
                     'image' => Storage::url($draft),
-                    'richtext' => ShortcodeProcessor::containsShortcodes($draft) ? ShortcodeProcessor::process($draft) : $draft,
+                    'richtext' => ShortcodeProcessor::containsShortcodes($draft) ? ShortcodeProcessor::processRaw($draft) : $draft,
                     'text' => ShortcodeProcessor::containsShortcodes($draft) ? ShortcodeProcessor::processRaw($draft) : $draft,
                     default => $draft,
                 };
@@ -73,7 +73,7 @@ if (! function_exists('content')) {
 
         return match ($resolvedType) {
             'image' => Storage::url($value),
-            'richtext' => ShortcodeProcessor::containsShortcodes($value) ? ShortcodeProcessor::process($value) : $value,
+            'richtext' => ShortcodeProcessor::containsShortcodes($value) ? ShortcodeProcessor::processRaw($value) : $value,
             'text' => ShortcodeProcessor::containsShortcodes($value) ? ShortcodeProcessor::processRaw($value) : $value,
             default => $value,
         };
