@@ -24,14 +24,14 @@
         <meta name="twitter:description" content="{{ $post->meta_description ?? strip_tags($post->excerpt) }}" />
     @endif
 
-    @php $ogImageUrl = $post->og_image ?: $post->featuredImageUrl() ?: config('seo.og.default_image'); @endphp
+    @php $ogImageUrl = $post->og_image ?: $post->featuredImageUrl() ?: \App\Models\Setting::get('seo.og.default_image', ''); @endphp
     @if ($ogImageUrl)
         <meta property="og:image" content="{{ $ogImageUrl }}" />
     @endif
 
     <meta name="twitter:card" content="summary_large_image" />
-    @if (config('seo.twitter.handle'))
-        <meta name="twitter:site" content="{{ config('seo.twitter.handle') }}" />
+    @if (\App\Models\Setting::get('seo.twitter.handle', ''))
+        <meta name="twitter:site" content="{{ \App\Models\Setting::get('seo.twitter.handle', '') }}" />
     @endif
     @if ($ogImageUrl)
         <meta name="twitter:image" content="{{ $ogImageUrl }}" />
@@ -52,13 +52,14 @@
         if ($post->featuredImageUrl()) {
             $articleSchema['image'] = $post->featuredImageUrl();
         }
-        $publisherName = config('seo.schema.name') ?: config('app.name');
+        $publisherName = config('app.name');
+        $seoSchema = \App\Models\Setting::get('seo.schema', []);
         $articleSchema['publisher'] = array_filter([
-            '@type' => config('seo.schema.type', 'Organization'),
+            '@type' => $seoSchema['type'] ?? 'Organization',
             'name' => $publisherName,
-            'url' => config('seo.schema.url') ?: config('app.url'),
-            'logo' => config('seo.schema.logo')
-                ? ['@type' => 'ImageObject', 'url' => config('seo.schema.logo')]
+            'url' => config('app.url'),
+            'logo' => ! empty($seoSchema['logo'])
+                ? ['@type' => 'ImageObject', 'url' => $seoSchema['logo']]
                 : null,
         ]);
     @endphp

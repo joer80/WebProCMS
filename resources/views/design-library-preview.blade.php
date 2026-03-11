@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Preview: {{ $name }}</title>
     @php
-        $fontsToLoad = collect([config('branding.body_font', 'instrument-sans'), config('branding.heading_font', 'instrument-sans')])
+        $fontsToLoad = collect([\App\Models\Setting::get('branding.body_font', 'instrument-sans'), \App\Models\Setting::get('branding.heading_font', 'instrument-sans')])
             ->filter(fn ($f) => $f !== 'system')
             ->unique()
             ->values();

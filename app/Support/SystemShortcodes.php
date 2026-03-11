@@ -2,6 +2,8 @@
 
 namespace App\Support;
 
+use App\Models\Setting;
+
 class SystemShortcodes
 {
     /**
@@ -12,8 +14,8 @@ class SystemShortcodes
      */
     public static function all(): array
     {
-        $street = (string) config('business.address_street', '');
-        $cityStateZip = (string) config('business.address_city_state_zip', '');
+        $street = (string) Setting::get('business.address_street', '');
+        $cityStateZip = (string) Setting::get('business.address_city_state_zip', '');
 
         return [
             'site_name' => [
@@ -22,19 +24,19 @@ class SystemShortcodes
             ],
             'business_phone' => [
                 'label' => 'Phone',
-                'value' => (string) config('business.phone', ''),
+                'value' => (string) Setting::get('business.phone', ''),
             ],
             'business_email' => [
                 'label' => 'Email',
-                'value' => (string) config('business.email', ''),
+                'value' => (string) Setting::get('business.email', ''),
             ],
             'business_url' => [
                 'label' => 'Website URL',
-                'value' => (string) config('business.url', ''),
+                'value' => (string) Setting::get('business.url', ''),
             ],
             'business_hours' => [
                 'label' => 'Business Hours',
-                'value' => (string) config('business.hours', ''),
+                'value' => (string) Setting::get('business.hours', ''),
             ],
             'business_address_street' => [
                 'label' => 'Address Street',

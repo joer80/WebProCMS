@@ -20,12 +20,12 @@
             @php
             if (content('__SLUG__', 'toggle_use_business_info', '1') === '1') {
                 $contactItems = array_values(array_filter([
-                    config('business.email') ? ['label' => 'Email', 'value' => config('business.email')] : null,
-                    config('business.phone') ? ['label' => 'Phone', 'value' => config('business.phone')] : null,
-                    (config('business.address_street') || config('business.address_city_state_zip'))
-                        ? ['label' => 'Office', 'value' => implode(', ', array_filter([config('business.address_street'), config('business.address_city_state_zip')]))]
+                    \App\Models\Setting::get('business.email', '') ? ['label' => 'Email', 'value' => \App\Models\Setting::get('business.email', '')] : null,
+                    \App\Models\Setting::get('business.phone', '') ? ['label' => 'Phone', 'value' => \App\Models\Setting::get('business.phone', '')] : null,
+                    (\App\Models\Setting::get('business.address_street', '') || \App\Models\Setting::get('business.address_city_state_zip', ''))
+                        ? ['label' => 'Office', 'value' => implode(', ', array_filter([\App\Models\Setting::get('business.address_street', ''), \App\Models\Setting::get('business.address_city_state_zip', '')]))]
                         : null,
-                    config('business.hours') ? ['label' => 'Hours', 'value' => config('business.hours')] : null,
+                    \App\Models\Setting::get('business.hours', '') ? ['label' => 'Hours', 'value' => \App\Models\Setting::get('business.hours', '')] : null,
                 ]));
             }
             @endphp

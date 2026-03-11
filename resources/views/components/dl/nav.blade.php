@@ -14,7 +14,7 @@ foreach ($navAttrsRaw as $attr) {
         $extraAttrsStr .= ' ' . e($attr['name']) . '="' . e($attr['value'] ?? '') . '"';
     }
 }
-$menu = collect(config('navigation.menus', []))->firstWhere('slug', $menuSlug);
+$menu = collect(\App\Models\Setting::get('navigation.menus', []))->firstWhere('slug', $menuSlug);
 $navItems = array_filter($menu['items'] ?? [], fn ($item) => $item['active'] ?? true);
 @endphp
 @if($toggle)

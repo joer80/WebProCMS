@@ -39,7 +39,7 @@ $showShortcodeBtn = ($field['type'] === 'text' && ! str_ends_with($field['key'],
             $currentPath = $contentValues[$field['key']] ?? '';
             $fallbackToken = $field['fallback_url'] ?? '';
             $fallbackUrl = match($fallbackToken) {
-                '__branding_logo__' => config('branding.logo_url', ''),
+                '__branding_logo__' => \App\Models\Setting::get('branding.logo_url', ''),
                 '' => '',
                 default => $fallbackToken,
             };
@@ -391,7 +391,7 @@ $showShortcodeBtn = ($field['type'] === 'text' && ! str_ends_with($field['key'],
             @endforeach
         </flux:select>
     @elseif (str_ends_with($field['key'], '_menu'))
-        @php $availableMenus = config('navigation.menus', []); @endphp
+        @php $availableMenus = \App\Models\Setting::get('navigation.menus', []); @endphp
         <flux:select wire:model.live="contentValues.{{ $field['key'] }}">
             @foreach ($availableMenus as $availableMenu)
                 <flux:select.option value="{{ $availableMenu['slug'] }}">{{ $availableMenu['label'] }}</flux:select.option>

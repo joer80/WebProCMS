@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\Setting;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
 use Livewire\Component;
@@ -17,8 +18,8 @@ new #[Layout('layouts.app')] #[Title('Design')] class extends Component {
 
     public function mount(): void
     {
-        $this->altRowsEnabled = (bool) config('branding.alt_rows_enabled', true);
-        $this->altRowsStart = config('branding.alt_rows_start', 'even');
+        $this->altRowsEnabled = (bool) Setting::get('branding.alt_rows_enabled', '0');
+        $this->altRowsStart = (string) Setting::get('branding.alt_rows_start', 'even');
         $this->loadTypography();
     }
 
@@ -74,45 +75,19 @@ new #[Layout('layouts.app')] #[Title('Design')] class extends Component {
 
     protected function loadTypography(): void
     {
-        $this->bodyFont = config('branding.body_font');
-        $this->headingFont = config('branding.heading_font');
-        $this->sectionSpacing = config('branding.section_spacing', 'medium');
+        $this->bodyFont = (string) Setting::get('branding.body_font', 'instrument-sans');
+        $this->headingFont = (string) Setting::get('branding.heading_font', 'instrument-sans');
+        $this->sectionSpacing = (string) Setting::get('branding.section_spacing', 'medium');
     }
 
     protected function writeBrandingConfig(): void
     {
-        $path = config_path('branding.php');
-        $e = fn (string $v): string => str_replace("'", "\\'", $v);
-
-        $altRowsPhp = $this->altRowsEnabled ? 'true' : 'false';
-
-        file_put_contents($path, implode("\n", [
-            '<?php',
-            '',
-            'return [',
-            '',
-            "    'logo_url' => '{$e(config('branding.logo_url', ''))}',",
-            "    'body_font' => '{$e($this->bodyFont)}',",
-            "    'heading_font' => '{$e($this->headingFont)}',",
-            "    'section_spacing' => '{$e($this->sectionSpacing)}',",
-            "    'alt_rows_enabled' => {$altRowsPhp},",
-            "    'alt_rows_start' => '{$e($this->altRowsStart)}',",
-            '',
-            '];',
-            '',
-        ]));
-
-        if (function_exists('opcache_invalidate')) {
-            opcache_invalidate($path, true);
-        }
-
-        config([
-            'branding.body_font' => $this->bodyFont,
-            'branding.heading_font' => $this->headingFont,
-            'branding.section_spacing' => $this->sectionSpacing,
-            'branding.alt_rows_enabled' => $this->altRowsEnabled,
-            'branding.alt_rows_start' => $this->altRowsStart,
-        ]);
+        Setting::set('branding.logo_url', Setting::get('branding.logo_url', ''));
+        Setting::set('branding.body_font', $this->bodyFont);
+        Setting::set('branding.heading_font', $this->headingFont);
+        Setting::set('branding.section_spacing', $this->sectionSpacing);
+        Setting::set('branding.alt_rows_enabled', $this->altRowsEnabled ? '1' : '0');
+        Setting::set('branding.alt_rows_start', $this->altRowsStart);
     }
 
     /** @return array{section: string, banner: string, hero: string} */

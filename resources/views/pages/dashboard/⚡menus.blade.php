@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\Setting;
 use Illuminate\Support\Facades\Route as RoutesFacade;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
@@ -50,10 +51,10 @@ new #[Layout('layouts.app')] #[Title('Menus')] class extends Component {
 
     public function mount(): void
     {
-        $this->menus = config('navigation.menus', []);
-        $this->footerSlugs = config('navigation.footer_slugs', []);
-        $this->showAuthLinks = (bool) config('navigation.show_auth_links', false);
-        $this->showAccountInFooter = (bool) config('navigation.show_account_in_footer', true);
+        $this->menus = Setting::get('navigation.menus', []);
+        $this->footerSlugs = Setting::get('navigation.footer_slugs', []);
+        $this->showAuthLinks = (bool) Setting::get('navigation.show_auth_links', '0');
+        $this->showAccountInFooter = (bool) Setting::get('navigation.show_account_in_footer', '0');
         $this->syncCurrentMenuInFooter();
     }
 
@@ -288,20 +289,10 @@ new #[Layout('layouts.app')] #[Title('Menus')] class extends Component {
 
     public function save(): void
     {
-        $config = config('navigation');
-        $config['show_auth_links'] = $this->showAuthLinks;
-        $config['show_account_in_footer'] = $this->showAccountInFooter;
-        $config['footer_slugs'] = array_values($this->footerSlugs);
-        $config['menus'] = array_values($this->menus);
-
-        $configPath = config_path('navigation.php');
-        file_put_contents($configPath, $this->buildConfigFileContents($config));
-
-        if (function_exists('opcache_invalidate')) {
-            opcache_invalidate($configPath, true);
-        }
-
-        config(['navigation' => $config]);
+        Setting::set('navigation.menus', array_values($this->menus));
+        Setting::set('navigation.footer_slugs', array_values($this->footerSlugs));
+        Setting::set('navigation.show_auth_links', $this->showAuthLinks ? '1' : '0');
+        Setting::set('navigation.show_account_in_footer', $this->showAccountInFooter ? '1' : '0');
 
         ResponseCache::clear();
 
@@ -316,96 +307,6 @@ new #[Layout('layouts.app')] #[Title('Menus')] class extends Component {
         $this->newCustomUrl = '';
         $this->newCustomLabel = '';
         $this->newCustomNewWindow = false;
-    }
-
-    /**
-     * @param array{
-     *     show_auth_links: bool,
-     *     show_account_in_footer: bool,
-     *     footer_slugs: array<int, string>,
-     *     menus: array<int, array{slug: string, label: string, items: array<int, array<string, mixed>>}>
-     * } $config
-     */
-    private function buildConfigFileContents(array $config): string
-    {
-        $showAuth = ($config['show_auth_links'] ?? false) ? 'true' : 'false';
-        $showAccountInFooter = ($config['show_account_in_footer'] ?? true) ? 'true' : 'false';
-
-        $footerSlugItems = array_map(
-            fn (string $s): string => "'" . str_replace("'", "\\'", $s) . "'",
-            $config['footer_slugs'] ?? [],
-        );
-        $footerSlugsLine = "    'footer_slugs' => [" . implode(', ', $footerSlugItems) . '],';
-
-        $menuBlocks = [];
-
-        foreach ($config['menus'] ?? [] as $menu) {
-            $slug = str_replace("'", "\\'", $menu['slug']);
-            $menuLabel = str_replace("'", "\\'", $menu['label']);
-
-            $itemLines = array_map(
-                fn (array $item): string => '            ' . $this->formatNavItem($item) . ',',
-                $menu['items'] ?? [],
-            );
-
-            $block = [
-                "        [",
-                "            'slug' => '{$slug}',",
-                "            'label' => '{$menuLabel}',",
-                "            'items' => [",
-                ...$itemLines,
-                "            ],",
-                "        ],",
-            ];
-
-            $menuBlocks = [...$menuBlocks, ...$block];
-        }
-
-        $lines = [
-            "<?php\n",
-            "/*",
-            "|--------------------------------------------------------------------------",
-            "| Navigation",
-            "|--------------------------------------------------------------------------",
-            "|",
-            "| Defines the public navigation and footer links for the site.",
-            "| Edit these menus via the dashboard at /dashboard/menus.",
-            "|",
-            "| Keys:",
-            "|   show_auth_links         - whether login/register/dashboard appear in the nav",
-            "|   show_account_in_footer  - whether an Account column appears in the footer",
-            "|   footer_slugs            - slugs of menus rendered as footer columns (in order)",
-            "|   menus                   - all menus; templates request them by slug",
-            "|",
-            "*/\n",
-            "return [\n",
-            "    'show_auth_links' => {$showAuth},",
-            "    'show_account_in_footer' => {$showAccountInFooter},",
-            $footerSlugsLine,
-            "    'menus' => [",
-            ...$menuBlocks,
-            "    ],\n",
-            "];\n",
-        ];
-
-        return implode("\n", $lines);
-    }
-
-    /** @param array<string, mixed> $item */
-    private function formatNavItem(array $item): string
-    {
-        $parts = [];
-
-        foreach ($item as $key => $value) {
-            if (is_bool($value)) {
-                $parts[] = "'{$key}' => " . ($value ? 'true' : 'false');
-            } else {
-                $escaped = str_replace("'", "\\'", (string) $value);
-                $parts[] = "'{$key}' => '{$escaped}'";
-            }
-        }
-
-        return '[' . implode(', ', $parts) . ']';
     }
 }; ?>
 

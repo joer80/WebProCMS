@@ -32,13 +32,13 @@ new #[Layout('layouts.app')] #[Title('Templates')] class extends Component {
     #[Computed]
     public function activeHeader(): ?string
     {
-        return config('layout.active_header');
+        return \App\Models\Setting::get('layout.active_header', '') ?: null;
     }
 
     #[Computed]
     public function activeFooter(): ?string
     {
-        return config('layout.active_footer');
+        return \App\Models\Setting::get('layout.active_footer', '') ?: null;
     }
 
     #[Computed]
@@ -131,7 +131,7 @@ new #[Layout('layouts.app')] #[Title('Templates')] class extends Component {
 
     public function restoreHeaderPartial(): void
     {
-        $name = config('layout.active_header');
+        $name = \App\Models\Setting::get('layout.active_header', '') ?: null;
 
         if (! $name) {
             return;
@@ -154,7 +154,7 @@ new #[Layout('layouts.app')] #[Title('Templates')] class extends Component {
 
     public function restoreFooterPartial(): void
     {
-        $name = config('layout.active_footer');
+        $name = \App\Models\Setting::get('layout.active_footer', '') ?: null;
 
         if (! $name) {
             return;
@@ -177,7 +177,7 @@ new #[Layout('layouts.app')] #[Title('Templates')] class extends Component {
 
     public function headerEditorUrl(): ?string
     {
-        if (! config('layout.active_header')) {
+        if (! (\App\Models\Setting::get('layout.active_header', '') ?: null)) {
             return null;
         }
 
@@ -190,7 +190,7 @@ new #[Layout('layouts.app')] #[Title('Templates')] class extends Component {
 
     public function footerEditorUrl(): ?string
     {
-        if (! config('layout.active_footer')) {
+        if (! (\App\Models\Setting::get('layout.active_footer', '') ?: null)) {
             return null;
         }
 

@@ -15,7 +15,7 @@ foreach ($logoAttrsRaw as $attr) {
     }
 }
 // Custom image (from media library) takes precedence; falls back to branding config logo.
-$logoSrc = $customImage ?: config('branding.logo_url');
+$logoSrc = $customImage ?: \App\Models\Setting::get('branding.logo_url', '');
 @endphp
 @if($toggle)
 <a href="{{ route('home') }}"{!! $extraAttrsStr !!}>

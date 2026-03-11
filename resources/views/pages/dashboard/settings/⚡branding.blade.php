@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\Setting;
 use Illuminate\Support\Facades\Storage;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\On;
@@ -16,7 +17,7 @@ new #[Layout('layouts.app')] #[Title('Branding')] class extends Component {
 
     public function mount(): void
     {
-        $this->logoUrl = config('branding.logo_url');
+        $this->logoUrl = (string) Setting::get('branding.logo_url', '');
         $this->loadThemeColors();
     }
 
@@ -100,31 +101,7 @@ new #[Layout('layouts.app')] #[Title('Branding')] class extends Component {
 
     protected function writeBrandingConfig(): void
     {
-        $path = config_path('branding.php');
-        $e = fn (string $v): string => str_replace("'", "\\'", $v);
-
-        $altRowsPhp = config('branding.alt_rows_enabled', true) ? 'true' : 'false';
-
-        file_put_contents($path, implode("\n", [
-            '<?php',
-            '',
-            'return [',
-            '',
-            "    'logo_url' => '{$e($this->logoUrl)}',",
-            "    'body_font' => '{$e(config('branding.body_font', 'instrument-sans'))}',",
-            "    'heading_font' => '{$e(config('branding.heading_font', 'instrument-sans'))}',",
-            "    'section_spacing' => '{$e(config('branding.section_spacing', 'medium'))}',",
-            "    'alt_rows_enabled' => {$altRowsPhp},",
-            '',
-            '];',
-            '',
-        ]));
-
-        if (function_exists('opcache_invalidate')) {
-            opcache_invalidate($path, true);
-        }
-
-        config(['branding.logo_url' => $this->logoUrl]);
+        Setting::set('branding.logo_url', $this->logoUrl);
     }
 }; ?>
 

@@ -3,20 +3,18 @@
     use App\Enums\SnippetPlacement;
     use App\Models\Snippet;
 
-    $navConfig = config('navigation', []);
-    $showAuthLinks = $navConfig['show_auth_links'] ?? false;
-    $showAccountInFooter = $navConfig['show_account_in_footer'] ?? true;
-    $allMenus = collect($navConfig['menus'] ?? []);
+    $showAuthLinks = (bool) \App\Models\Setting::get('navigation.show_auth_links', '0');
+    $showAccountInFooter = (bool) \App\Models\Setting::get('navigation.show_account_in_footer', '0');
+    $allMenus = collect(\App\Models\Setting::get('navigation.menus', []));
     $navMenu = $allMenus->firstWhere('slug', 'main-navigation');
     $navItems = array_filter($navMenu['items'] ?? [], fn ($item) => $item['active'] ?? true);
-    $footerSlugs = $navConfig['footer_slugs'] ?? [];
+    $footerSlugs = \App\Models\Setting::get('navigation.footer_slugs', []);
     $footerMenus = collect($footerSlugs)->map(fn ($slug) => $allMenus->firstWhere('slug', $slug))->filter()->values()->all();
 
-    $layoutConfig = config('layout', []);
-    $layoutBodyClasses = $layoutConfig['body_classes'] ?? '';
-    $layoutPhpTop = $layoutConfig['php_top'] ?? '';
-    $layoutActiveHeader = $layoutConfig['active_header'] ?? null;
-    $layoutActiveFooter = $layoutConfig['active_footer'] ?? null;
+    $layoutBodyClasses = \App\Models\Setting::get('layout.body_classes', '');
+    $layoutPhpTop = \App\Models\Setting::get('layout.php_top', '');
+    $layoutActiveHeader = \App\Models\Setting::get('layout.active_header', '') ?: null;
+    $layoutActiveFooter = \App\Models\Setting::get('layout.active_footer', '') ?: null;
 
     if ($layoutPhpTop) {
         try {
@@ -55,7 +53,7 @@
                 <div class="max-w-6xl mx-auto px-6">
                 <nav class="flex items-center justify-between gap-4 h-14">
                     <a href="{{ route('home') }}">
-                        <img src="{{ config('branding.logo_url', asset('images/logo.svg')) }}" alt="{{ config('app.name') }}" class="h-8 w-auto" />
+                        <img src="{{ \App\Models\Setting::get('branding.logo_url', asset('images/logo.svg')) }}" alt="{{ config('app.name') }}" class="h-8 w-auto" />
                     </a>
 
                     {{-- Desktop nav --}}
@@ -129,7 +127,7 @@
                 <div class="flex flex-col gap-8 sm:flex-row sm:justify-between">
                     <div class="flex flex-col gap-3">
                         <a href="{{ route('home') }}">
-                            <img src="{{ config('branding.logo_url', asset('images/logo.svg')) }}" alt="{{ config('app.name') }}" class="h-7 w-auto" />
+                            <img src="{{ \App\Models\Setting::get('branding.logo_url', asset('images/logo.svg')) }}" alt="{{ config('app.name') }}" class="h-7 w-auto" />
                         </a>
                         <p class="text-sm text-[#706f6c] dark:text-[#A1A09A] max-w-xs">
                             Build, manage, and publish — without limits.

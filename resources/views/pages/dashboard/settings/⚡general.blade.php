@@ -5,6 +5,7 @@ use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
 use Livewire\Component;
 
+
 new #[Layout('layouts.app')] #[Title('General Settings')] class extends Component {
     public string $locationsMode = 'single';
 
@@ -42,22 +43,23 @@ new #[Layout('layouts.app')] #[Title('General Settings')] class extends Componen
     {
         $this->locationsMode = Setting::get('locations_mode', 'single');
 
-        $this->businessUrl = config('business.url');
-        $this->businessPhone = config('business.phone');
-        $this->businessEmail = config('business.email');
-        $this->businessAddressStreet = config('business.address_street');
-        $this->businessAddressCityStateZip = config('business.address_city_state_zip');
-        $this->businessHours = config('business.hours');
+        $this->businessUrl = (string) Setting::get('business.url', '');
+        $this->businessPhone = (string) Setting::get('business.phone', '');
+        $this->businessEmail = (string) Setting::get('business.email', '');
+        $this->businessAddressStreet = (string) Setting::get('business.address_street', '');
+        $this->businessAddressCityStateZip = (string) Setting::get('business.address_city_state_zip', '');
+        $this->businessHours = (string) Setting::get('business.hours', '');
 
-        $this->seoSchemaType = config('seo.schema.type');
-        $this->seoSchemaLogo = config('seo.schema.logo');
-        $this->seoSchemaDescription = config('seo.schema.description');
-        $this->seoAddressCity = config('seo.schema.address.city');
-        $this->seoAddressRegion = config('seo.schema.address.region');
-        $this->seoAddressPostalCode = config('seo.schema.address.postal_code');
-        $this->seoAddressCountry = config('seo.schema.address.country');
-        $this->seoOgDefaultImage = config('seo.og.default_image');
-        $this->seoTwitterHandle = config('seo.twitter.handle');
+        $seoSchema = Setting::get('seo.schema', []);
+        $this->seoSchemaType = (string) ($seoSchema['type'] ?? 'Organization');
+        $this->seoSchemaLogo = (string) ($seoSchema['logo'] ?? '');
+        $this->seoSchemaDescription = (string) ($seoSchema['description'] ?? '');
+        $this->seoAddressCity = (string) ($seoSchema['address']['city'] ?? '');
+        $this->seoAddressRegion = (string) ($seoSchema['address']['region'] ?? '');
+        $this->seoAddressPostalCode = (string) ($seoSchema['address']['postal_code'] ?? '');
+        $this->seoAddressCountry = (string) ($seoSchema['address']['country'] ?? 'US');
+        $this->seoOgDefaultImage = (string) Setting::get('seo.og.default_image', '');
+        $this->seoTwitterHandle = (string) Setting::get('seo.twitter.handle', '');
     }
 
     public function saveBusinessInfo(): void
@@ -71,21 +73,12 @@ new #[Layout('layouts.app')] #[Title('General Settings')] class extends Componen
             'businessHours' => ['nullable', 'string', 'max:255'],
         ]);
 
-        $path = config_path('business.php');
-        file_put_contents($path, $this->buildBusinessConfig());
-
-        if (function_exists('opcache_invalidate')) {
-            opcache_invalidate($path, true);
-        }
-
-        config([
-            'business.url' => $this->businessUrl,
-            'business.phone' => $this->businessPhone,
-            'business.email' => $this->businessEmail,
-            'business.address_street' => $this->businessAddressStreet,
-            'business.address_city_state_zip' => $this->businessAddressCityStateZip,
-            'business.hours' => $this->businessHours,
-        ]);
+        Setting::set('business.url', $this->businessUrl);
+        Setting::set('business.phone', $this->businessPhone);
+        Setting::set('business.email', $this->businessEmail);
+        Setting::set('business.address_street', $this->businessAddressStreet);
+        Setting::set('business.address_city_state_zip', $this->businessAddressCityStateZip);
+        Setting::set('business.hours', $this->businessHours);
 
         $this->dispatch('notify', message: 'Business info saved.');
     }
@@ -104,24 +97,19 @@ new #[Layout('layouts.app')] #[Title('General Settings')] class extends Componen
             'seoTwitterHandle' => ['nullable', 'string', 'max:100'],
         ]);
 
-        $path = config_path('seo.php');
-        file_put_contents($path, $this->buildSeoConfig());
-
-        if (function_exists('opcache_invalidate')) {
-            opcache_invalidate($path, true);
-        }
-
-        config([
-            'seo.schema.type' => $this->seoSchemaType,
-            'seo.schema.logo' => $this->seoSchemaLogo,
-            'seo.schema.description' => $this->seoSchemaDescription,
-            'seo.schema.address.city' => $this->seoAddressCity,
-            'seo.schema.address.region' => $this->seoAddressRegion,
-            'seo.schema.address.postal_code' => $this->seoAddressPostalCode,
-            'seo.schema.address.country' => $this->seoAddressCountry,
-            'seo.og.default_image' => $this->seoOgDefaultImage,
-            'seo.twitter.handle' => $this->seoTwitterHandle,
+        Setting::set('seo.schema', [
+            'type' => $this->seoSchemaType,
+            'logo' => $this->seoSchemaLogo,
+            'description' => $this->seoSchemaDescription,
+            'address' => [
+                'city' => $this->seoAddressCity,
+                'region' => $this->seoAddressRegion,
+                'postal_code' => $this->seoAddressPostalCode,
+                'country' => $this->seoAddressCountry,
+            ],
         ]);
+        Setting::set('seo.og.default_image', $this->seoOgDefaultImage);
+        Setting::set('seo.twitter.handle', $this->seoTwitterHandle);
 
         $this->dispatch('notify', message: 'SEO settings saved.');
     }
@@ -135,67 +123,7 @@ new #[Layout('layouts.app')] #[Title('General Settings')] class extends Componen
         $this->dispatch('notify', message: 'Settings saved.');
     }
 
-    protected function buildBusinessConfig(): string
-    {
-        $e = fn (string $v): string => str_replace("'", "\\'", $v);
 
-        return implode("\n", [
-            '<?php',
-            '',
-            'return [',
-            '',
-            "    'url' => '{$e($this->businessUrl)}',",
-            "    'phone' => '{$e($this->businessPhone)}',",
-            "    'email' => '{$e($this->businessEmail)}',",
-            "    'admin_email' => env('BUSINESS_ADMIN_EMAIL', ''),",
-            "    'address_street' => '{$e($this->businessAddressStreet)}',",
-            "    'address_city_state_zip' => '{$e($this->businessAddressCityStateZip)}',",
-            "    'hours' => '{$e($this->businessHours)}',",
-            '',
-            '];',
-            '',
-        ]);
-    }
-
-    protected function buildSeoConfig(): string
-    {
-        $e = fn (string $v): string => str_replace("'", "\\'", $v);
-
-        return implode("\n", [
-            '<?php',
-            '',
-            'return [',
-            '',
-            "    'schema' => [",
-            "        'type' => '{$e($this->seoSchemaType)}',",
-            "        'name' => env('APP_NAME', ''),",
-            "        'url' => env('APP_URL', ''),",
-            "        'logo' => '{$e($this->seoSchemaLogo)}',",
-            "        'description' => '{$e($this->seoSchemaDescription)}',",
-            "        'phone' => config('business.phone', ''),",
-            "        'email' => config('business.email', ''),",
-            "        'address' => [",
-            "            'street' => config('business.address_street', ''),",
-            "            'city' => '{$e($this->seoAddressCity)}',",
-            "            'region' => '{$e($this->seoAddressRegion)}',",
-            "            'postal_code' => '{$e($this->seoAddressPostalCode)}',",
-            "            'country' => '{$e($this->seoAddressCountry)}',",
-            '        ],',
-            "        'hours' => config('business.hours', ''),",
-            '    ],',
-            '',
-            "    'og' => [",
-            "        'default_image' => '{$e($this->seoOgDefaultImage)}',",
-            '    ],',
-            '',
-            "    'twitter' => [",
-            "        'handle' => '{$e($this->seoTwitterHandle)}',",
-            '    ],',
-            '',
-            '];',
-            '',
-        ]);
-    }
 }; ?>
 
 <div>

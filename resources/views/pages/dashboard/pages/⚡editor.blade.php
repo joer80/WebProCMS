@@ -1905,7 +1905,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
         $altClass = 'row-alt';
         $drafts = session('editor_draft_overrides', []);
         $changed = false;
-        $altRowsStart = config('branding.alt_rows_start', 'even');
+        $altRowsStart = \App\Models\Setting::get('branding.alt_rows_start', 'even');
 
         foreach ($this->rows as $index => $row) {
             $slug = $row['slug'];
@@ -2118,7 +2118,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
         if ((bool) preg_match("/'alt_rows_disabled'\s*=>\s*true/", $this->phpSection)) {
             $this->altRowsEnabled = false;
         } else {
-            $this->altRowsEnabled = (bool) config('branding.alt_rows_enabled', true);
+            $this->altRowsEnabled = (bool) \App\Models\Setting::get('branding.alt_rows_enabled', false);
         }
 
         preg_match('/\/\/ ROW:php:start:page-redirect.*?redirect\(\'([^\']*)\',\s*(\d+)\)/s', $this->phpSection, $redirectMatch);

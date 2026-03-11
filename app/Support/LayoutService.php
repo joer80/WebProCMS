@@ -4,12 +4,11 @@ namespace App\Support;
 
 use App\Enums\RowCategory;
 use App\Models\DesignRow;
+use App\Models\Setting;
 use Illuminate\Support\Collection;
 
 class LayoutService
 {
-    private const CONFIG_FILE = 'layout.php';
-
     /**
      * Read the current layout config, merging with defaults.
      *
@@ -17,26 +16,16 @@ class LayoutService
      */
     public function getConfig(): array
     {
-        $defaults = [
-            'active_header' => null,
-            'active_footer' => null,
-            'body_classes' => '',
-            'php_top' => '',
+        return [
+            'active_header' => Setting::get('layout.active_header', '') ?: null,
+            'active_footer' => Setting::get('layout.active_footer', '') ?: null,
+            'body_classes' => Setting::get('layout.body_classes', ''),
+            'php_top' => Setting::get('layout.php_top', ''),
         ];
-
-        $path = config_path(self::CONFIG_FILE);
-
-        if (! file_exists($path)) {
-            return $defaults;
-        }
-
-        $loaded = include $path;
-
-        return is_array($loaded) ? array_merge($defaults, $loaded) : $defaults;
     }
 
     /**
-     * Merge updates into the current layout config and write it to disk.
+     * Merge updates into the current layout config and persist to the database.
      *
      * @param  array<string, mixed>  $updates
      */
@@ -45,34 +34,11 @@ class LayoutService
         $current = $this->getConfig();
         $merged = array_merge($current, $updates);
 
-        $exports = var_export($merged, true);
-        $content = <<<PHP
-<?php
+        Setting::set('layout.active_header', $merged['active_header'] ?? '');
+        Setting::set('layout.active_footer', $merged['active_footer'] ?? '');
+        Setting::set('layout.body_classes', $merged['body_classes'] ?? '');
+        Setting::set('layout.php_top', $merged['php_top'] ?? '');
 
-/*
-|--------------------------------------------------------------------------
-| Layout
-|--------------------------------------------------------------------------
-|
-| Controls the public site layout: active header/footer templates,
-| body tag classes, and global PHP code that runs on every public page.
-| Edit these settings via the dashboard at /dashboard/templates.
-|
-| Keys:
-|   active_header  - template name e.g. 'header-simple', or null for built-in
-|   active_footer  - template name e.g. 'footer-simple', or null for built-in
-|   body_classes   - additional classes appended to the <body> tag
-|   php_top        - PHP code eval()'d before the DOCTYPE on every public page
-|
-*/
-
-return $exports;
-PHP;
-
-        file_put_contents(config_path(self::CONFIG_FILE), $content);
-
-        // Keep the in-memory config cache in sync so wire:navigate SPA
-        // navigation picks up the new values without a full PHP restart.
         app('config')->set('layout', $merged);
     }
 
