@@ -12,14 +12,16 @@
     x-data="{
         open: false,
         targetFieldKey: null,
-        sections: { system: true, user: true, types: {} },
+        pageTypeSlug: null,
+        openSection: 'system',
+        toggle(key) { this.openSection = this.openSection === key ? null : key; },
         pick(tag) {
             window.dispatchEvent(new CustomEvent('shortcode-picked', { detail: { fieldKey: this.targetFieldKey, shortcode: tag }, bubbles: true }));
             this.open = false;
             this.targetFieldKey = null;
         }
     }"
-    @open-shortcode-picker.window="open = true; targetFieldKey = $event.detail.fieldKey"
+    @open-shortcode-picker.window="open = true; targetFieldKey = $event.detail.fieldKey; pageTypeSlug = $event.detail.pageTypeSlug || null; openSection = pageTypeSlug ? 'type:' + pageTypeSlug : 'system'"
     x-show="open"
     x-cloak
     class="fixed inset-0 z-50 flex items-start justify-center pt-16 px-4"
@@ -48,12 +50,12 @@
             {{-- System shortcodes --}}
             <div>
                 <button type="button"
-                    @click="sections.system = !sections.system"
+                    @click="toggle('system')"
                     class="w-full flex items-center justify-between px-5 py-3 text-left hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors">
                     <span class="text-xs font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">System</span>
-                    <svg xmlns="http://www.w3.org/2000/svg" class="size-4 text-zinc-400 transition-transform duration-150" :class="sections.system ? 'rotate-180' : ''" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.22 8.22a.75.75 0 0 1 1.06 0L10 11.94l3.72-3.72a.75.75 0 1 1 1.06 1.06l-4.25 4.25a.75.75 0 0 1-1.06 0L5.22 9.28a.75.75 0 0 1 0-1.06Z" clip-rule="evenodd"/></svg>
+                    <svg xmlns="http://www.w3.org/2000/svg" class="size-4 text-zinc-400 transition-transform duration-150" :class="openSection === 'system' ? 'rotate-180' : ''" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.22 8.22a.75.75 0 0 1 1.06 0L10 11.94l3.72-3.72a.75.75 0 1 1 1.06 1.06l-4.25 4.25a.75.75 0 0 1-1.06 0L5.22 9.28a.75.75 0 0 1 0-1.06Z" clip-rule="evenodd"/></svg>
                 </button>
-                <div x-show="sections.system" class="pb-2">
+                <div x-show="openSection === 'system'" class="pb-2">
                     @foreach ($systemShortcodes as $tag => $info)
                         @php $shortcode = '[[' . $tag . ']]'; @endphp
                         <button type="button"
@@ -75,12 +77,12 @@
             @if ($userShortcodes->isNotEmpty())
                 <div>
                     <button type="button"
-                        @click="sections.user = !sections.user"
+                        @click="toggle('user')"
                         class="w-full flex items-center justify-between px-5 py-3 text-left hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors">
                         <span class="text-xs font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Custom Shortcodes</span>
-                        <svg xmlns="http://www.w3.org/2000/svg" class="size-4 text-zinc-400 transition-transform duration-150" :class="sections.user ? 'rotate-180' : ''" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.22 8.22a.75.75 0 0 1 1.06 0L10 11.94l3.72-3.72a.75.75 0 1 1 1.06 1.06l-4.25 4.25a.75.75 0 0 1-1.06 0L5.22 9.28a.75.75 0 0 1 0-1.06Z" clip-rule="evenodd"/></svg>
+                        <svg xmlns="http://www.w3.org/2000/svg" class="size-4 text-zinc-400 transition-transform duration-150" :class="openSection === 'user' ? 'rotate-180' : ''" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.22 8.22a.75.75 0 0 1 1.06 0L10 11.94l3.72-3.72a.75.75 0 1 1 1.06 1.06l-4.25 4.25a.75.75 0 0 1-1.06 0L5.22 9.28a.75.75 0 0 1 0-1.06Z" clip-rule="evenodd"/></svg>
                     </button>
-                    <div x-show="sections.user" class="pb-2">
+                    <div x-show="openSection === 'user'" class="pb-2">
                         @foreach ($userShortcodes as $shortcode)
                             @php $tag = '[[' . $shortcode->tag . ']]'; @endphp
                             <button type="button"
@@ -102,18 +104,16 @@
             {{-- Content type field shortcodes --}}
             @foreach ($contentTypes as $type)
                 @if (count($type->fields) > 0)
-                    <div>
+                    <div x-show="pageTypeSlug === '{{ $type->slug }}'" x-cloak>
                         <button type="button"
-                            @click="sections.types['{{ $type->slug }}'] = !(sections.types['{{ $type->slug }}'] ?? true)"
+                            @click="toggle('type:{{ $type->slug }}')"
                             class="w-full flex items-center justify-between px-5 py-3 text-left hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors">
                             <div class="flex items-center gap-2">
-                                <flux:icon name="{{ $type->icon }}" class="size-4 text-zinc-400" />
                                 <span class="text-xs font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">{{ $type->name }} Fields</span>
-                                <span class="text-xs text-zinc-400 dark:text-zinc-500">(on {{ $type->slug }}/show page)</span>
                             </div>
-                            <svg xmlns="http://www.w3.org/2000/svg" class="size-4 text-zinc-400 transition-transform duration-150" :class="(sections.types['{{ $type->slug }}'] ?? true) ? 'rotate-180' : ''" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.22 8.22a.75.75 0 0 1 1.06 0L10 11.94l3.72-3.72a.75.75 0 1 1 1.06 1.06l-4.25 4.25a.75.75 0 0 1-1.06 0L5.22 9.28a.75.75 0 0 1 0-1.06Z" clip-rule="evenodd"/></svg>
+                            <svg xmlns="http://www.w3.org/2000/svg" class="size-4 text-zinc-400 transition-transform duration-150" :class="openSection === 'type:{{ $type->slug }}' ? 'rotate-180' : ''" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.22 8.22a.75.75 0 0 1 1.06 0L10 11.94l3.72-3.72a.75.75 0 1 1 1.06 1.06l-4.25 4.25a.75.75 0 0 1-1.06 0L5.22 9.28a.75.75 0 0 1 0-1.06Z" clip-rule="evenodd"/></svg>
                         </button>
-                        <div x-show="sections.types['{{ $type->slug }}'] ?? true" class="pb-2">
+                        <div x-show="openSection === 'type:{{ $type->slug }}'" class="pb-2">
                             @foreach ($type->fields as $field)
                                 @php $tag = '[[field:' . $field['name'] . ']]'; @endphp
                                 <button type="button"

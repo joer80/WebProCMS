@@ -8,6 +8,7 @@ if (in_array($field['type'], ['id', 'attrs'])) {
     $fieldShow = "{$effMode} === 'content'";
 }
 $showShortcodeBtn = ($field['type'] === 'text' && ! str_ends_with($field['key'], '_url') && ! str_ends_with($field['key'], '_htag')) || $field['key'] === 'subheadline';
+$pageTypeSlug = preg_match('#^pages/([^/]+)/⚡show\.blade\.php$#u', $file ?? '', $ptm) ? $ptm[1] : '';
 @endphp
 <div wire:key="field-{{ str_replace(':', '-', $field['slug']) }}-{{ $field['key'] }}" x-show="{{ $fieldShow }}">
     @if ($field['type'] === 'classes')
@@ -21,7 +22,7 @@ $showShortcodeBtn = ($field['type'] === 'text' && ! str_ends_with($field['key'],
             <div class="flex items-center gap-2">
                 @if ($showShortcodeBtn || $field['type'] === 'richtext')
                     <button type="button"
-                        onclick="window.dispatchEvent(new CustomEvent('open-shortcode-picker', { detail: { fieldKey: '{{ $field['key'] }}' }, bubbles: true }))"
+                        onclick="window.dispatchEvent(new CustomEvent('open-shortcode-picker', { detail: { fieldKey: '{{ $field['key'] }}', pageTypeSlug: '{{ $pageTypeSlug }}' }, bubbles: true }))"
                         class="text-zinc-400 dark:text-zinc-500 hover:text-primary dark:hover:text-primary transition-colors"
                         title="Insert shortcode"
                     ><flux:icon name="bolt" class="size-3.5" /></button>
@@ -96,7 +97,7 @@ $showShortcodeBtn = ($field['type'] === 'text' && ! str_ends_with($field['key'],
                 <div class="w-px h-4 bg-zinc-200 dark:bg-zinc-600 mx-0.5"></div>
                 <button type="button" @click="setLink()" :class="active.link ? 'bg-zinc-200 dark:bg-zinc-600' : ''" class="rounded px-1.5 py-0.5 text-xs text-zinc-700 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors" title="Link">Link</button>
                 <button type="button" @click="cmd().unsetAllMarks().clearNodes().run()" class="rounded px-1.5 py-0.5 text-xs text-zinc-700 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors" title="Clear Formatting">✕</button>
-                <button type="button" @click="$dispatch('open-shortcode-picker', { fieldKey: '{{ $field['key'] }}' })" class="rounded px-1.5 py-0.5 text-zinc-400 dark:text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors" title="Insert shortcode"><flux:icon name="bolt" class="size-3.5" /></button>
+                <button type="button" @click="$dispatch('open-shortcode-picker', { fieldKey: '{{ $field['key'] }}', pageTypeSlug: '{{ $pageTypeSlug }}' })" class="rounded px-1.5 py-0.5 text-zinc-400 dark:text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors" title="Insert shortcode"><flux:icon name="bolt" class="size-3.5" /></button>
                 <button type="button" @click="toggleSource()" :class="sourceMode ? 'bg-zinc-200 dark:bg-zinc-600' : ''" class="ml-auto rounded px-1.5 py-0.5 text-xs font-mono text-zinc-500 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors" title="HTML Source">&lt;/&gt;</button>
             </div>
             <div x-ref="editorEl" class="sidebar-rich-editor-content" x-show="!sourceMode"></div>
