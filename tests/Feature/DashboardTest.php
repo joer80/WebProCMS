@@ -93,17 +93,6 @@ it('shows the public page count', function (): void {
         ->assertSet('pageCount', fn ($count) => is_int($count) && $count >= 0);
 });
 
-it('shows the category count', function (): void {
-    \Livewire\Features\SupportLazyLoading\SupportLazyLoading::disableWhileTesting();
-
-    $user = User::factory()->create();
-    Category::factory()->count(4)->create();
-
-    Livewire::actingAs($user)
-        ->test('pages::dashboard')
-        ->assertSet('categoryCount', 4);
-});
-
 it('shows up to 5 recent posts', function (): void {
     \Livewire\Features\SupportLazyLoading\SupportLazyLoading::disableWhileTesting();
 

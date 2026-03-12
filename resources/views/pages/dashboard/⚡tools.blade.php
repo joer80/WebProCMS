@@ -111,11 +111,6 @@ new #[Layout('layouts.app')] #[Title('Tools')] class extends Component {
         $this->dispatch('notify', message: 'Update started — this may take a minute.');
     }
 
-    public function locationCount(): int
-    {
-        return Setting::get('locations_mode', 'single') === 'multiple' ? 5 : 1;
-    }
-
     public function clearCache(): void
     {
         ResponseCache::clear();
@@ -177,7 +172,7 @@ new #[Layout('layouts.app')] #[Title('Tools')] class extends Component {
                 <div class="flex items-start justify-between gap-6">
                     <div>
                         <flux:heading>Seed Demo Data</flux:heading>
-                        <flux:text class="mt-1">Populate the site with demo blog posts, categories, and {{ $this->locationCount() === 1 ? '1 location' : $this->locationCount() . ' locations' }}. Safe to run multiple times — nothing will be duplicated.</flux:text>
+                        <flux:text class="mt-1">Populate the site with demo blog posts, categories, and 5 locations. Safe to run multiple times — nothing will be duplicated.</flux:text>
                         @if ($this->seedingStatus === 'running')
                             <flux:text class="mt-2 text-sm text-amber-600 dark:text-amber-400">Seeding in progress — this may take a minute...</flux:text>
                         @elseif ($this->seedingStatus === 'complete')

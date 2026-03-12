@@ -2,6 +2,7 @@
 
 use App\Models\ContentItem;
 use App\Models\ContentTypeDefinition;
+use App\Support\ContentTypePageGenerator;
 use Illuminate\Support\Str;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
@@ -120,6 +121,8 @@ new #[Layout('layouts.app')] #[Title('Edit Content Type')] class extends Compone
 
         ContentItem::query()->where('type_slug', $type->slug)->delete();
         $type->delete();
+
+        app(ContentTypePageGenerator::class)->remove($type->slug);
 
         $this->redirect(route('dashboard.content-types.index'), navigate: true);
     }

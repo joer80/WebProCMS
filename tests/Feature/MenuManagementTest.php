@@ -1,6 +1,7 @@
 <?php
 
 use App\Enums\Role;
+use App\Models\Setting;
 use App\Models\User;
 use Livewire\Livewire;
 
@@ -26,15 +27,13 @@ it('shows the menus page to manager users', function (): void {
 });
 
 it('loads menus from the flat navigation config on mount', function (): void {
-    config([
-        'navigation.menus' => [
-            [
-                'slug' => 'main-navigation',
-                'label' => 'Main Navigation',
-                'items' => [
-                    ['label' => 'Features', 'url' => '#', 'active' => true],
-                    ['label' => 'Blog', 'route' => 'blog.index', 'active' => true],
-                ],
+    Setting::set('navigation.menus', [
+        [
+            'slug' => 'main-navigation',
+            'label' => 'Main Navigation',
+            'items' => [
+                ['label' => 'Features', 'url' => '#', 'active' => true],
+                ['label' => 'Blog', 'route' => 'blog.index', 'active' => true],
             ],
         ],
     ]);
@@ -311,33 +310,22 @@ it('does not overwrite a manually set page label when route changes', function (
         ->assertSet('newPageLabel', 'Read Our Blog');
 });
 
-it('saves menus changes to the config file', function (): void {
-    $configPath = config_path('navigation.php');
-    $originalContent = file_get_contents($configPath);
-
-    config([
-        'navigation' => require $configPath,
-    ]);
-
+it('saves menus changes to the settings', function (): void {
     $user = User::factory()->create();
 
-    try {
-        Livewire::actingAs($user)
-            ->test('pages::dashboard.menus')
-            ->set('menus', [[
-                'slug' => 'main-navigation',
-                'label' => 'Main Navigation',
-                'items' => [['label' => 'Test Page', 'route' => 'about', 'active' => true]],
-            ]])
-            ->call('save');
+    Livewire::actingAs($user)
+        ->test('pages::dashboard.menus')
+        ->set('menus', [[
+            'slug' => 'main-navigation',
+            'label' => 'Main Navigation',
+            'items' => [['label' => 'Test Page', 'route' => 'about', 'active' => true]],
+        ]])
+        ->call('save');
 
-        $written = require $configPath;
-        $mainNav = collect($written['menus'])->firstWhere('slug', 'main-navigation');
+    $menus = Setting::get('navigation.menus', []);
+    $mainNav = collect($menus)->firstWhere('slug', 'main-navigation');
 
-        expect($mainNav['items'])->toBe([
-            ['label' => 'Test Page', 'route' => 'about', 'active' => true],
-        ]);
-    } finally {
-        file_put_contents($configPath, $originalContent);
-    }
+    expect($mainNav['items'])->toBe([
+        ['label' => 'Test Page', 'route' => 'about', 'active' => true],
+    ]);
 });

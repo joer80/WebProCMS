@@ -7,8 +7,6 @@ use Livewire\Component;
 
 
 new #[Layout('layouts.app')] #[Title('General Settings')] class extends Component {
-    public string $locationsMode = 'single';
-
     public string $businessUrl = '';
 
     public string $businessPhone = '';
@@ -41,8 +39,6 @@ new #[Layout('layouts.app')] #[Title('General Settings')] class extends Componen
 
     public function mount(): void
     {
-        $this->locationsMode = Setting::get('locations_mode', 'single');
-
         $this->businessUrl = (string) Setting::get('business.url', '');
         $this->businessPhone = (string) Setting::get('business.phone', '');
         $this->businessEmail = (string) Setting::get('business.email', '');
@@ -114,15 +110,6 @@ new #[Layout('layouts.app')] #[Title('General Settings')] class extends Componen
         $this->dispatch('notify', message: 'SEO settings saved.');
     }
 
-    public function saveLocationsMode(): void
-    {
-        $this->validate(['locationsMode' => ['required', 'in:single,multiple']]);
-
-        Setting::set('locations_mode', $this->locationsMode);
-
-        $this->dispatch('notify', message: 'Settings saved.');
-    }
-
 
 }; ?>
 
@@ -182,21 +169,6 @@ new #[Layout('layouts.app')] #[Title('General Settings')] class extends Componen
                 </div>
             </div>
 
-            <div class="rounded-lg border border-zinc-200 dark:border-zinc-700 p-6">
-                <div class="flex items-start justify-between gap-6">
-                    <div class="flex-1">
-                        <flux:heading>Locations</flux:heading>
-                        <flux:text class="mt-1">Choose whether your site has a single location or multiple locations.</flux:text>
-                        <flux:radio.group wire:model="locationsMode" class="mt-4">
-                            <flux:radio value="single" label="Single location" description="Your site has one primary location." />
-                            <flux:radio value="multiple" label="Multiple locations" description="Your site has several locations to display." />
-                        </flux:radio.group>
-                    </div>
-                    <flux:button wire:click="saveLocationsMode" variant="outline" class="shrink-0">
-                        Save
-                    </flux:button>
-                </div>
-            </div>
         </div>
     </flux:main>
 </div>

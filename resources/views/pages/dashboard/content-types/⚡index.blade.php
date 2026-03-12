@@ -2,6 +2,7 @@
 
 use App\Models\ContentItem;
 use App\Models\ContentTypeDefinition;
+use App\Support\ContentTypePageGenerator;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
 use Livewire\Component;
@@ -13,6 +14,8 @@ new #[Layout('layouts.app')] #[Title('Content Types')] class extends Component {
 
         ContentItem::query()->where('type_slug', $type->slug)->delete();
         $type->delete();
+
+        app(ContentTypePageGenerator::class)->remove($type->slug);
 
         $this->dispatch('notify', message: 'Content type deleted.');
     }

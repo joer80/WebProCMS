@@ -23,15 +23,7 @@ class SeedDemoDataJob implements ShouldQueue
             }
         }
 
-        if (Setting::get('locations_mode', 'single') === 'multiple') {
-            $this->seedMultipleLocations();
-        } else {
-            $exitCode = Artisan::call('db:seed', ['--class' => 'LocationSeeder', '--no-interaction' => true, '--force' => true]);
-
-            if ($exitCode !== 0) {
-                throw new \RuntimeException('LocationSeeder failed. Check storage/logs/laravel.log for details.');
-            }
-        }
+        $this->seedLocations();
 
         Setting::set('seeding_status', 'complete');
     }
@@ -41,7 +33,7 @@ class SeedDemoDataJob implements ShouldQueue
         Setting::set('seeding_status', 'failed');
     }
 
-    private function seedMultipleLocations(): void
+    private function seedLocations(): void
     {
         $locations = [
             [

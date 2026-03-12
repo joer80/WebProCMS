@@ -4,6 +4,7 @@ use App\Enums\Role;
 use App\Models\ContentItem;
 use App\Models\ContentTypeDefinition;
 use App\Models\User;
+use App\Support\ContentTypePageGenerator;
 use Livewire\Livewire;
 
 it('redirects unauthenticated users from the content types dashboard', function (): void {
@@ -209,6 +210,39 @@ it('deletes a content type and all its items from the edit page', function (): v
 
     expect(ContentTypeDefinition::find($type->id))->toBeNull();
     expect(ContentItem::where('type_slug', 'events')->count())->toBe(0);
+});
+
+it('removes routes and view files when a content type is deleted', function (): void {
+    $slug = 'test-cleanup-type';
+    $routesPath = base_path('routes/web.php');
+    $viewDir = resource_path("views/pages/{$slug}");
+
+    // Inject fake routes and create fake view files
+    $indexLine = "\n    Route::livewire('{$slug}', 'pages::{$slug}.index')->name('{$slug}.index');";
+    $showLine = "\n    Route::livewire('{$slug}/{id}', 'pages::{$slug}.show')->name('{$slug}.show');";
+    file_put_contents($routesPath, file_get_contents($routesPath).$indexLine.$showLine);
+
+    mkdir($viewDir, 0755, true);
+    file_put_contents("{$viewDir}/⚡index.blade.php", '<?php // index ?>');
+    file_put_contents("{$viewDir}/⚡show.blade.php", '<?php // show ?>');
+
+    app(ContentTypePageGenerator::class)->remove($slug);
+
+    expect(file_get_contents($routesPath))->not->toContain("'{$slug}.index'");
+    expect(is_dir($viewDir))->toBeFalse();
+})->after(function (): void {
+    $slug = 'test-cleanup-type';
+    $routesPath = base_path('routes/web.php');
+    $viewDir = resource_path("views/pages/{$slug}");
+
+    // Remove injected lines if still present (e.g. test failed before remove() ran)
+    $indexLine = "\n    Route::livewire('{$slug}', 'pages::{$slug}.index')->name('{$slug}.index');";
+    $showLine = "\n    Route::livewire('{$slug}/{id}', 'pages::{$slug}.show')->name('{$slug}.show');";
+    file_put_contents($routesPath, str_replace([$indexLine, $showLine], '', file_get_contents($routesPath)));
+
+    if (is_dir($viewDir)) {
+        \Illuminate\Support\Facades\File::deleteDirectory($viewDir);
+    }
 });
 
 it('returns content types ordered by sort_order then name', function (): void {

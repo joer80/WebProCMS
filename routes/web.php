@@ -15,6 +15,8 @@ Route::middleware([
     // Route::get('blog2', \App\Livewire\Blog2::class)->name('blog2.index');
 
     // new cached pages are inserted here
+    Route::livewire('meeting-notes', 'pages::meeting-notes.index')->name('meeting-notes.index');
+    Route::livewire('meeting-notes/{id}', 'pages::meeting-notes.show')->name('meeting-notes.show');
     Route::livewire('minutes', 'pages::minutes.index')->name('minutes.index');
     Route::livewire('minutes/{id}', 'pages::minutes.show')->name('minutes.show');
     Route::livewire('contact', 'pages::contact')->name('contact');

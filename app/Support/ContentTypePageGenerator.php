@@ -3,10 +3,40 @@
 namespace App\Support;
 
 use App\Models\ContentTypeDefinition;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
 
 class ContentTypePageGenerator
 {
+    public function remove(string $slug): void
+    {
+        $this->removeRoutes($slug);
+        $this->removePages($slug);
+    }
+
+    private function removeRoutes(string $slug): void
+    {
+        $routesPath = base_path('routes/web.php');
+        $contents = file_get_contents($routesPath);
+
+        $indexLine = "\n    Route::livewire('{$slug}', 'pages::{$slug}.index')->name('{$slug}.index');";
+        $showLine = "\n    Route::livewire('{$slug}/{id}', 'pages::{$slug}.show')->name('{$slug}.show');";
+
+        $contents = str_replace($indexLine, '', $contents);
+        $contents = str_replace($showLine, '', $contents);
+
+        file_put_contents($routesPath, $contents);
+    }
+
+    private function removePages(string $slug): void
+    {
+        $dir = resource_path("views/pages/{$slug}");
+
+        if (is_dir($dir)) {
+            File::deleteDirectory($dir);
+        }
+    }
+
     public function generate(ContentTypeDefinition $typeDef): void
     {
         $this->createDirectory($typeDef->slug);

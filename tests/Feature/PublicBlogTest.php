@@ -2,6 +2,7 @@
 
 use App\Models\Category;
 use App\Models\Post;
+use App\Models\Setting;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use Livewire\Livewire;
@@ -111,6 +112,16 @@ it('returns 404 for a non-existent slug', function (): void {
 });
 
 it('is linked from the public navigation', function (): void {
+    Setting::set('navigation.menus', [
+        [
+            'slug' => 'main-navigation',
+            'label' => 'Main Navigation',
+            'items' => [
+                ['label' => 'Blog', 'route' => 'blog.index', 'active' => true],
+            ],
+        ],
+    ]);
+
     $this->get(route('home'))
         ->assertOk()
         ->assertSee(route('blog.index'))

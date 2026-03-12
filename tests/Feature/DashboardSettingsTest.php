@@ -11,14 +11,12 @@ use Livewire\Livewire;
 // ── Business Info ──────────────────────────────────────────────────────────────
 
 it('loads business info from config on mount', function (): void {
-    config([
-        'business.url' => 'https://example.com',
-        'business.phone' => '+1 (512) 555-0100',
-        'business.email' => 'sales@example.com',
-        'business.address_street' => '100 Congress Ave',
-        'business.address_city_state_zip' => 'Austin, TX 78701',
-        'business.hours' => 'Mon–Fri, 9am–5pm',
-    ]);
+    Setting::set('business.url', 'https://example.com');
+    Setting::set('business.phone', '+1 (512) 555-0100');
+    Setting::set('business.email', 'sales@example.com');
+    Setting::set('business.address_street', '100 Congress Ave');
+    Setting::set('business.address_city_state_zip', 'Austin, TX 78701');
+    Setting::set('business.hours', 'Mon–Fri, 9am–5pm');
 
     $user = User::factory()->create();
 
@@ -32,10 +30,7 @@ it('loads business info from config on mount', function (): void {
         ->assertSet('businessHours', 'Mon–Fri, 9am–5pm');
 });
 
-it('writes config/business.php and dispatches a notification when saving business info', function (): void {
-    $path = config_path('business.php');
-    $original = file_get_contents($path);
-
+it('saves business info to settings and dispatches a notification', function (): void {
     $user = User::factory()->create();
 
     Livewire::actingAs($user)
@@ -50,31 +45,12 @@ it('writes config/business.php and dispatches a notification when saving busines
         ->assertHasNoErrors()
         ->assertDispatched('notify', message: 'Business info saved.');
 
-    $written = file_get_contents($path);
-    expect($written)
-        ->toContain("'url' => 'https://test.com'")
-        ->toContain("'phone' => '+1 (555) 000-0001'")
-        ->toContain("'email' => 'info@test.com'")
-        ->toContain("'address_street' => '1 Main St'")
-        ->toContain("'address_city_state_zip' => 'Dallas, TX 75201'")
-        ->toContain("'hours' => 'Mon–Fri, 8am–6pm'");
-
-    file_put_contents($path, $original);
-});
-
-it('keeps admin_email as an env() call in the written business config', function (): void {
-    $path = config_path('business.php');
-    $original = file_get_contents($path);
-
-    $user = User::factory()->create();
-
-    Livewire::actingAs($user)
-        ->test('pages::dashboard.settings.general')
-        ->call('saveBusinessInfo');
-
-    expect(file_get_contents($path))->toContain("env('BUSINESS_ADMIN_EMAIL'");
-
-    file_put_contents($path, $original);
+    expect(Setting::get('business.url'))->toBe('https://test.com');
+    expect(Setting::get('business.phone'))->toBe('+1 (555) 000-0001');
+    expect(Setting::get('business.email'))->toBe('info@test.com');
+    expect(Setting::get('business.address_street'))->toBe('1 Main St');
+    expect(Setting::get('business.address_city_state_zip'))->toBe('Dallas, TX 75201');
+    expect(Setting::get('business.hours'))->toBe('Mon–Fri, 8am–6pm');
 });
 
 it('validates business email format', function (): void {
@@ -90,17 +66,19 @@ it('validates business email format', function (): void {
 // ── SEO Settings ───────────────────────────────────────────────────────────────
 
 it('loads SEO settings from config on mount', function (): void {
-    config([
-        'seo.schema.type' => 'LocalBusiness',
-        'seo.schema.logo' => 'https://example.com/logo.png',
-        'seo.schema.description' => 'We build things.',
-        'seo.schema.address.city' => 'Austin',
-        'seo.schema.address.region' => 'TX',
-        'seo.schema.address.postal_code' => '78701',
-        'seo.schema.address.country' => 'US',
-        'seo.og.default_image' => 'https://example.com/og.jpg',
-        'seo.twitter.handle' => '@example',
+    Setting::set('seo.schema', [
+        'type' => 'LocalBusiness',
+        'logo' => 'https://example.com/logo.png',
+        'description' => 'We build things.',
+        'address' => [
+            'city' => 'Austin',
+            'region' => 'TX',
+            'postal_code' => '78701',
+            'country' => 'US',
+        ],
     ]);
+    Setting::set('seo.og.default_image', 'https://example.com/og.jpg');
+    Setting::set('seo.twitter.handle', '@example');
 
     $user = User::factory()->create();
 
@@ -117,10 +95,7 @@ it('loads SEO settings from config on mount', function (): void {
         ->assertSet('seoTwitterHandle', '@example');
 });
 
-it('writes config/seo.php and dispatches a notification when saving SEO settings', function (): void {
-    $path = config_path('seo.php');
-    $original = file_get_contents($path);
-
+it('saves SEO settings to settings and dispatches a notification', function (): void {
     $user = User::factory()->create();
 
     Livewire::actingAs($user)
@@ -135,33 +110,12 @@ it('writes config/seo.php and dispatches a notification when saving SEO settings
         ->assertHasNoErrors()
         ->assertDispatched('notify', message: 'SEO settings saved.');
 
-    $written = file_get_contents($path);
-    expect($written)
-        ->toContain("'type' => 'LocalBusiness'")
-        ->toContain("'description' => 'A local biz.'")
-        ->toContain("'city' => 'Houston'")
-        ->toContain("'region' => 'TX'")
-        ->toContain("'postal_code' => '77001'");
-
-    file_put_contents($path, $original);
-});
-
-it('keeps phone and email as config() references in the written seo config', function (): void {
-    $path = config_path('seo.php');
-    $original = file_get_contents($path);
-
-    $user = User::factory()->create();
-
-    Livewire::actingAs($user)
-        ->test('pages::dashboard.settings.general')
-        ->call('saveSeoSettings');
-
-    $written = file_get_contents($path);
-    expect($written)
-        ->toContain("config('business.phone'")
-        ->toContain("config('business.email'");
-
-    file_put_contents($path, $original);
+    $schema = Setting::get('seo.schema');
+    expect($schema['type'])->toBe('LocalBusiness');
+    expect($schema['description'])->toBe('A local biz.');
+    expect($schema['address']['city'])->toBe('Houston');
+    expect($schema['address']['region'])->toBe('TX');
+    expect($schema['address']['postal_code'])->toBe('77001');
 });
 
 it('validates seo schema type is an allowed value', function (): void {
@@ -186,58 +140,16 @@ it('shows the settings page to manager users', function (): void {
     $this->actingAs($user)
         ->get(route('dashboard.settings.general'))
         ->assertOk()
-        ->assertSeeText('Locations');
+        ->assertSeeText('Business Information');
 });
 
-it('loads the saved locations_mode setting on mount', function (): void {
-    Setting::set('locations_mode', 'multiple');
-
-    $user = User::factory()->create();
-
-    Livewire::actingAs($user)
-        ->test('pages::dashboard.settings.general')
-        ->assertSet('locationsMode', 'multiple');
-});
-
-it('defaults locations mode to single when no setting exists', function (): void {
-    $user = User::factory()->create();
-
-    Livewire::actingAs($user)
-        ->test('pages::dashboard.settings.general')
-        ->assertSet('locationsMode', 'single');
-});
-
-it('saves the locations mode setting and dispatches a notification', function (): void {
-    $user = User::factory()->create();
-
-    Livewire::actingAs($user)
-        ->test('pages::dashboard.settings.general')
-        ->set('locationsMode', 'multiple')
-        ->call('saveLocationsMode')
-        ->assertDispatched('notify', message: 'Settings saved.');
-
-    expect(Setting::get('locations_mode'))->toBe('multiple');
-});
-
-it('seeds 5 locations when locations_mode is multiple', function (): void {
-    Setting::set('locations_mode', 'multiple');
-
+it('seeds 5 locations', function (): void {
     (new \App\Jobs\SeedDemoDataJob)->handle();
 
     expect(Location::count())->toBe(5);
 });
 
-it('seeds 1 location when locations_mode is single', function (): void {
-    Setting::set('locations_mode', 'single');
-
-    (new \App\Jobs\SeedDemoDataJob)->handle();
-
-    expect(Location::count())->toBe(1);
-});
-
 it('does not create duplicate posts when seeded twice', function (): void {
-    Setting::set('locations_mode', 'single');
-
     (new \App\Jobs\SeedDemoDataJob)->handle();
     $countAfterFirst = Post::query()->where('is_seeded', true)->count();
 
@@ -340,7 +252,8 @@ it('loads the full page cache lifetime from config on mount', function (): void 
 // ── Design — Typography ─────────────────────────────────────────────────────────
 
 it('loads font choices from branding config on mount', function (): void {
-    config(['branding.body_font' => 'inter', 'branding.heading_font' => 'system']);
+    Setting::set('branding.body_font', 'inter');
+    Setting::set('branding.heading_font', 'system');
 
     $user = User::factory()->create();
 
@@ -351,18 +264,16 @@ it('loads font choices from branding config on mount', function (): void {
         ->assertSet('sectionSpacing', 'medium');
 });
 
-it('saves typography to css files and writes branding config', function (): void {
+it('saves typography to css files and settings', function (): void {
     app()->detectEnvironment(fn () => 'local');
 
     $appCssPath = resource_path('css/app.css');
     $publicCssPath = resource_path('css/public.css');
     $editorCssPath = resource_path('css/editor.css');
-    $brandingPath = config_path('branding.php');
 
     $originalApp = file_get_contents($appCssPath);
     $originalPublic = file_get_contents($publicCssPath);
     $originalEditor = file_get_contents($editorCssPath);
-    $originalBranding = file_get_contents($brandingPath);
 
     $user = User::factory()->create();
 
@@ -384,12 +295,11 @@ it('saves typography to css files and writes branding config', function (): void
 
     expect(file_get_contents($publicCssPath))->toContain("--font-sans: 'Inter',");
     expect(file_get_contents($editorCssPath))->toContain("--font-sans: 'Inter',");
-    expect(file_get_contents($brandingPath))->toContain("'body_font' => 'inter'");
+    expect(Setting::get('branding.body_font'))->toBe('inter');
 
     file_put_contents($appCssPath, $originalApp);
     file_put_contents($publicCssPath, $originalPublic);
     file_put_contents($editorCssPath, $originalEditor);
-    file_put_contents($brandingPath, $originalBranding);
 });
 
 it('saves system font choice without a named font in the css stack', function (): void {
@@ -440,7 +350,8 @@ it('validates that section spacing uses a valid size keyword', function (): void
 // ── Design — Alt Rows ───────────────────────────────────────────────────────────
 
 it('loads alt_rows_start from branding config on mount', function (): void {
-    config(['branding.alt_rows_enabled' => true, 'branding.alt_rows_start' => 'odd']);
+    Setting::set('branding.alt_rows_enabled', '1');
+    Setting::set('branding.alt_rows_start', 'odd');
 
     $user = User::factory()->create();
 
@@ -450,11 +361,9 @@ it('loads alt_rows_start from branding config on mount', function (): void {
         ->assertSet('altRowsStart', 'odd');
 });
 
-it('saves alt_rows_start to branding config', function (): void {
-    $brandingPath = config_path('branding.php');
-    $originalBranding = file_get_contents($brandingPath);
-
-    config(['branding.alt_rows_enabled' => true, 'branding.alt_rows_start' => 'even']);
+it('saves alt_rows_start to settings', function (): void {
+    Setting::set('branding.alt_rows_enabled', '1');
+    Setting::set('branding.alt_rows_start', 'even');
 
     $user = User::factory()->create();
 
@@ -464,10 +373,7 @@ it('saves alt_rows_start to branding config', function (): void {
         ->call('saveAltRows')
         ->assertDispatched('notify', message: 'Alt row setting saved.');
 
-    expect(config('branding.alt_rows_start'))->toBe('odd');
-
-    file_put_contents($brandingPath, $originalBranding);
-    opcache_invalidate($brandingPath, true);
+    expect(Setting::get('branding.alt_rows_start'))->toBe('odd');
 });
 
 it('rejects invalid alt_rows_start values', function (): void {

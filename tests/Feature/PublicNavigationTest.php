@@ -1,18 +1,17 @@
 <?php
 
+use App\Models\Setting;
 use Spatie\ResponseCache\Middlewares\CacheResponse;
 
 it('shows navigation links from the flat navigation config', function (): void {
-    config([
-        'navigation.menus' => [
-            [
-                'slug' => 'main-navigation',
-                'label' => 'Main Navigation',
-                'items' => [
-                    ['label' => 'Our Blog', 'route' => 'blog.index', 'active' => true],
-                    ['label' => 'About Us', 'route' => 'about', 'active' => true],
-                    ['label' => 'Contact', 'route' => 'contact', 'active' => true],
-                ],
+    Setting::set('navigation.menus', [
+        [
+            'slug' => 'main-navigation',
+            'label' => 'Main Navigation',
+            'items' => [
+                ['label' => 'Our Blog', 'route' => 'blog.index', 'active' => true],
+                ['label' => 'About Us', 'route' => 'about', 'active' => true],
+                ['label' => 'Contact', 'route' => 'contact', 'active' => true],
             ],
         ],
     ]);
@@ -26,15 +25,13 @@ it('shows navigation links from the flat navigation config', function (): void {
 });
 
 it('does not show inactive navigation items', function (): void {
-    config([
-        'navigation.menus' => [
-            [
-                'slug' => 'main-navigation',
-                'label' => 'Main Navigation',
-                'items' => [
-                    ['label' => 'Visible', 'url' => '#', 'active' => true],
-                    ['label' => 'Hidden', 'url' => '#', 'active' => false],
-                ],
+    Setting::set('navigation.menus', [
+        [
+            'slug' => 'main-navigation',
+            'label' => 'Main Navigation',
+            'items' => [
+                ['label' => 'Visible', 'url' => '#', 'active' => true],
+                ['label' => 'Hidden', 'url' => '#', 'active' => false],
             ],
         ],
     ]);
@@ -47,21 +44,18 @@ it('does not show inactive navigation items', function (): void {
 });
 
 it('shows footer menus from the flat navigation config', function (): void {
-    config([
-        'layout.active_footer' => null,
-        'navigation.footer_slugs' => ['footer-links'],
-        'navigation.menus' => [
-            [
-                'slug' => 'main-navigation',
-                'label' => 'Main Navigation',
-                'items' => [],
-            ],
-            [
-                'slug' => 'footer-links',
-                'label' => 'Company',
-                'items' => [
-                    ['label' => 'Footer Link One', 'url' => '#', 'active' => true],
-                ],
+    Setting::set('navigation.footer_slugs', ['footer-links']);
+    Setting::set('navigation.menus', [
+        [
+            'slug' => 'main-navigation',
+            'label' => 'Main Navigation',
+            'items' => [],
+        ],
+        [
+            'slug' => 'footer-links',
+            'label' => 'Company',
+            'items' => [
+                ['label' => 'Footer Link One', 'url' => '#', 'active' => true],
             ],
         ],
     ]);

@@ -2,6 +2,7 @@
 
 use App\Enums\Role;
 use App\Models\Post;
+use App\Models\Setting;
 use App\Models\Shortcode;
 use App\Models\User;
 use App\Support\ShortcodeProcessor;
@@ -239,27 +240,28 @@ it('content helper does not expand shortcodes for non-text types', function (): 
 });
 
 it('resolves system shortcodes from config', function (): void {
-    config(['business.phone' => '555-0100']);
+    Setting::set('business.phone', '555-0100');
 
     expect(ShortcodeProcessor::process('Call [[business_phone]]'))->toBe('Call 555-0100');
     expect(ShortcodeProcessor::processRaw('Call [[business_phone]]'))->toBe('Call 555-0100');
 });
 
 it('db shortcode takes priority over system shortcode with same tag', function (): void {
-    config(['business.phone' => '555-0100']);
+    Setting::set('business.phone', '555-0100');
     Shortcode::factory()->singleText()->create(['tag' => 'business_phone', 'content' => '555-9999', 'is_active' => true]);
 
     expect(ShortcodeProcessor::process('[[business_phone]]'))->toBe('555-9999');
 });
 
 it('resolves business_address as combined street and city', function (): void {
-    config(['business.address_street' => '100 Main St', 'business.address_city_state_zip' => 'Austin, TX 78701']);
+    Setting::set('business.address_street', '100 Main St');
+    Setting::set('business.address_city_state_zip', 'Austin, TX 78701');
 
     expect(ShortcodeProcessor::processRaw('[[business_address]]'))->toBe('100 Main St, Austin, TX 78701');
 });
 
 it('shows system shortcodes on the shortcodes index page', function (): void {
-    config(['business.phone' => '555-0100']);
+    Setting::set('business.phone', '555-0100');
     $user = User::factory()->create();
 
     \Livewire\Features\SupportLazyLoading\SupportLazyLoading::disableWhileTesting();
