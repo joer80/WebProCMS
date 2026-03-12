@@ -18,6 +18,8 @@ new #[Layout('layouts.app')] #[Title('Edit Content Type')] class extends Compone
 
     public string $icon = 'document';
 
+    public bool $showDashboardButton = false;
+
     /** @var array<int, array{label: string, name: string, type: string, options: string, required: bool}> */
     public array $fields = [];
 
@@ -30,6 +32,7 @@ new #[Layout('layouts.app')] #[Title('Edit Content Type')] class extends Compone
         $this->slug = $type->slug;
         $this->singular = $type->singular;
         $this->icon = $type->icon;
+        $this->showDashboardButton = (bool) $type->show_dashboard_button;
         $this->fields = array_map(function (array $field): array {
             return [
                 'label' => $field['label'] ?? '',
@@ -105,6 +108,7 @@ new #[Layout('layouts.app')] #[Title('Edit Content Type')] class extends Compone
             'singular' => $this->singular,
             'icon' => $this->icon,
             'fields' => $this->fields,
+            'show_dashboard_button' => $this->showDashboardButton,
         ]);
 
         $this->dispatch('notify', message: 'Content type updated.');
@@ -352,6 +356,10 @@ new #[Layout('layouts.app')] #[Title('Edit Content Type')] class extends Compone
                     <flux:button href="{{ route('dashboard.content-types.index') }}" variant="ghost" class="w-full justify-center" wire:navigate>
                         Cancel
                     </flux:button>
+
+                    <div class="rounded-lg border border-zinc-200 dark:border-zinc-700 p-4">
+                        <flux:switch wire:model="showDashboardButton" label="Show on Dashboard" description="Add a quick-action button to the dashboard for creating new items of this type." />
+                    </div>
                 </div>
             </div>
         </form>

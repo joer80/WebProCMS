@@ -16,6 +16,8 @@ new #[Layout('layouts.app')] #[Title('New Content Type')] class extends Componen
 
     public string $icon = 'document';
 
+    public bool $showDashboardButton = false;
+
     /** @var array<int, array{label: string, name: string, type: string, options: string, required: bool}> */
     public array $fields = [];
 
@@ -88,6 +90,7 @@ new #[Layout('layouts.app')] #[Title('New Content Type')] class extends Componen
             'icon' => $this->icon,
             'fields' => $this->fields,
             'sort_order' => 0,
+            'show_dashboard_button' => $this->showDashboardButton,
         ]);
 
         (new ContentTypePageGenerator)->generate($typeDef);
@@ -316,6 +319,10 @@ new #[Layout('layouts.app')] #[Title('New Content Type')] class extends Componen
                     <flux:button href="{{ route('dashboard.content-types.index') }}" variant="ghost" class="w-full justify-center" wire:navigate>
                         Cancel
                     </flux:button>
+
+                    <div class="rounded-lg border border-zinc-200 dark:border-zinc-700 p-4">
+                        <flux:switch wire:model="showDashboardButton" label="Show on Dashboard" description="Add a quick-action button to the dashboard for creating new items of this type." />
+                    </div>
                 </div>
             </div>
         </form>

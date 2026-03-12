@@ -15,6 +15,7 @@ class ContentTypeDefinition extends Model
         'icon',
         'fields',
         'sort_order',
+        'show_dashboard_button',
     ];
 
     protected function casts(): array
@@ -22,6 +23,7 @@ class ContentTypeDefinition extends Model
         return [
             'fields' => 'array',
             'sort_order' => 'integer',
+            'show_dashboard_button' => 'boolean',
         ];
     }
 
