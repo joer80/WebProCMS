@@ -50,7 +50,7 @@ class UpdateCmsJob implements ShouldBeUnique, ShouldQueue
     public function failed(\Throwable $exception): void
     {
         $mergeHint = str_contains($exception->getMessage(), 'ff-only') || str_contains($exception->getMessage(), 'merge')
-            ? "\n\n--- How to resolve ---\nYour local branch has diverged from the upstream. SSH into the server and run:\n\n  cd ".base_path()."\n  git status\n  git diff HEAD..origin/".config('cms.git_branch', 'main')." --name-only\n\nThen either:\n  git merge origin/".config('cms.git_branch', 'main')."   # merge and resolve conflicts manually\n  git reset --hard origin/".config('cms.git_branch', 'main')."  # discard local changes and force update (destructive)\n\nAfter resolving, click Update Now again."
+            ? "\n\n--- How to resolve ---\nYour local branch has diverged from the upstream. The easiest way to resolve this is with GitHub Desktop:\n\n  1. Open GitHub Desktop and select this repository\n  2. Click Branch → Merge into Current Branch and select origin/".config('cms.git_branch', 'main')."\n  3. Resolve any conflicts using the built-in conflict editor\n  4. Commit the merge, then click Update Now again\n\nAlternatively, via command line:\n\n  cd ".base_path()."\n  git status\n  git merge origin/".config('cms.git_branch', 'main')."   # merge and resolve conflicts manually\n  # or: git reset --hard origin/".config('cms.git_branch', 'main')."  (destructive — discards local changes)\n\nAfter resolving, click Update Now again."
             : '';
 
         Setting::set('update_status', 'failed');
