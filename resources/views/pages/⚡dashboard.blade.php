@@ -257,14 +257,14 @@ new #[Layout('layouts.app')] #[Title('Dashboard')] #[Lazy] class extends Compone
         <div class="rounded-lg border border-zinc-200 dark:border-zinc-700 p-5 mb-8">
             <flux:heading class="mb-4">Quick Actions</flux:heading>
             <div class="flex flex-wrap gap-3">
-                <flux:button href="{{ route('dashboard.blog.create') }}" variant="primary" icon="plus" wire:navigate>
-                    New Post
-                </flux:button>
                 @if (auth()->user()->isAtLeast(\App\Enums\Role::Manager))
-                    <flux:button wire:click="$set('showNewPageModal', true)" variant="outline" icon="plus">
+                    <flux:button wire:click="$set('showNewPageModal', true)" variant="primary" icon="plus">
                         New Page
                     </flux:button>
                 @endif
+                <flux:button href="{{ route('dashboard.blog.create') }}" variant="outline" icon="plus" wire:navigate>
+                    New Post
+                </flux:button>
                 <flux:button href="{{ route('dashboard.media-library.index') }}" variant="outline" icon="arrow-up-tray" wire:navigate>
                     Upload Media
                 </flux:button>
