@@ -151,7 +151,7 @@ new #[Layout('layouts.app')] #[Title('Edit Content Type')] class extends Compone
 
                         <div class="grid sm:grid-cols-2 gap-4">
                             <flux:field>
-                                <flux:label>Name <flux:badge size="sm" variant="outline" class="ml-1">Plural</flux:badge></flux:label>
+                                <flux:label>Plural Name</flux:label>
                                 <flux:input wire:model="name" type="text" placeholder="Meeting Notes" required />
                                 <flux:description>The plural display name, e.g. "Meeting Notes".</flux:description>
                                 <flux:error name="name" />
@@ -175,8 +175,68 @@ new #[Layout('layouts.app')] #[Title('Edit Content Type')] class extends Compone
 
                             <flux:field>
                                 <flux:label>Icon</flux:label>
-                                <flux:input wire:model="icon" type="text" placeholder="document" />
-                                <flux:description>Heroicon name (e.g. document, briefcase, star).</flux:description>
+                                @php
+                                    $allIconsData = require resource_path('heroicons/data.php');
+                                    $outlineIcons = array_keys($allIconsData['outline']);
+                                    $solidIcons   = array_keys($allIconsData['solid']);
+                                @endphp
+                                <div x-data="{ pickerOpen: false, search: '', variant: 'outline', icon: '{{ $icon }}' }">
+                                    <div class="flex items-center gap-2 px-2.5 py-2 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900">
+                                        <div wire:key="icon-preview-{{ $icon }}" class="size-5 shrink-0 text-zinc-600 dark:text-zinc-300">
+                                            <x-heroicon :name="str_contains($icon, ':') ? substr($icon, 0, strpos($icon, ':')) : $icon" :variant="str_contains($icon, ':solid') ? 'solid' : 'outline'" class="size-5" />
+                                        </div>
+                                        <span class="text-sm text-zinc-500 dark:text-zinc-400 flex-1 font-mono truncate" x-text="icon || '—'"></span>
+                                        <button type="button" @click="pickerOpen = true" class="text-xs text-primary hover:text-primary/80 shrink-0 transition-colors">Change</button>
+                                    </div>
+                                    <div
+                                        x-show="pickerOpen"
+                                        x-transition:enter="transition ease-out duration-100"
+                                        x-transition:enter-start="opacity-0"
+                                        x-transition:enter-end="opacity-100"
+                                        x-transition:leave="transition ease-in duration-75"
+                                        x-transition:leave-start="opacity-100"
+                                        x-transition:leave-end="opacity-0"
+                                        class="fixed inset-0 z-50 flex items-center justify-center p-6"
+                                    >
+                                        <div class="absolute inset-0 bg-black/50" @click="pickerOpen = false; search = ''"></div>
+                                        <div class="relative z-10 bg-white dark:bg-zinc-800 rounded-xl shadow-2xl flex flex-col w-full max-w-2xl max-h-[80vh]">
+                                            <div class="flex items-center justify-between px-5 pt-5 pb-3 border-b border-zinc-200 dark:border-zinc-700 shrink-0">
+                                                <p class="text-sm font-semibold text-zinc-900 dark:text-white">Select Icon</p>
+                                                <div class="flex items-center gap-3">
+                                                    <div class="flex rounded-lg border border-zinc-200 dark:border-zinc-700 p-0.5">
+                                                        <button type="button" @click="variant = 'outline'" x-bind:class="variant === 'outline' ? 'bg-zinc-100 dark:bg-zinc-700 text-zinc-900 dark:text-white' : 'text-zinc-500 dark:text-zinc-400'" class="px-2.5 py-1 text-xs font-medium rounded-md transition-colors">Outline</button>
+                                                        <button type="button" @click="variant = 'solid'" x-bind:class="variant === 'solid' ? 'bg-zinc-100 dark:bg-zinc-700 text-zinc-900 dark:text-white' : 'text-zinc-500 dark:text-zinc-400'" class="px-2.5 py-1 text-xs font-medium rounded-md transition-colors">Solid</button>
+                                                    </div>
+                                                    <button type="button" @click="pickerOpen = false; search = ''" class="text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 transition-colors">
+                                                        <flux:icon name="x-mark" class="size-4" />
+                                                    </button>
+                                                </div>
+                                            </div>
+                                            <div class="px-5 py-3 border-b border-zinc-200 dark:border-zinc-700 shrink-0">
+                                                <input
+                                                    x-model="search"
+                                                    type="text"
+                                                    placeholder="Search icons… or press Enter to use any name"
+                                                    class="w-full text-sm rounded-lg border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-900 text-zinc-900 dark:text-white px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition"
+                                                    @keydown.enter.prevent="if (search.trim()) { icon = search.trim(); $wire.set('icon', search.trim()); search = ''; pickerOpen = false; }"
+                                                />
+                                            </div>
+                                            <div class="overflow-y-auto p-5">
+                                                <div x-show="variant === 'outline'" class="grid grid-cols-10 gap-1">
+                                                    @foreach ($outlineIcons as $iconName)
+                                                        <button type="button" x-show="!search || '{{ $iconName }}'.includes(search)" @click="icon = '{{ $iconName }}'; $wire.set('icon', '{{ $iconName }}'); search = ''; pickerOpen = false" x-bind:class="icon === '{{ $iconName }}' ? 'border-primary bg-primary/10 text-primary' : 'border-zinc-200 dark:border-zinc-700 hover:border-zinc-400 dark:hover:border-zinc-500 text-zinc-500 dark:text-zinc-400'" class="flex items-center justify-center p-2 rounded-lg border transition-colors" title="{{ $iconName }}"><x-heroicon name="{{ $iconName }}" class="size-5" /></button>
+                                                    @endforeach
+                                                </div>
+                                                <div x-show="variant === 'solid'" class="grid grid-cols-10 gap-1">
+                                                    @foreach ($solidIcons as $iconName)
+                                                        <button type="button" x-show="!search || '{{ $iconName }}'.includes(search)" @click="icon = '{{ $iconName }}:solid'; $wire.set('icon', '{{ $iconName }}:solid'); search = ''; pickerOpen = false" x-bind:class="icon === '{{ $iconName }}:solid' ? 'border-primary bg-primary/10 text-primary' : 'border-zinc-200 dark:border-zinc-700 hover:border-zinc-400 dark:hover:border-zinc-500 text-zinc-500 dark:text-zinc-400'" class="flex items-center justify-center p-2 rounded-lg border transition-colors" title="{{ $iconName }}"><x-heroicon name="{{ $iconName }}" variant="solid" class="size-5" /></button>
+                                                    @endforeach
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <flux:description>Search or browse all Heroicons. Outline and solid variants available.</flux:description>
                                 <flux:error name="icon" />
                             </flux:field>
                         </div>

@@ -70,13 +70,6 @@ new #[Layout('layouts.app')] #[Title('Content Types')] class extends Component {
                                 <td class="px-4 py-3">
                                     <div class="flex items-center justify-end gap-2">
                                         <flux:button
-                                            href="{{ route('dashboard.content.index', $type->slug) }}"
-                                            variant="ghost"
-                                            size="sm"
-                                            icon="document-text"
-                                            wire:navigate
-                                        />
-                                        <flux:button
                                             href="{{ route('dashboard.content-types.edit', $type->id) }}"
                                             variant="ghost"
                                             size="sm"
