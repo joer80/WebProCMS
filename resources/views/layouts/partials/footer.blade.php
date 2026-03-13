@@ -1,5 +1,5 @@
 <?php /** @layout-partial footer */ ?>
-<div>
+<div class="contents">
 {{-- ROW:start:footer-light:footer --}}
 <x-dl.section slug="footer-light:footer"
     tag="footer"
