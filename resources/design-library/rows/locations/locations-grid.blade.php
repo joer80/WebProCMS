@@ -32,13 +32,18 @@
     @if ($this->locationsFiltered->isNotEmpty())
         <x-dl.wrapper slug="__SLUG__" prefix="locations_grid" default-classes="grid sm:grid-cols-3 gap-6">
             @foreach ($this->locationsFiltered as $location)
+                <div wire:key="location-{{ $location->id }}" wire:transition>
                 <x-dl.card slug="__SLUG__" prefix="location_card"
-                    default-classes="bg-white dark:bg-zinc-800 rounded-card border border-zinc-200 dark:border-zinc-700 shadow-card overflow-hidden">
+                    default-classes="bg-white dark:bg-zinc-800 rounded-card border border-zinc-200 dark:border-zinc-700 shadow-card overflow-hidden h-full">
                     @if ($location->photoUrl())
                         <x-dl.wrapper slug="__SLUG__" prefix="location_image" tag="img"
                             src="{{ $location->photoUrl() }}"
                             alt="{{ $location->name }}"
                             default-classes="w-full h-48 object-cover" />
+                    @else
+                        <div class="w-full h-48 bg-zinc-100 dark:bg-zinc-700 flex items-center justify-center">
+                            <svg class="size-10 text-zinc-300 dark:text-zinc-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1 1 15 0Z" /></svg>
+                        </div>
                     @endif
                     <x-dl.group slug="__SLUG__" prefix="card_content" default-classes="p-5">
                         <x-dl.wrapper slug="__SLUG__" prefix="location_name" tag="h3"
@@ -60,6 +65,7 @@
                         </x-dl.wrapper>
                     </x-dl.group>
                 </x-dl.card>
+                </div>
             @endforeach
         </x-dl.wrapper>
     @else
