@@ -1,5 +1,7 @@
 # WebProCMS
 
+[![License: Elastic-2.0](https://img.shields.io/badge/License-Elastic%202.0-blue.svg)](LICENSE)
+
 ## Setting Up the Project Locally
 
 ### Step 1 — Install Laravel Herd
