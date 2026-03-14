@@ -33,8 +33,8 @@ class UpdateCmsJob implements ShouldBeUnique, ShouldQueue
         $this->runProcess([$npm, 'run', 'build'], $log, $env);
 
         if (! app()->isLocal()) {
-            $this->runProcess([PHP_BINARY, 'artisan', 'config:cache', '--no-interaction'], $log);
-            $this->runProcess([PHP_BINARY, 'artisan', 'route:cache', '--no-interaction'], $log);
+            $this->runProcess([PHP_BINARY, 'artisan', 'optimize', '--no-interaction'], $log);
+            $this->runProcess([PHP_BINARY, 'artisan', 'responsecache:clear'], $log);
         }
 
         $latestVersion = Setting::get('update_latest_version', '');
