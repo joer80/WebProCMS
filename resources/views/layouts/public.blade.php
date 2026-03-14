@@ -53,7 +53,7 @@
                 <div class="max-w-6xl mx-auto px-6">
                 <nav class="flex items-center justify-between gap-4 h-14">
                     <a href="{{ route('home') }}">
-                        <img src="{{ \App\Models\Setting::get('branding.logo_url', asset('images/logo.svg')) }}" alt="{{ config('app.name') }}" class="h-8 w-auto" />
+                        <img src="{{ \App\Models\Setting::get('branding.logo_url') ?: asset('images/logo.svg') }}" alt="{{ config('app.name') }}" class="h-8 w-auto" />
                     </a>
 
                     {{-- Desktop nav --}}
@@ -64,7 +64,7 @@
                             </a>
                         @endforeach
 
-                        @if ($showAuthLinks && Route::has('login'))
+                        @if (Route::has('login'))
                             @auth
                                 <a href="{{ url('/dashboard') }}" class="inline-block px-5 py-1.5 dark:text-[#EDEDEC] border-[#19140035] hover:border-[#1915014a] border text-[#1b1b18] dark:border-[#3E3E3A] dark:hover:border-[#62605b] rounded-sm text-sm leading-normal">
                                     Dashboard
@@ -99,7 +99,7 @@
                         <a href="{{ isset($item['route']) ? route($item['route']) : $item['url'] }}" @if (!empty($item['new_window'])) target="_blank" rel="noopener noreferrer" @endif class="px-2 py-2.5 text-[#1b1b18] dark:text-[#EDEDEC] hover:text-[#706f6c] dark:hover:text-[#A1A09A] transition-colors">{{ $item['label'] }}</a>
                     @endforeach
 
-                    @if ($showAuthLinks && Route::has('login'))
+                    @if (Route::has('login'))
                         @auth
                             <a href="{{ url('/dashboard') }}" class="px-2 py-2.5 text-[#1b1b18] dark:text-[#EDEDEC] hover:text-[#706f6c] dark:hover:text-[#A1A09A] transition-colors">Dashboard</a>
                         @else
@@ -127,7 +127,7 @@
                 <div class="flex flex-col gap-8 sm:flex-row sm:justify-between">
                     <div class="flex flex-col gap-3">
                         <a href="{{ route('home') }}">
-                            <img src="{{ \App\Models\Setting::get('branding.logo_url', asset('images/logo.svg')) }}" alt="{{ config('app.name') }}" class="h-7 w-auto" />
+                            <img src="{{ \App\Models\Setting::get('branding.logo_url') ?: asset('images/logo.svg') }}" alt="{{ config('app.name') }}" class="h-7 w-auto" />
                         </a>
                         <p class="text-sm text-[#706f6c] dark:text-[#A1A09A] max-w-xs">
                             Build, manage, and publish — without limits.

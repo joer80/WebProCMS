@@ -83,3 +83,21 @@ it('loads the blog index', function (): void {
         ->get(route('blog.index'))
         ->assertOk();
 });
+
+it('falls back to the default logo svg when branding logo url is empty', function (): void {
+    Setting::set('branding.logo_url', '');
+
+    $this->withoutMiddleware(CacheResponse::class)
+        ->get(route('home'))
+        ->assertOk()
+        ->assertSee('images/logo.svg');
+});
+
+it('always shows the login link in the fallback header regardless of show_auth_links setting', function (): void {
+    Setting::set('navigation.show_auth_links', '0');
+
+    $this->withoutMiddleware(CacheResponse::class)
+        ->get(route('home'))
+        ->assertOk()
+        ->assertSee(route('login'));
+});
