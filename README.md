@@ -117,6 +117,8 @@ Also confirm your production `.env` has `QUEUE_CONNECTION=database` (or whicheve
 
 Updates can be triggered directly from **Dashboard → Tools → CMS Update**. The update card shows the current installed version, checks for available updates against a configurable releases API, and lets you apply them with a single click.
 
+There are no auto-deploy webhooks — updates only happen when the site owner clicks **Update Now**. This gives clients full control over when updates are applied to their live site, preventing unexpected changes during business hours.
+
 #### How it works
 
 1. Click **Check for Updates** — makes an HTTP request to `CMS_RELEASES_API_URL` and compares the returned version against the local `VERSION` file
@@ -126,7 +128,8 @@ Updates can be triggered directly from **Dashboard → Tools → CMS Update**. T
    - `composer install --no-dev --optimize-autoloader`
    - `php artisan migrate --force`
    - `npm run build`
-   - `php artisan config:cache` + `route:cache` (production only)
+   - `php artisan optimize` (config, route, view, and event cache — production only)
+   - `php artisan responsecache:clear` (production only)
 4. The card polls every 3 seconds while the job runs and shows the full command log on completion or failure
 
 #### Configuration
