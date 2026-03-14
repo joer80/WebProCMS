@@ -145,6 +145,21 @@ The releases API must return JSON with a `version` key (e.g. `"1.0.1"`) and opti
 
 > **Requires the queue worker to be running.** The update job is dispatched to the queue — without a worker, clicking "Update Now" will dispatch the job but it will never execute.
 
+#### Releasing a new version
+
+To make an update available to clients:
+
+1. Push your fixes to `main`
+2. Update the `VERSION` file in the repo to the new version (e.g. `1.0.1`) and commit + push
+3. Go to your GitHub repo → **Releases** → **Draft a new release**
+4. Click **Choose a tag** → type `v1.0.1` (matching the version you just set) → **Create new tag**
+5. Add a title and release notes
+6. Click **Publish release**
+
+The client's **Check for Updates** button hits the GitHub releases API, strips the `v` prefix from the tag, and compares it against the version on their server. If the tag is higher, **Update Now** appears.
+
+> **Important:** Always update the `VERSION` file in the repo to match the release tag before pushing and tagging. New installs clone whatever is in the repo — if `VERSION` still says `1.0.0` but your latest release is `v1.0.5`, a fresh install will immediately show an update available and prompt the client to run through the full update pipeline on a site they just set up.
+
 #### If the update fails due to a merge conflict
 
 The update uses `git merge --ff-only`, which refuses to proceed if your local branch has diverged from the upstream (e.g. you edited a CMS core file directly on the server). The site is left untouched — no broken files.
