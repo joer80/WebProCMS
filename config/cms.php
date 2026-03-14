@@ -52,4 +52,15 @@ return [
     */
     'git_branch' => env('CMS_GIT_BRANCH', 'main'),
 
+    /*
+    |--------------------------------------------------------------------------
+    | Admin Email
+    |--------------------------------------------------------------------------
+    |
+    | The email address for the initial super admin account created during
+    | the first migration. Set BUSINESS_ADMIN_EMAIL in your .env file.
+    |
+    */
+    'admin_email' => env('BUSINESS_ADMIN_EMAIL', 'root@localhost'),
+
 ];

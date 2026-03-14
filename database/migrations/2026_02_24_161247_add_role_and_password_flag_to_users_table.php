@@ -22,7 +22,7 @@ return new class extends Migration
                 ->after('role');
         });
 
-        $rootEmail = env('BUSINESS_ADMIN_EMAIL', 'root@localhost');
+        $rootEmail = config('cms.admin_email', 'root@localhost');
 
         DB::table('users')->insertOrIgnore([
             'name' => 'Admin',
@@ -41,7 +41,7 @@ return new class extends Migration
      */
     public function down(): void
     {
-        DB::table('users')->where('email', env('BUSINESS_ADMIN_EMAIL', 'root@localhost'))->delete();
+        DB::table('users')->where('email', config('cms.admin_email', 'root@localhost'))->delete();
 
         Schema::table('users', function (Blueprint $table): void {
             $table->dropColumn(['role', 'must_change_password']);
