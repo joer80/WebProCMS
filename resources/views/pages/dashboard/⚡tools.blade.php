@@ -130,16 +130,18 @@ new #[Layout('layouts.app')] #[Title('Tools')] class extends Component {
     public function seedDemoData(): void
     {
         Setting::set('seeding_status', 'running');
-        SeedDemoDataJob::dispatch();
+        SeedDemoDataJob::dispatchSync();
 
-        $this->dispatch('notify', message: 'Seeding started — this may take a minute.');
+        unset($this->seedingStatus);
+
+        $this->dispatch('notify', message: 'Demo data seeded successfully.');
     }
 
     public function syncDesignLibrary(): void
     {
-        IndexDesignLibraryJob::dispatch();
+        IndexDesignLibraryJob::dispatchSync();
 
-        $this->dispatch('notify', message: 'Design Library sync started.');
+        $this->dispatch('notify', message: 'Design Library synced successfully.');
     }
 
 
