@@ -42,7 +42,7 @@
                             {{ __('Locations') }}
                         </flux:sidebar.item>
                     </flux:sidebar.group>
-                    <flux:sidebar.group expandable icon="adjustments-horizontal" heading="{{ __('Manage') }}" :expanded="request()->routeIs('dashboard.forms.*', 'dashboard.menus', 'dashboard.redirects', 'dashboard.users')" class="grid">
+                    <flux:sidebar.group expandable icon="adjustments-horizontal" heading="{{ __('Manage') }}" :expanded="request()->routeIs('dashboard.forms.*', 'dashboard.menus', 'dashboard.redirects', 'dashboard.users', 'dashboard.backups')" class="grid">
                         <flux:sidebar.item icon="document-check" :href="route('dashboard.forms.index')" :current="request()->routeIs('dashboard.forms.*')" wire:navigate>
                             {{ __('Forms') }}
                         </flux:sidebar.item>
@@ -54,6 +54,9 @@
                         </flux:sidebar.item>
                         <flux:sidebar.item icon="users" :href="route('dashboard.users')" :current="request()->routeIs('dashboard.users')" wire:navigate>
                             {{ __('Users') }}
+                        </flux:sidebar.item>
+                        <flux:sidebar.item icon="circle-stack" :href="route('dashboard.backups')" :current="request()->routeIs('dashboard.backups')" wire:navigate>
+                            {{ __('Backups') }}
                         </flux:sidebar.item>
                     </flux:sidebar.group>
                     <flux:sidebar.group expandable icon="wrench-screwdriver" heading="{{ __('Develop') }}" :expanded="request()->routeIs('dashboard.shortcodes.*', 'dashboard.snippets.*', 'dashboard.design-library.*', 'dashboard.tools', 'dashboard.templates', 'dashboard.content-types.*')" class="grid">

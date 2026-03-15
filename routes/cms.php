@@ -54,6 +54,20 @@ Route::middleware(['auth', 'verified'])->group(function (): void {
 
         Route::livewire('dashboard/users', 'pages::dashboard.users')->name('dashboard.users');
 
+        Route::livewire('dashboard/backups', 'pages::dashboard.backups')->name('dashboard.backups');
+        Route::get('dashboard/backups/download/{filename}', function (string $filename) {
+            // Prevent path traversal
+            $filename = basename($filename);
+            $path = storage_path('app/private/backups/'.$filename);
+
+            abort_if(! file_exists($path), 404);
+
+            $extension = pathinfo($filename, PATHINFO_EXTENSION);
+            abort_if($extension !== 'zip', 404);
+
+            return response()->download($path, $filename);
+        })->name('dashboard.backups.download');
+
         Route::livewire('dashboard/pages', 'pages::dashboard.pages')->name('dashboard.pages');
 
         Route::livewire('dashboard/menus', 'pages::dashboard.menus')->name('dashboard.menus');
