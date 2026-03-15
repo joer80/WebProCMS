@@ -73,7 +73,7 @@ function installer_find_php(): string
 
 function installer_find_composer(): string
 {
-    foreach (['/usr/local/bin/composer', '/usr/bin/composer'] as $path) {
+    foreach (['/usr/local/bin/composer', '/usr/bin/composer', '/usr/sbin/composer'] as $path) {
         if (file_exists($path)) {
             return $path;
         }

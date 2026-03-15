@@ -77,7 +77,7 @@ class UpdateCmsJob
             return $configured;
         }
 
-        $candidates = ['/usr/local/bin/composer', '/usr/bin/composer'];
+        $candidates = ['/usr/local/bin/composer', '/usr/bin/composer', '/usr/sbin/composer'];
 
         $home = getenv('HOME') ?: '';
         if ($home !== '') {
