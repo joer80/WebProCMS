@@ -170,7 +170,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // 0a — Composer install (skipped if vendor/ already exists)
     if (! $failed && ! is_dir($appRoot.'/vendor') && ! installer_step('Installing PHP dependencies', function () use ($appRoot) {
         $composer = installer_find_composer();
-        $env = ['PATH' => '/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:'.(getenv('PATH') ?: '')];
+        $env = [
+            'PATH' => '/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:'.(getenv('PATH') ?: ''),
+            'HOME' => getenv('HOME') ?: '/tmp',
+            'COMPOSER_HOME' => getenv('HOME') ? getenv('HOME').'/.composer' : '/tmp/.composer',
+        ];
 
         return installer_run([$composer, 'install', '--no-dev', '--no-interaction', '--prefer-dist', '--optimize-autoloader'], $appRoot, $env);
     })) {
