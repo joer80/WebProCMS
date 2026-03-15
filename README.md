@@ -249,6 +249,44 @@ $RESTART_QUEUES()
 
 Without this step, visitors will see broken styles after every deployment until their cached page response expires.
 
+### Deploying with RunCloud
+
+RunCloud supports deploying directly from a GitHub repository. Since WebProCMS is a public repo, no deploy key is required — leave the field blank.
+
+#### Initial setup
+
+1. In RunCloud, create a new **Web Application** and go to **Git Repository**
+2. Enter the repository URL: `https://github.com/joer80/WebProCMS.git`
+3. Leave the **Deploy Key** field blank (not needed for public repos)
+4. Set your deployment script to:
+
+```bash
+git merge
+
+composer install --no-dev --no-interaction --prefer-dist --optimize-autoloader
+
+npm ci || npm install
+npm run build
+
+php artisan storage:link
+```
+
+> **Do not add `php artisan migrate`, `key:generate`, or `optimize` to the deployment script.** The `.env` file doesn't exist yet when the script runs — those commands will fail. The web installer handles all of that.
+
+5. Deploy the application
+6. Visit your domain — the installer will appear automatically
+
+The installer walks through site name, database setup (SQLite or MySQL), admin email, and optional demo content. It then runs `key:generate`, `migrate`, and `optimize` for you and redirects to the dashboard.
+
+#### Queue worker (required)
+
+In RunCloud, go to your **web app → Supervisor** and add a queue worker:
+
+- **Command:** `php /path/to/your/app/artisan queue:work --sleep=3 --tries=3 --timeout=300`
+- **Auto-restart:** enabled
+
+Without a queue worker, the CMS Update button and on-save asset rebuilds will dispatch jobs that are never processed.
+
 ### Production Nginx Configuration
 
 Add the following block inside your site's `server {}` block, **above** the PHP catch-all. This caches Vite-built assets in the browser for 6 months — safe because Vite generates content-hashed filenames that change whenever the file changes.
