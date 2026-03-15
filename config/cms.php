@@ -30,6 +30,19 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Composer Path
+    |--------------------------------------------------------------------------
+    |
+    | Full path to the composer binary. On most servers composer is in PATH
+    | and the default works fine. Set this if the update job can't find it.
+    |
+    | Find yours with: which composer
+    |
+    */
+    'composer_path' => env('COMPOSER_PATH'),
+
+    /*
+    |--------------------------------------------------------------------------
     | Releases API URL
     |--------------------------------------------------------------------------
     |

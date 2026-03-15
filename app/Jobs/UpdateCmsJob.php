@@ -15,7 +15,8 @@ class UpdateCmsJob
         $this->runProcess(['git', 'fetch', 'origin', $branch], $log);
         $this->runProcess(['git', 'merge', '--ff-only', 'origin/'.$branch], $log);
 
-        $this->runProcess(['composer', 'install', '--no-dev', '--no-interaction', '--optimize-autoloader'], $log);
+        $composer = $this->findComposer();
+        $this->runProcess([$composer, 'install', '--no-dev', '--no-interaction', '--optimize-autoloader'], $log);
 
         $this->runProcess([PHP_BINARY, 'artisan', 'migrate', '--force', '--no-interaction'], $log);
 
@@ -68,6 +69,28 @@ class UpdateCmsJob
 
             throw new \RuntimeException($error);
         }
+    }
+
+    private function findComposer(): string
+    {
+        if ($configured = config('cms.composer_path')) {
+            return $configured;
+        }
+
+        $home = getenv('HOME') ?: '';
+
+        foreach ([
+            $home.'/.composer/vendor/bin/composer',
+            $home.'/.local/bin/composer',
+            '/usr/local/bin/composer',
+            '/usr/bin/composer',
+        ] as $path) {
+            if (file_exists($path) && is_executable($path)) {
+                return $path;
+            }
+        }
+
+        return 'composer';
     }
 
     private function findNpm(): string
