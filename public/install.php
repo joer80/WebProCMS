@@ -170,7 +170,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // 0a — Composer install (skipped if vendor/ already exists)
     if (! $failed && ! is_dir($appRoot.'/vendor') && ! installer_step('Installing PHP dependencies', function () use ($appRoot) {
         $composer = installer_find_composer();
-        $env = ['PATH' => dirname($composer).':'.(getenv('PATH') ?: '/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin')];
+        $env = ['PATH' => '/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:'.(getenv('PATH') ?: '')];
 
         return installer_run([$composer, 'install', '--no-dev', '--no-interaction', '--prefer-dist', '--optimize-autoloader'], $appRoot, $env);
     })) {
@@ -187,7 +187,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // 0c — npm build (skipped if public/build/ already exists)
     if (! $failed && ! is_dir($appRoot.'/public/build') && ! installer_step('Building frontend assets', function () use ($appRoot) {
         $npm = installer_find_npm();
-        $env = ['PATH' => dirname($npm).':'.(getenv('PATH') ?: '/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin')];
+        $env = ['PATH' => dirname($npm).':/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:'.(getenv('PATH') ?: '')];
 
         return installer_run([$npm, 'run', 'build'], $appRoot, $env);
     })) {
