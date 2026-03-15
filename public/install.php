@@ -395,7 +395,7 @@ npm run build</textarea>
     </div>
 </div>
 <hr class="divider">
-<p class="form-intro">Now fill in your site details below.</p>
+<p class="form-intro">Now fill in your site details below to generate your <code>.env</code> file, run migrations, and create your admin account.</p>
 <form method="POST" onsubmit="this.querySelector(\'.btn\').disabled=true;this.querySelector(\'.btn\').textContent=\'Installing…\'">
 
     <fieldset>
