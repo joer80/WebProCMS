@@ -7,6 +7,7 @@ use App\Models\Category;
 use App\Models\Location;
 use App\Models\Post;
 use App\Models\Setting;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Http;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
@@ -158,6 +159,57 @@ new #[Layout('layouts.app')] #[Title('Tools')] class extends Component {
         $this->dispatch('notify', message: 'Design Library synced successfully.');
     }
 
+    public string $artisanCommand = '';
+
+    public string $artisanOutput = '';
+
+    /** @var list<string> */
+    private array $blockedCommands = [
+        'migrate:fresh',
+        'migrate:reset',
+        'db:wipe',
+        'key:generate',
+        'down',
+    ];
+
+    public function runArtisan(): void
+    {
+        $input = trim(preg_replace('/^php\s+artisan\s+/i', '', $this->artisanCommand));
+
+        if ($input === '') {
+            $this->dispatch('notify', message: 'Please enter a command.');
+
+            return;
+        }
+
+        preg_match_all('/[^\s"\']+|"[^"]*"|\'[^\']*\'/', $input, $matches);
+        $tokens = array_map(fn ($t) => trim($t, '"\''), $matches[0]);
+        $commandName = array_shift($tokens);
+
+        if (in_array($commandName, $this->blockedCommands)) {
+            $this->artisanOutput = "Command '{$commandName}' is not permitted.";
+
+            return;
+        }
+
+        $parameters = [];
+        foreach ($tokens as $token) {
+            if (str_starts_with($token, '--')) {
+                [$key, $value] = array_pad(explode('=', $token, 2), 2, true);
+                $parameters[$key] = $value;
+            } else {
+                $parameters[] = $token;
+            }
+        }
+
+        try {
+            $exitCode = Artisan::call($commandName, $parameters);
+            $output = trim(Artisan::output());
+            $this->artisanOutput = ($output !== '' ? $output : '(No output)')."\n\nExit code: {$exitCode}";
+        } catch (\Throwable $e) {
+            $this->artisanOutput = 'Error: '.$e->getMessage();
+        }
+    }
 
 }; ?>
 
@@ -281,6 +333,22 @@ new #[Layout('layouts.app')] #[Title('Tools')] class extends Component {
                         Delete Demo Data
                     </flux:button>
                 </div>
+            </div>
+            <div class="rounded-lg border border-zinc-200 dark:border-zinc-700 p-6">
+                <flux:heading>Artisan Console</flux:heading>
+                <flux:text class="mt-1">Run an Artisan command on the server. Destructive commands (migrate:fresh, db:wipe, key:generate) are blocked.</flux:text>
+                <div class="mt-4 flex gap-2">
+                    <flux:input
+                        wire:model="artisanCommand"
+                        wire:keydown.enter="runArtisan"
+                        placeholder="e.g. migrate --force"
+                        class="font-mono"
+                    />
+                    <flux:button wire:click="runArtisan" variant="outline" class="shrink-0">Run</flux:button>
+                </div>
+                @if ($artisanOutput)
+                    <pre class="mt-3 text-xs bg-zinc-100 dark:bg-zinc-800 rounded p-3 overflow-x-auto whitespace-pre-wrap break-all">{{ $artisanOutput }}</pre>
+                @endif
             </div>
         </div>
     </flux:main>
