@@ -42,10 +42,7 @@
                             {{ __('Locations') }}
                         </flux:sidebar.item>
                     </flux:sidebar.group>
-                    <flux:sidebar.group expandable icon="wrench-screwdriver" heading="{{ __('Develop') }}" :expanded="request()->routeIs('dashboard.forms.*', 'dashboard.menus', 'dashboard.redirects', 'dashboard.users', 'dashboard.shortcodes.*', 'dashboard.snippets.*', 'dashboard.design-library.*', 'dashboard.tools', 'dashboard.templates', 'dashboard.content-types.*')" class="grid">
-                        <flux:sidebar.item icon="rectangle-group" :href="route('dashboard.content-types.index')" :current="request()->routeIs('dashboard.content-types.*')" wire:navigate>
-                            {{ __('Content Types') }}
-                        </flux:sidebar.item>
+                    <flux:sidebar.group expandable icon="adjustments-horizontal" heading="{{ __('Manage') }}" :expanded="request()->routeIs('dashboard.forms.*', 'dashboard.menus', 'dashboard.redirects', 'dashboard.users')" class="grid">
                         <flux:sidebar.item icon="document-check" :href="route('dashboard.forms.index')" :current="request()->routeIs('dashboard.forms.*')" wire:navigate>
                             {{ __('Forms') }}
                         </flux:sidebar.item>
@@ -57,6 +54,11 @@
                         </flux:sidebar.item>
                         <flux:sidebar.item icon="users" :href="route('dashboard.users')" :current="request()->routeIs('dashboard.users')" wire:navigate>
                             {{ __('Users') }}
+                        </flux:sidebar.item>
+                    </flux:sidebar.group>
+                    <flux:sidebar.group expandable icon="wrench-screwdriver" heading="{{ __('Develop') }}" :expanded="request()->routeIs('dashboard.shortcodes.*', 'dashboard.snippets.*', 'dashboard.design-library.*', 'dashboard.tools', 'dashboard.templates', 'dashboard.content-types.*')" class="grid">
+                        <flux:sidebar.item icon="rectangle-group" :href="route('dashboard.content-types.index')" :current="request()->routeIs('dashboard.content-types.*')" wire:navigate>
+                            {{ __('Content Types') }}
                         </flux:sidebar.item>
                         <flux:sidebar.item icon="code-bracket" :href="route('dashboard.shortcodes.index')" :current="request()->routeIs('dashboard.shortcodes.*')" wire:navigate>
                             {{ __('Shortcodes') }}
