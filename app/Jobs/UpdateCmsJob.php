@@ -77,15 +77,15 @@ class UpdateCmsJob
             return $configured;
         }
 
-        $home = getenv('HOME') ?: '';
+        $candidates = ['/usr/local/bin/composer', '/usr/bin/composer'];
 
-        foreach ([
-            $home.'/.composer/vendor/bin/composer',
-            $home.'/.local/bin/composer',
-            '/usr/local/bin/composer',
-            '/usr/bin/composer',
-        ] as $path) {
-            if (file_exists($path) && is_executable($path)) {
+        $home = getenv('HOME') ?: '';
+        if ($home !== '') {
+            array_unshift($candidates, $home.'/.local/bin/composer', $home.'/.composer/vendor/bin/composer');
+        }
+
+        foreach ($candidates as $path) {
+            if (@file_exists($path) && @is_executable($path)) {
                 return $path;
             }
         }
