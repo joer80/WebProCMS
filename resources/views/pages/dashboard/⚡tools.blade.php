@@ -1,6 +1,8 @@
 <?php
 
 use App\Jobs\IndexDesignLibraryJob;
+use App\Jobs\SeedDemoDataJob;
+use App\Jobs\UpdateCmsJob;
 use App\Models\Category;
 use App\Models\Location;
 use App\Models\Post;
@@ -103,7 +105,14 @@ new #[Layout('layouts.app')] #[Title('Tools')] class extends Component {
         Setting::set('update_status', 'running');
         Setting::set('update_log', '');
 
-        exec(PHP_BINARY.' '.base_path('artisan').' cms:update > /dev/null 2>&1 &');
+        defer(function () {
+            $job = new UpdateCmsJob;
+            try {
+                $job->handle();
+            } catch (\Throwable $e) {
+                $job->failed($e);
+            }
+        });
 
         unset($this->updateStatus, $this->updateLog);
 
@@ -130,7 +139,14 @@ new #[Layout('layouts.app')] #[Title('Tools')] class extends Component {
     {
         Setting::set('seeding_status', 'running');
 
-        exec(PHP_BINARY.' '.base_path('artisan').' cms:seed-demo > /dev/null 2>&1 &');
+        defer(function () {
+            $job = new SeedDemoDataJob;
+            try {
+                $job->handle();
+            } catch (\Throwable $e) {
+                $job->failed($e);
+            }
+        });
 
         $this->dispatch('notify', message: 'Seeding started — this may take a minute.');
     }
