@@ -209,11 +209,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $failed = true;
     }
 
-    // 0c — npm build (skipped if public/build/ already exists)
+    // 0c — npm install + build (skipped if public/build/ already exists)
     if (! $failed && ! is_dir($appRoot.'/public/build') && ! installer_step('Building frontend assets', function () use ($appRoot, $baseEnv) {
         $npm = installer_find_npm();
         $nodeBin = dirname($npm);
         $env = array_merge($baseEnv, ['PATH' => $nodeBin.':'.$appRoot.'/node_modules/.bin:'.$baseEnv['PATH']]);
+
+        installer_run(escapeshellarg($npm).' install', $appRoot, $env);
 
         return installer_run(escapeshellarg($npm).' run build', $appRoot, $env);
     })) {
