@@ -24,11 +24,14 @@ if (file_exists($envFile) && preg_match('/^APP_KEY=.+/m', file_get_contents($env
 
 function installer_run(array $command, string $cwd, array $env = []): string
 {
+    // Pass as a shell string so /bin/sh handles PATH resolution — proc_open with
+    // an array uses execve which requires an absolute path for the executable.
+    $shellCmd = implode(' ', array_map('escapeshellarg', $command));
     $descriptors = [0 => ['pipe', 'r'], 1 => ['pipe', 'w'], 2 => ['pipe', 'w']];
-    $process = proc_open($command, $descriptors, $pipes, $cwd, $env ?: null);
+    $process = proc_open($shellCmd, $descriptors, $pipes, $cwd, $env ?: null);
 
     if (! is_resource($process)) {
-        throw new \RuntimeException('Failed to start: '.implode(' ', $command));
+        throw new \RuntimeException('Failed to start process (proc_open returned false). Check PHP disabled_functions in RunCloud.');
     }
 
     fclose($pipes[0]);
