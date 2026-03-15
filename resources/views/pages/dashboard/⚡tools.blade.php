@@ -326,7 +326,7 @@ new #[Layout('layouts.app')] #[Title('Tools')] class extends Component {
                         @elseif ($this->updateStatus === 'complete')
                             <flux:text class="mt-2 text-sm text-green-600 dark:text-green-500">Update completed successfully.</flux:text>
                         @elseif ($this->updateStatus === 'failed')
-                            <flux:text class="mt-2 text-sm text-red-600 dark:text-red-400">Update failed. See the log below for details.</flux:text>
+                            <flux:text class="mt-2 text-sm text-red-600 dark:text-red-400">Update failed. See the log below for details. <button wire:click="resetUpdateStatus" class="underline">Dismiss</button></flux:text>
                         @elseif ($this->updateAvailable)
                             <flux:text class="mt-2 text-sm text-amber-600 dark:text-amber-400">A new version is available.</flux:text>
                             @if ($this->updateNotes)
