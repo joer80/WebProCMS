@@ -193,54 +193,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $baseEnv = installer_base_env();
     $php = installer_find_php();
 
-    // 0a — Composer install (skipped if vendor/ already exists)
-    if (! $failed && ! is_dir($appRoot.'/vendor') && ! installer_step('Installing PHP dependencies', function () use ($appRoot, $baseEnv) {
-        $composer = installer_find_composer();
-
-        return installer_run([$composer, 'install', '--no-dev', '--no-interaction', '--prefer-dist', '--optimize-autoloader'], $appRoot, $baseEnv);
-    })) {
-        $failed = true;
-    }
-
-    // 0b — Storage symlink
-    if (! $failed && ! installer_step('Creating storage symlink', function () use ($appRoot, $baseEnv, $php) {
-        installer_run([$php, 'artisan', 'storage:link', '--no-interaction'], $appRoot, $baseEnv);
-    })) {
-        $failed = true;
-    }
-
-    // 0c — npm install + build (skipped if public/build/ already exists)
-    if (! $failed && ! is_dir($appRoot.'/public/build') && ! installer_step('Building frontend assets', function () use ($appRoot, $baseEnv) {
-        $npm = installer_find_npm();
-        $nodeBin = dirname($npm);
-        $env = array_merge($baseEnv, ['PATH' => $nodeBin.':'.$appRoot.'/node_modules/.bin:'.$baseEnv['PATH']]);
-
-        // Check Node.js version — Vite requires Node 20.19+ or 22.12+
-        $nodeVersion = trim(installer_run('node --version', $appRoot, $env));
-        if (preg_match('/^v(\d+)\.(\d+)/', $nodeVersion, $m)) {
-            $major = (int) $m[1];
-            $minor = (int) $m[2];
-            $ok = ($major === 20 && $minor >= 19)
-                || ($major >= 22 && $minor >= 12)
-                || $major > 22;
-            if (! $ok) {
-                throw new \RuntimeException(
-                    "Node.js {$nodeVersion} is too old. Vite requires Node.js 20.19+ or 22.12+.\n\n".
-                    "Upgrade via SSH (Ubuntu):\n".
-                    "  curl -fsSL https://deb.nodesource.com/setup_22.x | sudo -E bash -\n".
-                    "  sudo apt-get install -y nodejs\n\n".
-                    'Then return here and submit the form again.'
-                );
-            }
-        }
-
-        installer_run(escapeshellarg($npm).' install', $appRoot, $env);
-
-        return installer_run(escapeshellarg($npm).' run build', $appRoot, $env);
-    })) {
-        $failed = true;
-    }
-
     // 1 — Copy .env
     if (! $failed && ! installer_step('Creating .env from template', function () use ($envFile, $envExample) {
         if (! file_exists($envExample)) {
@@ -405,7 +357,7 @@ echo installer_css().'<div class="card">
     </div>
 </div>
 <hr class="divider">
-<p class="tagline" style="margin-bottom:1.25rem">Complete these two steps in RunCloud before installing.</p>
+<p class="tagline" style="margin-bottom:1.25rem">Complete these three steps in RunCloud before installing.</p>
 <div class="prereqs">
     <div class="prereq">
         <div class="prereq-num">1</div>
@@ -422,6 +374,22 @@ echo installer_css().'<div class="card">
             <div class="fn-wrap">
                 <textarea id="fn-list" class="fn-list" readonly>'.htmlspecialchars($disabledFunctions).'</textarea>
                 <button type="button" class="fn-copy" onclick="navigator.clipboard.writeText(document.getElementById(\'fn-list\').value);this.textContent=\'Copied!\';setTimeout(()=>this.textContent=\'Copy\',2000)">Copy</button>
+            </div>
+        </div>
+    </div>
+    <div class="prereq">
+        <div class="prereq-num">3</div>
+        <div class="prereq-body">
+            <strong>Add a deployment script and redeploy</strong>
+            <p>Go to your web app &rarr; <strong>Deployment</strong> and paste the script below into the deployment script box. Then hit <strong>Deploy</strong> &mdash; this installs Composer dependencies and builds the frontend assets. Once it finishes, return here and fill out the form below.</p>
+            <div class="fn-wrap">
+                <textarea id="deploy-script" class="fn-list" style="height:6rem" readonly># Install PHP dependencies
+composer install --no-dev --no-interaction --prefer-dist --optimize-autoloader
+
+# Build frontend assets
+npm ci || npm install
+npm run build</textarea>
+                <button type="button" class="fn-copy" onclick="navigator.clipboard.writeText(document.getElementById(\'deploy-script\').value);this.textContent=\'Copied!\';setTimeout(()=>this.textContent=\'Copy\',2000)">Copy</button>
             </div>
         </div>
     </div>
