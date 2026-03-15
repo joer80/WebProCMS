@@ -215,6 +215,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $nodeBin = dirname($npm);
         $env = array_merge($baseEnv, ['PATH' => $nodeBin.':'.$appRoot.'/node_modules/.bin:'.$baseEnv['PATH']]);
 
+        // Check Node.js version — Vite requires Node 20.19+ or 22.12+
+        $nodeVersion = trim(installer_run('node --version', $appRoot, $env));
+        if (preg_match('/^v(\d+)\.(\d+)/', $nodeVersion, $m)) {
+            $major = (int) $m[1];
+            $minor = (int) $m[2];
+            $ok = ($major === 20 && $minor >= 19)
+                || ($major >= 22 && $minor >= 12)
+                || $major > 22;
+            if (! $ok) {
+                throw new \RuntimeException(
+                    "Node.js {$nodeVersion} is too old. Vite requires Node.js 20.19+ or 22.12+.\n\n".
+                    "Upgrade via SSH (Ubuntu):\n".
+                    "  curl -fsSL https://deb.nodesource.com/setup_22.x | sudo -E bash -\n".
+                    "  sudo apt-get install -y nodejs\n\n".
+                    'Then return here and submit the form again.'
+                );
+            }
+        }
+
         installer_run(escapeshellarg($npm).' install', $appRoot, $env);
 
         return installer_run(escapeshellarg($npm).' run build', $appRoot, $env);
@@ -362,7 +381,31 @@ $disabledFunctions = 'getmyuid,passthru,leak,listen,diskfreespace,tmpfile,link,s
 
 echo installer_css().'<div class="card">
 <div class="logo">WebProCMS</div>
-<p class="tagline">Complete these two steps in RunCloud before installing.</p>
+<p class="tagline">Select your hosting platform to get started.</p>
+<div class="platform-grid">
+    <div class="platform-card platform-card--active">
+        <div class="platform-check">&#10003;</div>
+        <div class="platform-name">RunCloud</div>
+        <div class="platform-desc">Managed server hosting</div>
+    </div>
+    <div class="platform-card platform-card--soon">
+        <div class="platform-soon-badge">Coming soon</div>
+        <div class="platform-name">Laravel Forge</div>
+        <div class="platform-desc">Server management by Laravel</div>
+    </div>
+    <div class="platform-card platform-card--soon">
+        <div class="platform-soon-badge">Coming soon</div>
+        <div class="platform-name">Ploi</div>
+        <div class="platform-desc">Simple server management</div>
+    </div>
+    <div class="platform-card platform-card--soon">
+        <div class="platform-soon-badge">Coming soon</div>
+        <div class="platform-name">More</div>
+        <div class="platform-desc">Additional platforms</div>
+    </div>
+</div>
+<hr class="divider">
+<p class="tagline" style="margin-bottom:1.25rem">Complete these two steps in RunCloud before installing.</p>
 <div class="prereqs">
     <div class="prereq">
         <div class="prereq-num">1</div>
@@ -549,6 +592,16 @@ a{color:#3B4A99;text-decoration:none}a:hover{text-decoration:underline}
 .fn-copy:hover{background:#2f3d80}
 .divider{border:none;border-top:1px solid #f1f5f9;margin:1.25rem 0}
 .form-intro{font-size:.875rem;color:#64748b;margin-bottom:1.25rem}
+/* platform picker */
+.platform-grid{display:grid;grid-template-columns:1fr 1fr;gap:.625rem;margin-bottom:1.25rem}
+.platform-card{position:relative;border:2px solid #e2e8f0;border-radius:10px;padding:.875rem 1rem;display:flex;flex-direction:column;gap:.2rem}
+.platform-card--active{border-color:#3B4A99;background:#f0f3ff}
+.platform-card--soon{opacity:.5;cursor:not-allowed}
+.platform-check{position:absolute;top:.5rem;right:.6rem;color:#3B4A99;font-weight:700;font-size:.85rem}
+.platform-soon-badge{position:absolute;top:.5rem;right:.5rem;font-size:.62rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;background:#e2e8f0;color:#64748b;border-radius:20px;padding:.15rem .5rem}
+.platform-name{font-size:.875rem;font-weight:600;color:#1e293b}
+.platform-card--soon .platform-name{color:#94a3b8}
+.platform-desc{font-size:.75rem;color:#94a3b8}
 </style>
 </head>
 <body>';
