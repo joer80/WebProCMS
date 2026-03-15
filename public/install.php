@@ -313,9 +313,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <div class="notice">
                 &#128161; In RunCloud, go to your web app &rarr; <strong>Settings</strong> and change the <strong>Application Stack</strong> to <strong>Laravel</strong>. This gives you one-click access to run Artisan commands directly from the RunCloud panel.
             </div>
-            <p class="redir">Redirecting in <span id="ct">5</span>s&hellip; <a href="'.$dashUrl.'">go now</a></p>
-        </div>
-        <script>let t=5;const el=document.getElementById("ct");const iv=setInterval(()=>{t--;el&&(el.textContent=t);t<=0&&(clearInterval(iv),location="'.$dashUrl.'")},1000);</script>';
+            <a href="'.$dashUrl.'" class="btn" style="display:block;text-align:center;text-decoration:none">Go to Dashboard &rarr;</a>
+        </div>';
     }
 
     echo '</div></body></html>';
