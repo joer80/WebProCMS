@@ -101,6 +101,16 @@ new #[Layout('layouts.app')] #[Title('Tools')] class extends Component {
             : 'You are on the latest version.');
     }
 
+    public function resetUpdateStatus(): void
+    {
+        Setting::set('update_status', 'idle');
+        Setting::set('update_log', '');
+
+        unset($this->updateStatus, $this->updateLog);
+
+        $this->dispatch('notify', message: 'Update status reset.');
+    }
+
     public function startUpdate(): void
     {
         Setting::set('update_status', 'running');
@@ -125,6 +135,21 @@ new #[Layout('layouts.app')] #[Title('Tools')] class extends Component {
         ResponseCache::clear();
 
         $this->dispatch('notify', message: 'Public cache cleared.');
+    }
+
+    public function optimizeClear(): void
+    {
+        defer(function () {
+            foreach (['config:clear', 'route:clear', 'view:clear', 'event:clear', 'cache:clear'] as $command) {
+                try {
+                    Artisan::call($command);
+                } catch (\Throwable) {
+                    // ignore missing files or other non-fatal errors per command
+                }
+            }
+        });
+
+        $this->dispatch('notify', message: 'Application caches cleared (config, route, view, events).');
     }
 
     public function deleteSeededDemoData(): void
@@ -236,6 +261,18 @@ new #[Layout('layouts.app')] #[Title('Tools')] class extends Component {
                 </div>
             </div>
 
+            <div class="rounded-lg border border-zinc-200 dark:border-zinc-700 p-6">
+                <div class="flex items-start justify-between gap-6">
+                    <div>
+                        <flux:heading>Application Cache</flux:heading>
+                        <flux:text class="mt-1">Clear all compiled application caches — config, routes, views, and events. Run this after deploying changes or if the app is serving stale config.</flux:text>
+                    </div>
+                    <flux:button wire:click="optimizeClear" variant="outline" class="shrink-0">
+                        Clear App Cache
+                    </flux:button>
+                </div>
+            </div>
+
             <div class="rounded-lg border border-zinc-200 dark:border-zinc-700 p-6" {{ $this->seedingStatus === 'running' ? 'wire:poll.3s' : '' }}>
                 <div class="flex items-start justify-between gap-6">
                     <div>
@@ -285,7 +322,7 @@ new #[Layout('layouts.app')] #[Title('Tools')] class extends Component {
                         </flux:text>
 
                         @if ($this->updateStatus === 'running')
-                            <flux:text class="mt-2 text-sm text-amber-600 dark:text-amber-400">Update in progress — this may take a minute...</flux:text>
+                            <flux:text class="mt-2 text-sm text-amber-600 dark:text-amber-400">Update in progress — this may take a minute... <button wire:click="resetUpdateStatus" class="underline">Reset</button></flux:text>
                         @elseif ($this->updateStatus === 'complete')
                             <flux:text class="mt-2 text-sm text-green-600 dark:text-green-500">Update completed successfully.</flux:text>
                         @elseif ($this->updateStatus === 'failed')
