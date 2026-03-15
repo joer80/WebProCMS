@@ -22,11 +22,11 @@ if (file_exists($envFile) && preg_match('/^APP_KEY=.+/m', file_get_contents($env
 // Helpers
 // ---------------------------------------------------------------------------
 
-function installer_run(array $command, string $cwd, array $env = []): string
+function installer_run(array|string $command, string $cwd, array $env = []): string
 {
     // Pass as a shell string so /bin/sh handles PATH resolution — proc_open with
     // an array uses execve which requires an absolute path for the executable.
-    $shellCmd = implode(' ', array_map('escapeshellarg', $command));
+    $shellCmd = is_string($command) ? $command : implode(' ', array_map('escapeshellarg', $command));
     $descriptors = [0 => ['pipe', 'r'], 1 => ['pipe', 'w'], 2 => ['pipe', 'w']];
     $process = proc_open($shellCmd, $descriptors, $pipes, $cwd, $env ?: null);
 
