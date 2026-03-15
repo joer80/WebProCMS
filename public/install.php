@@ -156,11 +156,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     $failed = false;
 
+    // Pre-flight — verify proc_open is available
+    if (! function_exists('proc_open')) {
+        echo '<div class="step"><div class="step-row"><span class="step-label"><span class="arr">▶</span> Checking server requirements</span><span class="badge err">✗ Failed</span></div>';
+        echo '<pre class="step-out err">proc_open is disabled in PHP. In RunCloud go to Server → PHP Settings → Disabled Functions, replace the list with the one shown on the previous page, save, then reload this page.</pre></div>';
+        echo '</div></div></body></html>';
+        exit;
+    }
+
     // 0a — Composer install (skipped if vendor/ already exists)
     if (! $failed && ! is_dir($appRoot.'/vendor') && ! installer_step('Installing PHP dependencies', function () use ($appRoot) {
         $composer = installer_find_composer();
+        $env = ['PATH' => dirname($composer).':'.(getenv('PATH') ?: '/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin')];
 
-        return installer_run([$composer, 'install', '--no-dev', '--no-interaction', '--prefer-dist', '--optimize-autoloader'], $appRoot);
+        return installer_run([$composer, 'install', '--no-dev', '--no-interaction', '--prefer-dist', '--optimize-autoloader'], $appRoot, $env);
     })) {
         $failed = true;
     }
