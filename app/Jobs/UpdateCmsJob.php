@@ -19,6 +19,8 @@ class UpdateCmsJob
 
         $this->runProcess([PHP_BINARY, 'artisan', 'migrate', '--force', '--no-interaction'], $log);
 
+        $this->runProcess([PHP_BINARY, 'artisan', 'design-library:index', '--no-interaction'], $log);
+
         $npm = $this->findNpm();
         $env = ['PATH' => dirname($npm).':'.(getenv('PATH') ?: '/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin')];
         $this->runProcess([$npm, 'run', 'build'], $log, $env);

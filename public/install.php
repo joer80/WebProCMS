@@ -279,7 +279,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $failed = true;
     }
 
-    // 7 — Optimize
+    // 7 — Index design library
+    if (! $failed && ! installer_step('Indexing design library', function () use ($appRoot, $baseEnv, $php) {
+        return installer_run([$php, 'artisan', 'design-library:index', '--no-interaction'], $appRoot, $baseEnv);
+    })) {
+        $failed = true;
+    }
+
+    // 9 — Optimize
     if (! $failed && ! installer_step('Caching config and routes', function () use ($appRoot, $baseEnv, $php) {
         return installer_run([$php, 'artisan', 'optimize', '--no-interaction'], $appRoot, $baseEnv);
     })) {
