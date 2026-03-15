@@ -22,7 +22,7 @@ $logoSrc = $customImage ?: \App\Models\Setting::get('branding.logo_url', '');
     @if($logoSrc)
         <img src="{{ $logoSrc }}" alt="{{ $imageAlt }}" class="{{ $imgClasses }}">
     @else
-        <span class="{{ $imgClasses }}">{{ $imageAlt }}</span>
+        <span class="{{ $imgClasses }}">Business Name</span>
     @endif
 </a>
 @endif
