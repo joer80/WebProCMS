@@ -73,11 +73,11 @@ This single command starts everything you need for development:
 | Process | What it does |
 |---|---|
 | `php artisan serve` | PHP dev server (Herd already handles this — it runs but is redundant) |
-| `php artisan queue:listen` | **Required** — processes background jobs (demo data seeding, etc.) |
+| `php artisan queue:listen` | **Optional** — only needed if you have custom queued jobs; CMS Update and Seed Demo Data run as detached background processes and do not require a queue worker |
 | `php artisan pail` | Streams application logs to the terminal |
 | `npm run dev` | Vite asset watcher with hot-reload |
 
-> **Do not run `npm run dev` on its own.** Without the queue worker, background jobs like seeding will be dispatched but never processed — they'll silently pile up in the database. Always use `composer run dev` so all four processes run together.
+> `composer run dev` starts all four processes together including the queue listener. If you don't need the queue, you can run the other processes individually instead.
 
 > **Laravel Boost (`php artisan boost:install --guidelines --skills`):** This command is only needed when setting up a brand-new project. Since this repository already includes the `CLAUDE.md` guidelines and skills files, you do **not** need to run it when cloning.
 
@@ -101,9 +101,11 @@ php artisan optimize
 > php artisan optimize
 > ```
 
-### Queue Worker (Required)
+### Queue Worker (Optional)
 
-Forge does **not** start a queue worker automatically. Without one, background jobs (like the Settings page seed) will be dispatched but never processed.
+A queue worker is **not required** for core CMS functionality. The CMS Update and Seed Demo Data features run as detached background processes (`exec`) and work without a queue worker.
+
+If you have custom queued jobs in your application, Forge does **not** start a queue worker automatically. To add one:
 
 1. In Forge, go to your **site → Processes** tab
 2. Click **New Background Process**
@@ -123,7 +125,7 @@ There are no auto-deploy webhooks — updates only happen when the site owner cl
 
 1. Click **Check for Updates** — makes an HTTP request to `CMS_RELEASES_API_URL` and compares the returned version against the local `VERSION` file
 2. If a newer version is available, **Update Now** appears
-3. Clicking it dispatches `UpdateCmsJob` (queued), which runs:
+3. Clicking it runs `UpdateCmsJob` as a detached background process (no queue worker required), which:
    - `git fetch origin <CMS_GIT_BRANCH>` + `git merge --ff-only` (safe — fails cleanly if histories have diverged)
    - `composer install --no-dev --optimize-autoloader`
    - `php artisan migrate --force`
@@ -143,7 +145,7 @@ CMS_GIT_BRANCH=main
 
 The releases API must return JSON with a `version` key (e.g. `"1.0.1"`) and optional `notes` key. The GitHub Releases API format is also supported — the `v` prefix on `tag_name` is stripped automatically.
 
-> **Requires the queue worker to be running.** The update job is dispatched to the queue — without a worker, clicking "Update Now" will dispatch the job but it will never execute.
+> The update runs as a detached background process — no queue worker required. Node.js and npm must be installed on the server for the `npm run build` step.
 
 #### Releasing a new version
 
@@ -277,14 +279,12 @@ npm run build
 
 The installer handles: SSL check, `.env` configuration, database setup, migrations, and redirecting you to the dashboard.
 
-#### Queue worker (required)
+#### Queue worker (optional)
 
-In RunCloud, go to your **web app → Supervisor** and add a queue worker:
+A queue worker is **not required** for core CMS functionality. If you have custom queued jobs, add one via **web app → Supervisor**:
 
 - **Command:** `php /path/to/your/app/artisan queue:work --sleep=3 --tries=3 --timeout=300`
 - **Auto-restart:** enabled
-
-Without a queue worker, the CMS Update button and on-save asset rebuilds will dispatch jobs that are never processed.
 
 ### Production Nginx Configuration
 
@@ -307,7 +307,7 @@ location ~* ^/build/ {
 
 | Command | Description |
 |---|---|
-| `composer run dev` | Start the dev server (Vite + queue + logs) |
+| `composer run dev` | Start the dev server (Vite + optional queue listener + logs) |
 | `npm run dev` | Start Vite asset watcher only |
 | `npm run build` | Build all asset bundles (app, public, editor) |
 | `npm run build:public` | Build the public bundle only — faster; used by the page editor on save |

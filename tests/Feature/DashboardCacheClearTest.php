@@ -1,13 +1,11 @@
 <?php
 
 use App\Enums\Role;
-use App\Jobs\SeedDemoDataJob;
 use App\Models\Category;
 use App\Models\Location;
 use App\Models\Post;
 use App\Models\Setting;
 use App\Models\User;
-use Illuminate\Support\Facades\Queue;
 use Livewire\Livewire;
 use Spatie\ResponseCache\Facades\ResponseCache;
 
@@ -58,9 +56,7 @@ it('deletes only seeded posts, locations, and categories and dispatches a notifi
     expect(Category::find($manualCategory->id))->not->toBeNull();
 });
 
-it('dispatches the seed demo data job and notifies', function (): void {
-    Queue::fake();
-
+it('sets seeding status to running and notifies when seed data is triggered', function (): void {
     $user = User::factory()->create();
 
     Livewire::actingAs($user)
@@ -68,6 +64,5 @@ it('dispatches the seed demo data job and notifies', function (): void {
         ->call('seedDemoData')
         ->assertDispatched('notify', message: 'Seeding started — this may take a minute.');
 
-    Queue::assertPushed(SeedDemoDataJob::class);
     expect(Setting::get('seeding_status'))->toBe('running');
 });

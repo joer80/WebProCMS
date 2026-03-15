@@ -40,7 +40,7 @@ return [
     | Example: https://api.github.com/repos/your-org/webprocms/releases/latest
     |
     */
-    'releases_api_url' => env('CMS_RELEASES_API_URL', ''),
+    'releases_api_url' => env('CMS_RELEASES_API_URL', 'https://api.github.com/repos/joer80/WebProCMS/releases/latest'),
 
     /*
     |--------------------------------------------------------------------------

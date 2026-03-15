@@ -3,19 +3,10 @@
 namespace App\Jobs;
 
 use App\Models\Setting;
-use Illuminate\Contracts\Queue\ShouldBeUnique;
-use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Foundation\Queue\Queueable;
 use Symfony\Component\Process\Process;
 
-class UpdateCmsJob implements ShouldBeUnique, ShouldQueue
+class UpdateCmsJob
 {
-    use Queueable;
-
-    public int $uniqueFor = 300;
-
-    public int $timeout = 300;
-
     public function handle(): void
     {
         $log = [];

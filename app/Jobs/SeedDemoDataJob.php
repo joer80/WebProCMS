@@ -5,14 +5,10 @@ namespace App\Jobs;
 use App\Models\Location;
 use App\Models\Post;
 use App\Models\Setting;
-use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\Artisan;
 
-class SeedDemoDataJob implements ShouldQueue
+class SeedDemoDataJob
 {
-    use Queueable;
-
     public function handle(): void
     {
         if (! Post::query()->where('is_seeded', true)->exists()) {
