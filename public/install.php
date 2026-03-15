@@ -48,6 +48,29 @@ function installer_run(array $command, string $cwd, array $env = []): string
     return trim($output);
 }
 
+function installer_base_env(): array
+{
+    $home = getenv('HOME') ?: '/tmp';
+
+    return [
+        'PATH' => '/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:'.(getenv('PATH') ?: ''),
+        'HOME' => $home,
+        'COMPOSER_HOME' => $home.'/.composer',
+    ];
+}
+
+function installer_find_php(): string
+{
+    // PHP_BINARY in FPM points to the FPM binary, not the CLI — find the CLI instead.
+    foreach (['/usr/bin/php', '/usr/local/bin/php'] as $path) {
+        if (is_executable($path)) {
+            return $path;
+        }
+    }
+
+    return 'php';
+}
+
 function installer_find_composer(): string
 {
     foreach (['/usr/local/bin/composer', '/usr/bin/composer'] as $path) {
@@ -167,31 +190,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         exit;
     }
 
-    // 0a — Composer install (skipped if vendor/ already exists)
-    if (! $failed && ! is_dir($appRoot.'/vendor') && ! installer_step('Installing PHP dependencies', function () use ($appRoot) {
-        $composer = installer_find_composer();
-        $env = [
-            'PATH' => '/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:'.(getenv('PATH') ?: ''),
-            'HOME' => getenv('HOME') ?: '/tmp',
-            'COMPOSER_HOME' => getenv('HOME') ? getenv('HOME').'/.composer' : '/tmp/.composer',
-        ];
+    $baseEnv = installer_base_env();
+    $php = installer_find_php();
 
-        return installer_run([$composer, 'install', '--no-dev', '--no-interaction', '--prefer-dist', '--optimize-autoloader'], $appRoot, $env);
+    // 0a — Composer install (skipped if vendor/ already exists)
+    if (! $failed && ! is_dir($appRoot.'/vendor') && ! installer_step('Installing PHP dependencies', function () use ($appRoot, $baseEnv) {
+        $composer = installer_find_composer();
+
+        return installer_run([$composer, 'install', '--no-dev', '--no-interaction', '--prefer-dist', '--optimize-autoloader'], $appRoot, $baseEnv);
     })) {
         $failed = true;
     }
 
     // 0b — Storage symlink
-    if (! $failed && ! installer_step('Creating storage symlink', function () use ($appRoot) {
-        installer_run([PHP_BINARY, 'artisan', 'storage:link', '--no-interaction'], $appRoot);
+    if (! $failed && ! installer_step('Creating storage symlink', function () use ($appRoot, $baseEnv, $php) {
+        installer_run([$php, 'artisan', 'storage:link', '--no-interaction'], $appRoot, $baseEnv);
     })) {
         $failed = true;
     }
 
     // 0c — npm build (skipped if public/build/ already exists)
-    if (! $failed && ! is_dir($appRoot.'/public/build') && ! installer_step('Building frontend assets', function () use ($appRoot) {
+    if (! $failed && ! is_dir($appRoot.'/public/build') && ! installer_step('Building frontend assets', function () use ($appRoot, $baseEnv) {
         $npm = installer_find_npm();
-        $env = ['PATH' => dirname($npm).':/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:'.(getenv('PATH') ?: '')];
+        $env = array_merge($baseEnv, ['PATH' => dirname($npm).':'.$baseEnv['PATH']]);
 
         return installer_run([$npm, 'run', 'build'], $appRoot, $env);
     })) {
@@ -235,8 +256,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     // 3 — Generate app key
-    if (! $failed && ! installer_step('Generating application key', function () use ($appRoot) {
-        installer_run([PHP_BINARY, 'artisan', 'key:generate', '--force'], $appRoot);
+    if (! $failed && ! installer_step('Generating application key', function () use ($appRoot, $baseEnv, $php) {
+        installer_run([$php, 'artisan', 'key:generate', '--force'], $appRoot, $baseEnv);
     })) {
         $failed = true;
     }
@@ -271,22 +292,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     // 5 — Migrate
-    if (! $failed && ! installer_step('Running database migrations', function () use ($appRoot) {
-        return installer_run([PHP_BINARY, 'artisan', 'migrate', '--force', '--no-interaction'], $appRoot);
+    if (! $failed && ! installer_step('Running database migrations', function () use ($appRoot, $baseEnv, $php) {
+        return installer_run([$php, 'artisan', 'migrate', '--force', '--no-interaction'], $appRoot, $baseEnv);
     })) {
         $failed = true;
     }
 
     // 6 — Seed (optional)
-    if (! $failed && $seedDemo && ! installer_step('Seeding demo content', function () use ($appRoot) {
-        return installer_run([PHP_BINARY, 'artisan', 'db:seed', '--no-interaction'], $appRoot);
+    if (! $failed && $seedDemo && ! installer_step('Seeding demo content', function () use ($appRoot, $baseEnv, $php) {
+        return installer_run([$php, 'artisan', 'db:seed', '--no-interaction'], $appRoot, $baseEnv);
     })) {
         $failed = true;
     }
 
     // 7 — Optimize
-    if (! $failed && ! installer_step('Caching config and routes', function () use ($appRoot) {
-        return installer_run([PHP_BINARY, 'artisan', 'optimize', '--no-interaction'], $appRoot);
+    if (! $failed && ! installer_step('Caching config and routes', function () use ($appRoot, $baseEnv, $php) {
+        return installer_run([$php, 'artisan', 'optimize', '--no-interaction'], $appRoot, $baseEnv);
     })) {
         $failed = true;
     }
