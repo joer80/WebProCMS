@@ -22,10 +22,10 @@ if (file_exists($envFile) && preg_match('/^APP_KEY=.+/m', file_get_contents($env
 // Helpers
 // ---------------------------------------------------------------------------
 
-function installer_run(array $command, string $cwd): string
+function installer_run(array $command, string $cwd, array $env = []): string
 {
     $descriptors = [0 => ['pipe', 'r'], 1 => ['pipe', 'w'], 2 => ['pipe', 'w']];
-    $process = proc_open($command, $descriptors, $pipes, $cwd);
+    $process = proc_open($command, $descriptors, $pipes, $cwd, $env ?: null);
 
     if (! is_resource($process)) {
         throw new \RuntimeException('Failed to start: '.implode(' ', $command));
@@ -43,6 +43,36 @@ function installer_run(array $command, string $cwd): string
     }
 
     return trim($output);
+}
+
+function installer_find_composer(): string
+{
+    foreach (['/usr/local/bin/composer', '/usr/bin/composer'] as $path) {
+        if (file_exists($path)) {
+            return $path;
+        }
+    }
+
+    return 'composer';
+}
+
+function installer_find_npm(): string
+{
+    $home = getenv('HOME') ?: '';
+
+    foreach ([
+        $home.'/Library/Application Support/Herd/config/nvm/versions/node/*/bin/npm',
+        $home.'/.nvm/versions/node/*/bin/npm',
+        '/usr/local/bin/npm',
+        '/usr/bin/npm',
+    ] as $pattern) {
+        $matches = glob($pattern);
+        if (! empty($matches)) {
+            return end($matches);
+        }
+    }
+
+    return 'npm';
 }
 
 function installer_set_env(string $file, string $key, string $value): void
@@ -125,6 +155,32 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     flush();
 
     $failed = false;
+
+    // 0a — Composer install (skipped if vendor/ already exists)
+    if (! $failed && ! is_dir($appRoot.'/vendor') && ! installer_step('Installing PHP dependencies', function () use ($appRoot) {
+        $composer = installer_find_composer();
+
+        return installer_run([$composer, 'install', '--no-dev', '--no-interaction', '--prefer-dist', '--optimize-autoloader'], $appRoot);
+    })) {
+        $failed = true;
+    }
+
+    // 0b — Storage symlink
+    if (! $failed && ! installer_step('Creating storage symlink', function () use ($appRoot) {
+        installer_run([PHP_BINARY, 'artisan', 'storage:link', '--no-interaction'], $appRoot);
+    })) {
+        $failed = true;
+    }
+
+    // 0c — npm build (skipped if public/build/ already exists)
+    if (! $failed && ! is_dir($appRoot.'/public/build') && ! installer_step('Building frontend assets', function () use ($appRoot) {
+        $npm = installer_find_npm();
+        $env = ['PATH' => dirname($npm).':'.(getenv('PATH') ?: '/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin')];
+
+        return installer_run([$npm, 'run', 'build'], $appRoot, $env);
+    })) {
+        $failed = true;
+    }
 
     // 1 — Copy .env
     if (! $failed && ! installer_step('Creating .env from template', function () use ($envFile, $envExample) {
@@ -259,9 +315,33 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 $proto = (! empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
 $defaultUrl = $proto.'://'.($_SERVER['HTTP_HOST'] ?? 'localhost');
 
+$disabledFunctions = 'getmyuid,passthru,leak,listen,diskfreespace,tmpfile,link,shell_exec,dl,exec,system,highlight_file,source,show_source,fpassthru,virtual,posix_ctermid,posix_getcwd,posix_getegid,posix_geteuid,posix_getgid,posix_getgrgid,posix_getgrnam,posix_getgroups,posix_getlogin,posix_getpgid,posix_getpgrp,posix_getpid,posix_getppid,posix_getpwuid,posix_getrlimit,posix_getsid,posix_getuid,posix_isatty,posix_kill,posix_mkfifo,posix_setegid,posix_seteuid,posix_setgid,posix_setpgid,posix_setsid,posix_setuid,posix_times,posix_ttyname,posix_uname,pcntl_exec,socket_accept,socket_bind,socket_clear_error,socket_close,socket_connect,posix_geteuid,ini_alter,socket_listen,socket_create_listen,socket_read,socket_create_pair,stream_socket_server,escapeshellcmd,ini_alter,popen,symlink';
+
 echo installer_css().'<div class="card">
 <div class="logo">WebProCMS</div>
-<p class="tagline">Let\'s get your site set up.</p>
+<p class="tagline">Complete these two steps in RunCloud before installing.</p>
+<div class="prereqs">
+    <div class="prereq">
+        <div class="prereq-num">1</div>
+        <div class="prereq-body">
+            <strong>Issue your SSL certificate</strong>
+            <p>Go to your web app &rarr; <strong>SSL/TLS</strong> and issue a Let&rsquo;s Encrypt certificate. The installer sets <code>APP_URL</code> to <code>https://</code> &mdash; without SSL the redirect to the dashboard will fail.</p>
+        </div>
+    </div>
+    <div class="prereq">
+        <div class="prereq-num">2</div>
+        <div class="prereq-body">
+            <strong>Update PHP disabled functions</strong>
+            <p>Go to <strong>Server &rarr; PHP Settings &rarr; Disabled Functions</strong> and replace the entire list with the one below. This removes the functions WebProCMS requires (<code>proc_open</code>, <code>set_time_limit</code>, <code>ignore_user_abort</code>) while keeping dangerous ones blocked.</p>
+            <div class="fn-wrap">
+                <textarea id="fn-list" class="fn-list" readonly>'.htmlspecialchars($disabledFunctions).'</textarea>
+                <button type="button" class="fn-copy" onclick="navigator.clipboard.writeText(document.getElementById(\'fn-list\').value);this.textContent=\'Copied!\';setTimeout(()=>this.textContent=\'Copy\',2000)">Copy</button>
+            </div>
+        </div>
+    </div>
+</div>
+<hr class="divider">
+<p class="form-intro">Now fill in your site details below.</p>
 <form method="POST" onsubmit="this.querySelector(\'.btn\').disabled=true;this.querySelector(\'.btn\').textContent=\'Installing…\'">
 
     <fieldset>
@@ -412,6 +492,20 @@ input:focus{border-color:#2563eb;box-shadow:0 0 0 3px rgba(37,99,235,.1)}
 .notice{background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:.75rem 1rem;font-size:.82rem;color:#92400e;margin-bottom:1rem;text-align:left}
 .redir{font-size:.85rem;color:#64748b}
 a{color:#2563eb;text-decoration:none}a:hover{text-decoration:underline}
+/* prereqs */
+.prereqs{display:flex;flex-direction:column;gap:.875rem;margin-bottom:1.25rem}
+.prereq{display:flex;gap:.875rem;align-items:flex-start}
+.prereq-num{flex-shrink:0;width:1.75rem;height:1.75rem;background:#2563eb;color:#fff;border-radius:50%;font-size:.8rem;font-weight:700;display:flex;align-items:center;justify-content:center;margin-top:.1rem}
+.prereq-body{flex:1;font-size:.875rem;color:#374151}
+.prereq-body strong{display:block;font-weight:600;margin-bottom:.25rem}
+.prereq-body p{color:#64748b;font-size:.82rem;line-height:1.5;margin-bottom:.5rem}
+.prereq-body code{font-family:ui-monospace,monospace;font-size:.78rem;background:#f1f5f9;padding:.1em .35em;border-radius:4px}
+.fn-wrap{position:relative}
+.fn-list{width:100%;height:3.5rem;font-family:ui-monospace,monospace;font-size:.7rem;color:#475569;background:#f8fafc;border:1.5px solid #e2e8f0;border-radius:8px;padding:.5rem .75rem;resize:none;overflow-y:auto;padding-right:4.5rem}
+.fn-copy{position:absolute;top:.4rem;right:.4rem;padding:.25rem .65rem;background:#2563eb;color:#fff;border:none;border-radius:6px;font-size:.72rem;font-weight:600;cursor:pointer}
+.fn-copy:hover{background:#1d4ed8}
+.divider{border:none;border-top:1px solid #f1f5f9;margin:1.25rem 0}
+.form-intro{font-size:.875rem;color:#64748b;margin-bottom:1.25rem}
 </style>
 </head>
 <body>';

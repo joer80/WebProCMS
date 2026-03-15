@@ -257,26 +257,13 @@ RunCloud supports deploying directly from a GitHub repository. Since WebProCMS i
 
 1. In RunCloud, create a new **Web Application** and go to **Git Repository**
 2. Enter the repository URL: `https://github.com/joer80/WebProCMS.git`
-3. Leave the **Deploy Key** field blank (not needed for public repos)
-4. Set your deployment script to:
+3. Branch: `main`
+4. Leave the **Deploy Key** field blank (not needed for public repos)
+5. Set the **Public Path** to `/public`
+6. Hit **Deploy** — RunCloud will download the repository files
+7. Visit your domain — the installer will appear automatically
 
-```bash
-git merge
-
-composer install --no-dev --no-interaction --prefer-dist --optimize-autoloader
-
-npm ci || npm install
-npm run build
-
-php artisan storage:link
-```
-
-> **Do not add `php artisan migrate`, `key:generate`, or `optimize` to the deployment script.** The `.env` file doesn't exist yet when the script runs — those commands will fail. The web installer handles all of that.
-
-5. Deploy the application
-6. Visit your domain — the installer will appear automatically
-
-The installer walks through site name, database setup (SQLite or MySQL), admin email, and optional demo content. It then runs `key:generate`, `migrate`, and `optimize` for you and redirects to the dashboard.
+The installer handles everything from there: it installs Composer dependencies, builds frontend assets, configures your `.env`, sets up the database, runs migrations, and redirects you to the dashboard. No deployment script required.
 
 #### Queue worker (required)
 
