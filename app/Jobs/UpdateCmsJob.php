@@ -13,6 +13,12 @@ class UpdateCmsJob
 
         $branch = config('cms.git_branch', 'main');
         $this->runProcess(['git', 'fetch', 'origin', $branch], $log);
+
+        // Reset tracked build assets before merging — the server modifies manifest.json
+        // at runtime (page editor CSS rebuilds), which would block a ff-only merge.
+        // The build:public step below immediately regenerates the correct public entries.
+        $this->runProcess(['git', 'checkout', '--', 'public/build/'], $log);
+
         $this->runProcess(['git', 'merge', '--ff-only', 'origin/'.$branch], $log);
 
         $fullPath = '/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:'.(getenv('PATH') ?: '');
@@ -62,11 +68,12 @@ class UpdateCmsJob
         $nodeOptions = '--disable-wasm-trap-handler --max-semi-space-size=4 --max-old-space-size=1500';
         $nodeEnv = array_merge(getenv() ?: [], ['PATH' => $npmPath]);
 
-        foreach (['build:app', 'build:editor', 'build:public'] as $buildScript) {
-            $buildCmd = "cd {$dirEscaped} && NODE_OPTIONS=".escapeshellarg($nodeOptions)." {$npmEscaped} run {$buildScript}";
-            $systemdCmd = 'systemd-run --scope --quiet bash -c '.escapeshellarg($buildCmd).' 2>/dev/null || bash -c '.escapeshellarg($buildCmd);
-            $this->runProcess(['bash', '-c', $systemdCmd], $log, $nodeEnv);
-        }
+        // App and editor bundles are pre-built and committed to git — only the
+        // public bundle needs rebuilding to pick up any new Tailwind classes used
+        // in updated rows or components.
+        $buildCmd = "cd {$dirEscaped} && NODE_OPTIONS=".escapeshellarg($nodeOptions)." {$npmEscaped} run build:public";
+        $systemdCmd = 'systemd-run --scope --quiet bash -c '.escapeshellarg($buildCmd).' 2>/dev/null || bash -c '.escapeshellarg($buildCmd);
+        $this->runProcess(['bash', '-c', $systemdCmd], $log, $nodeEnv);
 
         if (! app()->isLocal()) {
             $this->runProcess([$phpCli, 'artisan', 'optimize', '--no-interaction'], $log);
