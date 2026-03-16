@@ -258,7 +258,7 @@ Without this step, visitors will see broken styles after every deployment until 
 
 ### Deploying with RunCloud
 
-RunCloud supports deploying directly from a GitHub repository. Since WebProCMS is a public repo, no deploy key is required — leave the field blank.
+RunCloud supports deploying directly from a GitHub repository. Since WebProCMS is a public repo, no deploy key is required — you can ignore that field.
 
 #### Initial setup
 
@@ -302,6 +302,22 @@ location ~* ^/build/ {
     add_header Cache-Control "public, max-age=15552000, immutable";
     access_log off;
 }
+```
+
+### Production LiteSpeed Configuration (RunCloud)
+
+If you're using RunCloud with OpenLiteSpeed, add the following to your site's `.htaccess` file. This caches Vite-built assets in the browser for 6 months — safe because Vite generates content-hashed filenames that change whenever the file changes.
+
+In RunCloud, go to **Web Apps → your app → .htaccess Editor** and add:
+
+```apache
+<IfModule mod_expires.c>
+    ExpiresActive On
+    <FilesMatch "^build/">
+        ExpiresDefault "access plus 6 months"
+        Header set Cache-Control "public, max-age=15552000, immutable"
+    </FilesMatch>
+</IfModule>
 ```
 
 ---
