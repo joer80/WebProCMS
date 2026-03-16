@@ -59,7 +59,7 @@ class UpdateCmsJob
         // scavenge cycle promotes only a small batch — avoids the "young object
         // promotion failed" OOM that occurs when the semi-space evacuation needs
         // a large contiguous block in a memory-constrained cgroup.
-        $nodeOptions = '--disable-wasm-trap-handler --max-semi-space-size=4';
+        $nodeOptions = '--disable-wasm-trap-handler --max-semi-space-size=4 --max-old-space-size=1500';
         $nodeEnv = array_merge(getenv() ?: [], ['PATH' => $npmPath]);
 
         foreach (['build:app', 'build:editor', 'build:public'] as $buildScript) {
