@@ -21,3 +21,14 @@ yarn-error.log
 /.vscode
 /.zed
 /resources/views/pages/_editor-previews/
+
+# Client-editable pages — not tracked so client edits survive git deploys.
+# Installed from resources/stubs/pages/ via ClientPageSeeder on fresh deploy.
+/resources/views/pages/⚡home.blade.php
+/resources/views/pages/⚡about.blade.php
+/resources/views/pages/⚡contact.blade.php
+/resources/views/pages/⚡locations.blade.php
+/resources/views/pages/⚡services.blade.php
+/resources/views/pages/⚡404.blade.php
+/resources/views/pages/blog/⚡index.blade.php
+/resources/views/pages/blog/⚡show.blade.php

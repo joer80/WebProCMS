@@ -63,7 +63,9 @@
       "Read(//tmp/**)",
       "Bash(\"/Users/joepersonal/Library/Application Support/Herd/config/nvm/versions/node/v22.22.0/bin/npm\" run build:public)",
       "Read(//opt/homebrew/bin/**)",
-      "Read(//usr/local/bin/**)"
+      "Read(//usr/local/bin/**)",
+      "Bash(sed -i '' 's/return \\\\\\\\App\\\\\\\\Support\\\\\\\\ShortcodeProcessor::process\\(\\\\$this->post->content\\);/\\\\/\\\\/ Content is HTML \\(from the rich text editor\\) — use processRaw so tags are not escaped.\\\\n    return \\\\\\\\App\\\\\\\\Support\\\\\\\\ShortcodeProcessor::processRaw\\($this->post->content\\);/' /Users/joepersonal/Sites/WebProCMS/resources/design-library/rows/blog-detail/blog-post-article.blade.php)",
+      "Bash(sed -i '' 's/default-classes=\"\"leading-relaxed text-zinc-900 dark:text-zinc-100 whitespace-pre-wrap\"\"/default-classes=\"\"leading-relaxed text-zinc-900 dark:text-zinc-100 blog-content\"\"/' /Users/joepersonal/Sites/WebProCMS/resources/design-library/rows/blog-detail/blog-post-article.blade.php)"
     ]
   },
   "defaultMode": "acceptEdits"

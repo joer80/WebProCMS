@@ -2754,14 +2754,6 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
             </div>
         </div>
 
-        @if (! app()->isLocal())
-            <div class="px-6 pt-4">
-                <flux:callout variant="warning">
-                    <flux:callout.heading>Production environment</flux:callout.heading>
-                    <flux:callout.text>Saving will write directly to the blade file on disk. Changes will be lost on next deployment unless committed to git.</flux:callout.text>
-                </flux:callout>
-            </div>
-        @endif
 
         @if (! $file)
             <div class="flex items-center justify-center h-96 text-zinc-500 dark:text-zinc-400">

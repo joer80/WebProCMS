@@ -109,7 +109,7 @@
         @endif
 
         <x-dl.wrapper slug="__SLUG__" prefix="article_content"
-            default-classes="leading-relaxed text-zinc-900 dark:text-zinc-100 whitespace-pre-wrap">
+            default-classes="leading-relaxed text-zinc-900 dark:text-zinc-100 blog-content">
             {!! $this->processedContent ?? '' !!}
         </x-dl.wrapper>
 
@@ -211,7 +211,8 @@ public function title(): string
 
 public function getProcessedContentProperty(): string
 {
-    return \App\Support\ShortcodeProcessor::process($this->post->content);
+    // Content is HTML (from the rich text editor) — use processRaw so tags are not escaped.
+    return \App\Support\ShortcodeProcessor::processRaw($this->post->content);
 }
 
 public function getProcessedExcerptProperty(): ?string

@@ -17,6 +17,8 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
+        $this->call(ClientPageSeeder::class);
+
         $categories = collect(['General', 'News', 'Events'])->map(
             fn (string $name) => Category::firstOrCreate(['name' => $name], ['is_seeded' => true])
         );

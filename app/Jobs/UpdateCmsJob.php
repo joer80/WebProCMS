@@ -49,7 +49,10 @@ class UpdateCmsJob
 
         $this->runProcess([$phpCli, 'artisan', 'migrate', '--force', '--no-interaction'], $log);
 
+        // Index design library first so ClientPageSeeder can pull templates from it.
         $this->runProcess([$phpCli, 'artisan', 'design-library:index', '--no-interaction'], $log);
+
+        $this->runProcess([$phpCli, 'artisan', 'db:seed', '--class=ClientPageSeeder', '--force', '--no-interaction'], $log);
 
         $npm = $this->findNpm();
         $npmPath = dirname($npm).':'.(getenv('PATH') ?: '/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin');
