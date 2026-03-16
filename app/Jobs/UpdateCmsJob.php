@@ -46,11 +46,21 @@ class UpdateCmsJob
         $this->runProcess([$phpCli, 'artisan', 'design-library:index', '--no-interaction'], $log);
 
         $npm = $this->findNpm();
-        $env = [
-            'PATH' => dirname($npm).':'.(getenv('PATH') ?: '/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin'),
-            'NODE_OPTIONS' => '--disable-wasm-trap-handler --max-old-space-size=512',
-        ];
-        $this->runProcess([$npm, 'run', 'build'], $log, $env);
+        // Merge current env so Node has HOME, USER, TMPDIR, etc.
+        // Lift the virtual-address-space soft limit before spawning Node — PHP-FPM
+        // workers inherit a low rlimit_as that causes malloc to fail for tiny
+        // allocations inside Node's startup sequence.
+        $npmPath = dirname($npm).':'.(getenv('PATH') ?: '/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin');
+        $npmEnv = array_merge(getenv() ?: [], [
+            'PATH' => $npmPath,
+            'NODE_OPTIONS' => '--disable-wasm-trap-handler',
+        ]);
+        $npmEscaped = escapeshellarg($npm);
+        $this->runProcess(
+            ['bash', '-c', 'ulimit -v unlimited 2>/dev/null; ulimit -s unlimited 2>/dev/null; '.$npmEscaped.' run build'],
+            $log,
+            $npmEnv
+        );
 
         if (! app()->isLocal()) {
             $this->runProcess([$phpCli, 'artisan', 'optimize', '--no-interaction'], $log);
