@@ -68,6 +68,8 @@ class UpdateCmsJob
         $nodeOptions = '--disable-wasm-trap-handler --max-semi-space-size=4 --max-old-space-size=1500';
         $nodeEnv = array_merge(getenv() ?: [], ['PATH' => $npmPath]);
 
+        $this->runProcess([$npm, 'install', '--prefer-offline'], $log, $nodeEnv);
+
         // App and editor bundles are pre-built and committed to git — only the
         // public bundle needs rebuilding to pick up any new Tailwind classes used
         // in updated rows or components.
