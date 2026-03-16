@@ -242,7 +242,7 @@ new #[Layout('layouts.app')] #[Title('Tools')] class extends Component {
     <flux:main>
         <div class="mb-8">
             <flux:heading size="xl">Tools</flux:heading>
-            <flux:text class="mt-1">Utilities for managing your website...</flux:text>
+            <flux:text class="mt-1">Utilities for managing your website.</flux:text>
         </div>
 
         <div class="max-w-2xl space-y-4">
