@@ -1511,11 +1511,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
         }
 
         if ($hasClassesChange && (app()->isProduction() || config('cms.rebuild_assets_locally'))) {
-            if (app()->isProduction()) {
-                \App\Jobs\RebuildAssets::dispatch();
-            } else {
-                defer(fn () => \App\Jobs\RebuildAssets::dispatchSync());
-            }
+            defer(fn () => (new \App\Jobs\RebuildAssets)->handle());
         }
     }
 

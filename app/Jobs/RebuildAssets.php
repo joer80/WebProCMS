@@ -2,27 +2,24 @@
 
 namespace App\Jobs;
 
-use Illuminate\Contracts\Queue\ShouldBeUnique;
-use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Foundation\Queue\Queueable;
+use Illuminate\Support\Facades\Cache;
 use Symfony\Component\Process\Process;
 
-class RebuildAssets implements ShouldBeUnique, ShouldQueue
+class RebuildAssets
 {
-    use Queueable;
-
-    public int $uniqueFor = 30;
-
     public function handle(): void
     {
-        $npm = $this->findNpm();
-        $nodeBinDir = dirname($npm);
-        $systemPath = getenv('PATH') ?: '/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin';
-        $env = ['PATH' => $nodeBinDir.':'.$systemPath];
+        // Prevent concurrent rebuilds — skip if another rebuild started within the last 30 seconds.
+        Cache::lock('rebuild-assets', 30)->get(function () {
+            $npm = $this->findNpm();
+            $nodeBinDir = dirname($npm);
+            $systemPath = getenv('PATH') ?: '/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin';
+            $env = ['PATH' => $nodeBinDir.':'.$systemPath];
 
-        $process = new Process([$npm, 'run', 'build:public'], base_path(), $env);
-        $process->setTimeout(120);
-        $process->run();
+            $process = new Process([$npm, 'run', 'build:public'], base_path(), $env);
+            $process->setTimeout(120);
+            $process->run();
+        });
     }
 
     private function findNpm(): string

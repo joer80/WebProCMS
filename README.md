@@ -195,14 +195,18 @@ The CDN is injected only into the editor preview iframe; the live public site al
 
 #### Live site (compiled CSS on save)
 
-When you save a page, the system automatically:
+When you save a page with a **classes field change**, the system automatically:
 
 1. Writes the new class value back into the relevant blade file so Tailwind's scanner can detect it
-2. Dispatches a `RebuildAssets` job that runs `npm run build:public`
+2. Runs `npm run build:public` to recompile the public CSS/JS bundle
+
+Saves that only change text, images, or other non-classes fields skip the rebuild entirely.
 
 `npm run build:public` only recompiles the public CSS/JS bundle (skipping the dashboard and editor bundles), making it significantly faster than a full `npm run build`.
 
-**This requires Node.js and npm to be installed on the production server.** Without them, the `RebuildAssets` job will fail silently and the new CSS classes won't appear until a manual deploy.
+The build runs after the save response is sent (non-blocking via `defer()`) — **no queue worker needed** in either local or production environments.
+
+**Node.js and npm must be installed on the production server.** Without them, the build will fail silently and new CSS classes won't appear until a manual deploy.
 
 To verify Node.js is available on your Forge server:
 ```bash
@@ -312,6 +316,8 @@ location ~* ^/build/ {
 | `npm run dev` | Start Vite asset watcher only |
 | `npm run build` | Build all asset bundles (app, public, editor) |
 | `npm run build:public` | Build the public bundle only — faster; used by the page editor on save |
+
+> **About the editor bundle:** The page editor preview iframe uses the Tailwind Play CDN (JIT) — no build step needed there. The `editor.css` bundle is still required for the **editor UI chrome** (sidebar, panels, Flux components). So `npm run build` remains necessary when setting up locally.
 | `php artisan tinker` | Interactive PHP REPL with app context |
 | `php artisan pail` | Tail application logs in the terminal |
 
