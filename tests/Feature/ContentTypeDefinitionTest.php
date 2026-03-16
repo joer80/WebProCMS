@@ -41,6 +41,10 @@ it('creates a new content type', function (): void {
     expect($type->name)->toBe('Meeting Notes');
     expect($type->singular)->toBe('Meeting Note');
     expect($type->fields)->toHaveCount(1);
+})->after(function (): void {
+    $slug = 'meeting-notes';
+    app(ContentTypePageGenerator::class)->remove($slug);
+    ContentTypeDefinition::where('slug', $slug)->delete();
 });
 
 it('auto-derives slug and singular from name', function (): void {
