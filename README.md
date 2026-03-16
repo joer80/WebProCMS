@@ -51,14 +51,9 @@ php artisan storage:link
 
 ### Default Login Credentials
 
-After running `php artisan db:seed`, two accounts are available:
+The admin account is created during the initial installer setup, not by the seeder. Running `php artisan db:seed` only adds sample categories, posts, and client pages — no user accounts are created.
 
-| Account | Email | Password | Role |
-|---|---|---|---|
-| Admin | Set via `BUSINESS_ADMIN_EMAIL` in `.env` (defaults to `root@localhost`) | `Admin` | Super |
-| Test User | `test@{your-domain}` (e.g. `test@webprocms.test`) | `password` | Standard |
-
-Both accounts require a password change on first login.
+Log in with the credentials you set during installation. The admin email defaults to the value of `BUSINESS_ADMIN_EMAIL` in `.env` (defaults to `root@localhost`) and requires a password change on first login.
 
 ---
 
