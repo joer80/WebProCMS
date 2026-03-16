@@ -48,11 +48,10 @@ class UpdateCmsJob
         $npm = $this->findNpm();
         $npmPath = dirname($npm).':'.(getenv('PATH') ?: '/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin');
 
-        // Run npm build via systemd-run to escape the PHP-FPM cgroup — FPM worker
-        // cgroups on managed hosts (e.g. RunCloud) restrict virtual address space,
-        // causing Node to crash on malloc for tiny allocations before it can even start.
-        // systemd-run --scope places the process in a new transient scope outside FPM's slice.
-        // Falls back to plain npm if systemd-run is unavailable.
+        // Run each bundle as a separate npm process so each gets its own Node.js
+        // instance. Managed hosts (e.g. RunCloud/OLS) set a ~2 GB virtual address
+        // space limit (RLIMIT_AS) on worker processes — building all bundles in one
+        // process exhausts this, but each individual bundle fits comfortably within it.
         $npmEscaped = escapeshellarg($npm);
         $baseDir = base_path();
         $dirEscaped = escapeshellarg($baseDir);
@@ -61,11 +60,13 @@ class UpdateCmsJob
         // promotion failed" OOM that occurs when the semi-space evacuation needs
         // a large contiguous block in a memory-constrained cgroup.
         $nodeOptions = '--disable-wasm-trap-handler --max-semi-space-size=4';
+        $nodeEnv = array_merge(getenv() ?: [], ['PATH' => $npmPath]);
 
-        $buildCmd = "cd {$dirEscaped} && NODE_OPTIONS=".escapeshellarg($nodeOptions)." {$npmEscaped} run build";
-        $systemdCmd = 'systemd-run --scope --quiet bash -c '.escapeshellarg($buildCmd).' 2>/dev/null || bash -c '.escapeshellarg($buildCmd);
-
-        $this->runProcess(['bash', '-c', $systemdCmd], $log, array_merge(getenv() ?: [], ['PATH' => $npmPath]));
+        foreach (['build:app', 'build:editor', 'build:public'] as $buildScript) {
+            $buildCmd = "cd {$dirEscaped} && NODE_OPTIONS=".escapeshellarg($nodeOptions)." {$npmEscaped} run {$buildScript}";
+            $systemdCmd = 'systemd-run --scope --quiet bash -c '.escapeshellarg($buildCmd).' 2>/dev/null || bash -c '.escapeshellarg($buildCmd);
+            $this->runProcess(['bash', '-c', $systemdCmd], $log, $nodeEnv);
+        }
 
         if (! app()->isLocal()) {
             $this->runProcess([$phpCli, 'artisan', 'optimize', '--no-interaction'], $log);

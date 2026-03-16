@@ -61,7 +61,9 @@
       "Bash(curl -sk https://webprocms.test/blog)",
       "Bash(curl -sk -o /tmp/blog.html https://webprocms.test/blog)",
       "Read(//tmp/**)",
-      "Bash(\"/Users/joepersonal/Library/Application Support/Herd/config/nvm/versions/node/v22.22.0/bin/npm\" run build:public)"
+      "Bash(\"/Users/joepersonal/Library/Application Support/Herd/config/nvm/versions/node/v22.22.0/bin/npm\" run build:public)",
+      "Read(//opt/homebrew/bin/**)",
+      "Read(//usr/local/bin/**)"
     ]
   },
   "defaultMode": "acceptEdits"

@@ -4,6 +4,8 @@
     "type": "module",
     "scripts": {
         "build": "vite build",
+        "build:app": "vite build --config vite.app.config.js",
+        "build:editor": "vite build --config vite.editor.config.js",
         "build:public": "vite build --config vite.public.config.js",
         "dev": "vite"
     },
