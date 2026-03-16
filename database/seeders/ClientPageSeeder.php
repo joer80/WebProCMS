@@ -3,8 +3,10 @@
 namespace Database\Seeders;
 
 use App\Jobs\IndexDesignLibraryJob;
+use App\Models\ContentOverride;
 use App\Models\DesignPage;
 use App\Models\DesignRow;
+use App\Models\Form;
 use App\Models\Setting;
 use App\Support\VoltFileService;
 use Illuminate\Database\Seeder;
@@ -46,6 +48,10 @@ class ClientPageSeeder extends Seeder
                 'title' => 'Contact',
                 'route_line' => "    Route::livewire('contact', 'pages::contact')->name('contact');",
                 'route_check' => "'pages::contact'",
+                'seed_overrides' => [
+                    // Pre-select the Contact form in the form selector row.
+                    'contact-form' => ['form_id' => fn () => (string) (Form::query()->where('type', 'contact')->value('id') ?? '')],
+                ],
             ],
             [
                 'dl_source' => 'pages/custom/services.blade.php',
@@ -157,6 +163,44 @@ class ClientPageSeeder extends Seeder
             file_put_contents($destPath, $content);
 
             $this->recordSeededPage($destPath, $config['route_check'] ?? null);
+
+            if (! empty($config['seed_overrides'])) {
+                $this->seedContentOverrides($rows, $config['seed_overrides'], $config['route_check'] ?? null);
+            }
+        }
+    }
+
+    /**
+     * Seed ContentOverride records for specific rows on a newly created page.
+     *
+     * @param  array<int, array{slug: string, name: string, blade: string}>  $rows
+     * @param  array<string, array<string, string|\Closure>>  $overrides  Keyed by row template name, values are key => value (or Closure returning value).
+     */
+    private function seedContentOverrides(array $rows, array $overrides, ?string $pageSlug): void
+    {
+        // Strip the surrounding quotes from the route_check value (e.g. "'pages::contact'" → "pages::contact").
+        $pageSlugClean = $pageSlug ? trim($pageSlug, "'\"") : null;
+
+        foreach ($rows as $row) {
+            // Row slug format is "{templateName}:{randomId}" — extract the template name.
+            $templateName = Str::before($row['slug'], ':');
+
+            if (! isset($overrides[$templateName])) {
+                continue;
+            }
+
+            foreach ($overrides[$templateName] as $key => $value) {
+                $resolved = $value instanceof \Closure ? $value() : $value;
+
+                if ($resolved === '' || $resolved === null) {
+                    continue;
+                }
+
+                ContentOverride::firstOrCreate(
+                    ['row_slug' => $row['slug'], 'key' => $key],
+                    ['page_slug' => $pageSlugClean, 'value' => $resolved],
+                );
+            }
         }
     }
 

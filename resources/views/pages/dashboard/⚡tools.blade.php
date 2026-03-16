@@ -223,8 +223,8 @@ new #[Layout('layouts.app')] #[Title('Tools')] class extends Component {
         $routesContents = file_get_contents($routesPath);
 
         foreach ($pages as $path => $meta) {
-            // Never remove the homepage — the site errors without a home route.
-            if ($meta['route_check'] === "'pages::home'") {
+            // Never remove the homepage or contact page — core pages every site needs.
+            if (in_array($meta['route_check'], ["'pages::home'", "'pages::contact'"])) {
                 continue;
             }
 
