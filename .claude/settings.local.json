@@ -65,7 +65,13 @@
       "Read(//opt/homebrew/bin/**)",
       "Read(//usr/local/bin/**)",
       "Bash(sed -i '' 's/return \\\\\\\\App\\\\\\\\Support\\\\\\\\ShortcodeProcessor::process\\(\\\\$this->post->content\\);/\\\\/\\\\/ Content is HTML \\(from the rich text editor\\) — use processRaw so tags are not escaped.\\\\n    return \\\\\\\\App\\\\\\\\Support\\\\\\\\ShortcodeProcessor::processRaw\\($this->post->content\\);/' /Users/joepersonal/Sites/WebProCMS/resources/design-library/rows/blog-detail/blog-post-article.blade.php)",
-      "Bash(sed -i '' 's/default-classes=\"\"leading-relaxed text-zinc-900 dark:text-zinc-100 whitespace-pre-wrap\"\"/default-classes=\"\"leading-relaxed text-zinc-900 dark:text-zinc-100 blog-content\"\"/' /Users/joepersonal/Sites/WebProCMS/resources/design-library/rows/blog-detail/blog-post-article.blade.php)"
+      "Bash(sed -i '' 's/default-classes=\"\"leading-relaxed text-zinc-900 dark:text-zinc-100 whitespace-pre-wrap\"\"/default-classes=\"\"leading-relaxed text-zinc-900 dark:text-zinc-100 blog-content\"\"/' /Users/joepersonal/Sites/WebProCMS/resources/design-library/rows/blog-detail/blog-post-article.blade.php)",
+      "Bash(gh run:*)",
+      "Bash(php8.4 --version)",
+      "Bash(php8.5 --version)",
+      "Bash(DB_CONNECTION=sqlite DB_DATABASE=/tmp/cms-ci-setup.sqlite php artisan migrate --no-interaction)",
+      "Bash(DB_CONNECTION=sqlite DB_DATABASE=/tmp/cms-ci-setup.sqlite php artisan db:seed --class=ClientPageSeeder --no-interaction)",
+      "Bash(head -10 ls /Users/joepersonal/Sites/WebProCMS/resources/views/pages/blog/*.blade.php)"
     ]
   },
   "defaultMode": "acceptEdits"

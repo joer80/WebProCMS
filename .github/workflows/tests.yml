@@ -56,5 +56,11 @@ jobs:
       - name: Build Assets
         run: npm run build
 
+      - name: Install Client Pages
+        run: touch /tmp/cms-ci-setup.sqlite && php artisan migrate && php artisan db:seed --class=ClientPageSeeder
+        env:
+          DB_CONNECTION: sqlite
+          DB_DATABASE: /tmp/cms-ci-setup.sqlite
+
       - name: Run Tests
         run: ./vendor/bin/pest
