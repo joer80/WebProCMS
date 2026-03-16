@@ -48,7 +48,7 @@ class UpdateCmsJob
         $npm = $this->findNpm();
         $env = [
             'PATH' => dirname($npm).':'.(getenv('PATH') ?: '/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin'),
-            'NODE_OPTIONS' => '--max-old-space-size=512',
+            'NODE_OPTIONS' => '--max-old-space-size=4096',
         ];
         $this->runProcess([$npm, 'run', 'build'], $log, $env);
 
