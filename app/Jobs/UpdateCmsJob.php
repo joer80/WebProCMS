@@ -56,7 +56,11 @@ class UpdateCmsJob
         $npmEscaped = escapeshellarg($npm);
         $baseDir = base_path();
         $dirEscaped = escapeshellarg($baseDir);
-        $nodeOptions = '--disable-wasm-trap-handler';
+        // --max-semi-space-size=4 shrinks V8's young generation to 4 MB so each
+        // scavenge cycle promotes only a small batch — avoids the "young object
+        // promotion failed" OOM that occurs when the semi-space evacuation needs
+        // a large contiguous block in a memory-constrained cgroup.
+        $nodeOptions = '--disable-wasm-trap-handler --max-semi-space-size=4';
 
         $buildCmd = "cd {$dirEscaped} && NODE_OPTIONS=".escapeshellarg($nodeOptions)." {$npmEscaped} run build";
         $systemdCmd = 'systemd-run --scope --quiet bash -c '.escapeshellarg($buildCmd).' 2>/dev/null || bash -c '.escapeshellarg($buildCmd);
