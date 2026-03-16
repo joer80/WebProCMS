@@ -3,9 +3,11 @@
 use App\Jobs\IndexDesignLibraryJob;
 use App\Jobs\SeedDemoDataJob;
 use App\Jobs\UpdateCmsJob;
+use App\Enums\FormType;
 use App\Models\Category;
 use App\Models\ContentItem;
 use App\Models\ContentTypeDefinition;
+use App\Models\Form;
 use App\Models\Location;
 use App\Models\Post;
 use App\Models\Setting;
@@ -168,6 +170,12 @@ new #[Layout('layouts.app')] #[Title('Tools')] class extends Component {
         Post::query()->where('is_seeded', true)->get()->each->delete();
         Location::query()->where('is_seeded', true)->get()->each->delete();
         Category::query()->where('is_seeded', true)->get()->each->delete();
+
+        // Delete demo forms (Employment Application, Photo Contest) but keep the Contact Form.
+        Form::query()
+            ->where('is_seeded', true)
+            ->where('type', '!=', FormType::Contact->value)
+            ->get()->each->delete();
 
         $generator = app(ContentTypePageGenerator::class);
 

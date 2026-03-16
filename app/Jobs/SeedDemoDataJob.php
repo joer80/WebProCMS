@@ -2,8 +2,10 @@
 
 namespace App\Jobs;
 
+use App\Enums\FormType;
 use App\Models\ContentItem;
 use App\Models\ContentTypeDefinition;
+use App\Models\Form;
 use App\Models\Location;
 use App\Models\Post;
 use App\Models\Setting;
@@ -24,6 +26,7 @@ class SeedDemoDataJob
 
         $this->seedLocations();
         $this->seedContentTypes();
+        $this->seedDemoForms();
 
         Setting::set('seeding_status', 'complete');
     }
@@ -89,6 +92,33 @@ class SeedDemoDataJob
             if (! ContentItem::query()->where('type_slug', $item['type_slug'])->exists()) {
                 ContentItem::create($item);
             }
+        }
+    }
+
+    private function seedDemoForms(): void
+    {
+        $forms = [
+            [
+                'name' => 'Employment Application',
+                'type' => FormType::JobApplication,
+            ],
+            [
+                'name' => 'Photo Contest',
+                'type' => FormType::PhotoContest,
+            ],
+        ];
+
+        foreach ($forms as $formData) {
+            Form::firstOrCreate(
+                ['type' => $formData['type']->value, 'is_seeded' => true],
+                [
+                    'name' => $formData['name'],
+                    'notification_email' => null,
+                    'save_submissions' => true,
+                    'fields' => $formData['type']->defaultFields(),
+                    'is_seeded' => true,
+                ]
+            );
         }
     }
 
