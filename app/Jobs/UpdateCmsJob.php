@@ -17,9 +17,7 @@ class UpdateCmsJob
         // Reset tracked build assets before merging — the server modifies manifest.json
         // at runtime (page editor CSS rebuilds), which would block a ff-only merge.
         // The build:public step below immediately regenerates the correct public entries.
-        // Also reset VERSION — UpdateCmsJob writes the new version after the merge,
-        // so the local modification from the previous update would block the next pull.
-        $this->runProcess(['git', 'checkout', '--', 'public/build/', 'VERSION'], $log);
+        $this->runProcess(['git', 'checkout', '--', 'public/build/'], $log);
 
         $this->runProcess(['git', 'merge', '--ff-only', 'origin/'.$branch], $log);
 
@@ -85,12 +83,6 @@ class UpdateCmsJob
         if (! app()->isLocal()) {
             $this->runProcess([$phpCli, 'artisan', 'optimize', '--no-interaction'], $log);
             $this->runProcess([$phpCli, 'artisan', 'responsecache:clear'], $log);
-        }
-
-        $latestVersion = Setting::get('update_latest_version', '');
-
-        if ($latestVersion) {
-            file_put_contents(base_path('VERSION'), $latestVersion.PHP_EOL);
         }
 
         Setting::set('update_status', 'complete');
