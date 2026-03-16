@@ -177,6 +177,22 @@ new #[Layout('layouts.app')] #[Title('Tools')] class extends Component {
             ->where('type', '!=', FormType::Contact->value)
             ->get()->each->delete();
 
+        // Remove seeded navigation items (About, Blog) but leave the base menu (Home, Contact) intact.
+        $seededRoutes = Setting::get('navigation.seeded_routes', []);
+
+        if (! empty($seededRoutes)) {
+            $menus = array_map(function (array $menu) use ($seededRoutes): array {
+                $menu['items'] = array_values(
+                    array_filter($menu['items'], fn (array $item) => ! in_array($item['route'] ?? '', $seededRoutes))
+                );
+
+                return $menu;
+            }, Setting::get('navigation.menus', []));
+
+            Setting::set('navigation.menus', $menus);
+            Setting::set('navigation.seeded_routes', []);
+        }
+
         $generator = app(ContentTypePageGenerator::class);
 
         ContentTypeDefinition::query()->where('is_seeded', true)->each(function (ContentTypeDefinition $type) use ($generator): void {

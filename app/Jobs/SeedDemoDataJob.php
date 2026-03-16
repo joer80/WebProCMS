@@ -27,6 +27,7 @@ class SeedDemoDataJob
         $this->seedLocations();
         $this->seedContentTypes();
         $this->seedDemoForms();
+        $this->seedDemoNavigation();
 
         Setting::set('seeding_status', 'complete');
     }
@@ -120,6 +121,41 @@ class SeedDemoDataJob
                 ]
             );
         }
+    }
+
+    private function seedDemoNavigation(): void
+    {
+        $menus = Setting::get('navigation.menus', []);
+        $seededRoutes = Setting::get('navigation.seeded_routes', []);
+
+        $demoItems = [
+            ['label' => 'About', 'route' => 'about', 'active' => true],
+            ['label' => 'Blog', 'route' => 'blog.index', 'active' => true],
+        ];
+
+        $menus = array_map(function (array $menu) use ($demoItems, &$seededRoutes): array {
+            if ($menu['slug'] !== 'main-navigation') {
+                return $menu;
+            }
+
+            $existingRoutes = array_column($menu['items'], 'route');
+
+            foreach ($demoItems as $item) {
+                if (! in_array($item['route'], $existingRoutes)) {
+                    // Insert before the last item (Contact) so order is Home, About, Blog, Contact.
+                    array_splice($menu['items'], -1, 0, [$item]);
+
+                    if (! in_array($item['route'], $seededRoutes)) {
+                        $seededRoutes[] = $item['route'];
+                    }
+                }
+            }
+
+            return $menu;
+        }, $menus);
+
+        Setting::set('navigation.menus', $menus);
+        Setting::set('navigation.seeded_routes', $seededRoutes);
     }
 
     private function seedLocations(): void
