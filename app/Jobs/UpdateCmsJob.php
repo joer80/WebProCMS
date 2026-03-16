@@ -15,8 +15,9 @@ class UpdateCmsJob
         $this->runProcess(['git', 'fetch', 'origin', $branch], $log);
         $this->runProcess(['git', 'merge', '--ff-only', 'origin/'.$branch], $log);
 
-        $composer = $this->findComposer();
-        $this->runProcess([$composer, 'install', '--no-dev', '--no-interaction', '--optimize-autoloader'], $log);
+        $composer = config('cms.composer_path') ?: 'composer';
+        $fullPath = '/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:'.(getenv('PATH') ?: '');
+        $this->runProcess([$composer, 'install', '--no-dev', '--no-interaction', '--optimize-autoloader'], $log, ['PATH' => $fullPath]);
 
         $this->runProcess([PHP_BINARY, 'artisan', 'migrate', '--force', '--no-interaction'], $log);
 
@@ -69,25 +70,6 @@ class UpdateCmsJob
 
             throw new \RuntimeException($error);
         }
-    }
-
-    private function findComposer(): string
-    {
-        if ($configured = config('cms.composer_path')) {
-            return $configured;
-        }
-
-        // proc_open (used by Process) bypasses open_basedir, so 'which' works
-        // even when file_exists() cannot see paths outside the restriction.
-        $which = new Process(['which', 'composer']);
-        $which->setTimeout(10);
-        $which->run();
-
-        if ($which->isSuccessful() && ($path = trim($which->getOutput())) !== '') {
-            return $path;
-        }
-
-        return 'composer';
     }
 
     private function findNpm(): string
