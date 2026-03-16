@@ -46,21 +46,22 @@ class UpdateCmsJob
         $this->runProcess([$phpCli, 'artisan', 'design-library:index', '--no-interaction'], $log);
 
         $npm = $this->findNpm();
-        // Merge current env so Node has HOME, USER, TMPDIR, etc.
-        // Lift the virtual-address-space soft limit before spawning Node — PHP-FPM
-        // workers inherit a low rlimit_as that causes malloc to fail for tiny
-        // allocations inside Node's startup sequence.
         $npmPath = dirname($npm).':'.(getenv('PATH') ?: '/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin');
-        $npmEnv = array_merge(getenv() ?: [], [
-            'PATH' => $npmPath,
-            'NODE_OPTIONS' => '--disable-wasm-trap-handler',
-        ]);
+
+        // Run npm build via systemd-run to escape the PHP-FPM cgroup — FPM worker
+        // cgroups on managed hosts (e.g. RunCloud) restrict virtual address space,
+        // causing Node to crash on malloc for tiny allocations before it can even start.
+        // systemd-run --scope places the process in a new transient scope outside FPM's slice.
+        // Falls back to plain npm if systemd-run is unavailable.
         $npmEscaped = escapeshellarg($npm);
-        $this->runProcess(
-            ['bash', '-c', 'ulimit -v unlimited 2>/dev/null; ulimit -s unlimited 2>/dev/null; '.$npmEscaped.' run build'],
-            $log,
-            $npmEnv
-        );
+        $baseDir = base_path();
+        $dirEscaped = escapeshellarg($baseDir);
+        $nodeOptions = '--disable-wasm-trap-handler';
+
+        $buildCmd = "cd {$dirEscaped} && NODE_OPTIONS=".escapeshellarg($nodeOptions)." {$npmEscaped} run build";
+        $systemdCmd = 'systemd-run --scope --quiet bash -c '.escapeshellarg($buildCmd).' 2>/dev/null || bash -c '.escapeshellarg($buildCmd);
+
+        $this->runProcess(['bash', '-c', $systemdCmd], $log, array_merge(getenv() ?: [], ['PATH' => $npmPath]));
 
         if (! app()->isLocal()) {
             $this->runProcess([$phpCli, 'artisan', 'optimize', '--no-interaction'], $log);
