@@ -27,7 +27,17 @@ class UpdateCmsJob
             ? [$this->findPhpCli($fullPath), '-d', 'open_basedir=', $composer]
             : [$composer];
 
-        $this->runProcess([...$composerCmd, 'install', '--no-dev', '--no-interaction', '--optimize-autoloader'], $log, ['PATH' => $fullPath]);
+        // Composer requires HOME or COMPOSER_HOME — FPM may not set HOME, so fall
+        // back to a writable temp dir (which is always within open_basedir on managed hosts).
+        $composerEnv = ['PATH' => $fullPath];
+        if ($home = getenv('HOME')) {
+            $composerEnv['HOME'] = $home;
+        } else {
+            $composerEnv['COMPOSER_HOME'] = sys_get_temp_dir().'/composer';
+            @mkdir($composerEnv['COMPOSER_HOME'], 0755, true);
+        }
+
+        $this->runProcess([...$composerCmd, 'install', '--no-dev', '--no-interaction', '--optimize-autoloader'], $log, $composerEnv);
 
         $this->runProcess([PHP_BINARY, 'artisan', 'migrate', '--force', '--no-interaction'], $log);
 
