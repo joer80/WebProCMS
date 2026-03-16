@@ -21,6 +21,25 @@ use Livewire\Component;
 use Spatie\ResponseCache\Facades\ResponseCache;
 
 new #[Layout('layouts.app')] #[Title('Tools')] class extends Component {
+    /** @var array<string, bool> */
+    public array $seedWith = [
+        'blog' => true,
+        'locations' => true,
+        'content_types' => true,
+        'forms' => true,
+        'navigation' => true,
+    ];
+
+    /** @var array<string, bool> */
+    public array $deleteWith = [
+        'blog' => true,
+        'locations' => true,
+        'content_types' => true,
+        'forms' => true,
+        'navigation' => true,
+        'pages' => true,
+    ];
+
     public function mount(): void
     {
         if (Setting::get('update_status') === 'complete') {
@@ -167,41 +186,54 @@ new #[Layout('layouts.app')] #[Title('Tools')] class extends Component {
 
     public function deleteSeededDemoData(): void
     {
-        Post::query()->where('is_seeded', true)->get()->each->delete();
-        Location::query()->where('is_seeded', true)->get()->each->delete();
-        Category::query()->where('is_seeded', true)->get()->each->delete();
-
-        // Delete demo forms (Employment Application, Photo Contest) but keep the Contact Form.
-        Form::query()
-            ->where('is_seeded', true)
-            ->where('type', '!=', FormType::Contact->value)
-            ->get()->each->delete();
-
-        // Remove seeded navigation items (About, Blog) but leave the base menu (Home, Contact) intact.
-        $seededRoutes = Setting::get('navigation.seeded_routes', []);
-
-        if (! empty($seededRoutes)) {
-            $menus = array_map(function (array $menu) use ($seededRoutes): array {
-                $menu['items'] = array_values(
-                    array_filter($menu['items'], fn (array $item) => ! in_array($item['route'] ?? '', $seededRoutes))
-                );
-
-                return $menu;
-            }, Setting::get('navigation.menus', []));
-
-            Setting::set('navigation.menus', $menus);
-            Setting::set('navigation.seeded_routes', []);
+        if ($this->deleteWith['blog'] ?? false) {
+            Post::query()->where('is_seeded', true)->get()->each->delete();
+            Category::query()->where('is_seeded', true)->get()->each->delete();
         }
 
-        $generator = app(ContentTypePageGenerator::class);
+        if ($this->deleteWith['locations'] ?? false) {
+            Location::query()->where('is_seeded', true)->get()->each->delete();
+        }
 
-        ContentTypeDefinition::query()->where('is_seeded', true)->each(function (ContentTypeDefinition $type) use ($generator): void {
-            ContentItem::query()->where('type_slug', $type->slug)->delete();
-            $generator->remove($type->slug);
-            $type->delete();
-        });
+        // Delete demo forms (Employment Application, Photo Contest) but keep the Contact Form.
+        if ($this->deleteWith['forms'] ?? false) {
+            Form::query()
+                ->where('is_seeded', true)
+                ->where('type', '!=', FormType::Contact->value)
+                ->get()->each->delete();
+        }
 
-        $this->removeUnchangedSeededPages();
+        // Remove seeded navigation items (About, Blog) but leave the base menu (Home, Contact) intact.
+        if ($this->deleteWith['navigation'] ?? false) {
+            $seededRoutes = Setting::get('navigation.seeded_routes', []);
+
+            if (! empty($seededRoutes)) {
+                $menus = array_map(function (array $menu) use ($seededRoutes): array {
+                    $menu['items'] = array_values(
+                        array_filter($menu['items'], fn (array $item) => ! in_array($item['route'] ?? '', $seededRoutes))
+                    );
+
+                    return $menu;
+                }, Setting::get('navigation.menus', []));
+
+                Setting::set('navigation.menus', $menus);
+                Setting::set('navigation.seeded_routes', []);
+            }
+        }
+
+        if ($this->deleteWith['content_types'] ?? false) {
+            $generator = app(ContentTypePageGenerator::class);
+
+            ContentTypeDefinition::query()->where('is_seeded', true)->each(function (ContentTypeDefinition $type) use ($generator): void {
+                ContentItem::query()->where('type_slug', $type->slug)->delete();
+                $generator->remove($type->slug);
+                $type->delete();
+            });
+        }
+
+        if ($this->deleteWith['pages'] ?? false) {
+            $this->removeUnchangedSeededPages();
+        }
 
         $this->dispatch('notify', message: 'Seeded demo data deleted.');
     }
@@ -255,8 +287,10 @@ new #[Layout('layouts.app')] #[Title('Tools')] class extends Component {
     {
         Setting::set('seeding_status', 'running');
 
-        defer(function () {
-            $job = new SeedDemoDataJob;
+        $categories = array_keys(array_filter($this->seedWith));
+
+        defer(function () use ($categories) {
+            $job = new SeedDemoDataJob($categories);
             try {
                 $job->handle();
             } catch (\Throwable $e) {
@@ -365,9 +399,16 @@ new #[Layout('layouts.app')] #[Title('Tools')] class extends Component {
 
             <div class="rounded-lg border border-zinc-200 dark:border-zinc-700 p-6" {{ $this->seedingStatus === 'running' ? 'wire:poll.3s' : '' }}>
                 <div class="flex items-start justify-between gap-6">
-                    <div>
+                    <div class="flex-1 min-w-0">
                         <flux:heading>Seed Demo Data</flux:heading>
-                        <flux:text class="mt-1">Populate the site with demo blog posts, categories, and 5 locations. Safe to run multiple times — nothing will be duplicated.</flux:text>
+                        <flux:text class="mt-1">Populate the site with sample content. Safe to run multiple times — nothing will be duplicated.</flux:text>
+                        <div class="mt-3 grid grid-cols-2 gap-x-8 gap-y-2">
+                            <flux:checkbox wire:model="seedWith.blog" label="Blog posts &amp; categories" />
+                            <flux:checkbox wire:model="seedWith.locations" label="Locations" />
+                            <flux:checkbox wire:model="seedWith.content_types" label="Content types" />
+                            <flux:checkbox wire:model="seedWith.forms" label="Demo forms" />
+                            <flux:checkbox wire:model="seedWith.navigation" label="Navigation items" />
+                        </div>
                         @if ($this->seedingStatus === 'running')
                             <flux:text class="mt-2 text-sm text-amber-600 dark:text-amber-400">Seeding in progress — this may take a minute...</flux:text>
                         @elseif ($this->seedingStatus === 'complete')
@@ -447,13 +488,21 @@ new #[Layout('layouts.app')] #[Title('Tools')] class extends Component {
 
             <div class="rounded-lg border border-zinc-200 dark:border-zinc-700 p-6">
                 <div class="flex items-start justify-between gap-6">
-                    <div>
+                    <div class="flex-1 min-w-0">
                         <flux:heading>Delete Seeded Demo Data</flux:heading>
-                        <flux:text class="mt-1">Remove all demo blog posts, locations, and categories created by the seeder. Content you have added manually will not be affected.</flux:text>
+                        <flux:text class="mt-1">Remove seeded demo content. Content you have added manually will not be affected.</flux:text>
+                        <div class="mt-3 grid grid-cols-2 gap-x-8 gap-y-2">
+                            <flux:checkbox wire:model="deleteWith.blog" label="Blog posts &amp; categories" />
+                            <flux:checkbox wire:model="deleteWith.locations" label="Locations" />
+                            <flux:checkbox wire:model="deleteWith.content_types" label="Content types" />
+                            <flux:checkbox wire:model="deleteWith.forms" label="Demo forms" />
+                            <flux:checkbox wire:model="deleteWith.navigation" label="Navigation items" />
+                            <flux:checkbox wire:model="deleteWith.pages" label="Seeded pages" />
+                        </div>
                     </div>
                     <flux:button
                         wire:click="deleteSeededDemoData"
-                        wire:confirm="This will permanently delete all seeded demo data. Are you sure?"
+                        wire:confirm="This will permanently delete the selected seeded demo data. Are you sure?"
                         variant="outline"
                         class="shrink-0"
                     >

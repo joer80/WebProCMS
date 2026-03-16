@@ -14,9 +14,14 @@ use Illuminate\Support\Facades\Artisan;
 
 class SeedDemoDataJob
 {
+    /**
+     * @param  list<string>  $categories  Which categories to seed. Empty = all.
+     */
+    public function __construct(public array $categories = []) {}
+
     public function handle(): void
     {
-        if (! Post::query()->where('is_seeded', true)->exists()) {
+        if ($this->wants('blog') && ! Post::query()->where('is_seeded', true)->exists()) {
             $exitCode = Artisan::call('db:seed', ['--class' => 'DatabaseSeeder', '--no-interaction' => true, '--force' => true]);
 
             if ($exitCode !== 0) {
@@ -24,12 +29,28 @@ class SeedDemoDataJob
             }
         }
 
-        $this->seedLocations();
-        $this->seedContentTypes();
-        $this->seedDemoForms();
-        $this->seedDemoNavigation();
+        if ($this->wants('locations')) {
+            $this->seedLocations();
+        }
+
+        if ($this->wants('content_types')) {
+            $this->seedContentTypes();
+        }
+
+        if ($this->wants('forms')) {
+            $this->seedDemoForms();
+        }
+
+        if ($this->wants('navigation')) {
+            $this->seedDemoNavigation();
+        }
 
         Setting::set('seeding_status', 'complete');
+    }
+
+    private function wants(string $category): bool
+    {
+        return empty($this->categories) || in_array($category, $this->categories);
     }
 
     public function failed(\Throwable $exception): void

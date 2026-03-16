@@ -1,6 +1,6 @@
 {
   "resources/css/app.css": {
-    "file": "assets/app-pljjyI10.css",
+    "file": "assets/app-BTonCL2v.css",
     "src": "resources/css/app.css",
     "isEntry": true,
     "name": "app",
@@ -9,7 +9,7 @@
     ]
   },
   "resources/css/editor.css": {
-    "file": "assets/editor-DXTgsOoZ.css",
+    "file": "assets/editor-BYZ9lnw_.css",
     "src": "resources/css/editor.css",
     "isEntry": true,
     "name": "editor",
@@ -18,7 +18,7 @@
     ]
   },
   "resources/css/public.css": {
-    "file": "assets/public-B9mAT6xf.css",
+    "file": "assets/public-B-hPRvLJ.css",
     "src": "resources/css/public.css",
     "isEntry": true,
     "name": "public",
