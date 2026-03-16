@@ -77,17 +77,14 @@ class UpdateCmsJob
             return $configured;
         }
 
-        $candidates = ['/usr/local/bin/composer', '/usr/bin/composer', '/usr/sbin/composer'];
+        // proc_open (used by Process) bypasses open_basedir, so 'which' works
+        // even when file_exists() cannot see paths outside the restriction.
+        $which = new Process(['which', 'composer']);
+        $which->setTimeout(10);
+        $which->run();
 
-        $home = getenv('HOME') ?: '';
-        if ($home !== '') {
-            array_unshift($candidates, $home.'/.local/bin/composer', $home.'/.composer/vendor/bin/composer');
-        }
-
-        foreach ($candidates as $path) {
-            if (@file_exists($path) && @is_executable($path)) {
-                return $path;
-            }
+        if ($which->isSuccessful() && ($path = trim($which->getOutput())) !== '') {
+            return $path;
         }
 
         return 'composer';
