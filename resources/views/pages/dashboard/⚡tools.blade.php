@@ -16,6 +16,14 @@ use Livewire\Component;
 use Spatie\ResponseCache\Facades\ResponseCache;
 
 new #[Layout('layouts.app')] #[Title('Tools')] class extends Component {
+    public function mount(): void
+    {
+        if (Setting::get('update_status') === 'complete') {
+            Setting::set('update_status', 'idle');
+            Setting::set('update_log', '');
+        }
+    }
+
     #[Computed]
     public function seedingStatus(): string
     {

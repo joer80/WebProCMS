@@ -126,10 +126,12 @@ There are no auto-deploy webhooks — updates only happen when the site owner cl
 1. Click **Check for Updates** — makes an HTTP request to `CMS_RELEASES_API_URL` and compares the returned version against the local `VERSION` file
 2. If a newer version is available, **Update Now** appears
 3. Clicking it runs `UpdateCmsJob` as a detached background process (no queue worker required), which:
+   - `git checkout -- public/build/` (resets runtime-modified manifest so the merge can proceed cleanly)
    - `git fetch origin <CMS_GIT_BRANCH>` + `git merge --ff-only` (safe — fails cleanly if histories have diverged)
    - `composer install --no-dev --optimize-autoloader`
    - `php artisan migrate --force`
-   - `npm run build`
+   - `npm install --prefer-offline`
+   - `npm run build:public` (public bundle only — app/editor bundles are pre-built and committed to git)
    - `php artisan optimize` (config, route, view, and event cache — production only)
    - `php artisan responsecache:clear` (production only)
 4. The card polls every 3 seconds while the job runs and shows the full command log on completion or failure
@@ -145,18 +147,22 @@ CMS_GIT_BRANCH=main
 
 The releases API must return JSON with a `version` key (e.g. `"1.0.1"`) and optional `notes` key. The GitHub Releases API format is also supported — the `v` prefix on `tag_name` is stripped automatically.
 
-> The update runs as a detached background process — no queue worker required. Node.js and npm must be installed on the server for the `npm run build` step.
+> The update runs as a detached background process — no queue worker required. Node.js and npm must be installed on the server for the `npm run build:public` step.
 
 #### Releasing a new version
 
 To make an update available to clients:
 
-1. Push your fixes to `main`
-2. Update the `VERSION` file in the repo to the new version (e.g. `1.0.1`) and commit + push
-3. Go to your GitHub repo → **Releases** → **Draft a new release**
-4. Click **Choose a tag** → type `v1.0.1` (matching the version you just set) → **Create new tag**
-5. Add a title and release notes
-6. Click **Publish release**
+1. Make your changes locally
+2. Run `npm run build` to compile all asset bundles (app, editor, public)
+3. Commit everything — including the compiled files in `public/build/` — and push to `main`
+4. Update the `VERSION` file to the new version (e.g. `1.0.1`), commit + push
+5. Go to your GitHub repo → **Releases** → **Draft a new release**
+6. Click **Choose a tag** → type `v1.0.1` (matching the version you just set) → **Create new tag**
+7. Add a title and release notes
+8. Click **Publish release**
+
+> **Why commit `public/build/`?** The server runs `npm run build:public` during updates, not the full build. This fits within the ~2 GB virtual address space limit that managed hosts (RunCloud/OLS) impose on web worker processes. The app and editor bundles are heavier to build, so they are pre-compiled locally and shipped via git instead.
 
 The client's **Check for Updates** button hits the GitHub releases API, strips the `v` prefix from the tag, and compares it against the version on their server. If the tag is higher, **Update Now** appears.
 
