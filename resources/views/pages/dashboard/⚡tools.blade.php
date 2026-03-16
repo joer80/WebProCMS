@@ -199,6 +199,11 @@ new #[Layout('layouts.app')] #[Title('Tools')] class extends Component {
         $routesContents = file_get_contents($routesPath);
 
         foreach ($pages as $path => $meta) {
+            // Never remove the homepage — the site errors without a home route.
+            if ($meta['route_check'] === "'pages::home'") {
+                continue;
+            }
+
             if (! file_exists($path)) {
                 continue;
             }

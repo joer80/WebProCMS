@@ -234,7 +234,7 @@ class ClientPageSeeder extends Seeder
 
         $layoutAttr = empty($params)
             ? "#[Layout('{$layout}')]"
-            : "#[Layout('{$layout}', [{$paramsStr}]]";
+            : "#[Layout('{$layout}', [{$paramsStr}])]";
 
         $titleAttr = $title ? " #[Title('{$title}')]" : '';
 
