@@ -15,9 +15,17 @@ class UpdateCmsJob
         $this->runProcess(['git', 'fetch', 'origin', $branch], $log);
         $this->runProcess(['git', 'merge', '--ff-only', 'origin/'.$branch], $log);
 
-        $composer = config('cms.composer_path') ?: 'composer';
         $fullPath = '/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:'.(getenv('PATH') ?: '');
-        $this->runProcess([$composer, 'install', '--no-dev', '--no-interaction', '--optimize-autoloader'], $log, ['PATH' => $fullPath]);
+        $composer = $this->resolveComposer($fullPath);
+
+        // Invoke via PHP_BINARY with open_basedir disabled when composer is an absolute
+        // path — on managed hosts (e.g. RunCloud) the phar lives outside the allowed
+        // open_basedir paths and Phar::mapPhar() fails when called from php-fpm.
+        $composerCmd = str_starts_with($composer, '/')
+            ? [PHP_BINARY, '-d', 'open_basedir=', $composer]
+            : [$composer];
+
+        $this->runProcess([...$composerCmd, 'install', '--no-dev', '--no-interaction', '--optimize-autoloader'], $log, ['PATH' => $fullPath]);
 
         $this->runProcess([PHP_BINARY, 'artisan', 'migrate', '--force', '--no-interaction'], $log);
 
@@ -70,6 +78,22 @@ class UpdateCmsJob
 
             throw new \RuntimeException($error);
         }
+    }
+
+    private function resolveComposer(string $fullPath): string
+    {
+        if ($configured = config('cms.composer_path')) {
+            return $configured;
+        }
+
+        $process = new Process(['which', 'composer'], base_path(), ['PATH' => $fullPath]);
+        $process->run();
+
+        if ($process->isSuccessful() && ($path = trim($process->getOutput())) !== '') {
+            return $path;
+        }
+
+        return 'composer';
     }
 
     private function findNpm(): string
