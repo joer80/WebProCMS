@@ -17,7 +17,9 @@ class UpdateCmsJob
         // Reset tracked build assets before merging — the server modifies manifest.json
         // at runtime (page editor CSS rebuilds), which would block a ff-only merge.
         // The build:public step below immediately regenerates the correct public entries.
-        $this->runProcess(['git', 'checkout', '--', 'public/build/'], $log);
+        // Also reset VERSION — UpdateCmsJob writes the new version after the merge,
+        // so the local modification from the previous update would block the next pull.
+        $this->runProcess(['git', 'checkout', '--', 'public/build/', 'VERSION'], $log);
 
         $this->runProcess(['git', 'merge', '--ff-only', 'origin/'.$branch], $log);
 
