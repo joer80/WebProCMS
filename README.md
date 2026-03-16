@@ -459,41 +459,6 @@ DB::table('users')->count();
 
 ---
 
-## Website Type (Starting Point)
-
-The public site's navigation, homepage content, and footer links are controlled by a single environment variable:
-
-```env
-WEBSITE_TYPE=saas
-```
-
-Set this in `.env` before handing the project off to a client. After changing it, run `php artisan config:clear` (or `php artisan optimize:clear` in production).
-
-### Available types
-
-| Value | Navigation |
-|---|---|
-| `saas` | Features, Pricing, Blog, About + Login/Register or Dashboard |
-| `service` | Services, Locations, Blog, Contact Us |
-| `ecommerce` | Products, About Us, Contact Us + Login/Register or Dashboard |
-| `law` | Practice Areas, About Us, Contact Us |
-| `nonprofit` | About, Blog, Donate, Volunteer |
-| `healthcare` | Patients, Employers, Locations, Careers |
-| `custom` | About, Blog, Contact |
-
-Each type also controls the homepage hero headline, subheadline, and CTA buttons, as well as the footer Company link column.
-
-### How it works
-
-- `WEBSITE_TYPE` is read by `config/features.php` via `env('WEBSITE_TYPE', 'saas')`
-- `config/navigation.php` maps each type to its nav items and footer links
-- `resources/views/layouts/public.blade.php` loops over the config to render the header and footer
-- `resources/views/home.blade.php` uses a `match()` to render the correct hero and intro content per type
-
-All page routes (features, pricing, products, practice-areas, donate, volunteer, patients, employers, careers, locations, blog, contact, about, services) are always registered. The type setting determines which ones appear in the navigation.
-
----
-
 ## Brand & Styling
 
 | What | Where |
