@@ -18,11 +18,13 @@ class UpdateCmsJob
         $fullPath = '/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:'.(getenv('PATH') ?: '');
         $composer = $this->resolveComposer($fullPath);
 
-        // Invoke via PHP_BINARY with open_basedir disabled when composer is an absolute
+        // Invoke via PHP CLI with open_basedir disabled when composer is an absolute
         // path — on managed hosts (e.g. RunCloud) the phar lives outside the allowed
         // open_basedir paths and Phar::mapPhar() fails when called from php-fpm.
+        // PHP_BINARY may be the FPM binary or empty in this context, so resolve the
+        // CLI binary explicitly via which.
         $composerCmd = str_starts_with($composer, '/')
-            ? [PHP_BINARY, '-d', 'open_basedir=', $composer]
+            ? [$this->findPhpCli($fullPath), '-d', 'open_basedir=', $composer]
             : [$composer];
 
         $this->runProcess([...$composerCmd, 'install', '--no-dev', '--no-interaction', '--optimize-autoloader'], $log, ['PATH' => $fullPath]);
@@ -78,6 +80,22 @@ class UpdateCmsJob
 
             throw new \RuntimeException($error);
         }
+    }
+
+    private function findPhpCli(string $fullPath): string
+    {
+        // PHP_BINARY in FPM context may be the FPM binary (e.g. php8.2-fpm) or empty.
+        // Use `which` to find the real CLI binary from PATH instead.
+        foreach (['php', 'php8.4', 'php8.3', 'php8.2', 'php8.1', 'php8.0'] as $candidate) {
+            $process = new Process(['which', $candidate], base_path(), ['PATH' => $fullPath]);
+            $process->run();
+
+            if ($process->isSuccessful() && ($path = trim($process->getOutput())) !== '') {
+                return $path;
+            }
+        }
+
+        return PHP_BINARY ?: 'php';
     }
 
     private function resolveComposer(string $fullPath): string
