@@ -22,7 +22,6 @@ Route::middleware([
     Route::livewire('contact', 'pages::contact')->name('contact');
     Route::livewire('about', 'pages::about')->name('about');
     Route::livewire('404', 'pages::404')->name('404');
-    Route::livewire('test', 'pages::test')->name('test');
     Route::livewire('locations', 'pages::locations')->name('locations');
     Route::livewire('services', 'pages::services')->name('services');
 });
