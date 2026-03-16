@@ -16,15 +16,17 @@ class UpdateCmsJob
         $this->runProcess(['git', 'merge', '--ff-only', 'origin/'.$branch], $log);
 
         $fullPath = '/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:'.(getenv('PATH') ?: '');
+
+        // PHP_BINARY is the FPM binary (or empty) in web context — resolve the CLI binary.
+        $phpCli = $this->findPhpCli($fullPath);
+
         $composer = $this->resolveComposer($fullPath);
 
         // Invoke via PHP CLI with open_basedir disabled when composer is an absolute
         // path — on managed hosts (e.g. RunCloud) the phar lives outside the allowed
         // open_basedir paths and Phar::mapPhar() fails when called from php-fpm.
-        // PHP_BINARY may be the FPM binary or empty in this context, so resolve the
-        // CLI binary explicitly via which.
         $composerCmd = str_starts_with($composer, '/')
-            ? [$this->findPhpCli($fullPath), '-d', 'open_basedir=', $composer]
+            ? [$phpCli, '-d', 'open_basedir=', $composer]
             : [$composer];
 
         // Composer requires HOME or COMPOSER_HOME — FPM may not set HOME, so fall
@@ -39,17 +41,17 @@ class UpdateCmsJob
 
         $this->runProcess([...$composerCmd, 'install', '--no-dev', '--no-interaction', '--optimize-autoloader'], $log, $composerEnv);
 
-        $this->runProcess([PHP_BINARY, 'artisan', 'migrate', '--force', '--no-interaction'], $log);
+        $this->runProcess([$phpCli, 'artisan', 'migrate', '--force', '--no-interaction'], $log);
 
-        $this->runProcess([PHP_BINARY, 'artisan', 'design-library:index', '--no-interaction'], $log);
+        $this->runProcess([$phpCli, 'artisan', 'design-library:index', '--no-interaction'], $log);
 
         $npm = $this->findNpm();
         $env = ['PATH' => dirname($npm).':'.(getenv('PATH') ?: '/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin')];
         $this->runProcess([$npm, 'run', 'build'], $log, $env);
 
         if (! app()->isLocal()) {
-            $this->runProcess([PHP_BINARY, 'artisan', 'optimize', '--no-interaction'], $log);
-            $this->runProcess([PHP_BINARY, 'artisan', 'responsecache:clear'], $log);
+            $this->runProcess([$phpCli, 'artisan', 'optimize', '--no-interaction'], $log);
+            $this->runProcess([$phpCli, 'artisan', 'responsecache:clear'], $log);
         }
 
         $latestVersion = Setting::get('update_latest_version', '');
