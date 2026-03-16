@@ -2,9 +2,12 @@
 
 namespace App\Jobs;
 
+use App\Models\ContentItem;
+use App\Models\ContentTypeDefinition;
 use App\Models\Location;
 use App\Models\Post;
 use App\Models\Setting;
+use App\Support\ContentTypePageGenerator;
 use Illuminate\Support\Facades\Artisan;
 
 class SeedDemoDataJob
@@ -20,6 +23,7 @@ class SeedDemoDataJob
         }
 
         $this->seedLocations();
+        $this->seedContentTypes();
 
         Setting::set('seeding_status', 'complete');
     }
@@ -27,6 +31,65 @@ class SeedDemoDataJob
     public function failed(\Throwable $exception): void
     {
         Setting::set('seeding_status', 'failed');
+    }
+
+    private function seedContentTypes(): void
+    {
+        $types = [
+            [
+                'name' => 'Minutes',
+                'slug' => 'minutes',
+                'singular' => 'Minute',
+                'icon' => 'document',
+                'fields' => [
+                    ['label' => 'Meeting Date', 'name' => 'meeting_date', 'type' => 'date', 'options' => '', 'required' => true],
+                    ['label' => 'Meeting Notes', 'name' => 'meeting_notes', 'type' => 'richtext_tiptap', 'options' => '', 'required' => false],
+                ],
+                'sort_order' => 0,
+                'show_dashboard_button' => true,
+                'is_seeded' => true,
+            ],
+        ];
+
+        $generator = app(ContentTypePageGenerator::class);
+
+        foreach ($types as $typeData) {
+            $typeDef = ContentTypeDefinition::firstOrCreate(
+                ['slug' => $typeData['slug']],
+                $typeData
+            );
+
+            if (! $typeDef->is_seeded) {
+                $typeDef->update(['is_seeded' => true]);
+            }
+
+            if (! $generator->hasPages($typeDef->slug)) {
+                $generator->generate($typeDef);
+            }
+        }
+
+        $this->seedContentItems();
+    }
+
+    private function seedContentItems(): void
+    {
+        $items = [
+            [
+                'type_slug' => 'minutes',
+                'data' => [
+                    'meeting_date' => '2026-03-10',
+                    'meeting_notes' => '<p>Reviewed budget allocations for the upcoming quarter. Approved new vendor contracts and set next meeting for March 24th.</p>',
+                ],
+                'status' => 'published',
+                'published_at' => now(),
+            ],
+        ];
+
+        foreach ($items as $item) {
+            if (! ContentItem::query()->where('type_slug', $item['type_slug'])->exists()) {
+                ContentItem::create($item);
+            }
+        }
     }
 
     private function seedLocations(): void

@@ -4,9 +4,12 @@ use App\Jobs\IndexDesignLibraryJob;
 use App\Jobs\SeedDemoDataJob;
 use App\Jobs\UpdateCmsJob;
 use App\Models\Category;
+use App\Models\ContentItem;
+use App\Models\ContentTypeDefinition;
 use App\Models\Location;
 use App\Models\Post;
 use App\Models\Setting;
+use App\Support\ContentTypePageGenerator;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Http;
 use Livewire\Attributes\Computed;
@@ -166,7 +169,57 @@ new #[Layout('layouts.app')] #[Title('Tools')] class extends Component {
         Location::query()->where('is_seeded', true)->get()->each->delete();
         Category::query()->where('is_seeded', true)->get()->each->delete();
 
+        $generator = app(ContentTypePageGenerator::class);
+
+        ContentTypeDefinition::query()->where('is_seeded', true)->each(function (ContentTypeDefinition $type) use ($generator): void {
+            ContentItem::query()->where('type_slug', $type->slug)->delete();
+            $generator->remove($type->slug);
+            $type->delete();
+        });
+
+        $this->removeUnchangedSeededPages();
+
         $this->dispatch('notify', message: 'Seeded demo data deleted.');
+    }
+
+    /**
+     * Delete seeded client pages whose content has not changed since seeding,
+     * and remove their routes from routes/web.php.
+     */
+    private function removeUnchangedSeededPages(): void
+    {
+        /** @var array<string, array{hash: string, route_check: string|null}> $pages */
+        $pages = Setting::get('seeded_client_pages', []);
+
+        if (empty($pages)) {
+            return;
+        }
+
+        $routesPath = base_path('routes/web.php');
+        $routesContents = file_get_contents($routesPath);
+
+        foreach ($pages as $path => $meta) {
+            if (! file_exists($path)) {
+                continue;
+            }
+
+            if (md5_file($path) !== $meta['hash']) {
+                continue;
+            }
+
+            unlink($path);
+
+            if (! empty($meta['route_check'])) {
+                $routesContents = preg_replace(
+                    '/^\s*Route::livewire\([^)]*' . preg_quote($meta['route_check'], '/') . '[^)]*\)[^;]*;\n?/m',
+                    '',
+                    $routesContents
+                );
+            }
+        }
+
+        file_put_contents($routesPath, $routesContents);
+        Setting::set('seeded_client_pages', []);
     }
 
     public function seedDemoData(): void

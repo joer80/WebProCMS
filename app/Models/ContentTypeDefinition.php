@@ -16,6 +16,7 @@ class ContentTypeDefinition extends Model
         'fields',
         'sort_order',
         'show_dashboard_button',
+        'is_seeded',
     ];
 
     protected function casts(): array
@@ -24,6 +25,7 @@ class ContentTypeDefinition extends Model
             'fields' => 'array',
             'sort_order' => 'integer',
             'show_dashboard_button' => 'boolean',
+            'is_seeded' => 'boolean',
         ];
     }
 
