@@ -29,6 +29,8 @@ new class extends Component {
     /** @var array<int> */
     public array $selectedImageIds = [];
 
+    public ?int $pendingDeleteImageId = null;
+
     public bool $showNewCategoryForm = false;
 
     public string $newCategoryName = '';
@@ -281,7 +283,7 @@ new class extends Component {
                                     </div>
                                 @endif
                                 <button
-                                    x-on:click.stop="confirm('Delete this image?') && $wire.deleteImage({{ $image->id }})"
+                                    x-on:click.stop="$wire.set('pendingDeleteImageId', {{ $image->id }}); $flux.modal('confirm-delete-image').show()"
                                     class="absolute top-1 left-1 size-6 rounded-full bg-zinc-900/70 text-white opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center hover:bg-red-600"
                                 >
                                     <flux:icon name="x-mark" class="size-3" />
@@ -306,7 +308,7 @@ new class extends Component {
                                     </div>
                                 @endif
                                 <button
-                                    x-on:click.stop="confirm('Delete this image?') && $wire.deleteImage({{ $image->id }})"
+                                    x-on:click.stop="$wire.set('pendingDeleteImageId', {{ $image->id }}); $flux.modal('confirm-delete-image').show()"
                                     class="absolute top-1 left-1 size-6 rounded-full bg-zinc-900/70 text-white opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center hover:bg-red-600"
                                 >
                                     <flux:icon name="x-mark" class="size-3" />
@@ -394,4 +396,17 @@ new class extends Component {
             @endif
         </div>
     </div>
+
+    <flux:modal name="confirm-delete-image" class="w-full max-w-sm">
+        <flux:heading size="lg">Delete image?</flux:heading>
+        <flux:text class="mt-2">This will permanently delete the image and cannot be undone.</flux:text>
+        <div class="mt-6 flex justify-end gap-3">
+            <flux:modal.close>
+                <flux:button variant="ghost">Cancel</flux:button>
+            </flux:modal.close>
+            <flux:modal.close>
+                <flux:button variant="danger" wire:click="deleteImage($wire.pendingDeleteImageId)">Delete</flux:button>
+            </flux:modal.close>
+        </div>
+    </flux:modal>
 </div>

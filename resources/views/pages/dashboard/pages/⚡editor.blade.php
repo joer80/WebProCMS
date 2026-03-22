@@ -3355,7 +3355,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                                 </flux:tooltip>
                                 <flux:tooltip content="Remove all rows" position="bottom">
                                     <button type="button"
-                                        x-on:click="if (confirm('Remove all rows from this page?')) $wire.removeAllRows()"
+                                        x-on:click="$flux.modal('confirm-remove-all-rows').show()"
                                         class="p-1 rounded text-zinc-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors"
                                     >
                                         <flux:icon name="trash" class="size-3.5" />
@@ -3392,7 +3392,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                                 <div class="w-px h-4 bg-zinc-200 dark:bg-zinc-700 mx-0.5"></div>
                                 <flux:tooltip content="Auto BEM IDs for all rows" position="bottom">
                                     <button type="button"
-                                        x-on:click="if (confirm('Auto-generate BEM IDs for all rows on this page? Existing IDs will be updated.')) $wire.applyAutoBemAllRows()"
+                                        x-on:click="$flux.modal('confirm-auto-bem').show()"
                                         class="p-1 rounded text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors"
                                     >
                                         <flux:icon name="sparkles" class="size-3.5" />
@@ -4239,6 +4239,32 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
         <div class="mt-6 flex justify-end">
             <flux:modal.close>
                 <flux:button>Close</flux:button>
+            </flux:modal.close>
+        </div>
+    </flux:modal>
+
+    <flux:modal name="confirm-remove-all-rows" class="w-full max-w-sm">
+        <flux:heading size="lg">Remove all rows?</flux:heading>
+        <flux:text class="mt-2">This will remove all rows from this page. Any saved content for these rows will also be deleted.</flux:text>
+        <div class="mt-6 flex justify-end gap-3">
+            <flux:modal.close>
+                <flux:button variant="ghost">Cancel</flux:button>
+            </flux:modal.close>
+            <flux:modal.close>
+                <flux:button variant="danger" wire:click="removeAllRows">Remove All</flux:button>
+            </flux:modal.close>
+        </div>
+    </flux:modal>
+
+    <flux:modal name="confirm-auto-bem" class="w-full max-w-sm">
+        <flux:heading size="lg">Auto BEM all rows?</flux:heading>
+        <flux:text class="mt-2">Auto-generate BEM IDs for all rows on this page. Existing IDs will be updated.</flux:text>
+        <div class="mt-6 flex justify-end gap-3">
+            <flux:modal.close>
+                <flux:button variant="ghost">Cancel</flux:button>
+            </flux:modal.close>
+            <flux:modal.close>
+                <flux:button variant="primary" wire:click="applyAutoBemAllRows">Apply</flux:button>
             </flux:modal.close>
         </div>
     </flux:modal>
