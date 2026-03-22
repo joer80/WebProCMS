@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\ContentType;
 use App\Enums\RowCategory;
 use App\Jobs\IndexDesignLibraryJob;
 use App\Models\ContentOverride;
@@ -237,6 +238,82 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
 
         $this->isDirty = true;
         $this->refreshPreview();
+    }
+
+    /**
+     * @param  array<string>  $usedBlockNames  Block names already claimed by other rows (passed by ref so applyAutoBemAllRows can track state).
+     */
+    public function applyAutoBem(int $index, array &$usedBlockNames = []): void
+    {
+        $row = $this->rows[$index];
+        $slug = $row['slug'];
+
+        $existingId = $this->rowDesignValues[$slug]['section_id'] ?? '';
+        $baseBlockName = $existingId ?: Str::slug($row['name']);
+
+        // When called for a single row, collect section_ids already in use on other rows
+        // so we can avoid generating duplicate block names.
+        if (empty($usedBlockNames)) {
+            $drafts = session('editor_draft_overrides', []);
+            foreach ($this->rows as $i => $r) {
+                if ($i === $index) {
+                    continue;
+                }
+                $otherId = $drafts[$r['slug'].':section_id']['value']
+                    ?? $this->rowDesignValues[$r['slug']]['section_id']
+                    ?? '';
+                if ($otherId !== '') {
+                    $usedBlockNames[] = $otherId;
+                }
+            }
+        }
+
+        // Ensure the block name is unique — append -2, -3, … as needed
+        $blockName = $baseBlockName;
+        $counter = 2;
+        while (in_array($blockName, $usedBlockNames, true)) {
+            $blockName = $baseBlockName.'-'.$counter;
+            $counter++;
+        }
+        $usedBlockNames[] = $blockName;
+
+        $drafts = session('editor_draft_overrides', []);
+
+        $this->rowDesignValues[$slug]['section_id'] = $blockName;
+        $drafts[$slug.':section_id'] = ['type' => 'text', 'value' => $blockName];
+
+        // Find every _id type field registered in this row and assign BEM element IDs
+        $allFields = $this->parseContentFields($row['blade'], $slug);
+
+        foreach ($allFields as $field) {
+            if ($field['type'] !== 'id') {
+                continue;
+            }
+
+            // Strip _id suffix and replace underscores with hyphens to get the element name
+            $elementName = str_replace('_', '-', preg_replace('/_id$/', '', $field['key']));
+            $bemId = $blockName.'__'.$elementName;
+
+            $drafts[$field['slug'].':'.$field['key']] = ['type' => 'text', 'value' => $bemId];
+
+            // Keep contentValues in sync if this row's editor is currently open
+            if ($this->editingRowIndex === $index && array_key_exists($field['key'], $this->contentValues)) {
+                $this->contentValues[$field['key']] = $bemId;
+            }
+        }
+
+        session(['editor_draft_overrides' => $drafts]);
+
+        $this->isDirty = true;
+        $this->refreshPreview();
+    }
+
+    public function applyAutoBemAllRows(): void
+    {
+        $usedBlockNames = [];
+        foreach (array_keys($this->rows) as $index) {
+            $this->applyAutoBem($index, $usedBlockNames);
+        }
     }
 
     public function toggleNoAltRow(string $slug): void
@@ -1429,6 +1506,9 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                 ? ContentOverride::query()->where('row_slug', $slug)->where('key', $key)->value('value')
                 : null;
 
+            // Normalize UI-only types (id, attrs, htag, url, etc.) to a valid ContentType value
+            $storedType = ContentType::tryFrom($type)?->value ?? 'text';
+
             if ($value === '') {
                 ContentOverride::query()
                     ->where('row_slug', $slug)
@@ -1437,7 +1517,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
             } else {
                 ContentOverride::updateOrCreate(
                     ['row_slug' => $slug, 'key' => $key],
-                    ['type' => $type, 'value' => $value, 'page_slug' => isset($sharedSlugs[$slug]) ? null : ($this->pageSlug ?: null)]
+                    ['type' => $storedType, 'value' => $value, 'page_slug' => isset($sharedSlugs[$slug]) ? null : ($this->pageSlug ?: null)]
                 );
             }
 
@@ -2822,6 +2902,19 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                                 </div>
                             @endif
 
+                            {{-- Auto BEM — shown when Advanced tab is active --}}
+                            <div x-show="advancedMode" x-cloak class="mb-3">
+                                <button
+                                    wire:click="applyAutoBem({{ $editingRowIndex }})"
+                                    type="button"
+                                    class="w-full flex items-center justify-center gap-1.5 text-xs font-medium py-1.5 px-3 rounded-lg border border-zinc-200 dark:border-zinc-700 text-zinc-500 dark:text-zinc-400 hover:text-primary hover:border-primary transition-colors"
+                                    title="Auto-generate BEM IDs for all elements in this row. Uses Section ID (or row name) as the BEM block."
+                                >
+                                    <flux:icon name="sparkles" class="size-3.5" />
+                                    Auto BEM IDs
+                                </button>
+                            </div>
+
                             @php
                                 $rowItemBlocks = $editingRowIndex !== null ? $this->extractItemBlocks($rows[$editingRowIndex]['blade']) : [];
                             @endphp
@@ -3245,6 +3338,14 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                                         <flux:icon name="code-bracket" class="size-3.5" />
                                     </button>
                                 </flux:tooltip>
+                                <flux:tooltip content="Auto BEM IDs for all rows" position="bottom">
+                                    <button type="button"
+                                        x-on:click="if (confirm('Auto-generate BEM IDs for all rows on this page? Existing IDs will be updated.')) $wire.applyAutoBemAllRows()"
+                                        class="p-1 rounded text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors"
+                                    >
+                                        <flux:icon name="sparkles" class="size-3.5" />
+                                    </button>
+                                </flux:tooltip>
                                 <flux:tooltip content="Browse library rows for all" position="bottom">
                                     <button type="button"
                                         x-on:click="allDesignsOpen = false; allAdvancedOpen = false; allBrowseOpen = !allBrowseOpen; if (allBrowseOpen) { $wire.openAllBrowseMode(); $dispatch('expand-all-browse'); } else { $dispatch('collapse-all-rows'); }"
@@ -3548,6 +3649,15 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                                                         />
                                                     </div>
                                                 @endif
+                                                <button
+                                                    wire:click="applyAutoBem({{ $index }})"
+                                                    type="button"
+                                                    class="w-full flex items-center justify-center gap-1.5 text-xs font-medium py-1.5 px-3 rounded-lg border border-zinc-200 dark:border-zinc-700 text-zinc-500 dark:text-zinc-400 hover:text-primary hover:border-primary transition-colors"
+                                                    title="Auto-generate BEM IDs for all elements in this row. Uses Section ID (or row name) as the BEM block."
+                                                >
+                                                    <flux:icon name="sparkles" class="size-3.5" />
+                                                    Auto BEM IDs
+                                                </button>
                                             </div>
                                             {{-- Browse mode info --}}
                                             <div x-show="panelMode === 'browse'" class="px-3 py-2 border-t border-zinc-200 dark:border-zinc-700">
