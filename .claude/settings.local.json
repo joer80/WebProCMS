@@ -72,7 +72,8 @@
       "Bash(DB_CONNECTION=sqlite DB_DATABASE=/tmp/cms-ci-setup.sqlite php artisan migrate --no-interaction)",
       "Bash(DB_CONNECTION=sqlite DB_DATABASE=/tmp/cms-ci-setup.sqlite php artisan db:seed --class=ClientPageSeeder --no-interaction)",
       "Bash(head -10 ls /Users/joepersonal/Sites/WebProCMS/resources/views/pages/blog/*.blade.php)",
-      "Bash(find /Users/joepersonal/Sites/WebProCMS -type f \\\\\\(-name *editor* -o -name *Edit* \\\\\\))"
+      "Bash(find /Users/joepersonal/Sites/WebProCMS -type f \\\\\\(-name *editor* -o -name *Edit* \\\\\\))",
+      "WebSearch"
     ]
   },
   "defaultMode": "acceptEdits"

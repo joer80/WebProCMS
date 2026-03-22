@@ -2361,7 +2361,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
     </flux:modal>
 
     {{-- Library Drawer --}}
-    <flux:modal wire:model="showLibraryDrawer" class="w-full max-w-2xl">
+    <flux:modal wire:model="showLibraryDrawer" class="w-full max-w-6xl">
         <flux:heading size="lg" class="mb-4">{{ __('Insert Row') }}</flux:heading>
 
         {{-- Tabs --}}
@@ -2373,20 +2373,20 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                 {{ __('Rows') }}
             </button>
             <button
-                wire:click="switchLibraryTab('groups')"
-                class="px-4 py-2 text-sm font-medium border-b-2 transition-colors -mb-px {{ $libraryTab === 'groups' ? 'border-primary text-primary' : 'border-transparent text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200' }}"
-            >
-                {{ __('Row Groups') }}
-            </button>
-            <button
                 wire:click="switchLibraryTab('shared')"
                 class="px-4 py-2 text-sm font-medium border-b-2 transition-colors -mb-px {{ $libraryTab === 'shared' ? 'border-primary text-primary' : 'border-transparent text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200' }}"
             >
                 {{ __('Shared Rows') }}
             </button>
+            <button
+                wire:click="switchLibraryTab('groups')"
+                class="px-4 py-2 text-sm font-medium border-b-2 transition-colors -mb-px {{ $libraryTab === 'groups' ? 'border-primary text-primary' : 'border-transparent text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200' }}"
+            >
+                {{ __('Row Groups') }}
+            </button>
         </div>
 
-        <div class="min-h-[28rem]">
+        <div class="min-h-[40rem]">
         @if ($libraryTab === 'rows')
             <div class="flex gap-3 mb-4">
                 <flux:input
@@ -2410,26 +2410,48 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                     <p class="text-sm">No rows found.</p>
                 </div>
             @else
-                <div class="space-y-2 max-h-96 overflow-y-auto">
+                <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 max-h-[40rem] overflow-y-auto pr-1">
                     @foreach ($this->libraryRows as $libRow)
-                        <div wire:key="lib-{{ $libRow->id }}" class="flex items-center gap-3 p-3 rounded-lg border border-zinc-200 dark:border-zinc-700 hover:border-primary/40 transition-colors">
-                            <div class="flex-1 min-w-0">
-                                <div class="font-medium text-zinc-900 dark:text-white text-sm truncate">{{ $libRow->name }}</div>
-                                @if ($libRow->description)
-                                    <div class="text-xs text-zinc-500 dark:text-zinc-400 truncate mt-0.5">{{ $libRow->description }}</div>
-                                @endif
-                                <flux:badge size="sm" class="mt-1">{{ $libRow->category->label() }}</flux:badge>
+                        <div wire:key="lib-{{ $libRow->id }}" class="rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 overflow-hidden hover:border-primary/40 transition-colors flex flex-col">
+                            {{-- Live preview --}}
+                            <div class="relative h-44 overflow-hidden bg-zinc-100 dark:bg-zinc-800 shrink-0 border-b border-zinc-200 dark:border-zinc-700">
+                                <div class="absolute inset-0 flex items-center justify-center animate-pulse pointer-events-none">
+                                    <flux:icon name="photo" class="size-8 text-zinc-300 dark:text-zinc-600" />
+                                </div>
+                                <iframe
+                                    src="{{ route('dashboard.design-library.preview', ['type' => 'row', 'id' => $libRow->id]) }}"
+                                    class="absolute top-0 border-0"
+                                    style="width:1280px;height:800px;transform:scale(0.25);transform-origin:top center;pointer-events:none;left:50%;margin-left:-640px;"
+                                    loading="lazy"
+                                    scrolling="no"
+                                    tabindex="-1"
+                                    aria-hidden="true"
+                                    onload="this.previousElementSibling.style.display='none'"
+                                ></iframe>
                             </div>
-                            <a href="{{ route('dashboard.design-library.preview', ['type' => 'row', 'id' => $libRow->id]) }}" target="_blank" rel="noopener noreferrer">
-                                <flux:button variant="ghost" size="sm" icon="eye" />
-                            </a>
-                            <flux:button
-                                wire:click="insertRow({{ $libRow->id }}, {{ $insertAtIndex ?? count($rows) }})"
-                                variant="primary"
-                                size="sm"
-                            >
-                                {{ __('Insert') }}
-                            </flux:button>
+                            {{-- Card body --}}
+                            <div class="p-3 flex flex-col flex-1">
+                                <div class="flex-1 min-w-0">
+                                    <div class="font-medium text-zinc-900 dark:text-white text-sm truncate">{{ $libRow->name }}</div>
+                                    @if ($libRow->description)
+                                        <div class="text-xs text-zinc-500 dark:text-zinc-400 truncate mt-0.5">{{ $libRow->description }}</div>
+                                    @endif
+                                    <flux:badge size="sm" class="mt-1">{{ $libRow->category->label() }}</flux:badge>
+                                </div>
+                                <div class="mt-2 pt-2 border-t border-zinc-100 dark:border-zinc-800 flex items-center gap-2">
+                                    <flux:button
+                                        wire:click="insertRow({{ $libRow->id }}, {{ $insertAtIndex ?? count($rows) }})"
+                                        variant="primary"
+                                        size="sm"
+                                        class="flex-1"
+                                    >
+                                        {{ __('Insert') }}
+                                    </flux:button>
+                                    <a href="{{ route('dashboard.design-library.preview', ['type' => 'row', 'id' => $libRow->id]) }}" target="_blank" rel="noopener noreferrer">
+                                        <flux:button variant="ghost" size="sm" icon="eye" />
+                                    </a>
+                                </div>
+                            </div>
                         </div>
                     @endforeach
                 </div>
@@ -2442,7 +2464,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                     <p class="text-xs mt-1">Use the "Make Shared" action on any row to share it.</p>
                 </div>
             @else
-                <div class="space-y-2 max-h-96 overflow-y-auto">
+                <div class="space-y-2 max-h-[40rem] overflow-y-auto">
                     @foreach ($this->sharedLibraryRows as $sharedRow)
                         <div wire:key="shared-{{ $sharedRow->slug }}" class="flex items-center gap-3 p-3 rounded-lg border border-zinc-200 dark:border-zinc-700 hover:border-primary/40 transition-colors">
                             <div class="flex-1 min-w-0">
@@ -2484,38 +2506,58 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                     <p class="text-xs mt-1">Create groups in the Design Library to quickly insert multiple rows at once.</p>
                 </div>
             @else
-                <div class="space-y-2 max-h-96 overflow-y-auto">
+                <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 max-h-[40rem] overflow-y-auto pr-1">
                     @foreach ($this->libraryPages as $libPage)
-                        <div wire:key="page-{{ $libPage->id }}" class="p-3 rounded-lg border border-zinc-200 dark:border-zinc-700 hover:border-primary/40 transition-colors">
-                            <div class="flex items-center gap-3 mb-2">
+                        <div wire:key="page-{{ $libPage->id }}" class="rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 overflow-hidden hover:border-primary/40 transition-colors flex flex-col">
+                            {{-- Live preview --}}
+                            <div class="relative h-44 overflow-hidden bg-zinc-100 dark:bg-zinc-800 shrink-0 border-b border-zinc-200 dark:border-zinc-700">
+                                <div class="absolute inset-0 flex items-center justify-center animate-pulse pointer-events-none">
+                                    <flux:icon name="photo" class="size-8 text-zinc-300 dark:text-zinc-600" />
+                                </div>
+                                <iframe
+                                    src="{{ route('dashboard.design-library.preview', ['type' => 'page', 'id' => $libPage->id]) }}"
+                                    class="absolute top-0 border-0"
+                                    style="width:1280px;height:800px;transform:scale(0.25);transform-origin:top center;pointer-events:none;left:50%;margin-left:-640px;"
+                                    loading="lazy"
+                                    scrolling="no"
+                                    tabindex="-1"
+                                    aria-hidden="true"
+                                    onload="this.previousElementSibling.style.display='none'"
+                                ></iframe>
+                            </div>
+                            {{-- Card body --}}
+                            <div class="p-3 flex flex-col flex-1">
                                 <div class="flex-1 min-w-0">
                                     <div class="font-medium text-zinc-900 dark:text-white text-sm truncate">{{ $libPage->name }}</div>
                                     @if ($libPage->description)
                                         <div class="text-xs text-zinc-500 dark:text-zinc-400 truncate mt-0.5">{{ $libPage->description }}</div>
                                     @endif
+                                    <flux:badge size="sm" class="mt-1 shrink-0">{{ $libPage->website_category->label() }}</flux:badge>
                                 </div>
-                                <flux:badge size="sm" class="shrink-0">{{ $libPage->website_category->label() }}</flux:badge>
-                                <a href="{{ route('dashboard.design-library.preview', ['type' => 'page', 'id' => $libPage->id]) }}" target="_blank" rel="noopener noreferrer">
-                                    <flux:button variant="ghost" size="sm" icon="eye" />
-                                </a>
-                                <flux:button
-                                    wire:click="insertPageBundle({{ $libPage->id }}, {{ $insertAtIndex ?? count($rows) }})"
-                                    variant="primary"
-                                    size="sm"
-                                >
-                                    {{ __('Insert All') }}
-                                </flux:button>
+                                @if (! empty($libPage->row_names))
+                                    <div class="flex flex-wrap gap-1 mt-2">
+                                        @foreach ($libPage->row_names as $rowName)
+                                            <span class="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded bg-zinc-100 dark:bg-zinc-700 text-zinc-500 dark:text-zinc-400">
+                                                <flux:icon name="rectangle-stack" class="size-2.5" />
+                                                {{ $rowName }}
+                                            </span>
+                                        @endforeach
+                                    </div>
+                                @endif
+                                <div class="mt-2 pt-2 border-t border-zinc-100 dark:border-zinc-800 flex items-center gap-2">
+                                    <flux:button
+                                        wire:click="insertPageBundle({{ $libPage->id }}, {{ $insertAtIndex ?? count($rows) }})"
+                                        variant="primary"
+                                        size="sm"
+                                        class="flex-1"
+                                    >
+                                        {{ __('Insert All') }}
+                                    </flux:button>
+                                    <a href="{{ route('dashboard.design-library.preview', ['type' => 'page', 'id' => $libPage->id]) }}" target="_blank" rel="noopener noreferrer">
+                                        <flux:button variant="ghost" size="sm" icon="eye" />
+                                    </a>
+                                </div>
                             </div>
-                            @if (! empty($libPage->row_names))
-                                <div class="flex flex-wrap gap-1">
-                                    @foreach ($libPage->row_names as $rowName)
-                                        <span class="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded bg-zinc-100 dark:bg-zinc-700 text-zinc-500 dark:text-zinc-400">
-                                            <flux:icon name="rectangle-stack" class="size-2.5" />
-                                            {{ $rowName }}
-                                        </span>
-                                    @endforeach
-                                </div>
-                            @endif
                         </div>
                     @endforeach
                 </div>
