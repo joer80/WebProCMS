@@ -13,6 +13,7 @@ use App\Support\LayoutService;
 use App\Support\RowItemLibrary;
 use App\Support\SchemaCache;
 use App\Support\VoltFileService;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Livewire\Attributes\Computed;
@@ -1844,6 +1845,10 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
             $this->dispatch('content-attrs-reset', key: $key, value: $attrsJson);
         }
 
+        if ($field['type'] === 'richtext') {
+            $this->dispatch('content-richtext-reset', key: $key, value: (string) $original);
+        }
+
         $this->refreshPreview();
     }
 
@@ -2339,6 +2344,62 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
         }
 
         $this->dispatch('refresh-preview', url: $this->previewUrl);
+    }
+
+    public function generateAiContent(string $fieldKey, string $prompt, string $fieldType): void
+    {
+        $provider = \App\Models\Setting::get('ai.provider', 'claude');
+        $isRichText = $fieldType === 'richtext';
+        $systemPrompt = $isRichText
+            ? 'You are a content writer. Generate HTML content based on the user\'s request. Return only the HTML, no markdown code fences, no explanation.'
+            : 'You are a content writer. Generate concise, well-written text based on the user\'s request. Return only the text, no quotes, no explanation.';
+
+        try {
+            if ($provider === 'openai') {
+                $apiKey = \App\Models\Setting::get('ai.openai_key', '');
+                $response = Http::withHeaders([
+                    'Authorization' => 'Bearer ' . $apiKey,
+                    'Content-Type' => 'application/json',
+                ])->post('https://api.openai.com/v1/chat/completions', [
+                    'model' => 'gpt-4o-mini',
+                    'max_tokens' => 1024,
+                    'messages' => [
+                        ['role' => 'system', 'content' => $systemPrompt],
+                        ['role' => 'user', 'content' => $prompt],
+                    ],
+                ]);
+
+                if ($response->failed()) {
+                    throw new \Exception($response->json('error.message') ?? 'OpenAI API error.');
+                }
+
+                $content = $response->json('choices.0.message.content', '');
+            } else {
+                $apiKey = \App\Models\Setting::get('ai.claude_key', '');
+                $response = Http::withHeaders([
+                    'x-api-key' => $apiKey,
+                    'anthropic-version' => '2023-06-01',
+                    'content-type' => 'application/json',
+                ])->post('https://api.anthropic.com/v1/messages', [
+                    'model' => 'claude-haiku-4-5-20251001',
+                    'max_tokens' => 1024,
+                    'system' => $systemPrompt,
+                    'messages' => [
+                        ['role' => 'user', 'content' => $prompt],
+                    ],
+                ]);
+
+                if ($response->failed()) {
+                    throw new \Exception($response->json('error.message') ?? 'Claude API error.');
+                }
+
+                $content = $response->json('content.0.text', '');
+            }
+
+            $this->dispatch('ai-content-generated', fieldKey: $fieldKey, content: $content);
+        } catch (\Exception $e) {
+            $this->dispatch('ai-generate-error', fieldKey: $fieldKey, message: $e->getMessage());
+        }
     }
 }; ?>
 
@@ -3896,6 +3957,12 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
 
     {{-- Shortcode Reference modal --}}
     @include('partials.shortcode-modal')
+
+    {{-- AI Generate modal --}}
+    @include('partials.ai-generate-modal')
+
+    {{-- Lorem Ipsum modal --}}
+    @include('partials.lorem-ipsum-modal')
 
     {{-- SEO / Page Settings modal --}}
     <flux:modal wire:model="showSeoModal" class="w-full max-w-lg">

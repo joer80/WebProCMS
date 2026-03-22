@@ -9,6 +9,11 @@ if (in_array($field['type'], ['id', 'attrs'])) {
 }
 $showShortcodeBtn = ($field['type'] === 'text' && ! str_ends_with($field['key'], '_url') && ! str_ends_with($field['key'], '_htag')) || $field['key'] === 'subheadline';
 $pageTypeSlug = preg_match('#^pages/([^/]+)/⚡show\.blade\.php$#u', $file ?? '', $ptm) ? $ptm[1] : '';
+$aiEnabled = (bool) (\App\Models\Setting::get('ai.claude_key') || \App\Models\Setting::get('ai.openai_key'));
+$showAiBtn = $aiEnabled && ($showShortcodeBtn || $field['type'] === 'richtext');
+$showLoremBtn = $showShortcodeBtn || $field['type'] === 'richtext';
+$loremDefaultLen = strlen(strip_tags($field['default'] ?? ''));
+$loremDefaultSize = $loremDefaultLen <= 50 ? 'sentence' : ($loremDefaultLen <= 100 ? 'short' : ($loremDefaultLen <= 300 ? 'medium' : 'long'));
 @endphp
 <div wire:key="field-{{ str_replace(':', '-', $field['slug']) }}-{{ $field['key'] }}" x-show="{{ $fieldShow }}">
     @if ($field['type'] === 'classes')
@@ -26,6 +31,20 @@ $pageTypeSlug = preg_match('#^pages/([^/]+)/⚡show\.blade\.php$#u', $file ?? ''
                         class="text-zinc-400 dark:text-zinc-500 hover:text-primary dark:hover:text-primary transition-colors"
                         title="Insert shortcode"
                     ><flux:icon name="bolt" class="size-3.5" /></button>
+                @endif
+                @if ($showLoremBtn)
+                    <button type="button"
+                        onclick="window.dispatchEvent(new CustomEvent('open-lorem-ipsum', { detail: { fieldKey: '{{ $field['key'] }}', fieldType: '{{ $field['type'] }}', defaultSize: '{{ $loremDefaultSize }}' }, bubbles: true }))"
+                        class="text-zinc-400 dark:text-zinc-500 hover:text-primary dark:hover:text-primary transition-colors"
+                        title="Insert dummy text"
+                    ><flux:icon name="document-text" class="size-3.5" /></button>
+                @endif
+                @if ($showAiBtn)
+                    <button type="button"
+                        onclick="window.dispatchEvent(new CustomEvent('open-ai-generate', { detail: { fieldKey: '{{ $field['key'] }}', fieldType: '{{ $field['type'] }}', fieldLabel: '{{ addslashes($field['label']) }}' }, bubbles: true }))"
+                        class="text-zinc-400 dark:text-zinc-500 hover:text-primary dark:hover:text-primary transition-colors"
+                        title="Generate with AI"
+                    ><flux:icon name="sparkles" class="size-3.5" /></button>
                 @endif
                 @if ($field['type'] === 'grid')
                     <button wire:click="clearGridItems('{{ $field['key'] }}')" type="button" class="text-xs text-zinc-400 dark:text-zinc-500 hover:text-red-500 dark:hover:text-red-400 transition-colors">Remove All</button>
@@ -84,6 +103,8 @@ $pageTypeSlug = preg_match('#^pages/([^/]+)/⚡show\.blade\.php$#u', $file ?? ''
         <div wire:ignore
              x-data="richEditor(@js($contentValues[$field['key']] ?? $field['default'] ?? ''), 'contentValues.{{ $field['key'] }}')"
              x-on:shortcode-picked.window="if ($event.detail.fieldKey === '{{ $field['key'] }}') cmd().insertContent($event.detail.shortcode).run()"
+             x-on:ai-content-generated.window="if ($event.detail.fieldKey === '{{ $field['key'] }}') { cmd().selectAll().insertContent($event.detail.content).run(); $nextTick(() => cmd().focus().run()); }"
+             x-on:content-richtext-reset.window="if ($event.detail.key === '{{ $field['key'] }}') cmd().setContent($event.detail.value).run()"
              class="overflow-hidden rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900">
             {{-- Compact toolbar --}}
             <div class="flex flex-wrap items-center gap-0.5 border-b border-zinc-200 dark:border-zinc-700 px-1.5 py-1">
@@ -97,7 +118,6 @@ $pageTypeSlug = preg_match('#^pages/([^/]+)/⚡show\.blade\.php$#u', $file ?? ''
                 <div class="w-px h-4 bg-zinc-200 dark:bg-zinc-600 mx-0.5"></div>
                 <button type="button" @click="setLink()" :class="active.link ? 'bg-zinc-200 dark:bg-zinc-600' : ''" class="rounded px-1.5 py-0.5 text-xs text-zinc-700 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors" title="Link">Link</button>
                 <button type="button" @click="cmd().unsetAllMarks().clearNodes().run()" class="rounded px-1.5 py-0.5 text-xs text-zinc-700 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors" title="Clear Formatting">✕</button>
-                <button type="button" @click="$dispatch('open-shortcode-picker', { fieldKey: '{{ $field['key'] }}', pageTypeSlug: '{{ $pageTypeSlug }}' })" class="rounded px-1.5 py-0.5 text-zinc-400 dark:text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors" title="Insert shortcode"><flux:icon name="bolt" class="size-3.5" /></button>
                 <button type="button" @click="toggleSource()" :class="sourceMode ? 'bg-zinc-200 dark:bg-zinc-600' : ''" class="ml-auto rounded px-1.5 py-0.5 text-xs font-mono text-zinc-500 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors" title="HTML Source">&lt;/&gt;</button>
             </div>
             <div x-ref="editorEl" class="sidebar-rich-editor-content" x-show="!sourceMode"></div>
@@ -357,7 +377,9 @@ $pageTypeSlug = preg_match('#^pages/([^/]+)/⚡show\.blade\.php$#u', $file ?? ''
             placeholder="{{ $field['default'] ?: 'https://' }}"
         />
     @elseif ($field['key'] === 'subheadline')
-        <div x-data
+        <div x-data="{ prevVal: null }"
+            @keydown.ctrl.z="if (prevVal !== null) { $event.preventDefault(); const el = $el.querySelector('textarea'); el.value = prevVal; el.dispatchEvent(new Event('input', { bubbles: true })); el.focus(); prevVal = null; }"
+            @keydown.meta.z="if (prevVal !== null) { $event.preventDefault(); const el = $el.querySelector('textarea'); el.value = prevVal; el.dispatchEvent(new Event('input', { bubbles: true })); el.focus(); prevVal = null; }"
             x-on:shortcode-picked.window="
                 if ($event.detail.fieldKey === '{{ $field['key'] }}') {
                     const el = $el.querySelector('textarea');
@@ -369,6 +391,15 @@ $pageTypeSlug = preg_match('#^pages/([^/]+)/⚡show\.blade\.php$#u', $file ?? ''
                     el.dispatchEvent(new Event('input', { bubbles: true }));
                     el.focus();
                     el.setSelectionRange(start + sc.length, start + sc.length);
+                }
+            "
+            x-on:ai-content-generated.window="
+                if ($event.detail.fieldKey === '{{ $field['key'] }}') {
+                    const el = $el.querySelector('textarea');
+                    prevVal = el.value;
+                    el.value = $event.detail.content;
+                    el.dispatchEvent(new Event('input', { bubbles: true }));
+                    el.focus();
                 }
             ">
             <flux:textarea
@@ -546,7 +577,9 @@ $pageTypeSlug = preg_match('#^pages/([^/]+)/⚡show\.blade\.php$#u', $file ?? ''
             </button>
         </div>
     @else
-        <div x-data
+        <div x-data="{ prevVal: null }"
+            @keydown.ctrl.z="if (prevVal !== null) { $event.preventDefault(); const el = $el.querySelector('input'); el.value = prevVal; el.dispatchEvent(new Event('input', { bubbles: true })); el.focus(); prevVal = null; }"
+            @keydown.meta.z="if (prevVal !== null) { $event.preventDefault(); const el = $el.querySelector('input'); el.value = prevVal; el.dispatchEvent(new Event('input', { bubbles: true })); el.focus(); prevVal = null; }"
             x-on:shortcode-picked.window="
                 if ($event.detail.fieldKey === '{{ $field['key'] }}') {
                     const el = $el.querySelector('input');
@@ -558,6 +591,15 @@ $pageTypeSlug = preg_match('#^pages/([^/]+)/⚡show\.blade\.php$#u', $file ?? ''
                     el.dispatchEvent(new Event('input', { bubbles: true }));
                     el.focus();
                     el.setSelectionRange(start + sc.length, start + sc.length);
+                }
+            "
+            x-on:ai-content-generated.window="
+                if ($event.detail.fieldKey === '{{ $field['key'] }}') {
+                    const el = $el.querySelector('input');
+                    prevVal = el.value;
+                    el.value = $event.detail.content;
+                    el.dispatchEvent(new Event('input', { bubbles: true }));
+                    el.focus();
                 }
             ">
             <flux:input

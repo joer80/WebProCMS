@@ -52,6 +52,12 @@ new #[Layout('layouts.app')] #[Title('Advanced Settings')] class extends Compone
 
     public bool $rebuildAssetsLocally = false;
 
+    public string $aiProvider = 'claude';
+
+    public string $aiClaudeKey = '';
+
+    public string $aiOpenaiKey = '';
+
     public function mount(): void
     {
         $this->envWritable = is_writable(base_path('.env'));
@@ -81,6 +87,10 @@ new #[Layout('layouts.app')] #[Title('Advanced Settings')] class extends Compone
         $this->memcachedHost = config('cache.stores.memcached.servers.0.host', '127.0.0.1');
 
         $this->rebuildAssetsLocally = (bool) config('cms.rebuild_assets_locally');
+
+        $this->aiProvider = \App\Models\Setting::get('ai.provider', 'claude');
+        $this->aiClaudeKey = \App\Models\Setting::get('ai.claude_key', '');
+        $this->aiOpenaiKey = \App\Models\Setting::get('ai.openai_key', '');
     }
 
     public function saveMailSettings(): void
@@ -263,6 +273,21 @@ new #[Layout('layouts.app')] #[Title('Advanced Settings')] class extends Compone
         $this->dispatch('notify', message: 'Memcached settings saved.');
     }
 
+    public function saveAiSettings(): void
+    {
+        $this->validate([
+            'aiProvider' => ['required', 'in:claude,openai'],
+            'aiClaudeKey' => ['nullable', 'string', 'max:500'],
+            'aiOpenaiKey' => ['nullable', 'string', 'max:500'],
+        ]);
+
+        \App\Models\Setting::set('ai.provider', $this->aiProvider);
+        \App\Models\Setting::set('ai.claude_key', $this->aiClaudeKey);
+        \App\Models\Setting::set('ai.openai_key', $this->aiOpenaiKey);
+
+        $this->dispatch('notify', message: 'AI settings saved.');
+    }
+
     public function saveRebuildAssetsLocally(): void
     {
         if (! $this->envWritable) {
@@ -357,6 +382,37 @@ new #[Layout('layouts.app')] #[Title('Advanced Settings')] class extends Compone
         @endif
 
         <div class="max-w-2xl space-y-4">
+
+            {{-- AI Integration --}}
+            <div class="rounded-lg border border-zinc-200 dark:border-zinc-700 p-6">
+                <div class="flex items-start justify-between gap-6">
+                    <div class="flex-1">
+                        <flux:heading>AI Integration</flux:heading>
+                        <flux:text class="mt-1">Connect your Claude or ChatGPT account to enable AI content generation in the page editor. Your API key is used when generating content and billed directly to your account.</flux:text>
+                        <div x-show="$wire.aiProvider === 'claude'" class="mt-3 rounded-lg bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200 dark:border-zinc-700 px-4 py-3 text-sm text-zinc-600 dark:text-zinc-400">
+                            <p><strong class="font-medium text-zinc-800 dark:text-zinc-200">Claude (Anthropic):</strong> Sign in at <span class="font-mono text-xs">console.anthropic.com</span>, go to <strong>Settings → API Keys</strong>, and create a new key. Note: the Anthropic API is separate from Claude.ai subscriptions — you'll need to add a payment method.</p>
+                        </div>
+                        <div x-show="$wire.aiProvider === 'openai'" class="mt-3 rounded-lg bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200 dark:border-zinc-700 px-4 py-3 text-sm text-zinc-600 dark:text-zinc-400">
+                            <p><strong class="font-medium text-zinc-800 dark:text-zinc-200">ChatGPT (OpenAI):</strong> Sign in at <span class="font-mono text-xs">platform.openai.com</span>, go to <strong>Dashboard → API Keys</strong>, and create a new key.</p>
+                        </div>
+                        <div class="mt-4 space-y-4">
+                            <flux:radio.group wire:model="aiProvider" label="Provider">
+                                <flux:radio value="claude" label="Claude (Anthropic)" description="Uses claude-haiku-4-5 for fast, high-quality generation." />
+                                <flux:radio value="openai" label="ChatGPT (OpenAI)" description="Uses gpt-4o-mini for fast, high-quality generation." />
+                            </flux:radio.group>
+                            <div x-show="$wire.aiProvider === 'claude'">
+                                <flux:input wire:model="aiClaudeKey" label="Claude API Key" type="password" placeholder="sk-ant-..." />
+                                <flux:text class="mt-1 text-xs">Get your key at console.anthropic.com</flux:text>
+                            </div>
+                            <div x-show="$wire.aiProvider === 'openai'">
+                                <flux:input wire:model="aiOpenaiKey" label="OpenAI API Key" type="password" placeholder="sk-..." />
+                                <flux:text class="mt-1 text-xs">Get your key at platform.openai.com</flux:text>
+                            </div>
+                        </div>
+                    </div>
+                    <flux:button wire:click="saveAiSettings" variant="outline" class="shrink-0">Save</flux:button>
+                </div>
+            </div>
 
             {{-- Mail --}}
             <div class="rounded-lg border border-zinc-200 dark:border-zinc-700 p-6">
