@@ -3338,14 +3338,6 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                                         <flux:icon name="code-bracket" class="size-3.5" />
                                     </button>
                                 </flux:tooltip>
-                                <flux:tooltip content="Auto BEM IDs for all rows" position="bottom">
-                                    <button type="button"
-                                        x-on:click="if (confirm('Auto-generate BEM IDs for all rows on this page? Existing IDs will be updated.')) $wire.applyAutoBemAllRows()"
-                                        class="p-1 rounded text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors"
-                                    >
-                                        <flux:icon name="sparkles" class="size-3.5" />
-                                    </button>
-                                </flux:tooltip>
                                 <flux:tooltip content="Browse library rows for all" position="bottom">
                                     <button type="button"
                                         x-on:click="allDesignsOpen = false; allAdvancedOpen = false; allBrowseOpen = !allBrowseOpen; if (allBrowseOpen) { $wire.openAllBrowseMode(); $dispatch('expand-all-browse'); } else { $dispatch('collapse-all-rows'); }"
@@ -3353,6 +3345,15 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                                         class="p-1 rounded hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors"
                                     >
                                         <flux:icon name="rectangle-stack" class="size-3.5" />
+                                    </button>
+                                </flux:tooltip>
+                                <div class="w-px h-4 bg-zinc-200 dark:bg-zinc-700 mx-0.5"></div>
+                                <flux:tooltip content="Auto BEM IDs for all rows" position="bottom">
+                                    <button type="button"
+                                        x-on:click="if (confirm('Auto-generate BEM IDs for all rows on this page? Existing IDs will be updated.')) $wire.applyAutoBemAllRows()"
+                                        class="p-1 rounded text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors"
+                                    >
+                                        <flux:icon name="sparkles" class="size-3.5" />
                                     </button>
                                 </flux:tooltip>
                             </div>
