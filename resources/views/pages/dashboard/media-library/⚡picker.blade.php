@@ -354,48 +354,78 @@ new class extends Component {
                     </flux:button>
                 </div>
             @else
-                <div class="flex-1 min-w-0">
-                    @if ($selectedImageId)
-                        @php $selectedImage = $this->images->firstWhere('id', $selectedImageId); @endphp
-                        <p class="text-xs text-zinc-400 dark:text-zinc-500 truncate mb-1">{{ $selectedImage?->filename }}</p>
-                        <input
-                            type="text"
-                            value="{{ $selectedImage?->alt }}"
-                            x-on:change="$wire.saveAlt({{ $selectedImageId }}, $event.target.value)"
-                            placeholder="Alt text…"
-                            class="w-full text-xs rounded border border-zinc-200 dark:border-zinc-600 bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 px-2 py-1 focus:outline-none focus:ring-1 focus:ring-primary"
-                        >
-                    @else
-                        <span class="text-sm text-zinc-500 dark:text-zinc-400">Click an image to select it</span>
-                    @endif
-                </div>
-                <div class="flex items-center gap-2 shrink-0">
-                    @if ($selectedCategoryId)
-                        <flux:button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            icon="arrow-up-tray"
-                            x-on:click="$refs.uploadInput.click()"
-                            wire:loading.attr="disabled"
-                            wire:target="uploadedImages"
-                        >
-                            <span wire:loading.remove wire:target="uploadedImages">Upload</span>
-                            <span wire:loading wire:target="uploadedImages">Uploading…</span>
-                        </flux:button>
-                    @endif
+                <span class="text-sm text-zinc-500 dark:text-zinc-400">
+                    {{ $selectedImageId ? '' : 'Click an image to select it' }}
+                </span>
+                @if ($selectedCategoryId)
                     <flux:button
-                        wire:click="pickImage({{ $selectedImageId ?? 'null' }}, '{{ $selectedImageId ? $this->images->firstWhere('id', $selectedImageId)?->path : '' }}')"
-                        variant="primary"
+                        type="button"
+                        variant="outline"
                         size="sm"
-                        :disabled="! $selectedImageId"
+                        icon="arrow-up-tray"
+                        x-on:click="$refs.uploadInput.click()"
+                        wire:loading.attr="disabled"
+                        wire:target="uploadedImages"
                     >
-                        Use This Image
+                        <span wire:loading.remove wire:target="uploadedImages">Upload</span>
+                        <span wire:loading wire:target="uploadedImages">Uploading…</span>
                     </flux:button>
-                </div>
+                @endif
             @endif
         </div>
     </div>
+
+    @if (!$multiSelect && $selectedImageId)
+        @php $previewImg = $this->images->firstWhere('id', $selectedImageId); @endphp
+        <div class="w-56 shrink-0 border-l border-zinc-200 dark:border-zinc-700 flex flex-col bg-white dark:bg-zinc-900">
+            {{-- Image preview --}}
+            <div class="p-3 flex items-center justify-center bg-zinc-50 dark:bg-zinc-800 overflow-hidden aspect-square shrink-0">
+                <img src="{{ $previewImg?->url() }}" alt="{{ $previewImg?->alt }}" class="max-w-full max-h-full object-contain rounded">
+            </div>
+
+            {{-- Info + actions --}}
+            <div class="flex-1 overflow-y-auto p-3 space-y-3 border-t border-zinc-200 dark:border-zinc-700">
+                <div>
+                    <p class="text-xs text-zinc-400 dark:text-zinc-500 truncate mb-0.5">{{ $previewImg?->filename }}</p>
+                    <p class="text-xs font-mono text-zinc-600 dark:text-zinc-400 break-all bg-zinc-100 dark:bg-zinc-800 rounded p-1.5 leading-relaxed select-all">{{ $previewImg?->url() }}</p>
+                    <div x-data="{ copied: false }" class="mt-1.5">
+                        <button
+                            @click="navigator.clipboard.writeText('{{ addslashes($previewImg?->url()) }}').then(() => { copied = true; setTimeout(() => copied = false, 2000) })"
+                            class="w-full flex items-center justify-center gap-1.5 text-xs px-2 py-1.5 rounded-md border border-zinc-200 dark:border-zinc-600 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors"
+                        >
+                            <flux:icon name="clipboard" class="size-3.5" x-show="!copied" />
+                            <flux:icon name="check" class="size-3.5 text-green-500" x-show="copied" x-cloak />
+                            <span x-show="!copied">Copy URL</span>
+                            <span x-show="copied" x-cloak class="text-green-600 dark:text-green-400">Copied!</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="text-xs font-medium text-zinc-500 dark:text-zinc-400 block mb-1">Alt text</label>
+                    <input
+                        type="text"
+                        value="{{ $previewImg?->alt }}"
+                        x-on:change="$wire.saveAlt({{ $selectedImageId }}, $event.target.value)"
+                        placeholder="Describe this image…"
+                        class="w-full text-xs rounded border border-zinc-200 dark:border-zinc-600 bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-primary"
+                    >
+                </div>
+            </div>
+
+            {{-- Use This Image button --}}
+            <div class="shrink-0 p-3 border-t border-zinc-200 dark:border-zinc-700">
+                <flux:button
+                    wire:click="pickImage({{ $selectedImageId }}, '{{ $previewImg?->path }}')"
+                    variant="primary"
+                    size="sm"
+                    class="w-full"
+                >
+                    Use This Image
+                </flux:button>
+            </div>
+        </div>
+    @endif
 
     <flux:modal name="confirm-delete-image" class="w-full max-w-sm">
         <flux:heading size="lg">Delete image?</flux:heading>

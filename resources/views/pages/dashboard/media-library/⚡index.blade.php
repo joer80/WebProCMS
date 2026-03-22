@@ -38,6 +38,8 @@ new #[Layout('layouts.app')] #[Title('Media Library')] class extends Component {
 
     public bool $confirmingBulkDelete = false;
 
+    public ?int $previewImageId = null;
+
     /** @return \Illuminate\Database\Eloquent\Collection<int, MediaCategory> */
     #[Computed]
     public function categories(): \Illuminate\Database\Eloquent\Collection
@@ -73,6 +75,7 @@ new #[Layout('layouts.app')] #[Title('Media Library')] class extends Component {
     {
         $this->selectedCategoryId = $id;
         $this->selectedImageIds = [];
+        $this->previewImageId = null;
         $this->confirmingDeleteImage = null;
         $this->confirmingBulkDelete = false;
         unset($this->images);
@@ -80,6 +83,8 @@ new #[Layout('layouts.app')] #[Title('Media Library')] class extends Component {
 
     public function toggleImage(int $id): void
     {
+        $this->previewImageId = $id;
+
         if (in_array($id, $this->selectedImageIds)) {
             $this->selectedImageIds = array_values(
                 array_filter($this->selectedImageIds, fn (int $i) => $i !== $id)
@@ -87,6 +92,11 @@ new #[Layout('layouts.app')] #[Title('Media Library')] class extends Component {
         } else {
             $this->selectedImageIds[] = $id;
         }
+    }
+
+    public function closePreview(): void
+    {
+        $this->previewImageId = null;
     }
 
     public function selectAll(): void
@@ -140,6 +150,12 @@ new #[Layout('layouts.app')] #[Title('Media Library')] class extends Component {
     {
         $this->editingAltId = $id;
         $this->editingAltValue = $currentAlt;
+    }
+
+    public function updateAlt(int $id, string $alt): void
+    {
+        MediaItem::query()->findOrFail($id)->update(['alt' => $alt]);
+        unset($this->images);
     }
 
     public function saveAlt(int $id): void
@@ -213,6 +229,11 @@ new #[Layout('layouts.app')] #[Title('Media Library')] class extends Component {
         MediaItem::query()->findOrFail($id)->delete();
 
         $this->confirmingDeleteImage = null;
+
+        if ($this->previewImageId === $id) {
+            $this->previewImageId = null;
+        }
+
         $this->selectedImageIds = array_values(
             array_filter($this->selectedImageIds, fn (int $i) => $i !== $id)
         );
@@ -592,35 +613,80 @@ new #[Layout('layouts.app')] #[Title('Media Library')] class extends Component {
                                         </button>
                                     @endif
 
-                                    {{-- Alt text editor --}}
-                                    <div class="p-1.5 bg-white dark:bg-zinc-900 border-t border-zinc-100 dark:border-zinc-800" wire:click.stop>
-                                        @if ($editingAltId === $image->id)
-                                            <input
-                                                type="text"
-                                                wire:model="editingAltValue"
-                                                wire:keydown.enter="saveAlt({{ $image->id }})"
-                                                wire:keydown.escape="cancelEditingAlt"
-                                                wire:blur="saveAlt({{ $image->id }})"
-                                                class="w-full text-xs px-1.5 py-0.5 rounded border border-blue-500 outline-none bg-white dark:bg-zinc-800 dark:text-zinc-100"
-                                                placeholder="Alt text…"
-                                                autofocus
-                                            >
-                                        @else
-                                            <button
-                                                wire:click.stop="startEditingAlt({{ $image->id }}, '{{ addslashes($image->alt) }}')"
-                                                class="w-full text-left text-xs text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 truncate"
-                                                title="{{ $image->alt ?: 'Click to add alt text' }}"
-                                            >
-                                                {{ $image->alt ?: 'Add alt text…' }}
-                                            </button>
-                                        @endif
-                                    </div>
                                 </div>
                             @endforeach
                         </div>
                     @endif
                 </div>
             </div>
+
+        {{-- ───── RIGHT: Preview Panel ───── --}}
+        @if ($previewImageId)
+            @php $previewImage = $this->images->firstWhere('id', $previewImageId); @endphp
+            <div class="w-72 shrink-0 sticky top-0 h-screen flex flex-col border-l border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900">
+                {{-- Header --}}
+                <div class="px-4 py-3 border-b border-zinc-200 dark:border-zinc-700 flex items-center justify-between shrink-0">
+                    <flux:heading size="sm">Preview</flux:heading>
+                    <button
+                        wire:click="closePreview"
+                        class="text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 transition-colors"
+                    >
+                        <flux:icon name="x-mark" class="size-4" />
+                    </button>
+                </div>
+
+                {{-- Image --}}
+                <div class="bg-zinc-50 dark:bg-zinc-800 flex items-center justify-center overflow-hidden aspect-square shrink-0">
+                    <img
+                        src="{{ $previewImage?->url() }}"
+                        alt="{{ $previewImage?->alt }}"
+                        class="max-w-full max-h-full object-contain p-2"
+                    >
+                </div>
+
+                {{-- Info --}}
+                <div class="flex-1 overflow-y-auto p-4 space-y-4">
+                    <div>
+                        <p class="text-xs font-medium text-zinc-400 dark:text-zinc-500 uppercase tracking-wider mb-1">Filename</p>
+                        <p class="text-sm text-zinc-700 dark:text-zinc-300 break-all">{{ $previewImage?->filename }}</p>
+                    </div>
+
+                    <div>
+                        <p class="text-xs font-medium text-zinc-400 dark:text-zinc-500 uppercase tracking-wider mb-1">URL</p>
+                        <p class="text-xs font-mono text-zinc-600 dark:text-zinc-400 break-all bg-zinc-100 dark:bg-zinc-800 rounded p-2 leading-relaxed select-all">{{ $previewImage?->url() }}</p>
+                        <div x-data="{ copied: false }" class="mt-1.5">
+                            <button
+                                @click="navigator.clipboard.writeText('{{ addslashes($previewImage?->url()) }}').then(() => { copied = true; setTimeout(() => copied = false, 2000) })"
+                                class="w-full flex items-center justify-center gap-1.5 text-xs px-3 py-1.5 rounded-md border border-zinc-200 dark:border-zinc-600 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors"
+                            >
+                                <flux:icon name="clipboard" class="size-3.5" x-show="!copied" />
+                                <flux:icon name="check" class="size-3.5 text-green-500" x-show="copied" x-cloak />
+                                <span x-show="!copied">Copy URL</span>
+                                <span x-show="copied" x-cloak class="text-green-600 dark:text-green-400">Copied!</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div>
+                        <p class="text-xs font-medium text-zinc-400 dark:text-zinc-500 uppercase tracking-wider mb-1">Alt Text</p>
+                        <input
+                            type="text"
+                            value="{{ $previewImage?->alt }}"
+                            x-on:change="$wire.updateAlt({{ $previewImageId }}, $event.target.value)"
+                            placeholder="Describe this image…"
+                            class="w-full text-sm rounded border border-zinc-200 dark:border-zinc-600 bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 px-2.5 py-1.5 focus:outline-none focus:ring-1 focus:ring-primary"
+                        >
+                    </div>
+
+                    @if ($previewImage?->size)
+                        <div>
+                            <p class="text-xs font-medium text-zinc-400 dark:text-zinc-500 uppercase tracking-wider mb-1">Size</p>
+                            <p class="text-sm text-zinc-600 dark:text-zinc-400">{{ number_format($previewImage->size / 1024, 1) }} KB</p>
+                        </div>
+                    @endif
+                </div>
+            </div>
+        @endif
         </div>
     </flux:main>
 
