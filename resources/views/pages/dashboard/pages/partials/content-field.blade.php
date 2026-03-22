@@ -10,7 +10,7 @@ if (in_array($field['type'], ['id', 'attrs'])) {
 $showShortcodeBtn = ($field['type'] === 'text' && ! str_ends_with($field['key'], '_url') && ! str_ends_with($field['key'], '_htag')) || $field['key'] === 'subheadline';
 $pageTypeSlug = preg_match('#^pages/([^/]+)/⚡show\.blade\.php$#u', $file ?? '', $ptm) ? $ptm[1] : '';
 $aiEnabled = (bool) (\App\Models\Setting::get('ai.claude_key') || \App\Models\Setting::get('ai.openai_key'));
-$showAiBtn = $aiEnabled && ($showShortcodeBtn || $field['type'] === 'richtext');
+$showAiBtn = $aiEnabled && ($showShortcodeBtn || $field['type'] === 'richtext' || $field['type'] === 'classes');
 $showLoremBtn = $showShortcodeBtn || $field['type'] === 'richtext';
 $loremDefaultLen = strlen(strip_tags($field['default'] ?? ''));
 $loremDefaultSize = $loremDefaultLen <= 50 ? 'sentence' : ($loremDefaultLen <= 100 ? 'short' : ($loremDefaultLen <= 300 ? 'medium' : 'long'));
@@ -19,7 +19,16 @@ $loremDefaultSize = $loremDefaultLen <= 50 ? 'sentence' : ($loremDefaultLen <= 1
     @if ($field['type'] === 'classes')
         <div class="flex items-center justify-between mb-1.5">
             <flux:label class="text-zinc-500 dark:text-zinc-400">{{ $field['label'] }}</flux:label>
-            <button wire:click="resetClassesField('{{ $field['key'] }}')" type="button" class="text-xs text-zinc-400 dark:text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 transition-colors">Reset</button>
+            <div class="flex items-center gap-2">
+                @if ($showAiBtn)
+                    <button type="button"
+                        onclick="(function() { var ta = document.querySelector('[data-classes-key=\'{{ $field['key'] }}\']'); window.dispatchEvent(new CustomEvent('open-ai-generate', { detail: { fieldKey: '{{ $field['key'] }}', fieldType: 'classes', fieldLabel: '{{ addslashes($field['label']) }}', currentClasses: ta ? ta.value : '' }, bubbles: true })); })()"
+                        class="text-zinc-400 dark:text-zinc-500 hover:text-primary dark:hover:text-primary transition-colors"
+                        title="Generate with AI"
+                    ><flux:icon name="sparkles" class="size-3.5" /></button>
+                @endif
+                <button wire:click="resetClassesField('{{ $field['key'] }}')" type="button" class="text-xs text-zinc-400 dark:text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 transition-colors">Reset</button>
+            </div>
         </div>
     @elseif (! in_array($field['type'], ['toggle', 'note']))
         <div class="flex items-center justify-between mb-1.5">
@@ -126,9 +135,17 @@ $loremDefaultSize = $loremDefaultLen <= 50 ? 'sentence' : ($loremDefaultLen <= 1
             <textarea x-show="sourceMode" x-model="sourceHtml" rows="5" class="w-full p-3 font-mono text-xs text-zinc-800 dark:text-zinc-200 bg-white dark:bg-zinc-900 outline-none resize-y border-0"></textarea>
         </div>
     @elseif ($field['type'] === 'classes')
-        <div x-data="twAutocomplete('{{ $field['key'] }}')" class="relative">
+        <div x-data="twAutocomplete('{{ $field['key'] }}')" class="relative"
+            x-on:ai-content-generated.window="
+                if ($event.detail.fieldKey === '{{ $field['key'] }}') {
+                    $refs.input.value = $event.detail.content;
+                    $refs.input.dispatchEvent(new Event('input', { bubbles: true }));
+                    $refs.input.focus();
+                }
+            ">
             <textarea
                 x-ref="input"
+                data-classes-key="{{ $field['key'] }}"
                 wire:model.live.debounce.400ms="contentValues.{{ $field['key'] }}"
                 rows="3"
                 x-on:input="suggest($event)"

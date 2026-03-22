@@ -4,6 +4,7 @@
         fieldKey: null,
         fieldType: null,
         fieldLabel: '',
+        currentClasses: '',
         prompt: '',
         generating: false,
         error: '',
@@ -11,10 +12,10 @@
             if (!this.prompt.trim()) return;
             this.generating = true;
             this.error = '';
-            $wire.generateAiContent(this.fieldKey, this.prompt, this.fieldType);
+            $wire.generateAiContent(this.fieldKey, this.prompt, this.fieldType, this.currentClasses);
         }
     }"
-    @open-ai-generate.window="open = true; fieldKey = $event.detail.fieldKey; fieldType = $event.detail.fieldType; fieldLabel = $event.detail.fieldLabel || ''; prompt = ''; error = '';"
+    @open-ai-generate.window="open = true; fieldKey = $event.detail.fieldKey; fieldType = $event.detail.fieldType; fieldLabel = $event.detail.fieldLabel || ''; currentClasses = $event.detail.currentClasses || ''; prompt = ''; error = '';"
     @ai-content-generated.window="if ($event.detail.fieldKey === fieldKey) { open = false; generating = false; prompt = ''; }"
     @ai-generate-error.window="if ($event.detail.fieldKey === fieldKey) { error = $event.detail.message; generating = false; }"
     x-show="open"
@@ -44,7 +45,7 @@
                     x-model="prompt"
                     x-ref="promptInput"
                     rows="4"
-                    placeholder="Describe what content you want to generate…"
+                    :placeholder="fieldType === 'classes' ? 'Describe what to change… e.g. make the text smaller, add more padding' : 'Describe what content you want to generate…'"
                     @keydown.meta.enter="generate()"
                     @keydown.ctrl.enter="generate()"
                     :disabled="generating"

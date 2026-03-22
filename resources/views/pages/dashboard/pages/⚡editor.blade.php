@@ -2408,13 +2408,21 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
         $this->dispatch('refresh-preview', url: $this->previewUrl);
     }
 
-    public function generateAiContent(string $fieldKey, string $prompt, string $fieldType): void
+    public function generateAiContent(string $fieldKey, string $prompt, string $fieldType, string $currentClasses = ''): void
     {
         $provider = \App\Models\Setting::get('ai.provider', 'claude');
         $isRichText = $fieldType === 'richtext';
-        $systemPrompt = $isRichText
-            ? 'You are a content writer. Generate HTML content based on the user\'s request. Return only the HTML, no markdown code fences, no explanation.'
-            : 'You are a content writer. Generate concise, well-written text based on the user\'s request. Return only the text, no quotes, no explanation.';
+        $isClasses = $fieldType === 'classes';
+
+        if ($isClasses) {
+            $systemPrompt = 'You are a Tailwind CSS expert. You will be given a set of Tailwind CSS classes and an instruction to modify them. Return only the updated class string — space-separated Tailwind classes — with no explanation, no quotes, no backticks, and no markdown.';
+            $userMessage = "Current classes: {$currentClasses}\n\nInstruction: {$prompt}";
+        } else {
+            $systemPrompt = $isRichText
+                ? 'You are a content writer. Generate HTML content based on the user\'s request. Return only the HTML, no markdown code fences, no explanation.'
+                : 'You are a content writer. Generate concise, well-written text based on the user\'s request. Return only the text, no quotes, no explanation.';
+            $userMessage = $prompt;
+        }
 
         try {
             if ($provider === 'openai') {
@@ -2427,7 +2435,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                     'max_tokens' => 1024,
                     'messages' => [
                         ['role' => 'system', 'content' => $systemPrompt],
-                        ['role' => 'user', 'content' => $prompt],
+                        ['role' => 'user', 'content' => $userMessage],
                     ],
                 ]);
 
@@ -2447,7 +2455,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                     'max_tokens' => 1024,
                     'system' => $systemPrompt,
                     'messages' => [
-                        ['role' => 'user', 'content' => $prompt],
+                        ['role' => 'user', 'content' => $userMessage],
                     ],
                 ]);
 
