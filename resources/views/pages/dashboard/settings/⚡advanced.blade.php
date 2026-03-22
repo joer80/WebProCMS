@@ -52,7 +52,9 @@ new #[Layout('layouts.app')] #[Title('Advanced Settings')] class extends Compone
 
     public bool $rebuildAssetsLocally = false;
 
-    public string $aiProvider = 'claude';
+    public string $aiTextProvider = 'claude';
+
+    public string $aiImageProvider = 'openai';
 
     public string $aiClaudeKey = '';
 
@@ -88,7 +90,8 @@ new #[Layout('layouts.app')] #[Title('Advanced Settings')] class extends Compone
 
         $this->rebuildAssetsLocally = (bool) config('cms.rebuild_assets_locally');
 
-        $this->aiProvider = \App\Models\Setting::get('ai.provider', 'claude');
+        $this->aiTextProvider = \App\Models\Setting::get('ai.text_provider', 'claude');
+        $this->aiImageProvider = \App\Models\Setting::get('ai.image_provider', 'openai');
         $this->aiClaudeKey = \App\Models\Setting::get('ai.claude_key', '');
         $this->aiOpenaiKey = \App\Models\Setting::get('ai.openai_key', '');
     }
@@ -276,12 +279,14 @@ new #[Layout('layouts.app')] #[Title('Advanced Settings')] class extends Compone
     public function saveAiSettings(): void
     {
         $this->validate([
-            'aiProvider' => ['required', 'in:claude,openai'],
+            'aiTextProvider' => ['required', 'in:claude,openai'],
+            'aiImageProvider' => ['required', 'in:openai'],
             'aiClaudeKey' => ['nullable', 'string', 'max:500'],
             'aiOpenaiKey' => ['nullable', 'string', 'max:500'],
         ]);
 
-        \App\Models\Setting::set('ai.provider', $this->aiProvider);
+        \App\Models\Setting::set('ai.text_provider', $this->aiTextProvider);
+        \App\Models\Setting::set('ai.image_provider', $this->aiImageProvider);
         \App\Models\Setting::set('ai.claude_key', $this->aiClaudeKey);
         \App\Models\Setting::set('ai.openai_key', $this->aiOpenaiKey);
 
@@ -388,25 +393,50 @@ new #[Layout('layouts.app')] #[Title('Advanced Settings')] class extends Compone
                 <div class="flex items-start justify-between gap-6">
                     <div class="flex-1">
                         <flux:heading>AI Integration</flux:heading>
-                        <flux:text class="mt-1">Connect your Claude or ChatGPT account to enable AI content generation in the page editor. Your API key is used when generating content and billed directly to your account.</flux:text>
-                        <div x-show="$wire.aiProvider === 'claude'" class="mt-3 rounded-lg bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200 dark:border-zinc-700 px-4 py-3 text-sm text-zinc-600 dark:text-zinc-400">
-                            <p><strong class="font-medium text-zinc-800 dark:text-zinc-200">Claude (Anthropic):</strong> Sign in at <span class="font-mono text-xs">console.anthropic.com</span>, go to <strong>Settings → API Keys</strong>, and create a new key. Note: the Anthropic API is separate from Claude.ai subscriptions — you'll need to add a payment method.</p>
-                        </div>
-                        <div x-show="$wire.aiProvider === 'openai'" class="mt-3 rounded-lg bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200 dark:border-zinc-700 px-4 py-3 text-sm text-zinc-600 dark:text-zinc-400">
-                            <p><strong class="font-medium text-zinc-800 dark:text-zinc-200">ChatGPT (OpenAI):</strong> Sign in at <span class="font-mono text-xs">platform.openai.com</span>, go to <strong>Dashboard → API Keys</strong>, and create a new key.</p>
-                        </div>
-                        <div class="mt-4 space-y-4">
-                            <flux:radio.group wire:model="aiProvider" label="Provider">
-                                <flux:radio value="claude" label="Claude (Anthropic)" description="Uses claude-haiku-4-5 for fast, high-quality generation." />
-                                <flux:radio value="openai" label="ChatGPT (OpenAI)" description="Uses gpt-4o-mini for fast, high-quality generation." />
-                            </flux:radio.group>
-                            <div x-show="$wire.aiProvider === 'claude'">
-                                <flux:input wire:model="aiClaudeKey" label="Claude API Key" type="password" placeholder="sk-ant-..." />
-                                <flux:text class="mt-1 text-xs">Get your key at console.anthropic.com</flux:text>
+                        <flux:text class="mt-1">Connect your AI accounts to enable content and image generation in the page editor. API keys are billed directly to your account.</flux:text>
+
+                        <div class="mt-5 space-y-5">
+                            {{-- Text Generation --}}
+                            <div>
+                                <flux:subheading>Text Generation</flux:subheading>
+                                <flux:text class="mt-0.5 text-sm">Used for generating copy, headings, and Tailwind classes.</flux:text>
+                                <div x-show="$wire.aiTextProvider === 'claude'" class="mt-2 rounded-lg bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200 dark:border-zinc-700 px-4 py-3 text-sm text-zinc-600 dark:text-zinc-400">
+                                    <p><strong class="font-medium text-zinc-800 dark:text-zinc-200">Claude (Anthropic):</strong> Sign in at <span class="font-mono text-xs">console.anthropic.com</span>, go to <strong>Settings → API Keys</strong>, and create a new key. Note: the Anthropic API is separate from Claude.ai subscriptions — you'll need to add a payment method.</p>
+                                </div>
+                                <div x-show="$wire.aiTextProvider === 'openai'" class="mt-2 rounded-lg bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200 dark:border-zinc-700 px-4 py-3 text-sm text-zinc-600 dark:text-zinc-400">
+                                    <p><strong class="font-medium text-zinc-800 dark:text-zinc-200">ChatGPT (OpenAI):</strong> Sign in at <span class="font-mono text-xs">platform.openai.com</span>, go to <strong>Dashboard → API Keys</strong>, and create a new key.</p>
+                                </div>
+                                <div class="mt-3 space-y-3">
+                                    <flux:radio.group wire:model="aiTextProvider" label="Provider">
+                                        <flux:radio value="claude" label="Claude (Anthropic)" description="Uses claude-haiku-4-5 for fast, high-quality generation." />
+                                        <flux:radio value="openai" label="ChatGPT (OpenAI)" description="Uses gpt-4o-mini for fast, high-quality generation." />
+                                    </flux:radio.group>
+                                    <div x-show="$wire.aiTextProvider === 'claude'">
+                                        <flux:input wire:model="aiClaudeKey" label="Claude API Key" type="password" placeholder="sk-ant-..." />
+                                        <flux:text class="mt-1 text-xs">Get your key at console.anthropic.com</flux:text>
+                                    </div>
+                                    <div x-show="$wire.aiTextProvider === 'openai'">
+                                        <flux:input wire:model="aiOpenaiKey" label="OpenAI API Key" type="password" placeholder="sk-..." />
+                                        <flux:text class="mt-1 text-xs">Get your key at platform.openai.com</flux:text>
+                                    </div>
+                                </div>
                             </div>
-                            <div x-show="$wire.aiProvider === 'openai'">
-                                <flux:input wire:model="aiOpenaiKey" label="OpenAI API Key" type="password" placeholder="sk-..." />
-                                <flux:text class="mt-1 text-xs">Get your key at platform.openai.com</flux:text>
+
+                            <div class="border-t border-zinc-200 dark:border-zinc-700"></div>
+
+                            {{-- Image Generation --}}
+                            <div>
+                                <flux:subheading>Image Generation</flux:subheading>
+                                <flux:text class="mt-0.5 text-sm">Used for generating images via DALL·E 3. Generated images are saved to your Media Library.</flux:text>
+                                <div class="mt-3 space-y-3">
+                                    <flux:radio.group wire:model="aiImageProvider" label="Provider">
+                                        <flux:radio value="openai" label="OpenAI (DALL·E 3)" description="Generates high-quality images from text descriptions." />
+                                    </flux:radio.group>
+                                    <div>
+                                        <flux:input wire:model="aiOpenaiKey" label="OpenAI API Key" type="password" placeholder="sk-..." />
+                                        <flux:text class="mt-1 text-xs">Uses the same OpenAI key as text generation. Get your key at platform.openai.com</flux:text>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>

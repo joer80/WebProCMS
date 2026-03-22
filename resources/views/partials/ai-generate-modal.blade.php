@@ -12,11 +12,16 @@
             if (!this.prompt.trim()) return;
             this.generating = true;
             this.error = '';
-            $wire.generateAiContent(this.fieldKey, this.prompt, this.fieldType, this.currentClasses);
+            if (this.fieldType === 'image') {
+                $wire.generateAiImage(this.fieldKey, this.prompt);
+            } else {
+                $wire.generateAiContent(this.fieldKey, this.prompt, this.fieldType, this.currentClasses);
+            }
         }
     }"
     @open-ai-generate.window="open = true; fieldKey = $event.detail.fieldKey; fieldType = $event.detail.fieldType; fieldLabel = $event.detail.fieldLabel || ''; currentClasses = $event.detail.currentClasses || ''; prompt = ''; error = '';"
     @ai-content-generated.window="if ($event.detail.fieldKey === fieldKey) { open = false; generating = false; prompt = ''; }"
+    @ai-image-generated.window="if ($event.detail.fieldKey === fieldKey) { open = false; generating = false; prompt = ''; }"
     @ai-generate-error.window="if ($event.detail.fieldKey === fieldKey) { error = $event.detail.message; generating = false; }"
     x-show="open"
     x-cloak
@@ -45,12 +50,13 @@
                     x-model="prompt"
                     x-ref="promptInput"
                     rows="4"
-                    :placeholder="fieldType === 'classes' ? 'Describe what to change… e.g. make the text smaller, add more padding' : fieldType === 'seo' ? 'Describe the page content, target audience, and main keyword… e.g. Plumber in Austin TX, targeting homeowners needing emergency repairs' : 'Describe what content you want to generate…'"
+                    :placeholder="fieldType === 'classes' ? 'Describe what to change… e.g. make the text smaller, add more padding' : fieldType === 'seo' ? 'Describe the page content, target audience, and main keyword… e.g. Plumber in Austin TX, targeting homeowners needing emergency repairs' : fieldType === 'image' ? 'Describe the image you want to generate… e.g. A modern office lobby with warm lighting and plants' : 'Describe what content you want to generate…'"
                     @keydown.enter="if (!$event.shiftKey) { $event.preventDefault(); generate(); }"
                     :disabled="generating"
                     class="w-full text-sm rounded-lg border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-900 text-zinc-900 dark:text-white px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition resize-none disabled:opacity-60"
                 ></textarea>
-                <p class="text-xs text-zinc-400 dark:text-zinc-500 mt-1">Tip: Press Enter to generate, Shift+Enter for a new line.</p>
+                <p x-show="fieldType !== 'image'" class="text-xs text-zinc-400 dark:text-zinc-500 mt-1">Tip: Press Enter to generate, Shift+Enter for a new line.</p>
+                <p x-show="fieldType === 'image'" class="text-xs text-zinc-400 dark:text-zinc-500 mt-1">Image generation may take 10–20 seconds. The result will be saved to your Media Library.</p>
             </div>
             <div x-show="error" x-transition class="rounded-lg bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800 px-3 py-2 text-sm text-red-700 dark:text-red-400" x-text="error"></div>
         </div>

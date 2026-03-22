@@ -11,6 +11,8 @@ $showShortcodeBtn = ($field['type'] === 'text' && ! str_ends_with($field['key'],
 $pageTypeSlug = preg_match('#^pages/([^/]+)/⚡show\.blade\.php$#u', $file ?? '', $ptm) ? $ptm[1] : '';
 $aiEnabled = (bool) (\App\Models\Setting::get('ai.claude_key') || \App\Models\Setting::get('ai.openai_key'));
 $showAiBtn = $aiEnabled && ($showShortcodeBtn || $field['type'] === 'richtext' || $field['type'] === 'classes');
+$aiImageEnabled = (bool) \App\Models\Setting::get('ai.openai_key');
+$showAiImageBtn = $aiImageEnabled && $field['type'] === 'image';
 $showLoremBtn = $showShortcodeBtn || $field['type'] === 'richtext';
 $loremDefaultLen = strlen(strip_tags($field['default'] ?? ''));
 $loremDefaultSize = $loremDefaultLen <= 50 ? 'sentence' : ($loremDefaultLen <= 100 ? 'short' : ($loremDefaultLen <= 300 ? 'medium' : 'long'));
@@ -125,6 +127,13 @@ if ($field['type'] === 'classes') {
                         onclick="window.dispatchEvent(new CustomEvent('open-ai-generate', { detail: { fieldKey: '{{ $field['key'] }}', fieldType: '{{ $field['type'] }}', fieldLabel: '{{ addslashes($field['label']) }}' }, bubbles: true }))"
                         class="text-zinc-400 dark:text-zinc-500 hover:text-primary dark:hover:text-primary transition-colors"
                         title="Generate with AI"
+                    ><flux:icon name="sparkles" class="size-3.5" /></button>
+                @endif
+                @if ($showAiImageBtn)
+                    <button type="button"
+                        onclick="window.dispatchEvent(new CustomEvent('open-ai-generate', { detail: { fieldKey: '{{ $field['key'] }}', fieldType: 'image', fieldLabel: '{{ addslashes($field['label']) }}' }, bubbles: true }))"
+                        class="text-zinc-400 dark:text-zinc-500 hover:text-primary dark:hover:text-primary transition-colors"
+                        title="Generate image with AI"
                     ><flux:icon name="sparkles" class="size-3.5" /></button>
                 @endif
                 @if ($field['type'] === 'grid')

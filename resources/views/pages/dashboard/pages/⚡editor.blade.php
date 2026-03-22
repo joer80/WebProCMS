@@ -2411,7 +2411,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
 
     public function generateAiContent(string $fieldKey, string $prompt, string $fieldType, string $currentClasses = ''): void
     {
-        $provider = \App\Models\Setting::get('ai.provider', 'claude');
+        $provider = \App\Models\Setting::get('ai.text_provider', 'claude');
         $isSeo = $fieldType === 'seo';
         $isRichText = $fieldType === 'richtext';
         $isClasses = $fieldType === 'classes';
@@ -2527,6 +2527,77 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
             } else {
                 $this->dispatch('ai-content-generated', fieldKey: $fieldKey, content: $content);
             }
+        } catch (\Exception $e) {
+            $this->dispatch('ai-generate-error', fieldKey: $fieldKey, message: $e->getMessage());
+        }
+    }
+
+    public function generateAiImage(string $fieldKey, string $prompt): void
+    {
+        $apiKey = \App\Models\Setting::get('ai.openai_key', '');
+
+        if (empty($apiKey)) {
+            $this->dispatch('ai-generate-error', fieldKey: $fieldKey, message: 'No OpenAI API key configured.');
+
+            return;
+        }
+
+        try {
+            $response = Http::withHeaders([
+                'Authorization' => 'Bearer ' . $apiKey,
+                'Content-Type' => 'application/json',
+            ])->timeout(60)->post('https://api.openai.com/v1/images/generations', [
+                'model' => 'dall-e-3',
+                'prompt' => $prompt,
+                'n' => 1,
+                'size' => '1792x1024',
+                'response_format' => 'url',
+            ]);
+
+            if ($response->failed()) {
+                throw new \Exception($response->json('error.message') ?? 'OpenAI image generation failed.');
+            }
+
+            $imageUrl = $response->json('data.0.url');
+
+            if (empty($imageUrl)) {
+                throw new \Exception('No image URL returned from OpenAI.');
+            }
+
+            $imageResponse = Http::timeout(30)->get($imageUrl);
+
+            if ($imageResponse->failed()) {
+                throw new \Exception('Failed to download generated image.');
+            }
+
+            $defaultCategory = \App\Models\MediaCategory::where('is_default', true)->first()
+                ?? \App\Models\MediaCategory::first();
+
+            $categorySlug = $defaultCategory?->slug ?? 'uncategorized';
+            $filename = 'ai-' . now()->format('YmdHis') . '-' . substr(md5($prompt), 0, 6) . '.jpg';
+            $storagePath = $categorySlug . '/' . $filename;
+
+            \Illuminate\Support\Facades\Storage::disk('public')->put($storagePath, $imageResponse->body());
+
+            \App\Models\MediaItem::create([
+                'media_category_id' => $defaultCategory?->id,
+                'path' => $storagePath,
+                'filename' => $filename,
+                'alt' => $prompt,
+                'size' => strlen($imageResponse->body()),
+                'mime_type' => 'image/jpeg',
+            ]);
+
+            $this->contentValues[$fieldKey] = $storagePath;
+
+            $field = collect($this->contentFields)->firstWhere('key', $fieldKey);
+            if ($field) {
+                session()->put('editor_draft_overrides.'.$field['slug'].':'.$fieldKey, ['type' => 'image', 'value' => $storagePath]);
+            }
+
+            $this->isDirty = true;
+            $this->dispatch('ai-image-generated', fieldKey: $fieldKey, path: $storagePath);
+            $this->refreshPreview();
         } catch (\Exception $e) {
             $this->dispatch('ai-generate-error', fieldKey: $fieldKey, message: $e->getMessage());
         }
