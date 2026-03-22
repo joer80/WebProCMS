@@ -46,7 +46,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
 
     public bool $isDirty = false;
 
-    /** @var array<int, array<int, array{slug: string, name: string, blade: string}>> */
+    /** @var array<int, array{rows: array<int, array{slug: string, name: string, blade: string}>, overrides: array<string, mixed>}> */
     public array $rowHistory = [];
 
     public int $historyIndex = -1;
@@ -447,7 +447,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
             $this->isCachedPage = true;
             $this->requiredRole = '';
         }
-        $this->rowHistory = [$this->rows];
+        $this->rowHistory = [['rows' => $this->rows, 'overrides' => session('editor_draft_overrides', [])]];
         $this->historyIndex = 0;
         $this->savedHistoryIndex = 0;
         $this->liveUrl = $service->getRouteForFile($relativePath);
@@ -1884,13 +1884,46 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
         }
     }
 
+    public function pushContentHistory(): void
+    {
+        $this->pushHistory();
+        $this->isDirty = true;
+    }
+
+    public function updated(string $name): void
+    {
+        if (str_starts_with($name, 'contentValues.')) {
+            if (session('suppress_next_history_push')) {
+                session()->forget('suppress_next_history_push');
+
+                return;
+            }
+
+            $this->pushHistory();
+            $this->isDirty = true;
+        }
+    }
+
+    public function popContentHistory(): void
+    {
+        if ($this->historyIndex <= 0) {
+            return;
+        }
+
+        $this->rowHistory = array_slice($this->rowHistory, 0, $this->historyIndex + 1);
+        array_pop($this->rowHistory);
+        $this->historyIndex = count($this->rowHistory) - 1;
+        $this->isDirty = $this->historyIndex !== $this->savedHistoryIndex;
+        session(['suppress_next_history_push' => true]);
+    }
+
     private function pushHistory(): void
     {
         if ($this->historyIndex < count($this->rowHistory) - 1) {
             $this->rowHistory = array_slice($this->rowHistory, 0, $this->historyIndex + 1);
         }
 
-        $this->rowHistory[] = $this->rows;
+        $this->rowHistory[] = ['rows' => $this->rows, 'overrides' => session('editor_draft_overrides', [])];
         $this->historyIndex = count($this->rowHistory) - 1;
 
         if (count($this->rowHistory) > 20) {
@@ -1905,12 +1938,22 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
             return;
         }
 
+        $previousEditingIndex = $this->editingRowIndex;
         $this->historyIndex--;
-        $this->rows = $this->rowHistory[$this->historyIndex];
+        $snapshot = $this->rowHistory[$this->historyIndex];
+        $this->rows = $snapshot['rows'];
+        session(['editor_draft_overrides' => $snapshot['overrides']]);
         $this->loadRowDesignValues();
         $this->isDirty = $this->historyIndex !== $this->savedHistoryIndex;
-        $this->showContentEditor = false;
-        $this->editingRowIndex = null;
+
+        if ($previousEditingIndex !== null && isset($this->rows[$previousEditingIndex])) {
+            $this->openContentEditor($previousEditingIndex);
+            $this->dispatchRichtextResets();
+        } else {
+            $this->showContentEditor = false;
+            $this->editingRowIndex = null;
+        }
+
         $this->refreshPreview();
     }
 
@@ -1920,13 +1963,32 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
             return;
         }
 
+        $previousEditingIndex = $this->editingRowIndex;
         $this->historyIndex++;
-        $this->rows = $this->rowHistory[$this->historyIndex];
+        $snapshot = $this->rowHistory[$this->historyIndex];
+        $this->rows = $snapshot['rows'];
+        session(['editor_draft_overrides' => $snapshot['overrides']]);
         $this->loadRowDesignValues();
         $this->isDirty = $this->historyIndex !== $this->savedHistoryIndex;
-        $this->showContentEditor = false;
-        $this->editingRowIndex = null;
+
+        if ($previousEditingIndex !== null && isset($this->rows[$previousEditingIndex])) {
+            $this->openContentEditor($previousEditingIndex);
+            $this->dispatchRichtextResets();
+        } else {
+            $this->showContentEditor = false;
+            $this->editingRowIndex = null;
+        }
+
         $this->refreshPreview();
+    }
+
+    private function dispatchRichtextResets(): void
+    {
+        foreach ($this->contentFields as $field) {
+            if ($field['type'] === 'richtext') {
+                $this->dispatch('content-richtext-reset', key: $field['key'], value: (string) ($this->contentValues[$field['key']] ?? ''));
+            }
+        }
     }
 
     private function loadRowDesignValues(): void
@@ -2988,7 +3050,6 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                             />
                             <div class="min-w-0 flex-1">
                                 <div class="text-sm font-medium text-zinc-800 dark:text-zinc-200 truncate">{{ $rows[$editingRowIndex]['name'] }}</div>
-                                <div class="text-[10px] font-mono text-zinc-400 dark:text-zinc-500 truncate">{{ $rows[$editingRowIndex]['slug'] }}</div>
                             </div>
                             <div class="flex rounded-md border border-zinc-200 dark:border-zinc-700 overflow-hidden shrink-0">
                                 <button type="button" @click="if (!designMode && !advancedMode) { allGroupsOpen = !allGroupsOpen; $dispatch('set-group-open', { value: allGroupsOpen }); } else { designMode = false; advancedMode = false; allGroupsOpen = true; $wire.resetEmptyClassesFields(); $dispatch('set-group-mode', {}); $dispatch('set-group-open', { value: true }); }" :class="!designMode && !advancedMode ? 'bg-zinc-800 text-white dark:bg-zinc-100 dark:text-zinc-900' : 'bg-white text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200'" class="p-1.5 transition-colors" title="Content"><flux:icon name="document-text" class="size-3.5" /></button>
@@ -3849,6 +3910,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                                                         size="sm"
                                                         icon="share"
                                                         title="Make shared"
+                                                        class="opacity-60 hover:opacity-100"
                                                     />
                                                 @endif
                                                 <flux:button
@@ -3856,7 +3918,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                                                     variant="ghost"
                                                     size="sm"
                                                     icon="trash"
-                                                    class="text-red-500 dark:text-red-400"
+                                                    class="opacity-60 hover:opacity-100"
                                                     title="Remove row"
                                                     :loading="false"
                                                 />

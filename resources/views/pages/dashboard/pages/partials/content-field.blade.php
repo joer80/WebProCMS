@@ -105,6 +105,8 @@ $loremDefaultSize = $loremDefaultLen <= 50 ? 'sentence' : ($loremDefaultLen <= 1
              x-on:shortcode-picked.window="if ($event.detail.fieldKey === '{{ $field['key'] }}') cmd().insertContent($event.detail.shortcode).run()"
              x-on:ai-content-generated.window="if ($event.detail.fieldKey === '{{ $field['key'] }}') { cmd().selectAll().insertContent($event.detail.content).run(); $nextTick(() => cmd().focus().run()); }"
              x-on:content-richtext-reset.window="if ($event.detail.key === '{{ $field['key'] }}') cmd().setContent($event.detail.value).run()"
+             @keydown.ctrl.z="$wire.popContentHistory()"
+             @keydown.meta.z="$wire.popContentHistory()"
              class="overflow-hidden rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900">
             {{-- Compact toolbar --}}
             <div class="flex flex-wrap items-center gap-0.5 border-b border-zinc-200 dark:border-zinc-700 px-1.5 py-1">
@@ -377,9 +379,9 @@ $loremDefaultSize = $loremDefaultLen <= 50 ? 'sentence' : ($loremDefaultLen <= 1
             placeholder="{{ $field['default'] ?: 'https://' }}"
         />
     @elseif ($field['key'] === 'subheadline')
-        <div x-data="{ prevVal: null }"
-            @keydown.ctrl.z="if (prevVal !== null) { $event.preventDefault(); const el = $el.querySelector('textarea'); el.value = prevVal; el.dispatchEvent(new Event('input', { bubbles: true })); el.focus(); prevVal = null; }"
-            @keydown.meta.z="if (prevVal !== null) { $event.preventDefault(); const el = $el.querySelector('textarea'); el.value = prevVal; el.dispatchEvent(new Event('input', { bubbles: true })); el.focus(); prevVal = null; }"
+        <div
+            @keydown.ctrl.z.prevent="$wire.undo()"
+            @keydown.meta.z.prevent="$wire.undo()"
             x-on:shortcode-picked.window="
                 if ($event.detail.fieldKey === '{{ $field['key'] }}') {
                     const el = $el.querySelector('textarea');
@@ -396,7 +398,6 @@ $loremDefaultSize = $loremDefaultLen <= 50 ? 'sentence' : ($loremDefaultLen <= 1
             x-on:ai-content-generated.window="
                 if ($event.detail.fieldKey === '{{ $field['key'] }}') {
                     const el = $el.querySelector('textarea');
-                    prevVal = el.value;
                     el.value = $event.detail.content;
                     el.dispatchEvent(new Event('input', { bubbles: true }));
                     el.focus();
@@ -577,9 +578,9 @@ $loremDefaultSize = $loremDefaultLen <= 50 ? 'sentence' : ($loremDefaultLen <= 1
             </button>
         </div>
     @else
-        <div x-data="{ prevVal: null }"
-            @keydown.ctrl.z="if (prevVal !== null) { $event.preventDefault(); const el = $el.querySelector('input'); el.value = prevVal; el.dispatchEvent(new Event('input', { bubbles: true })); el.focus(); prevVal = null; }"
-            @keydown.meta.z="if (prevVal !== null) { $event.preventDefault(); const el = $el.querySelector('input'); el.value = prevVal; el.dispatchEvent(new Event('input', { bubbles: true })); el.focus(); prevVal = null; }"
+        <div
+            @keydown.ctrl.z.prevent="$wire.undo()"
+            @keydown.meta.z.prevent="$wire.undo()"
             x-on:shortcode-picked.window="
                 if ($event.detail.fieldKey === '{{ $field['key'] }}') {
                     const el = $el.querySelector('input');
@@ -596,7 +597,6 @@ $loremDefaultSize = $loremDefaultLen <= 50 ? 'sentence' : ($loremDefaultLen <= 1
             x-on:ai-content-generated.window="
                 if ($event.detail.fieldKey === '{{ $field['key'] }}') {
                     const el = $el.querySelector('input');
-                    prevVal = el.value;
                     el.value = $event.detail.content;
                     el.dispatchEvent(new Event('input', { bubbles: true }));
                     el.focus();
