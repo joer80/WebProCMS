@@ -45,7 +45,7 @@
                     x-model="prompt"
                     x-ref="promptInput"
                     rows="4"
-                    :placeholder="fieldType === 'classes' ? 'Describe what to change… e.g. make the text smaller, add more padding' : 'Describe what content you want to generate…'"
+                    :placeholder="fieldType === 'classes' ? 'Describe what to change… e.g. make the text smaller, add more padding' : fieldType === 'seo' ? 'Describe the page content, target audience, and main keyword… e.g. Plumber in Austin TX, targeting homeowners needing emergency repairs' : 'Describe what content you want to generate…'"
                     @keydown.enter="if (!$event.shiftKey) { $event.preventDefault(); generate(); }"
                     :disabled="generating"
                     class="w-full text-sm rounded-lg border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-900 text-zinc-900 dark:text-white px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition resize-none disabled:opacity-60"

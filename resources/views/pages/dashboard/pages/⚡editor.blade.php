@@ -2408,13 +2408,54 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
         $this->dispatch('refresh-preview', url: $this->previewUrl);
     }
 
+
     public function generateAiContent(string $fieldKey, string $prompt, string $fieldType, string $currentClasses = ''): void
     {
         $provider = \App\Models\Setting::get('ai.provider', 'claude');
+        $isSeo = $fieldType === 'seo';
         $isRichText = $fieldType === 'richtext';
         $isClasses = $fieldType === 'classes';
 
-        if ($isClasses) {
+        if ($isSeo) {
+            $systemPrompt = 'You are an SEO expert. Generate an optimized page title and meta description for a web page. Page title: 50–60 characters, compelling, naturally includes the main keyword. Meta description: 150–160 characters, concise summary with a call to action. If page content is limited or uses placeholder text, base your output on the page name and any guidance provided — always make a reasonable attempt. You MUST respond with ONLY valid JSON in this exact format, no matter what: {"title":"...","description":"..."} — no markdown, no code fences, no explanation, no refusals.';
+
+            // Extract readable text from the page's saved content fields
+            $rowSlugs = array_column($this->rows, 'slug');
+            $contentSnippets = [];
+
+            if (! empty($rowSlugs)) {
+                $overrides = \App\Models\ContentOverride::whereIn('row_slug', $rowSlugs)
+                    ->get(['key', 'value']);
+
+                foreach ($overrides as $override) {
+                    $key = $override->key;
+                    $value = trim(strip_tags((string) $override->value));
+
+                    if (
+                        empty($value) || mb_strlen($value) < 4 ||
+                        str_ends_with($key, '_classes') ||
+                        str_ends_with($key, '_image') ||
+                        str_ends_with($key, '_url') ||
+                        str_ends_with($key, '_new_tab') ||
+                        str_ends_with($key, '_id') ||
+                        str_ends_with($key, '_attrs') ||
+                        str_starts_with($key, 'toggle_') ||
+                        str_starts_with($key, 'grid_')
+                    ) {
+                        continue;
+                    }
+
+                    $contentSnippets[] = $value;
+                }
+            }
+
+            $contentContext = ! empty($contentSnippets)
+                ? "\n\nExisting page content:\n" . implode("\n", array_slice($contentSnippets, 0, 30))
+                : '';
+
+            $extraContext = trim($prompt) !== '' ? "\n\nAdditional guidance: {$prompt}" : '';
+            $userMessage = "Page name: {$this->pageName}{$contentContext}{$extraContext}";
+        } elseif ($isClasses) {
             $systemPrompt = 'You are a Tailwind CSS expert. You will be given a set of Tailwind CSS classes and an instruction to modify them. Return only the updated class string — space-separated Tailwind classes — with no explanation, no quotes, no backticks, and no markdown.';
             $userMessage = "Current classes: {$currentClasses}\n\nInstruction: {$prompt}";
         } else {
@@ -2466,7 +2507,26 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                 $content = $response->json('content.0.text', '');
             }
 
-            $this->dispatch('ai-content-generated', fieldKey: $fieldKey, content: $content);
+            if ($isSeo) {
+                // Strip markdown code fences if the AI wrapped the JSON
+                $stripped = trim(preg_replace('/^```(?:json)?\s*/i', '', preg_replace('/\s*```$/i', '', trim($content))));
+                $data = json_decode($stripped, true);
+
+                if (! is_array($data) || empty($data['title'])) {
+                    // AI returned a conversational response instead of JSON — surface it so the user can add context
+                    $this->dispatch('seo-ai-complete', title: '', description: '', error: $content);
+                } else {
+                    $this->seoTitle = $data['title'];
+                    $this->seoDescription = $data['description'] ?? '';
+                    $this->dispatch('seo-ai-complete',
+                        title: $data['title'],
+                        description: $data['description'] ?? '',
+                        error: '',
+                    );
+                }
+            } else {
+                $this->dispatch('ai-content-generated', fieldKey: $fieldKey, content: $content);
+            }
         } catch (\Exception $e) {
             $this->dispatch('ai-generate-error', fieldKey: $fieldKey, message: $e->getMessage());
         }
@@ -2836,12 +2896,24 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                         ></span>
                     </flux:tooltip>
 
+                    <flux:tooltip content="{{ $seoTitle ? 'Page title is set.' : 'No page title set. Click to generate with AI.' }}" position="bottom">
+                        <span
+                            x-data
+                            x-bind:class="$wire.seoTitle
+                                ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
+                                : 'bg-zinc-100 text-zinc-500 dark:bg-zinc-700 dark:text-zinc-400'"
+                            class="text-xs font-medium px-2 py-0.5 rounded-full cursor-pointer"
+                            x-text="$wire.seoTitle ? 'Meta Tags' : 'No Meta Tags'"
+                            @click="$wire.showSeoModal = true; $dispatch('open-settings-section', 'seo')"
+                        ></span>
+                    </flux:tooltip>
+
                     <flux:tooltip content="{{ $seoNoindex ? 'Search engines are prevented from indexing this page.' : 'Search engines can index this page.' }}" position="bottom">
                         <span
                             x-data
                             x-bind:class="$wire.seoNoindex
                                 ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
-                                : 'bg-zinc-100 text-zinc-500 dark:bg-zinc-700 dark:text-zinc-400'"
+                                : 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'"
                             class="text-xs font-medium px-2 py-0.5 rounded-full cursor-pointer"
                             x-text="$wire.seoNoindex ? 'No Index' : 'Indexed'"
                             @click="$wire.showSeoModal = true; $dispatch('open-settings-section', 'seo')"
@@ -2853,7 +2925,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                             x-data
                             x-bind:class="$wire.redirectUrl
                                 ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
-                                : 'bg-zinc-100 text-zinc-500 dark:bg-zinc-700 dark:text-zinc-400'"
+                                : 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'"
                             class="text-xs font-medium px-2 py-0.5 rounded-full cursor-pointer"
                             x-text="$wire.redirectUrl ? 'Redirect' : 'No Redirect'"
                             @click="$wire.showSeoModal = true; $dispatch('open-settings-section', 'redirect')"
@@ -4167,7 +4239,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
     @include('partials.lorem-ipsum-modal')
 
     {{-- SEO / Page Settings modal --}}
-    <flux:modal wire:model="showSeoModal" class="w-full max-w-lg">
+    <flux:modal wire:model="showSeoModal" class="w-full max-w-2xl">
         <flux:heading size="lg">Page Settings</flux:heading>
 
         <div class="mt-6 space-y-4">
@@ -4251,22 +4323,76 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
             </div>
 
             {{-- SEO --}}
-            <div x-data="{ seoOpen: false }" x-on:open-settings-section.window="seoOpen = ($event.detail === 'seo')" class="pt-4 border-t border-zinc-200 dark:border-zinc-700">
-                <button
-                    type="button"
-                    @click="seoOpen = !seoOpen"
-                    class="w-full flex items-center justify-between text-left"
-                >
-                    <div>
+            <div
+                x-data="{ seoOpen: false, aiOpen: false, aiPrompt: '', aiGenerating: false, aiError: '' }"
+                x-on:open-settings-section.window="seoOpen = ($event.detail === 'seo')"
+                x-on:seo-ai-complete.window="
+                    aiGenerating = false; aiOpen = false; aiPrompt = '';
+                    if ($event.detail.error) { aiError = $event.detail.error; aiOpen = true; return; }
+                    if ($event.detail.title) {
+                        let inp = $el.querySelector('input[name=seoTitle]');
+                        if (inp) { inp.value = $event.detail.title; inp.dispatchEvent(new Event('change', {bubbles: true})); }
+                    }
+                    if ($event.detail.description) {
+                        let ta = $el.querySelector('textarea[name=seoDescription]');
+                        if (ta) { ta.value = $event.detail.description; ta.dispatchEvent(new Event('change', {bubbles: true})); }
+                    }
+                "
+                x-on:ai-generate-error.window="if ($event.detail.fieldKey === 'seo') { aiError = $event.detail.message; aiGenerating = false; }"
+                class="pt-4 border-t border-zinc-200 dark:border-zinc-700"
+            >
+                <div class="w-full flex items-center justify-between">
+                    <button
+                        type="button"
+                        @click="seoOpen = !seoOpen"
+                        class="flex-1 text-left"
+                    >
                         <p class="text-xs font-semibold uppercase tracking-wide text-zinc-700 dark:text-zinc-200">SEO</p>
                         <p class="text-xs text-zinc-400 dark:text-zinc-500 mt-0.5">Page title, meta description, indexing, and social sharing.</p>
+                    </button>
+                    <div class="flex items-center gap-2 shrink-0 ml-3">
+                        @if (\App\Models\Setting::get('ai.claude_key') || \App\Models\Setting::get('ai.openai_key'))
+                            <button type="button"
+                                @click="seoOpen = true; aiOpen = !aiOpen"
+                                class="text-zinc-400 dark:text-zinc-500 hover:text-primary dark:hover:text-primary transition-colors"
+                                title="Generate SEO metadata with AI"
+                            ><flux:icon name="sparkles" class="size-3.5" /></button>
+                        @endif
+                        <button type="button" @click="seoOpen = !seoOpen">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="size-4 text-zinc-600 dark:text-zinc-300 transition-transform duration-200" :class="seoOpen ? 'rotate-180' : ''" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="m19 9-7 7-7-7" />
+                            </svg>
+                        </button>
                     </div>
-                    <svg xmlns="http://www.w3.org/2000/svg" class="size-4 text-zinc-600 dark:text-zinc-300 transition-transform duration-200 shrink-0 ml-3" :class="seoOpen ? 'rotate-180' : ''" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="m19 9-7 7-7-7" />
-                    </svg>
-                </button>
+                </div>
 
                 <div x-show="seoOpen" x-transition class="mt-3 pl-4 border-l-2 border-zinc-200 dark:border-zinc-700 space-y-4">
+                    {{-- Inline AI prompt --}}
+                    <div x-show="aiOpen" x-transition class="rounded-lg border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 p-3 space-y-2">
+                        <p class="text-xs font-medium text-zinc-700 dark:text-zinc-300">Generate SEO with AI</p>
+                        <p class="text-xs text-zinc-400 dark:text-zinc-500">Page content is read automatically. Optionally add any extra context, keywords, or tone guidance.</p>
+                        <textarea
+                            x-model="aiPrompt"
+                            rows="2"
+                            placeholder="Optional — e.g. focus on emergency plumbing, target homeowners in Austin TX"
+                            @keydown.enter="if (!$event.shiftKey) { $event.preventDefault(); if (!aiGenerating) { aiGenerating = true; aiError = ''; $wire.generateAiContent('seo', aiPrompt, 'seo'); } }"
+                            :disabled="aiGenerating"
+                            class="w-full text-xs rounded border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-900 text-zinc-900 dark:text-white px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-primary transition resize-none disabled:opacity-60"
+                        ></textarea>
+                        <div x-show="aiError" x-transition class="text-xs text-red-600 dark:text-red-400" x-text="aiError"></div>
+                        <div class="flex items-center justify-end gap-2">
+                            <button type="button" @click="aiOpen = false; aiPrompt = ''; aiError = ''" class="text-xs text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 transition-colors">Cancel</button>
+                            <button type="button"
+                                @click="if (!aiGenerating) { aiGenerating = true; aiError = ''; $wire.generateAiContent('seo', aiPrompt, 'seo'); }"
+                                :disabled="aiGenerating"
+                                class="flex items-center gap-1.5 px-3 py-1 bg-primary text-white text-xs font-medium rounded hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                            >
+                                <svg x-show="aiGenerating" class="size-3 animate-spin" viewBox="0 0 24 24" fill="none"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                                <flux:icon x-show="!aiGenerating" name="sparkles" class="size-3" />
+                                <span x-text="aiGenerating ? 'Generating…' : 'Generate'"></span>
+                            </button>
+                        </div>
+                    </div>
                     <flux:input
                         label="Page Title"
                         wire:model="seoTitle"
