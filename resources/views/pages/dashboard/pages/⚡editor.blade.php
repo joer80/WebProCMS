@@ -3129,14 +3129,15 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                                         @endphp
                                         <div
                                             class="rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 overflow-hidden transition-colors"
-                                            x-data="{ open: false, groupMode: null }"
+                                            x-data="{ open: false, groupMode: null, _dragTarget: null }"
                                             data-group-id="{{ $item['prefix'] }}"
                                             @set-group-open.window="open = $event.detail.value"
                                             @set-group-mode.window="groupMode = null"
                                             @open-group.window="open = ($event.detail.group === '{{ $item['prefix'] }}')"
                                             @sidebar-item-opened.window="if ($event.detail.index !== {{ $item['index'] }}) open = false"
+                                            @mousedown.capture="_dragTarget = $event.target"
                                             draggable="true"
-                                            @dragstart="if ($event.target.closest('textarea, input, select, [contenteditable]')) { $event.preventDefault(); return; } dragging = {{ $item['index'] }}"
+                                            @dragstart="if (_dragTarget?.closest('textarea, input, select, [contenteditable]')) { $event.preventDefault(); return; } dragging = {{ $item['index'] }}"
                                             @dragover.prevent="over = {{ $item['index'] }}"
                                             @drop="if (dragging !== null) { $wire.reorderItems(dragging, over); } dragging = null; over = null"
                                             @dragend="dragging = null; over = null"
@@ -3297,7 +3298,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                                             class="mb-2 rounded-lg border border-zinc-200 dark:border-zinc-700 overflow-hidden"
                                         >
                                             <div class="flex items-center gap-2 px-3 py-2 bg-zinc-100 dark:bg-zinc-700/50 cursor-pointer select-none" @click="open = !open; if (open) $dispatch('sidebar-group-opened', { slug: '{{ $rows[$editingRowIndex]['slug'] }}', id: 'row-settings' })">
-                                                <span class="text-sm font-medium text-zinc-800 dark:text-zinc-200 flex-1 truncate">Row Settings</span>
+                                                <span class="text-sm font-medium text-zinc-800 dark:text-zinc-200 flex-1 truncate">Section Settings</span>
                                                 @if ($orphanHasClassesFields)
                                                     <flux:tooltip content="Component design">
                                                         <button type="button" @click.stop="const isActive = groupMode !== null ? groupMode === 'design' : (designMode && !advancedMode); if (isActive && open) { open = false; } else { groupMode = 'design'; open = true; $dispatch('sidebar-group-opened', { slug: '{{ $rows[$editingRowIndex]['slug'] }}', id: 'row-settings' }); }"
@@ -3345,14 +3346,15 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                                             @endphp
                                             <div
                                                 class="rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 overflow-hidden transition-colors"
-                                                x-data="{ open: false, groupMode: null }"
+                                                x-data="{ open: false, groupMode: null, _dragTarget: null }"
                                                 data-group-id="{{ $comp['attrs']['prefix'] ?? $comp['slug'] }}"
                                                 @set-group-open.window="open = $event.detail.value"
                                                 @set-group-mode.window="groupMode = null"
                                                 @open-group.window="open = ($event.detail.group === '{{ $comp['attrs']['prefix'] ?? $comp['slug'] }}')"
                                                 @sidebar-group-opened.window="if ($event.detail.slug === '{{ $rows[$editingRowIndex]['slug'] }}' && $event.detail.id !== '{{ $comp['attrs']['prefix'] ?? $comp['slug'] }}') open = false"
+                                                @mousedown.capture="_dragTarget = $event.target"
                                                 draggable="true"
-                                                @dragstart="if ($event.target.closest('textarea, input, select, [contenteditable]')) { $event.preventDefault(); return; } dragging = {{ $comp['index'] }}"
+                                                @dragstart="if (_dragTarget?.closest('textarea, input, select, [contenteditable]')) { $event.preventDefault(); return; } dragging = {{ $comp['index'] }}"
                                                 @dragover.prevent="over = {{ $comp['index'] }}"
                                                 @drop="if (dragging !== null) { $wire.reorderComponents(dragging, over); } dragging = null; over = null"
                                                 @dragend="dragging = null; over = null"
@@ -3556,12 +3558,26 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                             </div>
                         </div>
 
+                        @php
+                            $rcAiEnabled = (bool) (\App\Models\Setting::get('ai.claude_key') || \App\Models\Setting::get('ai.openai_key'));
+                            $rcThemeColorNames = [];
+                            try {
+                                $rcPubCss = resource_path('css/public.css');
+                                if (file_exists($rcPubCss)) {
+                                    preg_match('/@theme\s*\{([^}]+)\}/s', file_get_contents($rcPubCss), $rcThemeBlock);
+                                    if (! empty($rcThemeBlock[1])) {
+                                        preg_match_all('/--color-([\w]+):/', $rcThemeBlock[1], $rcCm);
+                                        $rcThemeColorNames = array_values(array_unique($rcCm[1]));
+                                    }
+                                }
+                            } catch (\Throwable) {}
+                        @endphp
                         <div class="flex-1 overflow-y-auto p-3 space-y-2" x-data="{ dragging: null, over: null }" @click.self="$dispatch('row-deselected')">
                             @forelse ($rows as $index => $row)
                                 <div
                                     wire:key="row-item-{{ $row['slug'] }}"
                                     data-row-sidebar-index="{{ $index }}"
-                                    x-data="{ panelMode: null, renamingRow: false, rowNameDraft: '' }"
+                                    x-data="{ panelMode: null, renamingRow: false, rowNameDraft: '', _dragTarget: null }"
                                     @collapse-all-rows.window="panelMode = null"
                                     @expand-all-rows.window="panelMode = 'design'"
                                     @expand-all-advanced.window="panelMode = 'advanced'"
@@ -3569,8 +3585,9 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                                     class="rounded-lg border bg-white dark:bg-zinc-900 overflow-hidden transition-colors {{ !empty($row['hidden']) ? 'opacity-60' : '' }}"
                                     :class="editorOpen && {{ $editingRowIndex ?? -1 }} === {{ $index }} ? 'border-primary' : (selectedRowIndex === {{ $index }} ? 'border-primary' : (panelMode !== null ? 'border-primary/50' : 'border-zinc-200 dark:border-zinc-700'))"
                                     @click="selectedRowIndex === {{ $index }} ? $dispatch('row-deselected') : $dispatch('row-selected', { index: {{ $index }} })"
+                                    @mousedown.capture="_dragTarget = $event.target"
                                     draggable="true"
-                                    @dragstart="if ($event.target.closest('textarea, input, select, [contenteditable]')) { $event.preventDefault(); return; } dragging = {{ $index }}"
+                                    @dragstart="if (_dragTarget?.closest('textarea, input, select, [contenteditable]')) { $event.preventDefault(); return; } dragging = {{ $index }}"
                                     @dragover.prevent="over = {{ $index }}"
                                     @drop="if (dragging !== null) { $wire.reorderRows(dragging, over); } dragging = null; over = null"
                                     @dragend="dragging = null; over = null"
@@ -3682,7 +3699,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                                                 <div x-data="{ rowSettingsOpen: false }">
                                                     <button type="button" @click="rowSettingsOpen = !rowSettingsOpen" class="flex items-center gap-1.5 w-full text-left">
                                                         <flux:icon name="chevron-right" class="size-3 text-zinc-400 shrink-0 transition-transform duration-150" x-bind:class="rowSettingsOpen ? 'rotate-90' : ''" />
-                                                        <span class="text-[11px] uppercase tracking-wider font-semibold text-zinc-500 dark:text-zinc-400">Row Settings</span>
+                                                        <span class="text-[11px] uppercase tracking-wider font-semibold text-zinc-500 dark:text-zinc-400">Section Settings</span>
                                                     </button>
                                                     <div x-show="rowSettingsOpen" x-collapse class="mt-2 pl-3">
                                                         <div class="flex items-center justify-between">
@@ -3789,19 +3806,97 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                                                     <div x-show="classesOpen" x-collapse class="mt-2 pl-3 space-y-3">
                                                 @foreach (['section_classes' => 'Section Classes', 'section_container_classes' => 'Container Classes'] as $fieldKey => $fieldLabel)
                                                     @if (isset($rowDesignDefaults[$row['slug']][$fieldKey]))
+                                                        @php $rcKey = $row['slug'] . '_' . $fieldKey; @endphp
                                                         <div>
                                                             <div class="flex items-center justify-between mb-1.5">
                                                                 <span class="text-[11px] uppercase tracking-wider font-semibold text-zinc-500 dark:text-zinc-400">{{ $fieldLabel }}</span>
-                                                                <button wire:click="resetRowDesignField('{{ $row['slug'] }}', '{{ $fieldKey }}')" type="button" class="text-xs text-zinc-400 dark:text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 transition-colors">Reset</button>
+                                                                <div class="flex items-center gap-2">
+                                                                    <div class="relative" x-data="{
+                                                                        open: false,
+                                                                        fieldKey: @js($rcKey),
+                                                                        insert(cls) {
+                                                                            const ta = document.querySelector('[data-row-classes-key=\'' + this.fieldKey + '\']');
+                                                                            if (ta) {
+                                                                                const v = ta.value.trimEnd();
+                                                                                ta.value = v ? v + ' ' + cls : cls;
+                                                                                ta.dispatchEvent(new Event('input', { bubbles: true }));
+                                                                                ta.focus();
+                                                                            }
+                                                                            this.open = false;
+                                                                        }
+                                                                    }">
+                                                                        <button type="button"
+                                                                            @click="open = !open"
+                                                                            class="text-zinc-400 dark:text-zinc-500 hover:text-primary dark:hover:text-primary transition-colors"
+                                                                            title="Insert theme token"
+                                                                        ><flux:icon name="bolt" class="size-3.5" /></button>
+                                                                        <div
+                                                                            x-show="open"
+                                                                            @click.outside="open = false"
+                                                                            x-transition:enter="transition ease-out duration-75"
+                                                                            x-transition:enter-start="opacity-0 scale-95"
+                                                                            x-transition:enter-end="opacity-100 scale-100"
+                                                                            class="absolute right-0 top-full mt-1 z-50 w-56 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg shadow-lg overflow-hidden text-left"
+                                                                        >
+                                                                            @if (! empty($rcThemeColorNames))
+                                                                                <div class="px-3 pt-2.5 pb-2">
+                                                                                    <p class="text-[10px] uppercase tracking-wider font-semibold text-zinc-400 dark:text-zinc-500 mb-1.5">Colors</p>
+                                                                                    <div class="flex flex-wrap gap-1">
+                                                                                        @foreach ($rcThemeColorNames as $rcColorName)
+                                                                                            <button type="button" @click="insert('bg-{{ $rcColorName }}')" class="px-1.5 py-0.5 text-[10px] font-mono rounded bg-zinc-100 dark:bg-zinc-700 text-zinc-600 dark:text-zinc-300 hover:bg-primary hover:text-white transition-colors">bg-{{ $rcColorName }}</button>
+                                                                                            <button type="button" @click="insert('text-{{ $rcColorName }}')" class="px-1.5 py-0.5 text-[10px] font-mono rounded bg-zinc-100 dark:bg-zinc-700 text-zinc-600 dark:text-zinc-300 hover:bg-primary hover:text-white transition-colors">text-{{ $rcColorName }}</button>
+                                                                                            <button type="button" @click="insert('border-{{ $rcColorName }}')" class="px-1.5 py-0.5 text-[10px] font-mono rounded bg-zinc-100 dark:bg-zinc-700 text-zinc-600 dark:text-zinc-300 hover:bg-primary hover:text-white transition-colors">border-{{ $rcColorName }}</button>
+                                                                                        @endforeach
+                                                                                    </div>
+                                                                                </div>
+                                                                                <div class="border-t border-zinc-100 dark:border-zinc-700/60"></div>
+                                                                            @endif
+                                                                            <div class="px-3 pt-2 pb-2">
+                                                                                <p class="text-[10px] uppercase tracking-wider font-semibold text-zinc-400 dark:text-zinc-500 mb-1.5">Spacing</p>
+                                                                                <div class="flex flex-wrap gap-1">
+                                                                                    <button type="button" @click="insert('py-section')" class="px-1.5 py-0.5 text-[10px] font-mono rounded bg-zinc-100 dark:bg-zinc-700 text-zinc-600 dark:text-zinc-300 hover:bg-primary hover:text-white transition-colors">py-section</button>
+                                                                                    <button type="button" @click="insert('py-section-banner')" class="px-1.5 py-0.5 text-[10px] font-mono rounded bg-zinc-100 dark:bg-zinc-700 text-zinc-600 dark:text-zinc-300 hover:bg-primary hover:text-white transition-colors">py-section-banner</button>
+                                                                                    <button type="button" @click="insert('py-section-hero')" class="px-1.5 py-0.5 text-[10px] font-mono rounded bg-zinc-100 dark:bg-zinc-700 text-zinc-600 dark:text-zinc-300 hover:bg-primary hover:text-white transition-colors">py-section-hero</button>
+                                                                                </div>
+                                                                            </div>
+                                                                            <div class="border-t border-zinc-100 dark:border-zinc-700/60"></div>
+                                                                            <div class="px-3 pt-2 pb-2.5">
+                                                                                <p class="text-[10px] uppercase tracking-wider font-semibold text-zinc-400 dark:text-zinc-500 mb-1.5">Utilities</p>
+                                                                                <div class="flex flex-wrap gap-1">
+                                                                                    <button type="button" @click="insert('rounded-card')" class="px-1.5 py-0.5 text-[10px] font-mono rounded bg-zinc-100 dark:bg-zinc-700 text-zinc-600 dark:text-zinc-300 hover:bg-primary hover:text-white transition-colors">rounded-card</button>
+                                                                                    <button type="button" @click="insert('shadow-card')" class="px-1.5 py-0.5 text-[10px] font-mono rounded bg-zinc-100 dark:bg-zinc-700 text-zinc-600 dark:text-zinc-300 hover:bg-primary hover:text-white transition-colors">shadow-card</button>
+                                                                                    <button type="button" @click="insert('font-heading')" class="px-1.5 py-0.5 text-[10px] font-mono rounded bg-zinc-100 dark:bg-zinc-700 text-zinc-600 dark:text-zinc-300 hover:bg-primary hover:text-white transition-colors">font-heading</button>
+                                                                                </div>
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
+                                                                    @if ($rcAiEnabled)
+                                                                        <button type="button"
+                                                                            onclick="(function() { var ta = document.querySelector('[data-row-classes-key=\'{{ $rcKey }}\']'); window.dispatchEvent(new CustomEvent('open-ai-generate', { detail: { fieldKey: '{{ $rcKey }}', fieldType: 'classes', fieldLabel: '{{ addslashes($fieldLabel) }}', currentClasses: ta ? ta.value : '' }, bubbles: true })); })()"
+                                                                            class="text-zinc-400 dark:text-zinc-500 hover:text-primary dark:hover:text-primary transition-colors"
+                                                                            title="Generate with AI"
+                                                                        ><flux:icon name="sparkles" class="size-3.5" /></button>
+                                                                    @endif
+                                                                    <button wire:click="resetRowDesignField('{{ $row['slug'] }}', '{{ $fieldKey }}')" type="button" class="text-xs text-zinc-400 dark:text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 transition-colors">Reset</button>
+                                                                </div>
                                                             </div>
-                                                            <div x-data="twAutocomplete('{{ $row['slug'] }}_{{ $fieldKey }}')" class="relative">
+                                                            <div x-data="twAutocomplete('{{ $row['slug'] }}_{{ $fieldKey }}')" class="relative"
+                                                                x-on:ai-content-generated.window="
+                                                                    if ($event.detail.fieldKey === '{{ $rcKey }}') {
+                                                                        $refs.input.value = $event.detail.content;
+                                                                        $refs.input.dispatchEvent(new Event('input', { bubbles: true }));
+                                                                        $refs.input.focus();
+                                                                    }
+                                                                ">
                                                                 <textarea
                                                                     x-ref="input"
+                                                                    data-row-classes-key="{{ $rcKey }}"
                                                                     wire:model.live.debounce.400ms="rowDesignValues.{{ $row['slug'] }}.{{ $fieldKey }}"
                                                                     rows="2"
                                                                     x-on:input="suggest($event)"
                                                                     x-on:keydown="handleKey($event)"
                                                                     x-on:blur="delayClose()"
+                                                                    @mousedown.stop
                                                                     placeholder="{{ $rowDesignDefaults[$row['slug']][$fieldKey] }}"
                                                                     class="w-full font-mono text-xs rounded-lg border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-900 text-zinc-900 dark:text-white px-3 py-2 resize-none focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition"
                                                                 ></textarea>

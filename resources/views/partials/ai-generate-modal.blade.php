@@ -46,12 +46,11 @@
                     x-ref="promptInput"
                     rows="4"
                     :placeholder="fieldType === 'classes' ? 'Describe what to change… e.g. make the text smaller, add more padding' : 'Describe what content you want to generate…'"
-                    @keydown.meta.enter="generate()"
-                    @keydown.ctrl.enter="generate()"
+                    @keydown.enter="if (!$event.shiftKey) { $event.preventDefault(); generate(); }"
                     :disabled="generating"
                     class="w-full text-sm rounded-lg border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-900 text-zinc-900 dark:text-white px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition resize-none disabled:opacity-60"
                 ></textarea>
-                <p class="text-xs text-zinc-400 dark:text-zinc-500 mt-1">Tip: Press ⌘+Enter to generate.</p>
+                <p class="text-xs text-zinc-400 dark:text-zinc-500 mt-1">Tip: Press Enter to generate, Shift+Enter for a new line.</p>
             </div>
             <div x-show="error" x-transition class="rounded-lg bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800 px-3 py-2 text-sm text-red-700 dark:text-red-400" x-text="error"></div>
         </div>

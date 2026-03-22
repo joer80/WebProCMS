@@ -223,6 +223,7 @@ if ($field['type'] === 'classes') {
                 x-on:input="suggest($event)"
                 x-on:keydown="handleKey($event)"
                 x-on:blur="delayClose()"
+                @mousedown.stop
                 placeholder="{{ $field['default'] }}"
                 class="w-full font-mono text-xs rounded-lg border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-900 text-zinc-900 dark:text-white px-3 py-2 resize-none focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition"
             ></textarea>
