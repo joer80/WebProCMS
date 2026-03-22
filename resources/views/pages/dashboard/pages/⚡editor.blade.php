@@ -3198,23 +3198,25 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                                                         variant="ghost" size="sm" icon="arrow-up"
                                                         :disabled="$isFirst"
                                                         :class="$isFirst ? 'opacity-15!' : ''"
-                                                        title="Move up" :loading="false"
+                                                        tooltip="Move up" :loading="false"
                                                     />
                                                     <flux:button
                                                         wire:click="moveItemDown({{ $item['index'] }})"
                                                         variant="ghost" size="sm" icon="arrow-down"
                                                         :disabled="$isLast"
                                                         :class="$isLast ? 'opacity-15!' : ''"
-                                                        title="Move down" :loading="false"
+                                                        tooltip="Move down" :loading="false"
                                                     />
-                                                    <flux:icon name="bars-2" class="size-4 text-zinc-400 dark:text-zinc-500 cursor-grab active:cursor-grabbing mx-2" title="Drag to reorder" />
+                                                    <flux:tooltip content="Drag to reorder">
+                                                        <flux:icon name="bars-2" class="size-4 text-zinc-400 dark:text-zinc-500 cursor-grab active:cursor-grabbing mx-2" />
+                                                    </flux:tooltip>
                                                 </div>
                                                 <div class="flex items-center gap-0.5 ml-auto">
                                                     <flux:button
                                                         wire:click="openItemPickerAbove({{ $item['index'] }})"
                                                         variant="ghost"
                                                         size="sm"
-                                                        title="Insert item above"
+                                                        tooltip="Insert item above"
                                                         class="px-1!"
                                                         :loading="false"
                                                     >
@@ -3227,7 +3229,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                                                         wire:click="openItemPickerBelow({{ $item['index'] }})"
                                                         variant="ghost"
                                                         size="sm"
-                                                        title="Insert item below"
+                                                        tooltip="Insert item below"
                                                         class="px-1!"
                                                         :loading="false"
                                                     >
@@ -3241,7 +3243,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                                                         wire:confirm="Delete this item?"
                                                         variant="ghost" size="sm" icon="trash"
                                                         class="text-red-500 dark:text-red-400"
-                                                        title="Delete item" :loading="false"
+                                                        tooltip="Delete item" :loading="false"
                                                     />
                                                 </div>
                                             </div>
@@ -3278,14 +3280,18 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                                             <div class="flex items-center gap-2 px-3 py-2 bg-zinc-100 dark:bg-zinc-700/50 cursor-pointer select-none" @click="open = !open; if (open) $dispatch('sidebar-group-opened', { slug: '{{ $rows[$editingRowIndex]['slug'] }}', id: 'row-settings' })">
                                                 <span class="text-sm font-medium text-zinc-800 dark:text-zinc-200 flex-1 truncate">Row Settings</span>
                                                 @if ($orphanHasClassesFields)
-                                                    <button type="button" @click.stop="const isActive = groupMode !== null ? groupMode === 'design' : (designMode && !advancedMode); if (isActive && open) { open = false; } else { groupMode = 'design'; open = true; $dispatch('sidebar-group-opened', { slug: '{{ $rows[$editingRowIndex]['slug'] }}', id: 'row-settings' }); }"
-                                                        :class="(groupMode !== null ? groupMode === 'design' : (designMode && !advancedMode)) ? 'text-zinc-300 dark:text-zinc-600' : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 transition-colors'"
-                                                        title="Design"><flux:icon name="paint-brush" class="size-3.5" /></button>
+                                                    <flux:tooltip content="Component design">
+                                                        <button type="button" @click.stop="const isActive = groupMode !== null ? groupMode === 'design' : (designMode && !advancedMode); if (isActive && open) { open = false; } else { groupMode = 'design'; open = true; $dispatch('sidebar-group-opened', { slug: '{{ $rows[$editingRowIndex]['slug'] }}', id: 'row-settings' }); }"
+                                                            :class="(groupMode !== null ? groupMode === 'design' : (designMode && !advancedMode)) ? 'text-zinc-300 dark:text-zinc-600' : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 transition-colors'"
+                                                        ><flux:icon name="paint-brush" class="size-3.5" /></button>
+                                                    </flux:tooltip>
                                                 @endif
                                                 @if ($orphanHasAdvancedFields)
-                                                    <button type="button" @click.stop="const isActive = groupMode !== null ? groupMode === 'advanced' : advancedMode; if (isActive && open) { open = false; } else { groupMode = 'advanced'; open = true; $dispatch('sidebar-group-opened', { slug: '{{ $rows[$editingRowIndex]['slug'] }}', id: 'row-settings' }); }"
-                                                        :class="(groupMode !== null ? groupMode === 'advanced' : advancedMode) ? 'text-zinc-300 dark:text-zinc-600' : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 transition-colors'"
-                                                        title="Advanced"><flux:icon name="code-bracket" class="size-3.5" /></button>
+                                                    <flux:tooltip content="Component settings">
+                                                        <button type="button" @click.stop="const isActive = groupMode !== null ? groupMode === 'advanced' : advancedMode; if (isActive && open) { open = false; } else { groupMode = 'advanced'; open = true; $dispatch('sidebar-group-opened', { slug: '{{ $rows[$editingRowIndex]['slug'] }}', id: 'row-settings' }); }"
+                                                            :class="(groupMode !== null ? groupMode === 'advanced' : advancedMode) ? 'text-zinc-300 dark:text-zinc-600' : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 transition-colors'"
+                                                        ><flux:icon name="code-bracket" class="size-3.5" /></button>
+                                                    </flux:tooltip>
                                                 @endif
                                             </div>
                                             <div x-show="open" x-collapse class="border-t border-zinc-200 dark:border-zinc-700 p-3 space-y-4">
@@ -3341,19 +3347,25 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                                                 <div class="flex items-center gap-2 px-3 py-2 bg-zinc-100 dark:bg-zinc-700/50 cursor-pointer select-none" @click="if ({{ $compHasContentFields ? 'true' : 'false' }} || designMode || advancedMode || groupMode !== null) { open = !open; if (open) $dispatch('sidebar-group-opened', { slug: '{{ $compAccordionSlug }}', id: '{{ $compAccordionId }}' }); }">
                                                     <span class="text-sm font-medium text-zinc-800 dark:text-zinc-200 flex-1 truncate">{{ $comp['name'] }}</span>
                                                     @if ($compHasContentFields)
-                                                        <button type="button" @click.stop="const isActive = groupMode !== null ? groupMode === 'content' : (!designMode && !advancedMode); if (isActive && open) { open = false; } else { groupMode = 'content'; open = true; $dispatch('sidebar-group-opened', { slug: '{{ $compAccordionSlug }}', id: '{{ $compAccordionId }}' }); }"
-                                                            :class="(groupMode !== null ? groupMode === 'content' : (!designMode && !advancedMode)) ? 'text-zinc-300 dark:text-zinc-600' : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 transition-colors'"
-                                                            title="Content"><flux:icon name="document-text" class="size-3.5" /></button>
+                                                        <flux:tooltip content="Component content">
+                                                            <button type="button" @click.stop="const isActive = groupMode !== null ? groupMode === 'content' : (!designMode && !advancedMode); if (isActive && open) { open = false; } else { groupMode = 'content'; open = true; $dispatch('sidebar-group-opened', { slug: '{{ $compAccordionSlug }}', id: '{{ $compAccordionId }}' }); }"
+                                                                :class="(groupMode !== null ? groupMode === 'content' : (!designMode && !advancedMode)) ? 'text-zinc-300 dark:text-zinc-600' : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 transition-colors'"
+                                                            ><flux:icon name="document-text" class="size-3.5" /></button>
+                                                        </flux:tooltip>
                                                     @endif
                                                     @if ($compHasClassesFields)
-                                                        <button type="button" @click.stop="const isActive = groupMode !== null ? groupMode === 'design' : (designMode && !advancedMode); if (isActive && open) { open = false; } else { groupMode = 'design'; open = true; $dispatch('sidebar-group-opened', { slug: '{{ $compAccordionSlug }}', id: '{{ $compAccordionId }}' }); }"
-                                                            :class="(groupMode !== null ? groupMode === 'design' : (designMode && !advancedMode)) ? 'text-zinc-300 dark:text-zinc-600' : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 transition-colors'"
-                                                            title="Design"><flux:icon name="paint-brush" class="size-3.5" /></button>
+                                                        <flux:tooltip content="Component design">
+                                                            <button type="button" @click.stop="const isActive = groupMode !== null ? groupMode === 'design' : (designMode && !advancedMode); if (isActive && open) { open = false; } else { groupMode = 'design'; open = true; $dispatch('sidebar-group-opened', { slug: '{{ $compAccordionSlug }}', id: '{{ $compAccordionId }}' }); }"
+                                                                :class="(groupMode !== null ? groupMode === 'design' : (designMode && !advancedMode)) ? 'text-zinc-300 dark:text-zinc-600' : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 transition-colors'"
+                                                            ><flux:icon name="paint-brush" class="size-3.5" /></button>
+                                                        </flux:tooltip>
                                                     @endif
                                                     @if ($compHasAdvancedFields)
-                                                        <button type="button" @click.stop="const isActive = groupMode !== null ? groupMode === 'advanced' : advancedMode; if (isActive && open) { open = false; } else { groupMode = 'advanced'; open = true; $dispatch('sidebar-group-opened', { slug: '{{ $compAccordionSlug }}', id: '{{ $compAccordionId }}' }); }"
-                                                            :class="(groupMode !== null ? groupMode === 'advanced' : advancedMode) ? 'text-zinc-300 dark:text-zinc-600' : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 transition-colors'"
-                                                            title="Advanced"><flux:icon name="code-bracket" class="size-3.5" /></button>
+                                                        <flux:tooltip content="Component settings">
+                                                            <button type="button" @click.stop="const isActive = groupMode !== null ? groupMode === 'advanced' : advancedMode; if (isActive && open) { open = false; } else { groupMode = 'advanced'; open = true; $dispatch('sidebar-group-opened', { slug: '{{ $compAccordionSlug }}', id: '{{ $compAccordionId }}' }); }"
+                                                                :class="(groupMode !== null ? groupMode === 'advanced' : advancedMode) ? 'text-zinc-300 dark:text-zinc-600' : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 transition-colors'"
+                                                            ><flux:icon name="code-bracket" class="size-3.5" /></button>
+                                                        </flux:tooltip>
                                                     @endif
                                                     @if ($headerToggleField)
                                                         <flux:switch wire:model.live="contentValues.{{ $headerToggleField['key'] }}" @click.stop />
@@ -3405,16 +3417,18 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                                                             variant="ghost" size="sm" icon="arrow-up"
                                                             :disabled="$isFirst"
                                                             :class="$isFirst ? 'opacity-15!' : ''"
-                                                            title="Move up" :loading="false"
+                                                            tooltip="Move up" :loading="false"
                                                         />
                                                         <flux:button
                                                             wire:click="moveComponentDown({{ $comp['index'] }})"
                                                             variant="ghost" size="sm" icon="arrow-down"
                                                             :disabled="$isLast"
                                                             :class="$isLast ? 'opacity-15!' : ''"
-                                                            title="Move down" :loading="false"
+                                                            tooltip="Move down" :loading="false"
                                                         />
-                                                        <flux:icon name="bars-2" class="size-4 text-zinc-400 dark:text-zinc-500 cursor-grab active:cursor-grabbing mx-2" title="Drag to reorder" />
+                                                        <flux:tooltip content="Drag to reorder">
+                                                            <flux:icon name="bars-2" class="size-4 text-zinc-400 dark:text-zinc-500 cursor-grab active:cursor-grabbing mx-2" />
+                                                        </flux:tooltip>
                                                     </div>
                                                     <div class="flex items-center gap-0.5 ml-auto">
                                                         <flux:button
@@ -3422,7 +3436,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                                                             wire:confirm="Delete this component?"
                                                             variant="ghost" size="sm" icon="trash"
                                                             class="text-red-500 dark:text-red-400"
-                                                            title="Delete component" :loading="false"
+                                                            tooltip="Delete component" :loading="false"
                                                         />
                                                     </div>
                                                 </div>
@@ -3557,12 +3571,13 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                                                         title="Click to edit content"
                                                         @click.stop="$wire.openContentEditor({{ $index }})"
                                                     >{{ $row['name'] }}</span>
+                                                    <flux:tooltip content="Rename row">
                                                     <button
                                                         type="button"
                                                         class="shrink-0 opacity-0 group-hover:opacity-100 transition-opacity p-0.5 rounded text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200"
-                                                        title="Rename row"
                                                         @click.stop="renamingRow = true; rowNameDraft = '{{ addslashes($row['name']) }}'; $nextTick(() => $refs.rowNameInput_{{ $index }}.select())"
                                                     ><flux:icon name="pencil" class="size-3" /></button>
+                                                </flux:tooltip>
                                                 </div>
                                                 <input
                                                     x-show="renamingRow"
@@ -3581,24 +3596,33 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                                             </div>
                                         </div>
                                         @if (isset($rowDesignDefaults[$row['slug']]))
-                                            <button type="button" @click.stop="panelMode = panelMode === 'content' ? null : 'content'"
-                                                :class="panelMode === 'content' ? 'text-primary' : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 transition-colors'"
-                                                title="Background image"><flux:icon name="document-text" class="size-3.5" /></button>
-                                            <button type="button" @click.stop="panelMode = panelMode === 'design' ? null : 'design'"
-                                                :class="panelMode === 'design' ? 'text-primary' : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 transition-colors'"
-                                                title="Edit section styles"><flux:icon name="paint-brush" class="size-3.5" /></button>
-                                            <button type="button" @click.stop="panelMode = panelMode === 'advanced' ? null : 'advanced'"
-                                                :class="panelMode === 'advanced' ? 'text-primary' : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 transition-colors'"
-                                                title="Advanced settings"><flux:icon name="code-bracket" class="size-3.5" /></button>
-                                            <button type="button" @click.stop="panelMode = panelMode === 'browse' ? null : 'browse'; if (panelMode === 'browse') $wire.openBrowseMode({{ $index }})"
-                                                :class="panelMode === 'browse' ? 'text-primary' : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 transition-colors'"
-                                                title="Browse library rows for this row"><flux:icon name="rectangle-stack" class="size-3.5" /></button>
+                                            <flux:tooltip content="Section content">
+                                                <button type="button" @click.stop="panelMode = panelMode === 'content' ? null : 'content'"
+                                                    :class="panelMode === 'content' ? 'text-primary' : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 transition-colors'"
+                                                ><flux:icon name="document-text" class="size-3.5" /></button>
+                                            </flux:tooltip>
+                                            <flux:tooltip content="Section design">
+                                                <button type="button" @click.stop="panelMode = panelMode === 'design' ? null : 'design'"
+                                                    :class="panelMode === 'design' ? 'text-primary' : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 transition-colors'"
+                                                ><flux:icon name="paint-brush" class="size-3.5" /></button>
+                                            </flux:tooltip>
+                                            <flux:tooltip content="Section settings">
+                                                <button type="button" @click.stop="panelMode = panelMode === 'advanced' ? null : 'advanced'"
+                                                    :class="panelMode === 'advanced' ? 'text-primary' : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 transition-colors'"
+                                                ><flux:icon name="code-bracket" class="size-3.5" /></button>
+                                            </flux:tooltip>
+                                            <flux:tooltip content="Section design library">
+                                                <button type="button" @click.stop="panelMode = panelMode === 'browse' ? null : 'browse'; if (panelMode === 'browse') $wire.openBrowseMode({{ $index }})"
+                                                    :class="panelMode === 'browse' ? 'text-primary' : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 transition-colors'"
+                                                ><flux:icon name="rectangle-stack" class="size-3.5" /></button>
+                                            </flux:tooltip>
                                         @endif
-                                        <flux:switch
-                                            :checked="empty($row['hidden'])"
-                                            @click.stop="$wire.toggleRowVisibility({{ $index }})"
-                                            title="{{ !empty($row['hidden']) ? 'Row hidden — click to show' : 'Click to hide row' }}"
-                                        />
+                                        <flux:tooltip :content="!empty($row['hidden']) ? 'Row hidden — click to show' : 'Click to hide row'">
+                                            <flux:switch
+                                                :checked="empty($row['hidden'])"
+                                                @click.stop="$wire.toggleRowVisibility({{ $index }})"
+                                            />
+                                        </flux:tooltip>
                                     </div>
 
                                     {{-- Inline panel: design mode (classes) or advanced mode (section id) --}}
@@ -3858,7 +3882,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                                                     icon="arrow-up"
                                                     :disabled="$index === 0"
                                                     :class="$index === 0 ? 'opacity-15!' : ''"
-                                                    title="Move up"
+                                                    tooltip="Move up"
                                                     :loading="false"
                                                 />
                                                 <flux:button
@@ -3868,11 +3892,13 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                                                     icon="arrow-down"
                                                     :disabled="$index === count($rows) - 1"
                                                     :class="$index === count($rows) - 1 ? 'opacity-15!' : ''"
-                                                    title="Move down"
+                                                    tooltip="Move down"
                                                     :loading="false"
                                                 />
 
-                                                <flux:icon name="bars-2" class="size-4 text-zinc-400 dark:text-zinc-500 cursor-grab active:cursor-grabbing mx-2" title="Drag to reorder" />
+                                                <flux:tooltip content="Drag to reorder">
+                                                    <flux:icon name="bars-2" class="size-4 text-zinc-400 dark:text-zinc-500 cursor-grab active:cursor-grabbing mx-2" />
+                                                </flux:tooltip>
 
                                             </div>
                                             <div class="flex items-center gap-0.5 ml-auto">
@@ -3880,7 +3906,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                                                     wire:click="openLibraryDrawer({{ $index }})"
                                                     variant="ghost"
                                                     size="sm"
-                                                    title="Insert row above"
+                                                    tooltip="Insert section above"
                                                     class="px-1!"
                                                     :loading="false"
                                                 >
@@ -3893,7 +3919,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                                                     wire:click="openLibraryDrawer({{ $index + 1 }})"
                                                     variant="ghost"
                                                     size="sm"
-                                                    title="Insert row below"
+                                                    tooltip="Insert section below"
                                                     class="px-1!"
                                                     :loading="false"
                                                 >
@@ -3909,7 +3935,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                                                         variant="ghost"
                                                         size="sm"
                                                         icon="share"
-                                                        title="Make shared"
+                                                        tooltip="Make shared"
                                                         class="opacity-60 hover:opacity-100"
                                                     />
                                                 @endif
@@ -3919,7 +3945,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                                                     size="sm"
                                                     icon="trash"
                                                     class="opacity-60 hover:opacity-100"
-                                                    title="Remove row"
+                                                    tooltip="Remove section"
                                                     :loading="false"
                                                 />
                                             </div>
