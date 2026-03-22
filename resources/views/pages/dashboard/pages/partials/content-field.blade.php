@@ -14,12 +14,84 @@ $showAiBtn = $aiEnabled && ($showShortcodeBtn || $field['type'] === 'richtext' |
 $showLoremBtn = $showShortcodeBtn || $field['type'] === 'richtext';
 $loremDefaultLen = strlen(strip_tags($field['default'] ?? ''));
 $loremDefaultSize = $loremDefaultLen <= 50 ? 'sentence' : ($loremDefaultLen <= 100 ? 'short' : ($loremDefaultLen <= 300 ? 'medium' : 'long'));
+$themeColorNames = [];
+if ($field['type'] === 'classes') {
+    try {
+        $pubCss = resource_path('css/public.css');
+        if (file_exists($pubCss)) {
+            preg_match('/@theme\s*\{([^}]+)\}/s', file_get_contents($pubCss), $themeBlock);
+            if (! empty($themeBlock[1])) {
+                preg_match_all('/--color-([\w]+):/', $themeBlock[1], $cm);
+                $themeColorNames = array_values(array_unique($cm[1]));
+            }
+        }
+    } catch (\Throwable) {}
+}
 @endphp
 <div wire:key="field-{{ str_replace(':', '-', $field['slug']) }}-{{ $field['key'] }}" x-show="{{ $fieldShow }}">
     @if ($field['type'] === 'classes')
         <div class="flex items-center justify-between mb-1.5">
             <flux:label class="text-zinc-500 dark:text-zinc-400">{{ $field['label'] }}</flux:label>
             <div class="flex items-center gap-2">
+                <div class="relative" x-data="{
+                    open: false,
+                    fieldKey: @js($field['key']),
+                    insert(cls) {
+                        const ta = document.querySelector('[data-classes-key=\'' + this.fieldKey + '\']');
+                        if (ta) {
+                            const v = ta.value.trimEnd();
+                            ta.value = v ? v + ' ' + cls : cls;
+                            ta.dispatchEvent(new Event('input', { bubbles: true }));
+                            ta.focus();
+                        }
+                        this.open = false;
+                    }
+                }">
+                    <button type="button"
+                        @click="open = !open"
+                        class="text-zinc-400 dark:text-zinc-500 hover:text-primary dark:hover:text-primary transition-colors"
+                        title="Insert theme token"
+                    ><flux:icon name="bolt" class="size-3.5" /></button>
+                    <div
+                        x-show="open"
+                        @click.outside="open = false"
+                        x-transition:enter="transition ease-out duration-75"
+                        x-transition:enter-start="opacity-0 scale-95"
+                        x-transition:enter-end="opacity-100 scale-100"
+                        class="absolute right-0 top-full mt-1 z-50 w-56 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg shadow-lg overflow-hidden text-left"
+                    >
+                        @if (! empty($themeColorNames))
+                            <div class="px-3 pt-2.5 pb-2">
+                                <p class="text-[10px] uppercase tracking-wider font-semibold text-zinc-400 dark:text-zinc-500 mb-1.5">Colors</p>
+                                <div class="flex flex-wrap gap-1">
+                                    @foreach ($themeColorNames as $colorName)
+                                        <button type="button" @click="insert('bg-{{ $colorName }}')" class="px-1.5 py-0.5 text-[10px] font-mono rounded bg-zinc-100 dark:bg-zinc-700 text-zinc-600 dark:text-zinc-300 hover:bg-primary hover:text-white transition-colors">bg-{{ $colorName }}</button>
+                                        <button type="button" @click="insert('text-{{ $colorName }}')" class="px-1.5 py-0.5 text-[10px] font-mono rounded bg-zinc-100 dark:bg-zinc-700 text-zinc-600 dark:text-zinc-300 hover:bg-primary hover:text-white transition-colors">text-{{ $colorName }}</button>
+                                        <button type="button" @click="insert('border-{{ $colorName }}')" class="px-1.5 py-0.5 text-[10px] font-mono rounded bg-zinc-100 dark:bg-zinc-700 text-zinc-600 dark:text-zinc-300 hover:bg-primary hover:text-white transition-colors">border-{{ $colorName }}</button>
+                                    @endforeach
+                                </div>
+                            </div>
+                            <div class="border-t border-zinc-100 dark:border-zinc-700/60"></div>
+                        @endif
+                        <div class="px-3 pt-2 pb-2">
+                            <p class="text-[10px] uppercase tracking-wider font-semibold text-zinc-400 dark:text-zinc-500 mb-1.5">Spacing</p>
+                            <div class="flex flex-wrap gap-1">
+                                <button type="button" @click="insert('py-section')" class="px-1.5 py-0.5 text-[10px] font-mono rounded bg-zinc-100 dark:bg-zinc-700 text-zinc-600 dark:text-zinc-300 hover:bg-primary hover:text-white transition-colors">py-section</button>
+                                <button type="button" @click="insert('py-section-banner')" class="px-1.5 py-0.5 text-[10px] font-mono rounded bg-zinc-100 dark:bg-zinc-700 text-zinc-600 dark:text-zinc-300 hover:bg-primary hover:text-white transition-colors">py-section-banner</button>
+                                <button type="button" @click="insert('py-section-hero')" class="px-1.5 py-0.5 text-[10px] font-mono rounded bg-zinc-100 dark:bg-zinc-700 text-zinc-600 dark:text-zinc-300 hover:bg-primary hover:text-white transition-colors">py-section-hero</button>
+                            </div>
+                        </div>
+                        <div class="border-t border-zinc-100 dark:border-zinc-700/60"></div>
+                        <div class="px-3 pt-2 pb-2.5">
+                            <p class="text-[10px] uppercase tracking-wider font-semibold text-zinc-400 dark:text-zinc-500 mb-1.5">Utilities</p>
+                            <div class="flex flex-wrap gap-1">
+                                <button type="button" @click="insert('rounded-card')" class="px-1.5 py-0.5 text-[10px] font-mono rounded bg-zinc-100 dark:bg-zinc-700 text-zinc-600 dark:text-zinc-300 hover:bg-primary hover:text-white transition-colors">rounded-card</button>
+                                <button type="button" @click="insert('shadow-card')" class="px-1.5 py-0.5 text-[10px] font-mono rounded bg-zinc-100 dark:bg-zinc-700 text-zinc-600 dark:text-zinc-300 hover:bg-primary hover:text-white transition-colors">shadow-card</button>
+                                <button type="button" @click="insert('font-heading')" class="px-1.5 py-0.5 text-[10px] font-mono rounded bg-zinc-100 dark:bg-zinc-700 text-zinc-600 dark:text-zinc-300 hover:bg-primary hover:text-white transition-colors">font-heading</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
                 @if ($showAiBtn)
                     <button type="button"
                         onclick="(function() { var ta = document.querySelector('[data-classes-key=\'{{ $field['key'] }}\']'); window.dispatchEvent(new CustomEvent('open-ai-generate', { detail: { fieldKey: '{{ $field['key'] }}', fieldType: 'classes', fieldLabel: '{{ addslashes($field['label']) }}', currentClasses: ta ? ta.value : '' }, bubbles: true })); })()"
