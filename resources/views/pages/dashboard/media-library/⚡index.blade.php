@@ -152,10 +152,77 @@ new #[Layout('layouts.app')] #[Title('Media Library')] class extends Component {
         $this->editingAltValue = $currentAlt;
     }
 
+    public bool $generatingAlt = false;
+
     public function updateAlt(int $id, string $alt): void
     {
         MediaItem::query()->findOrFail($id)->update(['alt' => $alt]);
         unset($this->images);
+    }
+
+    public function generateAltForImage(int $id): void
+    {
+        $item = MediaItem::find($id);
+
+        if (! $item || ! Storage::disk('public')->exists($item->path)) {
+            return;
+        }
+
+        $this->generatingAlt = true;
+
+        $imageContents = Storage::disk('public')->get($item->path);
+        $mimeType = Storage::disk('public')->mimeType($item->path) ?: 'image/jpeg';
+        $base64 = base64_encode($imageContents);
+
+        $provider = \App\Models\Setting::get('ai.text_provider', 'claude');
+        $prompt = 'Generate a concise, descriptive alt text for this image suitable for screen readers. Maximum 10 words. Return only the alt text, no quotes, no trailing punctuation, no explanation.';
+
+        try {
+            if ($provider === 'openai') {
+                $apiKey = \App\Models\Setting::get('ai.openai_key', '');
+                $response = \Illuminate\Support\Facades\Http::withHeaders([
+                    'Authorization' => 'Bearer ' . $apiKey,
+                    'Content-Type' => 'application/json',
+                ])->post('https://api.openai.com/v1/chat/completions', [
+                    'model' => 'gpt-4o-mini',
+                    'max_tokens' => 100,
+                    'messages' => [[
+                        'role' => 'user',
+                        'content' => [
+                            ['type' => 'image_url', 'image_url' => ['url' => 'data:' . $mimeType . ';base64,' . $base64]],
+                            ['type' => 'text', 'text' => $prompt],
+                        ],
+                    ]],
+                ]);
+
+                $alt = $response->json('choices.0.message.content', '');
+            } else {
+                $apiKey = \App\Models\Setting::get('ai.claude_key', '');
+                $response = \Illuminate\Support\Facades\Http::withHeaders([
+                    'x-api-key' => $apiKey,
+                    'anthropic-version' => '2023-06-01',
+                    'content-type' => 'application/json',
+                ])->post('https://api.anthropic.com/v1/messages', [
+                    'model' => 'claude-haiku-4-5-20251001',
+                    'max_tokens' => 100,
+                    'messages' => [[
+                        'role' => 'user',
+                        'content' => [
+                            ['type' => 'image', 'source' => ['type' => 'base64', 'media_type' => $mimeType, 'data' => $base64]],
+                            ['type' => 'text', 'text' => $prompt],
+                        ],
+                    ]],
+                ]);
+
+                $alt = $response->json('content.0.text', '');
+            }
+
+            $this->updateAlt($id, trim($alt));
+        } catch (\Exception) {
+            // silently fail — user can type alt text manually
+        }
+
+        $this->generatingAlt = false;
     }
 
     public function saveAlt(int $id): void
@@ -668,7 +735,24 @@ new #[Layout('layouts.app')] #[Title('Media Library')] class extends Component {
                     </div>
 
                     <div>
-                        <p class="text-xs font-medium text-zinc-400 dark:text-zinc-500 uppercase tracking-wider mb-1">Alt Text</p>
+                        <div class="flex items-center justify-between mb-1">
+                            <p class="text-xs font-medium text-zinc-400 dark:text-zinc-500 uppercase tracking-wider">Alt Text</p>
+                            @if (\App\Models\Setting::get('ai.claude_key') || \App\Models\Setting::get('ai.openai_key'))
+                                <button
+                                    type="button"
+                                    wire:click="generateAltForImage({{ $previewImageId }})"
+                                    wire:loading.attr="disabled"
+                                    wire:target="generateAltForImage"
+                                    class="text-zinc-400 dark:text-zinc-500 hover:text-primary dark:hover:text-primary transition-colors disabled:opacity-50"
+                                    title="Generate alt text from image"
+                                >
+                                    <span wire:loading.remove wire:target="generateAltForImage"><flux:icon name="sparkles" class="size-3.5" /></span>
+                                    <span wire:loading wire:target="generateAltForImage">
+                                        <svg class="size-3.5 animate-spin" viewBox="0 0 24 24" fill="none"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                                    </span>
+                                </button>
+                            @endif
+                        </div>
                         <input
                             type="text"
                             value="{{ $previewImage?->alt }}"

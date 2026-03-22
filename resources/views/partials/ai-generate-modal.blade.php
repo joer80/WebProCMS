@@ -19,7 +19,7 @@
             }
         }
     }"
-    @open-ai-generate.window="open = true; fieldKey = $event.detail.fieldKey; fieldType = $event.detail.fieldType; fieldLabel = $event.detail.fieldLabel || ''; currentClasses = $event.detail.currentClasses || ''; prompt = ''; error = '';"
+    @open-ai-generate.window="open = true; fieldKey = $event.detail.fieldKey; fieldType = $event.detail.fieldType; fieldLabel = $event.detail.fieldLabel || ''; currentClasses = $event.detail.currentClasses || ''; prompt = ''; error = ''; if ($event.detail.fieldType === 'alt') { generating = true; $wire.generateAiAltText($event.detail.fieldKey, $event.detail.imageFieldKey); }"
     @ai-content-generated.window="if ($event.detail.fieldKey === fieldKey) { open = false; generating = false; prompt = ''; }"
     @ai-image-generated.window="if ($event.detail.fieldKey === fieldKey) { open = false; generating = false; prompt = ''; }"
     @ai-generate-error.window="if ($event.detail.fieldKey === fieldKey) { error = $event.detail.message; generating = false; }"
@@ -44,7 +44,16 @@
 
         {{-- Body --}}
         <div class="p-5 space-y-4">
-            <div>
+            <div x-show="fieldType === 'alt'" class="py-2 text-center">
+                <div class="flex items-center justify-center gap-2 text-sm text-zinc-600 dark:text-zinc-400">
+                    <svg class="size-4 animate-spin shrink-0" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    <span>Analyzing image for alt text…</span>
+                </div>
+            </div>
+            <div x-show="fieldType !== 'alt'">
                 <label class="text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1.5 block">Prompt</label>
                 <textarea
                     x-model="prompt"
@@ -70,6 +79,7 @@
                 class="text-sm text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 transition-colors disabled:opacity-50"
             >Cancel</button>
             <button
+                x-show="fieldType !== 'alt'"
                 type="button"
                 @click="generate()"
                 :disabled="generating || !prompt.trim()"

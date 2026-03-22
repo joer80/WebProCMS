@@ -2532,6 +2532,186 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
         }
     }
 
+    public function generateAiGridItemAltText(string $gridKey, int $idx, string $altKey, string $imagePath): void
+    {
+        if (empty($imagePath)) {
+            $this->dispatch('ai-grid-alt-error', gridKey: $gridKey, idx: $idx, altKey: $altKey, message: 'No image found.');
+
+            return;
+        }
+
+        if (! \Illuminate\Support\Facades\Storage::disk('public')->exists($imagePath)) {
+            $this->dispatch('ai-grid-alt-error', gridKey: $gridKey, idx: $idx, altKey: $altKey, message: 'Image file not found in storage.');
+
+            return;
+        }
+
+        $imageContents = \Illuminate\Support\Facades\Storage::disk('public')->get($imagePath);
+        $mimeType = \Illuminate\Support\Facades\Storage::disk('public')->mimeType($imagePath) ?: 'image/jpeg';
+        $base64 = base64_encode($imageContents);
+
+        $provider = \App\Models\Setting::get('ai.text_provider', 'claude');
+        $prompt = 'Generate a concise, descriptive alt text for this image suitable for screen readers. Maximum 10 words. Return only the alt text, no quotes, no trailing punctuation, no explanation.';
+
+        try {
+            if ($provider === 'openai') {
+                $apiKey = \App\Models\Setting::get('ai.openai_key', '');
+                $response = Http::withHeaders([
+                    'Authorization' => 'Bearer ' . $apiKey,
+                    'Content-Type' => 'application/json',
+                ])->post('https://api.openai.com/v1/chat/completions', [
+                    'model' => 'gpt-4o-mini',
+                    'max_tokens' => 100,
+                    'messages' => [
+                        [
+                            'role' => 'user',
+                            'content' => [
+                                [
+                                    'type' => 'image_url',
+                                    'image_url' => ['url' => 'data:' . $mimeType . ';base64,' . $base64],
+                                ],
+                                ['type' => 'text', 'text' => $prompt],
+                            ],
+                        ],
+                    ],
+                ]);
+
+                if ($response->failed()) {
+                    throw new \Exception($response->json('error.message') ?? 'OpenAI API error.');
+                }
+
+                $content = $response->json('choices.0.message.content', '');
+            } else {
+                $apiKey = \App\Models\Setting::get('ai.claude_key', '');
+                $response = Http::withHeaders([
+                    'x-api-key' => $apiKey,
+                    'anthropic-version' => '2023-06-01',
+                    'content-type' => 'application/json',
+                ])->post('https://api.anthropic.com/v1/messages', [
+                    'model' => 'claude-haiku-4-5-20251001',
+                    'max_tokens' => 100,
+                    'messages' => [
+                        [
+                            'role' => 'user',
+                            'content' => [
+                                [
+                                    'type' => 'image',
+                                    'source' => [
+                                        'type' => 'base64',
+                                        'media_type' => $mimeType,
+                                        'data' => $base64,
+                                    ],
+                                ],
+                                ['type' => 'text', 'text' => $prompt],
+                            ],
+                        ],
+                    ],
+                ]);
+
+                if ($response->failed()) {
+                    throw new \Exception($response->json('error.message') ?? 'Claude API error.');
+                }
+
+                $content = $response->json('content.0.text', '');
+            }
+
+            $this->dispatch('ai-grid-item-alt-generated', gridKey: $gridKey, idx: $idx, altKey: $altKey, content: trim($content));
+        } catch (\Exception $e) {
+            $this->dispatch('ai-grid-alt-error', gridKey: $gridKey, idx: $idx, altKey: $altKey, message: $e->getMessage());
+        }
+    }
+
+    public function generateAiAltText(string $altFieldKey, string $imageFieldKey): void
+    {
+        $imagePath = $this->contentValues[$imageFieldKey] ?? '';
+
+        if (empty($imagePath)) {
+            $this->dispatch('ai-generate-error', fieldKey: $altFieldKey, message: 'No image found. Please upload an image first.');
+
+            return;
+        }
+
+        if (! \Illuminate\Support\Facades\Storage::disk('public')->exists($imagePath)) {
+            $this->dispatch('ai-generate-error', fieldKey: $altFieldKey, message: 'Image file not found in storage.');
+
+            return;
+        }
+
+        $imageContents = \Illuminate\Support\Facades\Storage::disk('public')->get($imagePath);
+        $mimeType = \Illuminate\Support\Facades\Storage::disk('public')->mimeType($imagePath) ?: 'image/jpeg';
+        $base64 = base64_encode($imageContents);
+
+        $provider = \App\Models\Setting::get('ai.text_provider', 'claude');
+        $prompt = 'Generate a concise, descriptive alt text for this image suitable for screen readers. Maximum 10 words. Return only the alt text, no quotes, no trailing punctuation, no explanation.';
+
+        try {
+            if ($provider === 'openai') {
+                $apiKey = \App\Models\Setting::get('ai.openai_key', '');
+                $response = Http::withHeaders([
+                    'Authorization' => 'Bearer ' . $apiKey,
+                    'Content-Type' => 'application/json',
+                ])->post('https://api.openai.com/v1/chat/completions', [
+                    'model' => 'gpt-4o-mini',
+                    'max_tokens' => 100,
+                    'messages' => [
+                        [
+                            'role' => 'user',
+                            'content' => [
+                                [
+                                    'type' => 'image_url',
+                                    'image_url' => ['url' => 'data:' . $mimeType . ';base64,' . $base64],
+                                ],
+                                ['type' => 'text', 'text' => $prompt],
+                            ],
+                        ],
+                    ],
+                ]);
+
+                if ($response->failed()) {
+                    throw new \Exception($response->json('error.message') ?? 'OpenAI API error.');
+                }
+
+                $content = $response->json('choices.0.message.content', '');
+            } else {
+                $apiKey = \App\Models\Setting::get('ai.claude_key', '');
+                $response = Http::withHeaders([
+                    'x-api-key' => $apiKey,
+                    'anthropic-version' => '2023-06-01',
+                    'content-type' => 'application/json',
+                ])->post('https://api.anthropic.com/v1/messages', [
+                    'model' => 'claude-haiku-4-5-20251001',
+                    'max_tokens' => 100,
+                    'messages' => [
+                        [
+                            'role' => 'user',
+                            'content' => [
+                                [
+                                    'type' => 'image',
+                                    'source' => [
+                                        'type' => 'base64',
+                                        'media_type' => $mimeType,
+                                        'data' => $base64,
+                                    ],
+                                ],
+                                ['type' => 'text', 'text' => $prompt],
+                            ],
+                        ],
+                    ],
+                ]);
+
+                if ($response->failed()) {
+                    throw new \Exception($response->json('error.message') ?? 'Claude API error.');
+                }
+
+                $content = $response->json('content.0.text', '');
+            }
+
+            $this->dispatch('ai-content-generated', fieldKey: $altFieldKey, content: trim($content));
+        } catch (\Exception $e) {
+            $this->dispatch('ai-generate-error', fieldKey: $altFieldKey, message: $e->getMessage());
+        }
+    }
+
     public function generateAiImage(string $fieldKey, string $prompt): void
     {
         $apiKey = \App\Models\Setting::get('ai.openai_key', '');

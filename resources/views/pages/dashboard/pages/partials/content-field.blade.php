@@ -7,10 +7,12 @@ if (in_array($field['type'], ['id', 'attrs'])) {
 } else {
     $fieldShow = "{$effMode} === 'content'";
 }
-$showShortcodeBtn = ($field['type'] === 'text' && ! str_ends_with($field['key'], '_url') && ! str_ends_with($field['key'], '_htag')) || $field['key'] === 'subheadline';
+$isAltField = $field['type'] === 'text' && str_ends_with($field['key'], '_alt');
+$showShortcodeBtn = ($field['type'] === 'text' && ! str_ends_with($field['key'], '_url') && ! str_ends_with($field['key'], '_htag') && ! $isAltField) || $field['key'] === 'subheadline';
 $pageTypeSlug = preg_match('#^pages/([^/]+)/⚡show\.blade\.php$#u', $file ?? '', $ptm) ? $ptm[1] : '';
 $aiEnabled = (bool) (\App\Models\Setting::get('ai.claude_key') || \App\Models\Setting::get('ai.openai_key'));
-$showAiBtn = $aiEnabled && ($showShortcodeBtn || $field['type'] === 'richtext' || $field['type'] === 'classes');
+$showAiBtn = $aiEnabled && ! $isAltField && ($showShortcodeBtn || $field['type'] === 'richtext' || $field['type'] === 'classes');
+$showAiAltBtn = $aiEnabled && $isAltField;
 $aiImageEnabled = (bool) \App\Models\Setting::get('ai.openai_key');
 $showAiImageBtn = $aiImageEnabled && $field['type'] === 'image';
 $showLoremBtn = $showShortcodeBtn || $field['type'] === 'richtext';
@@ -127,6 +129,13 @@ if ($field['type'] === 'classes') {
                         onclick="window.dispatchEvent(new CustomEvent('open-ai-generate', { detail: { fieldKey: '{{ $field['key'] }}', fieldType: '{{ $field['type'] }}', fieldLabel: '{{ addslashes($field['label']) }}' }, bubbles: true }))"
                         class="text-zinc-400 dark:text-zinc-500 hover:text-primary dark:hover:text-primary transition-colors"
                         title="Generate with AI"
+                    ><flux:icon name="sparkles" class="size-3.5" /></button>
+                @endif
+                @if ($showAiAltBtn)
+                    <button type="button"
+                        onclick="window.dispatchEvent(new CustomEvent('open-ai-generate', { detail: { fieldKey: '{{ $field['key'] }}', fieldType: 'alt', fieldLabel: '{{ addslashes($field['label']) }}', imageFieldKey: '{{ substr($field['key'], 0, -4) }}' }, bubbles: true }))"
+                        class="text-zinc-400 dark:text-zinc-500 hover:text-primary dark:hover:text-primary transition-colors"
+                        title="Generate alt text from image"
                     ><flux:icon name="sparkles" class="size-3.5" /></button>
                 @endif
                 @if ($showAiImageBtn)
@@ -279,6 +288,7 @@ if ($field['type'] === 'classes') {
                 items: {{ json_encode($gridItems) }},
                 keys: {{ json_encode($gridKeys) }},
                 openItems: {},
+                generatingAlt: {},
                 sync() {
                     $wire.set('contentValues.{{ $field['key'] }}', JSON.stringify(this.items));
                 },
@@ -293,12 +303,27 @@ if ($field['type'] === 'classes') {
                 addItem() {
                     this.items.push(Object.fromEntries(this.keys.map(k => [k, ''])));
                     this.sync();
+                },
+                generateAlt(idx, fKey) {
+                    const imageKey = fKey.replace(/_alt$/, '');
+                    const imagePath = this.items[idx][imageKey] || '';
+                    if (!imagePath) { alert('No image found. Please upload an image first.'); return; }
+                    this.generatingAlt = { ...this.generatingAlt, [idx + '-' + fKey]: true };
+                    $wire.call('generateAiGridItemAltText', '{{ $field['key'] }}', idx, fKey, imagePath);
                 }
             }"
             x-on:content-grid-reset.window="if ($event.detail.key === '{{ $field['key'] }}') {
                 const parsed = JSON.parse($event.detail.value || '[]');
                 items = parsed;
                 keys = parsed.length > 0 ? Object.keys(parsed[0]) : keys;
+            }"
+            x-on:ai-grid-item-alt-generated.window="if ($event.detail.gridKey === '{{ $field['key'] }}') {
+                updateField($event.detail.idx, $event.detail.altKey, $event.detail.content);
+                generatingAlt = { ...generatingAlt, [$event.detail.idx + '-' + $event.detail.altKey]: false };
+            }"
+            x-on:ai-grid-alt-error.window="if ($event.detail.gridKey === '{{ $field['key'] }}') {
+                alert('AI error: ' + $event.detail.message);
+                generatingAlt = { ...generatingAlt, [$event.detail.idx + '-' + $event.detail.altKey]: false };
             }"
             class="space-y-2"
         >
@@ -323,7 +348,19 @@ if ($field['type'] === 'classes') {
                     <div x-show="openItems[idx]" x-transition class="border-t border-zinc-200 dark:border-zinc-700 px-3 pt-2 pb-3 space-y-2">
                     <template x-for="fKey in keys" :key="fKey">
                         <div>
-                            <p class="text-[10px] uppercase tracking-wider font-semibold text-zinc-500 dark:text-zinc-400 mb-1" x-text="fKey"></p>
+                            <div class="flex items-center justify-between mb-1">
+                                <p class="text-[10px] uppercase tracking-wider font-semibold text-zinc-500 dark:text-zinc-400" x-text="fKey"></p>
+                                @if ($aiEnabled)
+                                    <button
+                                        type="button"
+                                        x-show="fKey.endsWith('_alt') || fKey === 'alt'"
+                                        @click="generateAlt(idx, fKey)"
+                                        :class="generatingAlt[idx + '-' + fKey] ? 'opacity-50 cursor-not-allowed' : 'hover:text-primary dark:hover:text-primary'"
+                                        class="text-zinc-400 dark:text-zinc-500 transition-colors shrink-0"
+                                        title="Generate alt text from image"
+                                    ><flux:icon name="sparkles" class="size-3.5" /></button>
+                                @endif
+                            </div>
                             <template x-if="fKey === 'icon'">
                                 <div x-data="{ pickerOpen: false, search: '', variant: 'outline' }">
                                     {{-- Compact current selection --}}
@@ -428,7 +465,15 @@ if ($field['type'] === 'classes') {
                                     </button>
                                 </div>
                             </template>
-                            <template x-if="fKey !== 'icon' && fKey !== 'desc' && fKey !== 'description' && fKey !== 'answer' && fKey !== 'a' && fKey !== 'image' && !fKey.endsWith('_image')">
+                            <template x-if="fKey.endsWith('_alt') || fKey === 'alt'">
+                                <input
+                                    :value="item[fKey]"
+                                    @change="updateField(idx, fKey, $event.target.value)"
+                                    type="text"
+                                    class="w-full text-sm rounded-lg border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-900 text-zinc-900 dark:text-white px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition"
+                                />
+                            </template>
+                            <template x-if="fKey !== 'icon' && fKey !== 'desc' && fKey !== 'description' && fKey !== 'answer' && fKey !== 'a' && fKey !== 'image' && !fKey.endsWith('_image') && !fKey.endsWith('_alt') && fKey !== 'alt'">
                                 <input
                                     :value="item[fKey]"
                                     @change="updateField(idx, fKey, $event.target.value)"
