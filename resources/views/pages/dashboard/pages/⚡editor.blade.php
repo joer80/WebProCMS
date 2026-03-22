@@ -3093,7 +3093,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                                     class="w-full flex items-center justify-center gap-1.5 text-xs font-medium py-1.5 px-3 rounded-lg border border-zinc-200 dark:border-zinc-700 text-zinc-500 dark:text-zinc-400 hover:text-primary hover:border-primary transition-colors"
                                     title="Auto-generate BEM IDs for all elements in this row. Uses Section ID (or row name) as the BEM block."
                                 >
-                                    <flux:icon name="sparkles" class="size-3.5" />
+                                    <flux:icon name="finger-print" class="size-3.5" />
                                     Auto BEM IDs
                                 </button>
                             </div>
@@ -3552,7 +3552,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                                         x-on:click="$flux.modal('confirm-auto-bem').show()"
                                         class="p-1 rounded text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors"
                                     >
-                                        <flux:icon name="sparkles" class="size-3.5" />
+                                        <flux:icon name="finger-print" class="size-3.5" />
                                     </button>
                                 </flux:tooltip>
                             </div>
@@ -3958,7 +3958,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                                                     class="w-full flex items-center justify-center gap-1.5 text-xs font-medium py-1.5 px-3 rounded-lg border border-zinc-200 dark:border-zinc-700 text-zinc-500 dark:text-zinc-400 hover:text-primary hover:border-primary transition-colors"
                                                     title="Auto-generate BEM IDs for all elements in this row. Uses Section ID (or row name) as the BEM block."
                                                 >
-                                                    <flux:icon name="sparkles" class="size-3.5" />
+                                                    <flux:icon name="finger-print" class="size-3.5" />
                                                     Auto BEM IDs
                                                 </button>
                                             </div>
