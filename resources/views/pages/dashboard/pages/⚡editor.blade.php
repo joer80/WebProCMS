@@ -3437,7 +3437,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                 $content = $response->json('content.0.text', '');
             }
 
-            $this->dispatch('ai-grid-item-alt-generated', gridKey: $gridKey, idx: $idx, altKey: $altKey, content: trim($content));
+            $this->dispatch('ai-grid-item-alt-generated', gridKey: $gridKey, idx: $idx, altKey: $altKey, content: ucfirst(trim($content)));
         } catch (\Exception $e) {
             $this->dispatch('ai-grid-alt-error', gridKey: $gridKey, idx: $idx, altKey: $altKey, message: $e->getMessage());
         }
@@ -3528,7 +3528,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                 $content = $response->json('content.0.text', '');
             }
 
-            $this->dispatch('ai-content-generated', fieldKey: $altFieldKey, content: trim($content));
+            $this->dispatch('ai-content-generated', fieldKey: $altFieldKey, content: ucfirst(trim($content)));
         } catch (\Exception $e) {
             $this->dispatch('ai-generate-error', fieldKey: $altFieldKey, message: $e->getMessage());
         }

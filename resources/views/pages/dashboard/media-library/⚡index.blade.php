@@ -40,6 +40,18 @@ new #[Layout('layouts.app')] #[Title('Media Library')] class extends Component {
 
     public ?int $previewImageId = null;
 
+    public bool $showGenerateModal = false;
+
+    public string $generatePrompt = '';
+
+    public bool $generatingImage = false;
+
+    public ?string $generatedTempPath = null;
+
+    public string $generateError = '';
+
+    public string $lastGeneratedPrompt = '';
+
     /** @return \Illuminate\Database\Eloquent\Collection<int, MediaCategory> */
     #[Computed]
     public function categories(): \Illuminate\Database\Eloquent\Collection
@@ -217,7 +229,7 @@ new #[Layout('layouts.app')] #[Title('Media Library')] class extends Component {
                 $alt = $response->json('content.0.text', '');
             }
 
-            $this->updateAlt($id, trim($alt));
+            $this->updateAlt($id, ucfirst(trim($alt)));
         } catch (\Exception) {
             // silently fail — user can type alt text manually
         }
@@ -393,6 +405,209 @@ new #[Layout('layouts.app')] #[Title('Media Library')] class extends Component {
         $to->save();
 
         unset($this->categories);
+    }
+
+    public function openGenerateModal(): void
+    {
+        $this->showGenerateModal = true;
+        $this->generatePrompt = '';
+        $this->lastGeneratedPrompt = '';
+        $this->generatedTempPath = null;
+        $this->generateError = '';
+    }
+
+    public function updatedShowGenerateModal(bool $value): void
+    {
+        if (! $value && $this->generatedTempPath) {
+            Storage::disk('public')->delete($this->generatedTempPath);
+            $this->generatedTempPath = null;
+        }
+    }
+
+    public function generateImageForLibrary(): void
+    {
+        $this->validate(['generatePrompt' => 'required|string|max:1000']);
+
+        if ($this->generatedTempPath) {
+            Storage::disk('public')->delete($this->generatedTempPath);
+            $this->generatedTempPath = null;
+        }
+
+        $this->generateError = '';
+        $provider = \App\Models\Setting::get('ai.image_provider', 'openai');
+
+        try {
+            $imageContents = match ($provider) {
+                'fal' => $this->generateImageViaFal($this->generatePrompt),
+                'stability' => $this->generateImageViaStability($this->generatePrompt),
+                default => $this->generateImageViaOpenAi($this->generatePrompt),
+            };
+        } catch (\Exception $e) {
+            $this->generateError = $e->getMessage();
+
+            return;
+        }
+
+        $tempPath = 'tmp/ai-' . now()->format('YmdHis') . '-' . substr(md5($this->generatePrompt), 0, 6) . '.jpg';
+        Storage::disk('public')->put($tempPath, $imageContents);
+        $this->lastGeneratedPrompt = $this->generatePrompt;
+        $this->generatedTempPath = $tempPath;
+    }
+
+    public function saveGeneratedImage(): void
+    {
+        if (! $this->generatedTempPath || ! Storage::disk('public')->exists($this->generatedTempPath)) {
+            return;
+        }
+
+        $category = $this->selectedCategoryId
+            ? MediaCategory::query()->findOrFail($this->selectedCategoryId)
+            : MediaCategory::query()->where('is_default', true)->first()
+                ?? MediaCategory::query()->first();
+
+        $filename = basename($this->generatedTempPath);
+        $finalPath = $category->slug . '/' . $filename;
+
+        Storage::disk('public')->move($this->generatedTempPath, $finalPath);
+
+        $nextSortOrder = MediaItem::query()
+            ->where('media_category_id', $category->id)
+            ->max('sort_order') ?? 0;
+
+        MediaItem::create([
+            'media_category_id' => $category->id,
+            'path' => $finalPath,
+            'filename' => $filename,
+            'alt' => $this->generatePrompt,
+            'sort_order' => $nextSortOrder + 1,
+            'size' => Storage::disk('public')->size($finalPath),
+            'mime_type' => 'image/jpeg',
+        ]);
+
+        $this->generatedTempPath = null;
+        $this->generatePrompt = '';
+        $this->showGenerateModal = false;
+        unset($this->images, $this->categories, $this->totalCount);
+
+        $this->dispatch('notify', message: 'Image saved to library.');
+    }
+
+    public function discardGeneratedImage(): void
+    {
+        if ($this->generatedTempPath) {
+            Storage::disk('public')->delete($this->generatedTempPath);
+            $this->generatedTempPath = null;
+        }
+
+        $this->showGenerateModal = false;
+        $this->generatePrompt = '';
+        $this->lastGeneratedPrompt = '';
+        $this->generateError = '';
+    }
+
+    protected function generateImageViaOpenAi(string $prompt): string
+    {
+        $apiKey = \App\Models\Setting::get('ai.openai_key', '');
+
+        if (empty($apiKey)) {
+            throw new \Exception('No OpenAI API key configured.');
+        }
+
+        $response = \Illuminate\Support\Facades\Http::withHeaders([
+            'Authorization' => 'Bearer ' . $apiKey,
+            'Content-Type' => 'application/json',
+        ])->timeout(60)->post('https://api.openai.com/v1/images/generations', [
+            'model' => 'dall-e-3',
+            'prompt' => $prompt,
+            'n' => 1,
+            'size' => '1792x1024',
+            'response_format' => 'url',
+        ]);
+
+        if ($response->failed()) {
+            throw new \Exception($response->json('error.message') ?? 'OpenAI image generation failed.');
+        }
+
+        $imageUrl = $response->json('data.0.url');
+
+        if (empty($imageUrl)) {
+            throw new \Exception('No image URL returned from OpenAI.');
+        }
+
+        $imageResponse = \Illuminate\Support\Facades\Http::timeout(30)->get($imageUrl);
+
+        if ($imageResponse->failed()) {
+            throw new \Exception('Failed to download generated image from OpenAI.');
+        }
+
+        return $imageResponse->body();
+    }
+
+    protected function generateImageViaFal(string $prompt): string
+    {
+        $apiKey = \App\Models\Setting::get('ai.fal_key', '');
+
+        if (empty($apiKey)) {
+            throw new \Exception('No fal.ai API key configured.');
+        }
+
+        $response = \Illuminate\Support\Facades\Http::withHeaders([
+            'Authorization' => 'Key ' . $apiKey,
+            'Content-Type' => 'application/json',
+        ])->timeout(120)->post('https://fal.run/fal-ai/flux/schnell', [
+            'prompt' => $prompt,
+            'image_size' => 'landscape_16_9',
+            'num_inference_steps' => 4,
+            'num_images' => 1,
+        ]);
+
+        if ($response->failed()) {
+            throw new \Exception($response->json('detail') ?? $response->json('error') ?? 'fal.ai image generation failed.');
+        }
+
+        $imageUrl = $response->json('images.0.url');
+
+        if (empty($imageUrl)) {
+            throw new \Exception('No image URL returned from fal.ai.');
+        }
+
+        $imageResponse = \Illuminate\Support\Facades\Http::timeout(30)->get($imageUrl);
+
+        if ($imageResponse->failed()) {
+            throw new \Exception('Failed to download generated image from fal.ai.');
+        }
+
+        return $imageResponse->body();
+    }
+
+    protected function generateImageViaStability(string $prompt): string
+    {
+        $apiKey = \App\Models\Setting::get('ai.stability_key', '');
+
+        if (empty($apiKey)) {
+            throw new \Exception('No Stability AI API key configured.');
+        }
+
+        $response = \Illuminate\Support\Facades\Http::withHeaders([
+            'Authorization' => 'Bearer ' . $apiKey,
+            'Accept' => 'application/json',
+        ])->timeout(60)->asMultipart()->post('https://api.stability.ai/v2beta/stable-image/generate/core', [
+            ['name' => 'prompt', 'contents' => $prompt],
+            ['name' => 'output_format', 'contents' => 'jpeg'],
+            ['name' => 'aspect_ratio', 'contents' => '16:9'],
+        ]);
+
+        if ($response->failed()) {
+            throw new \Exception($response->json('errors.0') ?? $response->json('message') ?? 'Stability AI image generation failed.');
+        }
+
+        $base64 = $response->json('image');
+
+        if (empty($base64)) {
+            throw new \Exception('No image data returned from Stability AI.');
+        }
+
+        return base64_decode($base64);
     }
 }; ?>
 
@@ -576,6 +791,16 @@ new #[Layout('layouts.app')] #[Title('Media Library')] class extends Component {
                     >
                         Add Category
                     </flux:button>
+                    @if (\App\Models\Setting::get('ai.openai_key') || \App\Models\Setting::get('ai.fal_key') || \App\Models\Setting::get('ai.stability_key'))
+                    <flux:button
+                        wire:click="openGenerateModal"
+                        variant="ghost"
+                        size="sm"
+                        icon="sparkles"
+                    >
+                        Generate Image
+                    </flux:button>
+                    @endif
                     <div x-data="{ uploading: false }" class="shrink-0"
                         x-on:livewire-upload-start.window="uploading = true"
                         x-on:livewire-upload-finish.window="uploading = false"
@@ -787,5 +1012,72 @@ new #[Layout('layouts.app')] #[Title('Media Library')] class extends Component {
                 <flux:button type="submit" variant="primary">Create</flux:button>
             </div>
         </form>
+    </flux:modal>
+
+    <flux:modal wire:model="showGenerateModal" class="w-2xl">
+        <flux:heading size="lg">Generate Image with AI</flux:heading>
+        <p class="text-sm text-zinc-500 dark:text-zinc-400 mt-1">
+            Describe the image you want to create.
+        </p>
+
+        <div class="mt-5 space-y-4">
+            <flux:field>
+                <flux:label>Prompt</flux:label>
+                <flux:textarea
+                    wire:model="generatePrompt"
+                    rows="3"
+                    placeholder="A tree in a park, photorealistic, natural lighting, detailed bark…"
+                />
+                <flux:error name="generatePrompt" />
+                @if ($lastGeneratedPrompt)
+                    <flux:description>Keep your original description and add style changes at the end — don't replace it entirely.</flux:description>
+                @endif
+            </flux:field>
+
+            <div class="flex items-center justify-between gap-3">
+                <flux:button
+                    wire:click="generateImageForLibrary"
+                    wire:loading.attr="disabled"
+                    wire:target="generateImageForLibrary"
+                    variant="{{ $generatedTempPath ? 'ghost' : 'primary' }}"
+                    icon="sparkles"
+                >
+                    <span wire:loading.remove wire:target="generateImageForLibrary">
+                        {{ $generatedTempPath ? 'Regenerate' : 'Generate' }}
+                    </span>
+                    <span wire:loading wire:target="generateImageForLibrary" class="flex items-center gap-2">
+                        <svg class="size-4 animate-spin" viewBox="0 0 24 24" fill="none"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                        Generating…
+                    </span>
+                </flux:button>
+
+                @if ($generatedTempPath)
+                    <div class="flex items-center gap-2">
+                        <flux:button wire:click="discardGeneratedImage" variant="ghost">
+                            Discard
+                        </flux:button>
+                        <flux:button wire:click="saveGeneratedImage" variant="primary" icon="arrow-down-tray">
+                            Save to Library
+                        </flux:button>
+                    </div>
+                @endif
+            </div>
+
+            @if ($generateError)
+                <div class="rounded-lg bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800 px-3 py-2.5 text-sm text-red-700 dark:text-red-300">
+                    {{ $generateError }}
+                </div>
+            @endif
+
+            @if ($generatedTempPath && \Illuminate\Support\Facades\Storage::disk('public')->exists($generatedTempPath))
+                <div class="rounded-lg overflow-hidden border border-zinc-200 dark:border-zinc-700">
+                    <img
+                        src="{{ \Illuminate\Support\Facades\Storage::url($generatedTempPath) }}"
+                        alt="Generated image preview"
+                        class="w-full"
+                    >
+                </div>
+            @endif
+        </div>
     </flux:modal>
 </div>
