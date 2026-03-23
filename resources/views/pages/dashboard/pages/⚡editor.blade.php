@@ -417,22 +417,6 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
             ->all();
     }
 
-    #[Computed]
-    public function accessibilityButtonTooltip(): string
-    {
-        if ($this->accessibilityScannedSaveCount < 0) {
-            return 'Accessibility Audit — Never scanned';
-        }
-
-        $savesAgo = $this->accessibilitySaveCount - $this->accessibilityScannedSaveCount;
-
-        if ($savesAgo === 0) {
-            return 'Accessibility Audit — Just scanned';
-        }
-
-        return 'Accessibility Audit — Scanned '.($savesAgo === 1 ? '1 save ago' : "{$savesAgo} saves ago");
-    }
-
     public function loadFile(string $relativePath): void
     {
         $this->file = $relativePath;
@@ -3685,24 +3669,9 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                     @endif
 
                     @if ($file)
-                        <div class="flex items-center gap-2">
-                            <flux:tooltip content="Page Settings" position="bottom">
-                                <flux:button variant="outline" size="sm" icon="cog-6-tooth" wire:click="$set('showSeoModal', true)" :loading="false" />
-                            </flux:tooltip>
-                            <flux:tooltip content="{{ $this->accessibilityButtonTooltip }}" position="bottom">
-                                <flux:button
-                                    variant="outline"
-                                    size="sm"
-                                    wire:click="$set('showAccessibilityModal', true)"
-                                    :loading="false"
-                                    class="{{ count($accessibilityIssues) > 0 ? 'text-amber-600 border-amber-300 dark:text-amber-400 dark:border-amber-700' : ($accessibilityScannedSaveCount >= 0 ? 'text-green-600 border-green-300 dark:text-green-400 dark:border-green-700' : '') }}"
-                                >
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="size-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75m-3-7.036A11.959 11.959 0 0 1 3.598 6 11.955 11.955 0 0 0 3 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285Z" />
-                                    </svg>
-                                </flux:button>
-                            </flux:tooltip>
-                        </div>
+                        <flux:tooltip content="Page Settings" position="bottom">
+                            <flux:button variant="outline" size="sm" icon="cog-6-tooth" wire:click="$set('showSeoModal', true)" :loading="false" />
+                        </flux:tooltip>
                     @endif
                 @endif
 
@@ -5185,7 +5154,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
             <div x-data="{ basicOpen: false }" x-on:open-settings-section.window="basicOpen = ($event.detail === 'basic')">
                 <button
                     type="button"
-                    @click="basicOpen = !basicOpen"
+                    @click="$dispatch('open-settings-section', basicOpen ? null : 'basic')"
                     class="w-full flex items-center justify-between text-left"
                 >
                     <div>
@@ -5207,24 +5176,6 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                             description="Shown in the page title banner row. Separate from the SEO title — can be shorter or longer."
                         />
                     @endif
-
-                    {{-- Visibility / Status --}}
-                    <flux:field>
-                        <flux:label>Status</flux:label>
-                        <flux:select wire:model="pageStatus">
-                            <flux:select.option value="draft">Draft</flux:select.option>
-                            <flux:select.option value="published">Published</flux:select.option>
-                            <flux:select.option value="unlisted">Unlisted</flux:select.option>
-                            <flux:select.option value="unpublished">Unpublished</flux:select.option>
-                        </flux:select>
-                        <div x-data>
-                            <flux:description x-show="$wire.pageStatus === 'draft'">Saved but not yet visible to the public.</flux:description>
-                            <flux:description x-show="$wire.pageStatus === 'published'">Live and visible to all visitors.</flux:description>
-                            <flux:description x-show="$wire.pageStatus === 'unlisted'">Accessible via direct link, but excluded from auto-generated navigation.</flux:description>
-                            <flux:description x-show="$wire.pageStatus === 'unpublished'">Removed from public access — visitors will see a 404.</flux:description>
-                        </div>
-                        <flux:error name="pageStatus" />
-                    </flux:field>
 
                     @if (preg_match('#^pages/⚡[^/]+\.blade\.php$#u', $file))
                         {{-- Slug --}}
@@ -5257,6 +5208,24 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                             </div>
                         @endif
                     @endif
+
+                    {{-- Visibility / Status --}}
+                    <flux:field>
+                        <flux:label>Status</flux:label>
+                        <flux:select wire:model="pageStatus">
+                            <flux:select.option value="draft">Draft</flux:select.option>
+                            <flux:select.option value="published">Published</flux:select.option>
+                            <flux:select.option value="unlisted">Unlisted</flux:select.option>
+                            <flux:select.option value="unpublished">Unpublished</flux:select.option>
+                        </flux:select>
+                        <div x-data>
+                            <flux:description x-show="$wire.pageStatus === 'draft'">Saved but not yet visible to the public.</flux:description>
+                            <flux:description x-show="$wire.pageStatus === 'published'">Live and visible to all visitors.</flux:description>
+                            <flux:description x-show="$wire.pageStatus === 'unlisted'">Accessible via direct link, but excluded from auto-generated navigation.</flux:description>
+                            <flux:description x-show="$wire.pageStatus === 'unpublished'">Removed from public access — visitors will see a 404.</flux:description>
+                        </div>
+                        <flux:error name="pageStatus" />
+                    </flux:field>
                 </div>
             </div>
 
@@ -5282,7 +5251,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                 <div class="w-full flex items-center justify-between">
                     <button
                         type="button"
-                        @click="seoOpen = !seoOpen"
+                        @click="$dispatch('open-settings-section', seoOpen ? null : 'seo')"
                         class="flex-1 text-left"
                     >
                         <p class="text-xs font-semibold uppercase tracking-wide text-zinc-700 dark:text-zinc-200">SEO</p>
@@ -5296,7 +5265,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                                 title="Generate SEO metadata with AI"
                             ><flux:icon name="sparkles" class="size-3.5" /></button>
                         @endif
-                        <button type="button" @click="seoOpen = !seoOpen">
+                        <button type="button" @click="$dispatch('open-settings-section', seoOpen ? null : 'seo')">
                             <svg xmlns="http://www.w3.org/2000/svg" class="size-4 text-zinc-600 dark:text-zinc-300 transition-transform duration-200" :class="seoOpen ? 'rotate-180' : ''" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="m19 9-7 7-7-7" />
                             </svg>
@@ -5363,7 +5332,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
             <div x-data="{ designOpen: false }" x-on:open-settings-section.window="designOpen = ($event.detail === 'design')" class="pt-4 border-t border-zinc-200 dark:border-zinc-700">
                 <button
                     type="button"
-                    @click="designOpen = !designOpen"
+                    @click="$dispatch('open-settings-section', designOpen ? null : 'design')"
                     class="w-full flex items-center justify-between text-left"
                 >
                     <div>
@@ -5389,7 +5358,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
             <div x-data="{ advancedOpen: false }" x-on:open-settings-section.window="advancedOpen = ($event.detail === 'advanced')" class="pt-4 border-t border-zinc-200 dark:border-zinc-700">
                 <button
                     type="button"
-                    @click="advancedOpen = !advancedOpen"
+                    @click="$dispatch('open-settings-section', advancedOpen ? null : 'advanced')"
                     class="w-full flex items-center justify-between text-left"
                 >
                     <div>
@@ -5439,7 +5408,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
             <div x-data="{ redirectOpen: false }" x-on:open-settings-section.window="redirectOpen = ($event.detail === 'redirect')" class="pt-4 border-t border-zinc-200 dark:border-zinc-700">
                 <button
                     type="button"
-                    @click="redirectOpen = !redirectOpen"
+                    @click="$dispatch('open-settings-section', redirectOpen ? null : 'redirect')"
                     class="w-full flex items-center justify-between text-left"
                 >
                     <div>
