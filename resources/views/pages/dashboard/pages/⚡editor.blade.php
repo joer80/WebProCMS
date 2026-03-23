@@ -3550,6 +3550,22 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
             return;
         }
 
+        $tempPath = 'tmp/ai-' . now()->format('YmdHis') . '-' . substr(md5($prompt), 0, 6) . '.jpg';
+        \Illuminate\Support\Facades\Storage::disk('public')->put($tempPath, $imageContents);
+
+        $this->dispatch('ai-image-preview',
+            fieldKey: $fieldKey,
+            tempPath: $tempPath,
+            url: \Illuminate\Support\Facades\Storage::url($tempPath),
+        );
+    }
+
+    public function saveAiImagePreview(string $fieldKey, string $tempPath, string $prompt): void
+    {
+        if (! \Illuminate\Support\Facades\Storage::disk('public')->exists($tempPath)) {
+            return;
+        }
+
         $isRowBg = str_starts_with($fieldKey, 'row-design-bg:');
 
         if ($isRowBg) {
@@ -3562,17 +3578,17 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
         }
 
         $categorySlug = $category?->slug ?? 'uncategorized';
-        $filename = 'ai-' . now()->format('YmdHis') . '-' . substr(md5($prompt), 0, 6) . '.jpg';
+        $filename = basename($tempPath);
         $storagePath = $categorySlug . '/' . $filename;
 
-        \Illuminate\Support\Facades\Storage::disk('public')->put($storagePath, $imageContents);
+        \Illuminate\Support\Facades\Storage::disk('public')->move($tempPath, $storagePath);
 
         \App\Models\MediaItem::create([
             'media_category_id' => $category?->id,
             'path' => $storagePath,
             'filename' => $filename,
             'alt' => $prompt,
-            'size' => strlen($imageContents),
+            'size' => \Illuminate\Support\Facades\Storage::disk('public')->size($storagePath),
             'mime_type' => 'image/jpeg',
         ]);
 
@@ -3595,6 +3611,13 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
         $this->isDirty = true;
         $this->dispatch('ai-image-generated', fieldKey: $fieldKey, path: $storagePath);
         $this->refreshPreview();
+    }
+
+    public function discardAiImagePreview(string $tempPath): void
+    {
+        if ($tempPath) {
+            \Illuminate\Support\Facades\Storage::disk('public')->delete($tempPath);
+        }
     }
 
     protected function generateImageViaOpenAi(string $prompt): string
