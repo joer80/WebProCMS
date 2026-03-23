@@ -2728,7 +2728,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
     }
 
 
-    public function generateAiContent(string $fieldKey, string $prompt, string $fieldType, string $currentClasses = ''): void
+    public function generateAiContent(string $fieldKey, string $prompt, string $fieldType, string $currentClasses = '', bool $useHtml = true): void
     {
         $provider = \App\Models\Setting::get('ai.text_provider', 'claude');
         $isSeo = $fieldType === 'seo';
@@ -2778,9 +2778,9 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
             $systemPrompt = 'You are a Tailwind CSS expert. You will be given a set of Tailwind CSS classes and an instruction to modify them. Return only the updated class string — space-separated Tailwind classes — with no explanation, no quotes, no backticks, and no markdown.';
             $userMessage = "Current classes: {$currentClasses}\n\nInstruction: {$prompt}";
         } else {
-            $systemPrompt = $isRichText
-                ? 'You are a content writer. Generate HTML content based on the user\'s request. Return only the HTML, no markdown code fences, no explanation.'
-                : 'You are a content writer. Generate concise, well-written text based on the user\'s request. Return only the text, no quotes, no explanation.';
+            $systemPrompt = $isRichText && $useHtml
+                ? 'You are a content writer. Generate clean, concise HTML content based on the user\'s request. Use only simple inline and block tags such as <p>, <strong>, <em>, <a>, <ul>, <ol>, <li>. Do not use heading tags (h1–h6). Do not produce empty tags or unnecessary whitespace between tags. Return only the HTML, no markdown code fences, no explanation.'
+                : 'You are a content writer. Generate concise, well-written text based on the user\'s request. Return only the text, no HTML tags, no markdown, no quotes, no explanation.';
             $userMessage = $prompt;
         }
 

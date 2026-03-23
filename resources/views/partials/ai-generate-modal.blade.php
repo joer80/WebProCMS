@@ -11,6 +11,7 @@
         toneLabel: '',
         generating: false,
         error: '',
+        useHtml: true,
         async generate() {
             if (!this.prompt.trim()) return;
             this.generating = true;
@@ -18,11 +19,11 @@
             if (this.fieldType === 'image') {
                 $wire.generateAiImage(this.fieldKey, this.prompt);
             } else {
-                $wire.generateAiContent(this.fieldKey, this.prompt, this.fieldType, this.currentClasses);
+                $wire.generateAiContent(this.fieldKey, this.prompt, this.fieldType, this.currentClasses, this.useHtml);
             }
         }
     }"
-    @open-ai-generate.window="open = true; mode = 'generate'; fieldKey = $event.detail.fieldKey; fieldType = $event.detail.fieldType; fieldLabel = $event.detail.fieldLabel || ''; currentClasses = $event.detail.currentClasses || ''; prompt = ''; tone = ''; toneLabel = ''; error = ''; if ($event.detail.fieldType === 'alt') { generating = true; $wire.generateAiAltText($event.detail.fieldKey, $event.detail.imageFieldKey); }"
+    @open-ai-generate.window="open = true; mode = 'generate'; fieldKey = $event.detail.fieldKey; fieldType = $event.detail.fieldType; fieldLabel = $event.detail.fieldLabel || ''; currentClasses = $event.detail.currentClasses || ''; prompt = ''; tone = ''; toneLabel = ''; error = ''; useHtml = true; if ($event.detail.fieldType === 'alt') { generating = true; $wire.generateAiAltText($event.detail.fieldKey, $event.detail.imageFieldKey); }"
     @open-ai-rewrite.window="open = true; mode = 'rewrite'; fieldKey = $event.detail.fieldKey; fieldType = $event.detail.fieldType; fieldLabel = $event.detail.fieldLabel || ''; tone = $event.detail.tone; toneLabel = $event.detail.toneLabel; prompt = ''; currentClasses = ''; error = ''; generating = true; $wire.rewriteAiContent($event.detail.fieldKey, $event.detail.fieldType, $event.detail.tone);"
     @ai-content-generated.window="if ($event.detail.fieldKey === fieldKey) { open = false; generating = false; prompt = ''; }"
     @ai-image-generated.window="if ($event.detail.fieldKey === fieldKey) { open = false; generating = false; prompt = ''; }"
@@ -77,7 +78,20 @@
                     :disabled="generating"
                     class="w-full text-sm rounded-lg border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-900 text-zinc-900 dark:text-white px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition resize-none disabled:opacity-60"
                 ></textarea>
-                <p x-show="fieldType !== 'image'" class="text-xs text-zinc-400 dark:text-zinc-500 mt-1">Tip: Press Enter to generate, Shift+Enter for a new line.</p>
+                <div x-show="fieldType === 'richtext'" class="flex items-center justify-between mt-2">
+                    <p class="text-xs text-zinc-400 dark:text-zinc-500">Tip: Press Enter to generate, Shift+Enter for a new line.</p>
+                    <button
+                        type="button"
+                        @click="useHtml = !useHtml"
+                        :disabled="generating"
+                        class="flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full border transition-colors disabled:opacity-50"
+                        :class="useHtml ? 'bg-primary/10 border-primary/30 text-primary dark:bg-primary/20' : 'bg-zinc-100 dark:bg-zinc-800 border-zinc-300 dark:border-zinc-600 text-zinc-500 dark:text-zinc-400'"
+                    >
+                        <flux:icon name="code-bracket" class="size-3" />
+                        <span x-text="useHtml ? 'HTML' : 'Plain text'"></span>
+                    </button>
+                </div>
+                <p x-show="fieldType !== 'image' && fieldType !== 'richtext'" class="text-xs text-zinc-400 dark:text-zinc-500 mt-1">Tip: Press Enter to generate, Shift+Enter for a new line.</p>
                 <p x-show="fieldType === 'image'" class="text-xs text-zinc-400 dark:text-zinc-500 mt-1">Image generation may take 10–20 seconds. The result will be saved to your Media Library.</p>
             </div>
             <div x-show="error" x-transition class="rounded-lg bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800 px-3 py-2 text-sm text-red-700 dark:text-red-400" x-text="error"></div>
