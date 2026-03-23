@@ -2872,6 +2872,175 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
             $this->dispatch('ai-generate-error', fieldKey: $fieldKey, message: $e->getMessage());
         }
     }
+
+    public function generateAiSectionContent(string $rowSlug, string $prompt): void
+    {
+        $row = collect($this->rows)->firstWhere('slug', $rowSlug);
+
+        if (! $row) {
+            $this->dispatch('ai-section-content-error', rowSlug: $rowSlug, message: 'Row not found.');
+
+            return;
+        }
+
+        $skipKeys = [
+            'section_classes', 'section_container_classes', 'section_id', 'section_attrs',
+            'section_animation', 'section_animation_delay', 'section_bg_image',
+            'section_bg_position', 'section_bg_size', 'section_bg_repeat',
+        ];
+
+        $allFields = $this->parseContentFields($row['blade'], $rowSlug);
+
+        $textFields = array_values(array_filter($allFields, function (array $field) use ($skipKeys): bool {
+            if (in_array($field['key'], $skipKeys, true)) {
+                return false;
+            }
+            if (! in_array($field['type'], ['text', 'richtext'], true)) {
+                return false;
+            }
+            if (
+                str_ends_with($field['key'], '_classes') ||
+                str_ends_with($field['key'], '_url') ||
+                str_ends_with($field['key'], '_alt') ||
+                str_ends_with($field['key'], '_new_tab') ||
+                str_ends_with($field['key'], '_id') ||
+                str_ends_with($field['key'], '_attrs') ||
+                str_ends_with($field['key'], '_htag') ||
+                str_starts_with($field['key'], 'toggle_') ||
+                str_starts_with($field['key'], 'grid_')
+            ) {
+                return false;
+            }
+
+            return true;
+        }));
+
+        if (empty($textFields)) {
+            $this->dispatch('ai-section-content-error', rowSlug: $rowSlug, message: 'No editable text fields found in this section.');
+
+            return;
+        }
+
+        $drafts = session('editor_draft_overrides', []);
+        $overrides = \App\Models\ContentOverride::query()
+            ->where('row_slug', $rowSlug)
+            ->whereIn('key', array_column($textFields, 'key'))
+            ->get()
+            ->keyBy('key');
+
+        $fieldSchema = [];
+        foreach ($textFields as $field) {
+            $draftKey = $field['slug'].':'.$field['key'];
+            $draft = $drafts[$draftKey] ?? null;
+            $currentValue = $draft !== null
+                ? ($draft['value'] ?? '')
+                : ($overrides->get($field['key'])?->value ?? '');
+            $fieldSchema[] = [
+                'key' => $field['key'],
+                'label' => $field['label'],
+                'type' => $field['type'],
+                'current' => strip_tags((string) $currentValue),
+            ];
+        }
+
+        $provider = \App\Models\Setting::get('ai.text_provider', 'claude');
+
+        $currentContent = collect($fieldSchema)
+            ->filter(fn (array $f): bool => ! empty($f['current']))
+            ->map(fn (array $f): string => $f['label'].': '.$f['current'])
+            ->implode("\n");
+
+        $fieldsJson = json_encode(array_map(fn (array $f): array => ['key' => $f['key'], 'label' => $f['label'], 'type' => $f['type']], $fieldSchema));
+
+        $systemPrompt = 'You are a web content writer. You will be given a list of text fields for a website section and a description of what the section should contain. Generate appropriate content for each field. Respond ONLY with valid JSON where each key is a field key and each value is the content string. For richtext fields, use simple HTML (p, strong, em tags only). For text fields, return plain text only. Keep content concise and professional. No explanations, no markdown code fences, no extra keys.';
+        $userMessage = "Section fields (JSON): {$fieldsJson}\n\nInstruction: {$prompt}";
+
+        if ($currentContent) {
+            $userMessage .= "\n\nCurrent content for reference:\n{$currentContent}";
+        }
+
+        try {
+            if ($provider === 'openai') {
+                $apiKey = \App\Models\Setting::get('ai.openai_key', '');
+                $response = \Illuminate\Support\Facades\Http::withHeaders([
+                    'Authorization' => 'Bearer '.$apiKey,
+                    'Content-Type' => 'application/json',
+                ])->post('https://api.openai.com/v1/chat/completions', [
+                    'model' => 'gpt-4o-mini',
+                    'max_tokens' => 2048,
+                    'messages' => [
+                        ['role' => 'system', 'content' => $systemPrompt],
+                        ['role' => 'user', 'content' => $userMessage],
+                    ],
+                ]);
+
+                if ($response->failed()) {
+                    throw new \Exception($response->json('error.message') ?? 'OpenAI API error.');
+                }
+
+                $content = $response->json('choices.0.message.content', '');
+            } else {
+                $apiKey = \App\Models\Setting::get('ai.claude_key', '');
+                $response = \Illuminate\Support\Facades\Http::withHeaders([
+                    'x-api-key' => $apiKey,
+                    'anthropic-version' => '2023-06-01',
+                    'content-type' => 'application/json',
+                ])->post('https://api.anthropic.com/v1/messages', [
+                    'model' => 'claude-haiku-4-5-20251001',
+                    'max_tokens' => 2048,
+                    'system' => $systemPrompt,
+                    'messages' => [
+                        ['role' => 'user', 'content' => $userMessage],
+                    ],
+                ]);
+
+                if ($response->failed()) {
+                    throw new \Exception($response->json('error.message') ?? 'Claude API error.');
+                }
+
+                $content = $response->json('content.0.text', '');
+            }
+
+            $stripped = trim(preg_replace('/^```(?:json)?\s*/i', '', preg_replace('/\s*```$/i', '', trim($content))));
+            $data = json_decode($stripped, true);
+
+            if (! is_array($data)) {
+                throw new \Exception('AI returned an unexpected response. Please try again with more detail.');
+            }
+
+            $drafts = session('editor_draft_overrides', []);
+            $updatedValues = [];
+
+            foreach ($textFields as $field) {
+                $key = $field['key'];
+
+                if (! array_key_exists($key, $data)) {
+                    continue;
+                }
+
+                $value = (string) $data[$key];
+                $draftKey = $field['slug'].':'.$key;
+                $drafts[$draftKey] = ['type' => $field['type'], 'value' => $value];
+                $updatedValues[$key] = $value;
+
+                if (
+                    $this->editingRowIndex !== null &&
+                    isset($this->rows[$this->editingRowIndex]) &&
+                    $this->rows[$this->editingRowIndex]['slug'] === $rowSlug
+                ) {
+                    $this->contentValues[$key] = $value;
+                }
+            }
+
+            session(['editor_draft_overrides' => $drafts]);
+            $this->isDirty = true;
+            $this->refreshPreview();
+
+            $this->dispatch('ai-section-content-generated', rowSlug: $rowSlug, values: $updatedValues);
+        } catch (\Exception $e) {
+            $this->dispatch('ai-section-content-error', rowSlug: $rowSlug, message: $e->getMessage());
+        }
+    }
 }; ?>
 
 <div>
@@ -3484,9 +3653,15 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                                 <div class="text-sm font-medium text-zinc-800 dark:text-zinc-200 truncate">{{ $rows[$editingRowIndex]['name'] }}</div>
                             </div>
                             <div class="flex rounded-md border border-zinc-200 dark:border-zinc-700 overflow-hidden shrink-0">
-                                <button type="button" @click="if (!designMode && !advancedMode) { allGroupsOpen = !allGroupsOpen; $dispatch('set-group-open', { value: allGroupsOpen }); } else { designMode = false; advancedMode = false; allGroupsOpen = true; $wire.resetEmptyClassesFields(); $dispatch('set-group-mode', {}); $dispatch('set-group-open', { value: true }); }" :class="!designMode && !advancedMode ? 'bg-zinc-800 text-white dark:bg-zinc-100 dark:text-zinc-900' : 'bg-white text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200'" class="p-1.5 transition-colors" title="Content"><flux:icon name="document-text" class="size-3.5" /></button>
-                                <button type="button" @click="if (designMode && !advancedMode) { allGroupsOpen = !allGroupsOpen; $dispatch('set-group-open', { value: allGroupsOpen }); } else { designMode = true; advancedMode = false; allGroupsOpen = true; $wire.resetEmptyClassesFields(); $dispatch('set-group-mode', {}); $dispatch('set-group-open', { value: true }); }" :class="designMode && !advancedMode ? 'bg-zinc-800 text-white dark:bg-zinc-100 dark:text-zinc-900' : 'bg-white text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200'" class="p-1.5 transition-colors border-l border-zinc-200 dark:border-zinc-700" title="Design"><flux:icon name="paint-brush" class="size-3.5" /></button>
-                                <button type="button" @click="if (advancedMode) { allGroupsOpen = !allGroupsOpen; $dispatch('set-group-open', { value: allGroupsOpen }); } else { advancedMode = true; designMode = false; allGroupsOpen = true; $wire.resetEmptyClassesFields(); $dispatch('set-group-mode', {}); $dispatch('set-group-open', { value: true }); }" :class="advancedMode ? 'bg-zinc-800 text-white dark:bg-zinc-100 dark:text-zinc-900' : 'bg-white text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200'" class="p-1.5 transition-colors border-l border-zinc-200 dark:border-zinc-700" title="Advanced"><flux:icon name="code-bracket" class="size-3.5" /></button>
+                                <flux:tooltip content="Content" position="bottom">
+                                    <button type="button" @click="if (!designMode && !advancedMode) { allGroupsOpen = !allGroupsOpen; $dispatch('set-group-open', { value: allGroupsOpen }); } else { designMode = false; advancedMode = false; allGroupsOpen = true; $wire.resetEmptyClassesFields(); $dispatch('set-group-mode', {}); $dispatch('set-group-open', { value: true }); }" :class="!designMode && !advancedMode ? 'bg-zinc-800 text-white dark:bg-zinc-100 dark:text-zinc-900' : 'bg-white text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200'" class="p-1.5 transition-colors"><flux:icon name="document-text" class="size-3.5" /></button>
+                                </flux:tooltip>
+                                <flux:tooltip content="Design" position="bottom">
+                                    <button type="button" @click="if (designMode && !advancedMode) { allGroupsOpen = !allGroupsOpen; $dispatch('set-group-open', { value: allGroupsOpen }); } else { designMode = true; advancedMode = false; allGroupsOpen = true; $wire.resetEmptyClassesFields(); $dispatch('set-group-mode', {}); $dispatch('set-group-open', { value: true }); }" :class="designMode && !advancedMode ? 'bg-zinc-800 text-white dark:bg-zinc-100 dark:text-zinc-900' : 'bg-white text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200'" class="p-1.5 transition-colors border-l border-zinc-200 dark:border-zinc-700"><flux:icon name="paint-brush" class="size-3.5" /></button>
+                                </flux:tooltip>
+                                <flux:tooltip content="Advanced" position="bottom">
+                                    <button type="button" @click="if (advancedMode) { allGroupsOpen = !allGroupsOpen; $dispatch('set-group-open', { value: allGroupsOpen }); } else { advancedMode = true; designMode = false; allGroupsOpen = true; $wire.resetEmptyClassesFields(); $dispatch('set-group-mode', {}); $dispatch('set-group-open', { value: true }); }" :class="advancedMode ? 'bg-zinc-800 text-white dark:bg-zinc-100 dark:text-zinc-900' : 'bg-white text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200'" class="p-1.5 transition-colors border-l border-zinc-200 dark:border-zinc-700"><flux:icon name="code-bracket" class="size-3.5" /></button>
+                                </flux:tooltip>
                             </div>
                         </div>
 
@@ -3565,19 +3740,25 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                                             <div class="flex items-center gap-2 px-3 py-2 bg-zinc-100 dark:bg-zinc-700/50 cursor-pointer select-none" @click="open = !open; if (open) $dispatch('sidebar-item-opened', { index: {{ $itemAccordionIndex }} })">
                                                 <span class="text-sm font-medium text-zinc-800 dark:text-zinc-200 flex-1 truncate">{{ $item['name'] }}</span>
                                                 @if ($itemHasContentFields)
-                                                    <button type="button" @click.stop="const isActive = groupMode !== null ? groupMode === 'content' : (!designMode && !advancedMode); if (isActive && open) { open = false; } else { groupMode = 'content'; open = true; $dispatch('sidebar-item-opened', { index: {{ $itemAccordionIndex }} }); }"
-                                                        :class="(groupMode !== null ? groupMode === 'content' : (!designMode && !advancedMode)) ? 'text-zinc-300 dark:text-zinc-600' : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 transition-colors'"
-                                                        title="Content"><flux:icon name="document-text" class="size-3.5" /></button>
+                                                    <flux:tooltip content="Item content">
+                                                        <button type="button" @click.stop="const isActive = groupMode !== null ? groupMode === 'content' : (!designMode && !advancedMode); if (isActive && open) { open = false; } else { groupMode = 'content'; open = true; $dispatch('sidebar-item-opened', { index: {{ $itemAccordionIndex }} }); }"
+                                                            :class="(groupMode !== null ? groupMode === 'content' : (!designMode && !advancedMode)) ? 'text-zinc-300 dark:text-zinc-600' : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 transition-colors'"
+                                                        ><flux:icon name="document-text" class="size-3.5" /></button>
+                                                    </flux:tooltip>
                                                 @endif
                                                 @if ($itemHasClassesFields)
-                                                    <button type="button" @click.stop="const isActive = groupMode !== null ? groupMode === 'design' : (designMode && !advancedMode); if (isActive && open) { open = false; } else { groupMode = 'design'; open = true; $dispatch('sidebar-item-opened', { index: {{ $itemAccordionIndex }} }); }"
-                                                        :class="(groupMode !== null ? groupMode === 'design' : (designMode && !advancedMode)) ? 'text-zinc-300 dark:text-zinc-600' : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 transition-colors'"
-                                                        title="Design"><flux:icon name="paint-brush" class="size-3.5" /></button>
+                                                    <flux:tooltip content="Item design">
+                                                        <button type="button" @click.stop="const isActive = groupMode !== null ? groupMode === 'design' : (designMode && !advancedMode); if (isActive && open) { open = false; } else { groupMode = 'design'; open = true; $dispatch('sidebar-item-opened', { index: {{ $itemAccordionIndex }} }); }"
+                                                            :class="(groupMode !== null ? groupMode === 'design' : (designMode && !advancedMode)) ? 'text-zinc-300 dark:text-zinc-600' : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 transition-colors'"
+                                                        ><flux:icon name="paint-brush" class="size-3.5" /></button>
+                                                    </flux:tooltip>
                                                 @endif
                                                 @if ($itemHasAdvancedFields)
-                                                    <button type="button" @click.stop="const isActive = groupMode !== null ? groupMode === 'advanced' : advancedMode; if (isActive && open) { open = false; } else { groupMode = 'advanced'; open = true; $dispatch('sidebar-item-opened', { index: {{ $itemAccordionIndex }} }); }"
-                                                        :class="(groupMode !== null ? groupMode === 'advanced' : advancedMode) ? 'text-zinc-300 dark:text-zinc-600' : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 transition-colors'"
-                                                        title="Advanced"><flux:icon name="code-bracket" class="size-3.5" /></button>
+                                                    <flux:tooltip content="Item settings">
+                                                        <button type="button" @click.stop="const isActive = groupMode !== null ? groupMode === 'advanced' : advancedMode; if (isActive && open) { open = false; } else { groupMode = 'advanced'; open = true; $dispatch('sidebar-item-opened', { index: {{ $itemAccordionIndex }} }); }"
+                                                            :class="(groupMode !== null ? groupMode === 'advanced' : advancedMode) ? 'text-zinc-300 dark:text-zinc-600' : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 transition-colors'"
+                                                        ><flux:icon name="code-bracket" class="size-3.5" /></button>
+                                                    </flux:tooltip>
                                                 @endif
                                                 @if ($headerToggleField)
                                                     <flux:switch wire:model.live="contentValues.{{ $headerToggleField['key'] }}" @click.stop />
@@ -4117,6 +4298,73 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                                                         {{ ($rowDesignValues[$row['slug']]['section_bg_image'] ?? '') ? 'Replace image…' : 'Pick from Media Library…' }}
                                                     </span>
                                                 </button>
+
+                                                {{-- Generate Content with AI --}}
+                                                @php $aiSectionEnabled = (bool) (\App\Models\Setting::get('ai.claude_key') || \App\Models\Setting::get('ai.openai_key')); @endphp
+                                                @if ($aiSectionEnabled)
+                                                    <div class="border-t border-zinc-200 dark:border-zinc-700 pt-2"
+                                                        x-data="{
+                                                            aiOpen: false,
+                                                            aiPrompt: '',
+                                                            aiGenerating: false,
+                                                            aiError: '',
+                                                            aiSuccess: false,
+                                                            rowSlug: @js($row['slug']),
+                                                            generate() {
+                                                                if (!this.aiPrompt.trim()) return;
+                                                                this.aiGenerating = true;
+                                                                this.aiError = '';
+                                                                this.aiSuccess = false;
+                                                                $wire.generateAiSectionContent(this.rowSlug, this.aiPrompt);
+                                                            }
+                                                        }"
+                                                        x-on:ai-section-content-generated.window="
+                                                            if ($event.detail.rowSlug === rowSlug) {
+                                                                aiGenerating = false;
+                                                                aiSuccess = true;
+                                                                aiPrompt = '';
+                                                                setTimeout(() => aiSuccess = false, 4000);
+                                                            }
+                                                        "
+                                                        x-on:ai-section-content-error.window="
+                                                            if ($event.detail.rowSlug === rowSlug) {
+                                                                aiGenerating = false;
+                                                                aiError = $event.detail.message;
+                                                            }
+                                                        "
+                                                    >
+                                                        <button type="button" @click="aiOpen = !aiOpen" class="flex items-center gap-1.5 w-full text-left">
+                                                            <span class="text-[11px] uppercase tracking-wider font-semibold text-zinc-500 dark:text-zinc-400">Generate Content with AI</span>
+                                                            <flux:icon name="chevron-right" class="size-3 text-zinc-400 shrink-0 transition-transform duration-150 ml-auto" x-bind:class="aiOpen ? 'rotate-90' : ''" />
+                                                        </button>
+                                                        <div x-show="aiOpen" x-collapse class="mt-2 space-y-2">
+                                                            <p class="text-[11px] text-zinc-500 dark:text-zinc-400 leading-relaxed">Describe what this section should be about and AI will write all text fields at once.</p>
+                                                            <textarea
+                                                                x-model="aiPrompt"
+                                                                placeholder="e.g. A hero section for a plumbing company in Austin, TX highlighting 24/7 emergency service"
+                                                                rows="3"
+                                                                class="w-full text-xs rounded-lg border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-900 text-zinc-900 dark:text-white px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition resize-none placeholder-zinc-400"
+                                                                @keydown.cmd.enter.prevent="generate()"
+                                                                @keydown.ctrl.enter.prevent="generate()"
+                                                            ></textarea>
+                                                            <div x-show="aiError" class="text-[11px] text-red-500 dark:text-red-400 leading-snug" x-text="aiError"></div>
+                                                            <div x-show="aiSuccess" class="flex items-center gap-1.5 text-[11px] text-green-600 dark:text-green-400">
+                                                                <flux:icon name="check-circle" class="size-3 shrink-0" />
+                                                                <span>Content generated — open fields to review.</span>
+                                                            </div>
+                                                            <button
+                                                                type="button"
+                                                                @click="generate()"
+                                                                :disabled="aiGenerating || !aiPrompt.trim()"
+                                                                class="flex items-center justify-center gap-1.5 w-full px-3 py-2 bg-primary text-white text-xs font-semibold rounded-lg hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                                            >
+                                                                <flux:icon name="sparkles" class="size-3 shrink-0" x-show="!aiGenerating" />
+                                                                <flux:icon name="arrow-path" class="size-3 shrink-0 animate-spin" x-show="aiGenerating" />
+                                                                <span x-text="aiGenerating ? 'Generating…' : 'Generate'"></span>
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                @endif
                                             </div>
                                             {{-- Design mode --}}
                                             <div x-show="panelMode === 'design'" class="p-3 space-y-3">

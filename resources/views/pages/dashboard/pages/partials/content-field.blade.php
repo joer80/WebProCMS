@@ -52,11 +52,12 @@ if ($field['type'] === 'classes') {
                         this.open = false;
                     }
                 }">
-                    <button type="button"
-                        @click="open = !open"
-                        class="text-zinc-400 dark:text-zinc-500 hover:text-primary dark:hover:text-primary transition-colors"
-                        title="Insert theme token"
-                    ><flux:icon name="bolt" class="size-3.5" /></button>
+                    <flux:tooltip content="Insert theme token" position="bottom">
+                        <button type="button"
+                            @click="open = !open"
+                            class="text-zinc-400 dark:text-zinc-500 hover:text-primary dark:hover:text-primary transition-colors"
+                        ><flux:icon name="bolt" class="size-3.5" /></button>
+                    </flux:tooltip>
                     <div
                         x-show="open"
                         @click.outside="open = false"
@@ -98,13 +99,16 @@ if ($field['type'] === 'classes') {
                     </div>
                 </div>
                 @if ($showAiBtn)
-                    <button type="button"
-                        onclick="(function() { var ta = document.querySelector('[data-classes-key=\'{{ $field['key'] }}\']'); window.dispatchEvent(new CustomEvent('open-ai-generate', { detail: { fieldKey: '{{ $field['key'] }}', fieldType: 'classes', fieldLabel: '{{ addslashes($field['label']) }}', currentClasses: ta ? ta.value : '' }, bubbles: true })); })()"
-                        class="text-zinc-400 dark:text-zinc-500 hover:text-primary dark:hover:text-primary transition-colors"
-                        title="Generate with AI"
-                    ><flux:icon name="sparkles" class="size-3.5" /></button>
+                    <flux:tooltip content="Generate with AI" position="bottom">
+                        <button type="button"
+                            onclick="(function() { var ta = document.querySelector('[data-classes-key=\'{{ $field['key'] }}\']'); window.dispatchEvent(new CustomEvent('open-ai-generate', { detail: { fieldKey: '{{ $field['key'] }}', fieldType: 'classes', fieldLabel: '{{ addslashes($field['label']) }}', currentClasses: ta ? ta.value : '' }, bubbles: true })); })()"
+                            class="text-zinc-400 dark:text-zinc-500 hover:text-primary dark:hover:text-primary transition-colors"
+                        ><flux:icon name="sparkles" class="size-3.5" /></button>
+                    </flux:tooltip>
                 @endif
-                <button wire:click="resetClassesField('{{ $field['key'] }}')" type="button" class="text-zinc-400 dark:text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 transition-colors" title="Reset"><flux:icon name="arrow-path" class="size-3.5" /></button>
+                <flux:tooltip content="Reset" position="bottom">
+                    <button wire:click="resetClassesField('{{ $field['key'] }}')" type="button" class="text-zinc-400 dark:text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 transition-colors"><flux:icon name="arrow-path" class="size-3.5" /></button>
+                </flux:tooltip>
             </div>
         </div>
     @elseif (! in_array($field['type'], ['toggle', 'note']))
@@ -112,27 +116,30 @@ if ($field['type'] === 'classes') {
             <flux:label class="text-zinc-500 dark:text-zinc-400">{{ $field['label'] }}</flux:label>
             <div class="flex items-center gap-2">
                 @if ($showShortcodeBtn || $field['type'] === 'richtext')
-                    <button type="button"
-                        onclick="window.dispatchEvent(new CustomEvent('open-shortcode-picker', { detail: { fieldKey: '{{ $field['key'] }}', pageTypeSlug: '{{ $pageTypeSlug }}' }, bubbles: true }))"
-                        class="text-zinc-400 dark:text-zinc-500 hover:text-primary dark:hover:text-primary transition-colors"
-                        title="Insert shortcode"
-                    ><flux:icon name="bolt" class="size-3.5" /></button>
+                    <flux:tooltip content="Insert shortcode" position="bottom">
+                        <button type="button"
+                            onclick="window.dispatchEvent(new CustomEvent('open-shortcode-picker', { detail: { fieldKey: '{{ $field['key'] }}', pageTypeSlug: '{{ $pageTypeSlug }}' }, bubbles: true }))"
+                            class="text-zinc-400 dark:text-zinc-500 hover:text-primary dark:hover:text-primary transition-colors"
+                        ><flux:icon name="bolt" class="size-3.5" /></button>
+                    </flux:tooltip>
                 @endif
                 @if ($showLoremBtn)
-                    <button type="button"
-                        onclick="window.dispatchEvent(new CustomEvent('open-lorem-ipsum', { detail: { fieldKey: '{{ $field['key'] }}', fieldType: '{{ $field['type'] }}', defaultSize: '{{ $loremDefaultSize }}' }, bubbles: true }))"
-                        class="text-zinc-400 dark:text-zinc-500 hover:text-primary dark:hover:text-primary transition-colors"
-                        title="Insert dummy text"
-                    ><flux:icon name="document-text" class="size-3.5" /></button>
+                    <flux:tooltip content="Insert dummy text" position="bottom">
+                        <button type="button"
+                            onclick="window.dispatchEvent(new CustomEvent('open-lorem-ipsum', { detail: { fieldKey: '{{ $field['key'] }}', fieldType: '{{ $field['type'] }}', defaultSize: '{{ $loremDefaultSize }}' }, bubbles: true }))"
+                            class="text-zinc-400 dark:text-zinc-500 hover:text-primary dark:hover:text-primary transition-colors"
+                        ><flux:icon name="document-text" class="size-3.5" /></button>
+                    </flux:tooltip>
                 @endif
                 @if ($showAiRewriteBtn)
                     <div class="relative" x-data="{ open: false }" @click.away="open = false">
-                        <button
-                            type="button"
-                            @click="open = !open"
-                            class="text-zinc-400 dark:text-zinc-500 hover:text-primary dark:hover:text-primary transition-colors"
-                            title="Rewrite with AI"
-                        ><flux:icon name="light-bulb" class="size-3.5" /></button>
+                        <flux:tooltip content="Rewrite with AI" position="bottom">
+                            <button
+                                type="button"
+                                @click="open = !open"
+                                class="text-zinc-400 dark:text-zinc-500 hover:text-primary dark:hover:text-primary transition-colors"
+                            ><flux:icon name="light-bulb" class="size-3.5" /></button>
+                        </flux:tooltip>
                         <div
                             x-show="open"
                             x-transition:enter="transition ease-out duration-100"
@@ -155,30 +162,35 @@ if ($field['type'] === 'classes') {
                     </div>
                 @endif
                 @if ($showAiBtn)
-                    <button type="button"
-                        onclick="window.dispatchEvent(new CustomEvent('open-ai-generate', { detail: { fieldKey: '{{ $field['key'] }}', fieldType: '{{ $field['type'] }}', fieldLabel: '{{ addslashes($field['label']) }}' }, bubbles: true }))"
-                        class="text-zinc-400 dark:text-zinc-500 hover:text-primary dark:hover:text-primary transition-colors"
-                        title="Generate with AI"
-                    ><flux:icon name="sparkles" class="size-3.5" /></button>
+                    <flux:tooltip content="Generate with AI" position="bottom">
+                        <button type="button"
+                            onclick="window.dispatchEvent(new CustomEvent('open-ai-generate', { detail: { fieldKey: '{{ $field['key'] }}', fieldType: '{{ $field['type'] }}', fieldLabel: '{{ addslashes($field['label']) }}' }, bubbles: true }))"
+                            class="text-zinc-400 dark:text-zinc-500 hover:text-primary dark:hover:text-primary transition-colors"
+                        ><flux:icon name="sparkles" class="size-3.5" /></button>
+                    </flux:tooltip>
                 @endif
                 @if ($showAiAltBtn)
-                    <button type="button"
-                        onclick="window.dispatchEvent(new CustomEvent('open-ai-generate', { detail: { fieldKey: '{{ $field['key'] }}', fieldType: 'alt', fieldLabel: '{{ addslashes($field['label']) }}', imageFieldKey: '{{ substr($field['key'], 0, -4) }}' }, bubbles: true }))"
-                        class="text-zinc-400 dark:text-zinc-500 hover:text-primary dark:hover:text-primary transition-colors"
-                        title="Generate alt text from image"
-                    ><flux:icon name="sparkles" class="size-3.5" /></button>
+                    <flux:tooltip content="Generate alt text from image" position="bottom">
+                        <button type="button"
+                            onclick="window.dispatchEvent(new CustomEvent('open-ai-generate', { detail: { fieldKey: '{{ $field['key'] }}', fieldType: 'alt', fieldLabel: '{{ addslashes($field['label']) }}', imageFieldKey: '{{ substr($field['key'], 0, -4) }}' }, bubbles: true }))"
+                            class="text-zinc-400 dark:text-zinc-500 hover:text-primary dark:hover:text-primary transition-colors"
+                        ><flux:icon name="sparkles" class="size-3.5" /></button>
+                    </flux:tooltip>
                 @endif
                 @if ($showAiImageBtn)
-                    <button type="button"
-                        onclick="window.dispatchEvent(new CustomEvent('open-ai-generate', { detail: { fieldKey: '{{ $field['key'] }}', fieldType: 'image', fieldLabel: '{{ addslashes($field['label']) }}' }, bubbles: true }))"
-                        class="text-zinc-400 dark:text-zinc-500 hover:text-primary dark:hover:text-primary transition-colors"
-                        title="Generate image with AI"
-                    ><flux:icon name="sparkles" class="size-3.5" /></button>
+                    <flux:tooltip content="Generate image with AI" position="bottom">
+                        <button type="button"
+                            onclick="window.dispatchEvent(new CustomEvent('open-ai-generate', { detail: { fieldKey: '{{ $field['key'] }}', fieldType: 'image', fieldLabel: '{{ addslashes($field['label']) }}' }, bubbles: true }))"
+                            class="text-zinc-400 dark:text-zinc-500 hover:text-primary dark:hover:text-primary transition-colors"
+                        ><flux:icon name="sparkles" class="size-3.5" /></button>
+                    </flux:tooltip>
                 @endif
                 @if ($field['type'] === 'grid')
                     <button wire:click="clearGridItems('{{ $field['key'] }}')" type="button" class="text-xs text-zinc-400 dark:text-zinc-500 hover:text-red-500 dark:hover:text-red-400 transition-colors">Remove All</button>
                 @endif
-                <button wire:click="resetContentField('{{ $field['key'] }}')" type="button" class="text-zinc-400 dark:text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 transition-colors" title="Reset"><flux:icon name="arrow-path" class="size-3.5" /></button>
+                <flux:tooltip content="Reset" position="bottom">
+                    <button wire:click="resetContentField('{{ $field['key'] }}')" type="button" class="text-zinc-400 dark:text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 transition-colors"><flux:icon name="arrow-path" class="size-3.5" /></button>
+                </flux:tooltip>
             </div>
         </div>
     @endif
@@ -200,13 +212,14 @@ if ($field['type'] === 'classes') {
                     alt=""
                     class="h-24 rounded-lg object-cover border border-zinc-200 dark:border-zinc-700"
                 >
-                <button
-                    wire:click="removeImage('{{ $field['key'] }}')"
-                    class="absolute -top-2 -right-2 size-5 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600"
-                    title="Remove image"
-                >
-                    <flux:icon name="x-mark" class="size-3" />
-                </button>
+                <flux:tooltip content="Remove image">
+                    <button
+                        wire:click="removeImage('{{ $field['key'] }}')"
+                        class="absolute -top-2 -right-2 size-5 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600"
+                    >
+                        <flux:icon name="x-mark" class="size-3" />
+                    </button>
+                </flux:tooltip>
             </div>
         @elseif ($fallbackUrl)
             <div class="mb-2">
@@ -295,14 +308,15 @@ if ($field['type'] === 'classes') {
             </div>
             <div class="flex items-center gap-1.5 mt-1">
                 <p class="text-xs text-zinc-400 dark:text-zinc-500">Tailwind CSS classes. Tab or Enter to complete.</p>
-                <button
-                    @click="$flux.modal('tailwind-css-help').show()"
-                    type="button"
-                    class="text-zinc-400 dark:text-zinc-500 hover:text-zinc-600 dark:hover:text-zinc-300 transition-colors shrink-0"
-                    title="Tailwind CSS reference"
-                >
-                    <flux:icon name="question-mark-circle" class="size-3.5" />
-                </button>
+                <flux:tooltip content="Tailwind CSS reference" position="right">
+                    <button
+                        @click="$flux.modal('tailwind-css-help').show()"
+                        type="button"
+                        class="text-zinc-400 dark:text-zinc-500 hover:text-zinc-600 dark:hover:text-zinc-300 transition-colors shrink-0"
+                    >
+                        <flux:icon name="question-mark-circle" class="size-3.5" />
+                    </button>
+                </flux:tooltip>
             </div>
         </div>
     @elseif ($field['type'] === 'grid')
@@ -365,14 +379,15 @@ if ($field['type'] === 'classes') {
                             <flux:icon name="chevron-right" class="size-4 text-zinc-400 shrink-0 transition-transform duration-150" x-bind:class="openItems[idx] ? 'rotate-90' : ''" />
                             <span class="text-sm text-zinc-700 dark:text-zinc-200 font-medium truncate" x-text="item.title || item.name || item.label || item.alt || (item.image ? item.image.split('/').pop() : null) || ('Item ' + (idx + 1))"></span>
                         </button>
-                        <button
-                            type="button"
-                            @click="removeItem(idx)"
-                            class="text-zinc-400 hover:text-red-500 transition-colors shrink-0"
-                            title="Remove item"
-                        >
-                            <flux:icon name="x-mark" class="size-3.5" />
-                        </button>
+                        <flux:tooltip content="Remove item">
+                            <button
+                                type="button"
+                                @click="removeItem(idx)"
+                                class="text-zinc-400 hover:text-red-500 transition-colors shrink-0"
+                            >
+                                <flux:icon name="x-mark" class="size-3.5" />
+                            </button>
+                        </flux:tooltip>
                     </div>
                     {{-- Expanded fields --}}
                     <div x-show="openItems[idx]" x-transition class="border-t border-zinc-200 dark:border-zinc-700 px-3 pt-2 pb-3 space-y-2">
@@ -381,14 +396,15 @@ if ($field['type'] === 'classes') {
                             <div class="flex items-center justify-between mb-1">
                                 <p class="text-[10px] uppercase tracking-wider font-semibold text-zinc-500 dark:text-zinc-400" x-text="fKey"></p>
                                 @if ($aiEnabled)
-                                    <button
-                                        type="button"
-                                        x-show="fKey.endsWith('_alt') || fKey === 'alt'"
-                                        @click="generateAlt(idx, fKey)"
-                                        :class="generatingAlt[idx + '-' + fKey] ? 'opacity-50 cursor-not-allowed' : 'hover:text-primary dark:hover:text-primary'"
-                                        class="text-zinc-400 dark:text-zinc-500 transition-colors shrink-0"
-                                        title="Generate alt text from image"
-                                    ><flux:icon name="sparkles" class="size-3.5" /></button>
+                                    <flux:tooltip content="Generate alt text from image" position="bottom">
+                                        <button
+                                            type="button"
+                                            x-show="fKey.endsWith('_alt') || fKey === 'alt'"
+                                            @click="generateAlt(idx, fKey)"
+                                            :class="generatingAlt[idx + '-' + fKey] ? 'opacity-50 cursor-not-allowed' : 'hover:text-primary dark:hover:text-primary'"
+                                            class="text-zinc-400 dark:text-zinc-500 transition-colors shrink-0"
+                                        ><flux:icon name="sparkles" class="size-3.5" /></button>
+                                    </flux:tooltip>
                                 @endif
                             </div>
                             <template x-if="fKey === 'icon'">
@@ -537,7 +553,9 @@ if ($field['type'] === 'classes') {
         <div class="flex items-center gap-2">
             <flux:switch wire:model.live="contentValues.{{ $field['key'] }}" />
             <span class="text-sm text-zinc-500 dark:text-zinc-400">{{ $field['label'] }}</span>
-            <button wire:click="resetContentField('{{ $field['key'] }}')" type="button" class="ml-auto text-zinc-400 dark:text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 transition-colors" title="Reset"><flux:icon name="arrow-path" class="size-3.5" /></button>
+            <flux:tooltip content="Reset" position="bottom">
+                <button wire:click="resetContentField('{{ $field['key'] }}')" type="button" class="ml-auto text-zinc-400 dark:text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 transition-colors"><flux:icon name="arrow-path" class="size-3.5" /></button>
+            </flux:tooltip>
         </div>
     @elseif (str_ends_with($field['key'], '_htag'))
         <flux:select wire:model.live="contentValues.{{ $field['key'] }}">
@@ -710,14 +728,15 @@ if ($field['type'] === 'classes') {
                             <flux:icon name="chevron-right" class="size-4 text-zinc-400 shrink-0 transition-transform duration-150" x-bind:class="openItems[idx] ? 'rotate-90' : ''" />
                             <span class="text-sm text-zinc-700 dark:text-zinc-200 font-medium font-mono truncate" x-text="item.name || ('Attribute ' + (idx + 1))"></span>
                         </button>
-                        <button
-                            type="button"
-                            @click="removeItem(idx)"
-                            class="text-zinc-400 hover:text-red-500 transition-colors shrink-0"
-                            title="Remove attribute"
-                        >
-                            <flux:icon name="x-mark" class="size-3.5" />
-                        </button>
+                        <flux:tooltip content="Remove attribute">
+                            <button
+                                type="button"
+                                @click="removeItem(idx)"
+                                class="text-zinc-400 hover:text-red-500 transition-colors shrink-0"
+                            >
+                                <flux:icon name="x-mark" class="size-3.5" />
+                            </button>
+                        </flux:tooltip>
                     </div>
                     <div x-show="openItems[idx]" x-transition class="border-t border-zinc-200 dark:border-zinc-700 px-3 pt-2 pb-3 space-y-2">
                         <div>

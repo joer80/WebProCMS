@@ -23,7 +23,15 @@ if ($animPreset) {
 @endphp
 @if($noToggle || $toggle)
 @php
-$renderedText = preg_replace('/^<p>(.*)<\/p>$/s', '$1', trim($text));
+$trimmedText = trim($text);
+$isMultiParagraph = (bool) preg_match('/<\/p>\s*<p/i', $trimmedText);
+if ($isMultiParagraph) {
+    $renderedText = $trimmedText;
+    $renderTag = 'div';
+} else {
+    $renderedText = preg_replace('/^<p>(.*)<\/p>$/s', '$1', $trimmedText);
+    $renderTag = $tag;
+}
 @endphp
-{!! "<{$tag} " . $attributes->merge(array_merge(['class' => $cls], $extraAttrs))->toHtml() . $animAttr . ">" . $renderedText . "</{$tag}>" !!}
+{!! "<{$renderTag} " . $attributes->merge(array_merge(['class' => $cls], $extraAttrs))->toHtml() . $animAttr . ">" . $renderedText . "</{$renderTag}>" !!}
 @endif
