@@ -184,7 +184,7 @@ if ($field['type'] === 'classes') {
                 @if ($showAiImageBtn)
                     <flux:tooltip content="Generate image with AI" position="bottom">
                         <button type="button"
-                            onclick="window.dispatchEvent(new CustomEvent('open-ai-generate', { detail: { fieldKey: '{{ $field['key'] }}', fieldType: 'image', fieldLabel: '{{ addslashes($field['label']) }}' }, bubbles: true }))"
+                            onclick="window.dispatchEvent(new CustomEvent('open-ai-generate', { detail: { fieldKey: '{{ $field['key'] }}', fieldType: 'image', fieldLabel: '{{ addslashes($field['label']) }}', rowSlug: '{{ $field['slug'] }}' }, bubbles: true }))"
                             class="text-zinc-400 dark:text-zinc-500 hover:text-primary dark:hover:text-primary transition-colors"
                         ><flux:icon name="sparkles" class="size-3.5" /></button>
                     </flux:tooltip>
@@ -419,6 +419,9 @@ if ($field['type'] === 'classes') {
                 updateField($event.detail.idx, $event.detail.altKey, $event.detail.content);
                 generatingAlt = { ...generatingAlt, [$event.detail.idx + '-' + $event.detail.altKey]: false };
             }"
+            x-on:ai-grid-item-image-generated.window="if ($event.detail.gridKey === '{{ $field['key'] }}') {
+                updateField($event.detail.idx, $event.detail.itemKey, $event.detail.path);
+            }"
             x-on:ai-grid-alt-error.window="if ($event.detail.gridKey === '{{ $field['key'] }}') {
                 alert('AI error: ' + $event.detail.message);
                 generatingAlt = { ...generatingAlt, [$event.detail.idx + '-' + $event.detail.altKey]: false };
@@ -457,6 +460,16 @@ if ($field['type'] === 'classes') {
                                             @click="generateAlt(idx, fKey)"
                                             :class="generatingAlt[idx + '-' + fKey] ? 'opacity-50 cursor-not-allowed' : 'hover:text-primary dark:hover:text-primary'"
                                             class="text-zinc-400 dark:text-zinc-500 transition-colors shrink-0"
+                                        ><flux:icon name="sparkles" class="size-3.5" /></button>
+                                    </flux:tooltip>
+                                @endif
+                                @if ($aiImageEnabled)
+                                    <flux:tooltip content="Generate with AI" position="bottom">
+                                        <button
+                                            type="button"
+                                            x-show="fKey === 'image' || fKey.endsWith('_image')"
+                                            @click="window.dispatchEvent(new CustomEvent('open-ai-generate', { detail: { fieldKey: '{{ $field['key'] }}', fieldType: 'image', fieldLabel: 'Card Image', rowSlug: '{{ $field['slug'] }}', gridItemIdx: idx, gridItemKey: fKey }, bubbles: true }))"
+                                            class="text-zinc-400 dark:text-zinc-500 hover:text-primary dark:hover:text-primary transition-colors shrink-0"
                                         ><flux:icon name="sparkles" class="size-3.5" /></button>
                                     </flux:tooltip>
                                 @endif

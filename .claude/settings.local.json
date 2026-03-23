@@ -83,7 +83,18 @@
       "Bash(sed -i '' \"s/''model'' => ''claude-haiku-4-5-20251001''/''model'' => \\\\\\\\App\\\\\\\\Models\\\\\\\\Setting::get\\(''ai.claude_model'', ''claude-haiku-4-5-20251001''\\)/g\" \"/Users/joepersonal/Sites/WebProCMS/resources/views/pages/dashboard/media-library/⚡index.blade.php\" \"/Users/joepersonal/Sites/WebProCMS/resources/views/pages/dashboard/media-library/⚡picker.blade.php\")",
       "Bash(for f:*)",
       "Bash(sed -i '' \"s/Setting::get\\(''ai\\\\.claude_model'', ''claude-haiku-4-5-20251001''\\)/Setting::get\\(''ai.claude_model''\\)/g\" \"$f\")",
-      "Bash(sed -i '' \"s/Setting::get\\(''ai\\\\.openai_model'', ''gpt-4o-mini''\\)/Setting::get\\(''ai.openai_model''\\)/g\" \"$f\")"
+      "Bash(sed -i '' \"s/Setting::get\\(''ai\\\\.openai_model'', ''gpt-4o-mini''\\)/Setting::get\\(''ai.openai_model''\\)/g\" \"$f\")",
+      "Bash(curl -s \"https://platform.openai.com/docs/api-reference\")",
+      "Bash(curl -s \"https://docs.anthropic.com/en/api/\")",
+      "WebFetch(domain:platform.openai.com)",
+      "WebFetch(domain:docs.anthropic.com)",
+      "WebFetch(domain:docs.fal.ai)",
+      "WebFetch(domain:platform.stability.ai)",
+      "WebFetch(domain:fal.ai)",
+      "WebFetch(domain:community.openai.com)",
+      "WebFetch(domain:stabilityai.apidog.io)",
+      "WebFetch(domain:kb.stability.ai)",
+      "WebFetch(domain:gist.github.com)"
     ]
   },
   "defaultMode": "acceptEdits"

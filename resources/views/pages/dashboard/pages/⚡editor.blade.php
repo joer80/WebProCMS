@@ -2753,13 +2753,15 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                     if (
                         empty($value) || mb_strlen($value) < 4 ||
                         str_ends_with($key, '_classes') ||
-                        str_ends_with($key, '_image') ||
+                        str_ends_with($key, '_image') || $key === 'image' ||
+                        str_ends_with($key, '_alt') || $key === 'alt' ||
                         str_ends_with($key, '_url') ||
                         str_ends_with($key, '_new_tab') ||
                         str_ends_with($key, '_id') ||
                         str_ends_with($key, '_attrs') ||
                         str_starts_with($key, 'toggle_') ||
-                        str_starts_with($key, 'grid_')
+                        str_starts_with($key, 'grid_') ||
+                        preg_match('/__[a-z]{2,10}$/', $key)
                     ) {
                         continue;
                     }
@@ -3534,15 +3536,36 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
         }
     }
 
-    public function generateAiImage(string $fieldKey, string $prompt): void
+    public function loadAiImageContext(string $fieldKey, string $rowSlug, int $gridItemIdx = -1): void
+    {
+        $snippets = $this->buildAiImageContextSnippets($rowSlug, $fieldKey, $gridItemIdx);
+        $this->dispatch('ai-image-context', fieldKey: $fieldKey, snippets: $snippets);
+    }
+
+    public function generateAiImage(string $fieldKey, string $prompt, string $rowSlug = '', bool $includeContext = true, int $gridItemIdx = -1): void
     {
         $provider = \App\Models\Setting::get('ai.image_provider', 'openai');
 
+        $fullPrompt = $prompt;
+
+        if ($includeContext && $rowSlug !== '') {
+            $snippets = $this->buildAiImageContextSnippets($rowSlug, $fieldKey, $gridItemIdx);
+
+            if (! empty($snippets)) {
+                $contextString = implode(' | ', $snippets);
+                $fullPrompt = $prompt !== ''
+                    ? $prompt . "\n\nContext from surrounding content: " . $contextString
+                    : 'Generate an image appropriate for this content: ' . $contextString;
+            } elseif ($prompt === '') {
+                $fullPrompt = 'Generate an appropriate image.';
+            }
+        }
+
         try {
             $imageContents = match ($provider) {
-                'fal' => $this->generateImageViaFal($prompt),
-                'stability' => $this->generateImageViaStability($prompt),
-                default => $this->generateImageViaOpenAi($prompt),
+                'fal' => $this->generateImageViaFal($fullPrompt),
+                'stability' => $this->generateImageViaStability($fullPrompt),
+                default => $this->generateImageViaOpenAi($fullPrompt),
             };
         } catch (\Exception $e) {
             $this->dispatch('ai-generate-error', fieldKey: $fieldKey, message: $e->getMessage());
@@ -3557,6 +3580,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
             fieldKey: $fieldKey,
             tempPath: $tempPath,
             url: \Illuminate\Support\Facades\Storage::url($tempPath),
+            fullPrompt: $fullPrompt,
         );
     }
 
@@ -3613,11 +3637,103 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
         $this->refreshPreview();
     }
 
+    public function saveAiGridItemImagePreview(string $gridFieldKey, string $tempPath, string $prompt, int $idx, string $itemKey): void
+    {
+        if (! \Illuminate\Support\Facades\Storage::disk('public')->exists($tempPath)) {
+            return;
+        }
+
+        $category = \App\Models\MediaCategory::where('is_default', true)->first()
+            ?? \App\Models\MediaCategory::first();
+
+        $categorySlug = $category?->slug ?? 'uncategorized';
+        $filename = basename($tempPath);
+        $storagePath = $categorySlug . '/' . $filename;
+
+        \Illuminate\Support\Facades\Storage::disk('public')->move($tempPath, $storagePath);
+
+        \App\Models\MediaItem::create([
+            'media_category_id' => $category?->id,
+            'path' => $storagePath,
+            'filename' => $filename,
+            'alt' => $prompt,
+            'size' => \Illuminate\Support\Facades\Storage::disk('public')->size($storagePath),
+            'mime_type' => 'image/jpeg',
+        ]);
+
+        $this->isDirty = true;
+        $this->dispatch('ai-grid-item-image-generated', gridKey: $gridFieldKey, idx: $idx, itemKey: $itemKey, path: $storagePath);
+        $this->dispatch('ai-image-generated', fieldKey: $gridFieldKey, path: $storagePath);
+        $this->refreshPreview();
+    }
+
     public function discardAiImagePreview(string $tempPath): void
     {
         if ($tempPath) {
             \Illuminate\Support\Facades\Storage::disk('public')->delete($tempPath);
         }
+    }
+
+    /** @return string[] */
+    private function buildAiImageContextSnippets(string $rowSlug, string $fieldKey, int $gridItemIdx): array
+    {
+        $overrides = \App\Models\ContentOverride::where('row_slug', $rowSlug)->get(['key', 'value']);
+        $snippets = [];
+
+        foreach ($overrides as $override) {
+            $key = $override->key;
+            $value = trim(strip_tags((string) $override->value));
+
+            if (str_starts_with($key, 'grid_') && $gridItemIdx >= 0) {
+                $items = json_decode($value, true) ?? [];
+                $item = $items[$gridItemIdx] ?? null;
+
+                if ($item) {
+                    foreach ($item as $itemKey => $itemValue) {
+                        $itemValue = trim(strip_tags((string) $itemValue));
+
+                        if (
+                            empty($itemValue) || mb_strlen($itemValue) < 4 ||
+                            str_ends_with($itemKey, '_classes') ||
+                            str_ends_with($itemKey, '_image') || $itemKey === 'image' ||
+                            str_ends_with($itemKey, '_url') ||
+                            str_ends_with($itemKey, '_new_tab') ||
+                            str_ends_with($itemKey, '_alt') || $itemKey === 'alt' ||
+                            str_ends_with($itemKey, '_id') ||
+                            str_starts_with($itemKey, 'toggle_') ||
+                            $itemKey === 'icon' ||
+                            preg_match('/__[a-z]{2,10}$/', $itemKey)
+                        ) {
+                            continue;
+                        }
+
+                        $snippets[] = $itemValue;
+                    }
+                }
+
+                continue;
+            }
+
+            if (
+                empty($value) || mb_strlen($value) < 4 ||
+                str_ends_with($key, '_classes') ||
+                str_ends_with($key, '_image') || $key === 'image' ||
+                str_ends_with($key, '_alt') || $key === 'alt' ||
+                str_ends_with($key, '_url') ||
+                str_ends_with($key, '_new_tab') ||
+                str_ends_with($key, '_id') ||
+                str_ends_with($key, '_attrs') ||
+                str_starts_with($key, 'toggle_') ||
+                str_starts_with($key, 'grid_') ||
+                preg_match('/__[a-z]{2,10}$/', $key)
+            ) {
+                continue;
+            }
+
+            $snippets[] = $value;
+        }
+
+        return $snippets;
     }
 
     protected function generateImageViaOpenAi(string $prompt): string

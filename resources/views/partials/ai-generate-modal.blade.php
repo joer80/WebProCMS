@@ -15,6 +15,15 @@
         previewPath: null,
         previewUrl: null,
         lastPrompt: '',
+        rowSlug: null,
+        includeContext: true,
+        gridItemIdx: null,
+        gridItemKey: null,
+        sentPrompt: '',
+        showSentPrompt: false,
+        contextSnippets: [],
+        loadingContext: false,
+        showContextPreview: false,
         closeModal() {
             if (this.previewPath) {
                 $wire.discardAiImagePreview(this.previewPath);
@@ -24,7 +33,7 @@
             this.open = false;
         },
         async generate() {
-            if (!this.prompt.trim()) return;
+            if (!this.prompt.trim() && !(this.fieldType === 'image' && this.includeContext)) return;
             this.generating = true;
             this.error = '';
             if (this.fieldType === 'image') {
@@ -33,15 +42,16 @@
                     this.previewPath = null;
                     this.previewUrl = null;
                 }
-                $wire.generateAiImage(this.fieldKey, this.prompt);
+                $wire.generateAiImage(this.fieldKey, this.prompt, this.rowSlug, this.includeContext, this.gridItemIdx ?? -1);
             } else {
                 $wire.generateAiContent(this.fieldKey, this.prompt, this.fieldType, this.currentClasses, this.useHtml);
             }
         }
     }"
-    @open-ai-generate.window="open = true; mode = 'generate'; fieldKey = $event.detail.fieldKey; fieldType = $event.detail.fieldType; fieldLabel = $event.detail.fieldLabel || ''; currentClasses = $event.detail.currentClasses || ''; prompt = ''; tone = ''; toneLabel = ''; error = ''; useHtml = true; previewPath = null; previewUrl = null; lastPrompt = ''; if ($event.detail.fieldType === 'alt') { generating = true; $wire.generateAiAltText($event.detail.fieldKey, $event.detail.imageFieldKey); }"
+    @open-ai-generate.window="open = true; mode = 'generate'; fieldKey = $event.detail.fieldKey; fieldType = $event.detail.fieldType; fieldLabel = $event.detail.fieldLabel || ''; currentClasses = $event.detail.currentClasses || ''; rowSlug = $event.detail.rowSlug || null; gridItemIdx = $event.detail.gridItemIdx ?? null; gridItemKey = $event.detail.gridItemKey || null; prompt = ''; tone = ''; toneLabel = ''; error = ''; useHtml = true; previewPath = null; previewUrl = null; lastPrompt = ''; sentPrompt = ''; showSentPrompt = false; contextSnippets = []; loadingContext = false; showContextPreview = false; if ($event.detail.fieldType === 'alt') { generating = true; $wire.generateAiAltText($event.detail.fieldKey, $event.detail.imageFieldKey); }"
+    @ai-image-context.window="if ($event.detail.fieldKey === fieldKey) { contextSnippets = $event.detail.snippets; loadingContext = false; showContextPreview = true; }"
     @open-ai-rewrite.window="open = true; mode = 'rewrite'; fieldKey = $event.detail.fieldKey; fieldType = $event.detail.fieldType; fieldLabel = $event.detail.fieldLabel || ''; tone = $event.detail.tone; toneLabel = $event.detail.toneLabel; prompt = ''; currentClasses = ''; error = ''; generating = true; $wire.rewriteAiContent($event.detail.fieldKey, $event.detail.fieldType, $event.detail.tone);"
-    @ai-image-preview.window="if ($event.detail.fieldKey === fieldKey) { previewPath = $event.detail.tempPath; previewUrl = $event.detail.url; lastPrompt = prompt; generating = false; }"
+    @ai-image-preview.window="if ($event.detail.fieldKey === fieldKey) { previewPath = $event.detail.tempPath; previewUrl = $event.detail.url; lastPrompt = prompt; sentPrompt = $event.detail.fullPrompt || ''; showSentPrompt = false; generating = false; }"
     @ai-content-generated.window="if ($event.detail.fieldKey === fieldKey) { open = false; generating = false; prompt = ''; }"
     @ai-image-generated.window="if ($event.detail.fieldKey === fieldKey) { open = false; generating = false; prompt = ''; previewPath = null; previewUrl = null; lastPrompt = ''; }"
     @ai-generate-error.window="if ($event.detail.fieldKey === fieldKey) { error = $event.detail.message; generating = false; }"
@@ -88,8 +98,18 @@
             <div x-show="mode === 'generate' && fieldType !== 'alt'">
 
                 {{-- Image preview --}}
-                <div x-show="fieldType === 'image' && previewUrl" class="mb-4 rounded-lg overflow-hidden border border-zinc-200 dark:border-zinc-700">
-                    <img :src="previewUrl" alt="Generated image preview" class="w-full">
+                <div x-show="fieldType === 'image' && previewUrl" class="mb-4">
+                    <div class="rounded-lg overflow-hidden border border-zinc-200 dark:border-zinc-700">
+                        <img :src="previewUrl" alt="Generated image preview" class="w-full">
+                    </div>
+                    <div x-show="sentPrompt" class="mt-1.5">
+                        <button type="button" @click="showSentPrompt = !showSentPrompt"
+                            class="flex items-center gap-1 text-xs text-zinc-400 dark:text-zinc-500 hover:text-zinc-600 dark:hover:text-zinc-300 transition-colors">
+                            <flux:icon name="eye" class="size-3" />
+                            <span x-text="showSentPrompt ? 'Hide prompt sent to AI' : 'View prompt sent to AI'"></span>
+                        </button>
+                        <div x-show="showSentPrompt" x-transition class="mt-1.5 rounded-lg bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 px-3 py-2 text-xs text-zinc-600 dark:text-zinc-300 whitespace-pre-wrap font-mono" x-text="sentPrompt"></div>
+                    </div>
                 </div>
 
                 <label class="text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1.5 block">Prompt</label>
@@ -116,6 +136,37 @@
                     </button>
                 </div>
                 <p x-show="fieldType !== 'image' && fieldType !== 'richtext'" class="text-xs text-zinc-400 dark:text-zinc-500 mt-1">Tip: Press Enter to generate, Shift+Enter for a new line.</p>
+                <div x-show="fieldType === 'image'" class="mt-2 space-y-1.5">
+                    <div class="flex items-center gap-2">
+                        <input type="checkbox" id="ai-include-context" x-model="includeContext" :disabled="generating"
+                            @change="contextSnippets = []; showContextPreview = false;"
+                            class="rounded border-zinc-300 dark:border-zinc-600 text-primary focus:ring-primary focus:ring-offset-0 disabled:opacity-50 cursor-pointer">
+                        <label for="ai-include-context" class="text-xs text-zinc-500 dark:text-zinc-400 cursor-pointer select-none flex-1">Provide AI with text used around this image for context</label>
+                        <button x-show="includeContext && rowSlug" type="button"
+                            @click="if (!loadingContext) { if (showContextPreview && contextSnippets.length) { showContextPreview = false; } else { loadingContext = true; $wire.loadAiImageContext(fieldKey, rowSlug, gridItemIdx ?? -1); } }"
+                            :disabled="generating"
+                            class="text-zinc-400 dark:text-zinc-500 hover:text-primary dark:hover:text-primary transition-colors disabled:opacity-50 shrink-0">
+                            <template x-if="loadingContext">
+                                <svg class="size-3.5 animate-spin" viewBox="0 0 24 24" fill="none"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"/></svg>
+                            </template>
+                            <template x-if="!loadingContext">
+                                <flux:icon name="eye" class="size-3.5" />
+                            </template>
+                        </button>
+                    </div>
+                    <div x-show="showContextPreview" x-transition>
+                        <template x-if="contextSnippets.length">
+                            <ul class="rounded-lg bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 px-3 py-2 space-y-0.5">
+                                <template x-for="snippet in contextSnippets" :key="snippet">
+                                    <li class="text-xs text-zinc-600 dark:text-zinc-300 font-mono truncate" x-text="'• ' + snippet"></li>
+                                </template>
+                            </ul>
+                        </template>
+                        <template x-if="!contextSnippets.length">
+                            <p class="text-xs text-zinc-400 dark:text-zinc-500 italic">No saved text content found for this section yet.</p>
+                        </template>
+                    </div>
+                </div>
                 <p x-show="fieldType === 'image' && !previewUrl" class="text-xs text-zinc-400 dark:text-zinc-500 mt-1">Image generation may take 10–20 seconds.</p>
                 <p x-show="fieldType === 'image' && previewUrl" class="text-xs text-zinc-400 dark:text-zinc-500 mt-1">Keep your original description and add style changes — don't replace it entirely.</p>
             </div>
@@ -146,7 +197,7 @@
                 x-show="mode === 'generate' && fieldType !== 'alt'"
                 type="button"
                 @click="generate()"
-                :disabled="generating || !prompt.trim()"
+                :disabled="generating || (!prompt.trim() && !(fieldType === 'image' && includeContext))"
                 class="flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 :class="(fieldType === 'image' && previewUrl) ? 'bg-zinc-100 dark:bg-zinc-700 text-zinc-700 dark:text-zinc-200 hover:bg-zinc-200 dark:hover:bg-zinc-600' : 'bg-primary text-white hover:bg-primary/90'"
             >
@@ -164,7 +215,7 @@
             <button
                 x-show="fieldType === 'image' && previewUrl"
                 type="button"
-                @click="generating = true; $wire.saveAiImagePreview(fieldKey, previewPath, prompt)"
+                @click="generating = true; gridItemIdx !== null ? $wire.saveAiGridItemImagePreview(fieldKey, previewPath, prompt, gridItemIdx, gridItemKey) : $wire.saveAiImagePreview(fieldKey, previewPath, prompt)"
                 :disabled="generating"
                 class="flex items-center gap-2 px-4 py-2 bg-zinc-900 text-white text-sm font-medium rounded-lg hover:bg-zinc-700 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
