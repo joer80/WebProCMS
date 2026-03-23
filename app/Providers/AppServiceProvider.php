@@ -44,7 +44,7 @@ class AppServiceProvider extends ServiceProvider
             $default = $parts[3] ?? "''";
             $gridKey = "'grid_{$prefixClean}'";
 
-            return "<?php {$var} = json_decode(content({$slug}, {$gridKey}, {$default}), true) ?: []; ?>";
+            return "<?php {$var} = json_decode(content({$slug}, {$gridKey}, {$default}), true) ?: []; \$__glc = config('cms.current_language', 'en'); if (\$__glc && \$__glc !== 'en') { {$var} = array_map(function(\$__gi) use (\$__glc) { foreach (array_keys(\$__gi) as \$__gk) { \$__lk = \$__gk . '__' . \$__glc; if (isset(\$__gi[\$__lk]) && \$__gi[\$__lk] !== '') { \$__gi[\$__gk] = \$__gi[\$__lk]; } } return \$__gi; }, {$var}); } ?>";
         });
     }
 

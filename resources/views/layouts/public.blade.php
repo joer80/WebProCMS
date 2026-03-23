@@ -171,6 +171,82 @@
             </footer>
         @endif
 
+        @php
+            $siteLanguages = \App\Models\Setting::get('site.languages', [['code' => 'en', 'label' => 'English', 'flag' => '🇺🇸']]);
+            $hasMultipleLanguages = count($siteLanguages) > 1;
+            $currentLangCode = config('cms.current_language', 'en');
+            $currentLang = collect($siteLanguages)->firstWhere('code', $currentLangCode) ?? $siteLanguages[0];
+            // Derive the canonical path (without language prefix) for building switcher URLs.
+            $rawSegments = request()->segments();
+            $langCodes = array_column($siteLanguages, 'code');
+            $canonicalSegments = (count($rawSegments) && in_array($rawSegments[0], $langCodes, true))
+                ? array_slice($rawSegments, 1)
+                : $rawSegments;
+            $canonicalPath = '/' . implode('/', $canonicalSegments);
+        @endphp
+        @if ($hasMultipleLanguages)
+            @php
+                $lsDark = \App\Models\Setting::get('site.language_switcher_theme', 'light') === 'dark';
+                $lsPopupClasses = $lsDark
+                    ? 'absolute bottom-full mb-2 left-0 bg-zinc-900 rounded-xl shadow-xl border border-zinc-700 overflow-hidden min-w-40'
+                    : 'absolute bottom-full mb-2 left-0 bg-white rounded-xl shadow-xl border border-zinc-200 overflow-hidden min-w-40';
+                $lsItemBase = $lsDark
+                    ? 'flex items-center gap-3 px-4 py-2.5 text-sm text-zinc-200 hover:bg-zinc-800 transition-colors'
+                    : 'flex items-center gap-3 px-4 py-2.5 text-sm text-zinc-700 hover:bg-zinc-50 transition-colors';
+                $lsItemActive = $lsDark ? 'bg-zinc-800 font-semibold' : 'bg-zinc-50 font-semibold';
+                $lsBtnClasses = $lsDark
+                    ? 'flex items-center gap-2 rounded-full bg-zinc-900 border border-zinc-700 shadow-lg px-4 py-2.5 text-sm font-semibold text-zinc-100 hover:bg-zinc-800 transition-colors'
+                    : 'flex items-center gap-2 rounded-full bg-white border border-zinc-200 shadow-lg px-4 py-2.5 text-sm font-semibold text-zinc-800 hover:bg-zinc-50 transition-colors';
+            @endphp
+            <div
+                class="fixed bottom-6 left-6 z-40"
+                x-data="{ open: false }"
+                @click.outside="open = false"
+            >
+                {{-- Popup list --}}
+                <div
+                    x-show="open"
+                    x-transition:enter="transition ease-out duration-150"
+                    x-transition:enter-start="opacity-0 translate-y-2"
+                    x-transition:enter-end="opacity-100 translate-y-0"
+                    x-transition:leave="transition ease-in duration-100"
+                    x-transition:leave-start="opacity-100 translate-y-0"
+                    x-transition:leave-end="opacity-0 translate-y-2"
+                    class="{{ $lsPopupClasses }}"
+                >
+                    @foreach ($siteLanguages as $lang)
+                        @php
+                            $langPath = $lang['code'] === 'en' ? $canonicalPath : ('/' . $lang['code'] . $canonicalPath);
+                        @endphp
+                        <a
+                            href="{{ $langPath }}"
+                            class="{{ $lsItemBase }} {{ $lang['code'] === $currentLangCode ? $lsItemActive : '' }}"
+                        >
+                            <span class="text-base leading-none">{{ $lang['flag'] }}</span>
+                            <span>{{ $lang['label'] }}</span>
+                            @if ($lang['code'] === $currentLangCode)
+                                <flux:icon name="check" class="size-3.5 ml-auto text-primary" />
+                            @endif
+                        </a>
+                    @endforeach
+                </div>
+                {{-- FAB trigger button --}}
+                <button
+                    type="button"
+                    @click="open = !open"
+                    class="{{ $lsBtnClasses }}"
+                    :aria-expanded="open"
+                    aria-label="Switch language"
+                >
+                    <span class="text-base leading-none">{{ $currentLang['flag'] }}</span>
+                    <span class="uppercase tracking-wide text-xs">{{ strtoupper($currentLangCode) }}</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" class="size-3.5 transition-transform duration-200" :class="open ? 'rotate-180' : ''" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M5.22 8.22a.75.75 0 011.06 0L10 11.94l3.72-3.72a.75.75 0 111.06 1.06l-4.25 4.25a.75.75 0 01-1.06 0L5.22 9.28a.75.75 0 010-1.06z" clip-rule="evenodd" />
+                    </svg>
+                </button>
+            </div>
+        @endif
+
         @auth
             @if(auth()->user()->isAtLeast(\App\Enums\Role::Manager))
                 @php

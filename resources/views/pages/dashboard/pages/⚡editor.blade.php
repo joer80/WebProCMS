@@ -973,6 +973,44 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
         $this->pendingImageKey = '';
         $this->pendingImageUpload = null;
 
+        // Inject per-language variant fields for translatable content.
+        $activeLanguages = \App\Models\Setting::get('site.languages', [['code' => 'en']]);
+        $nonEnglishLangs = array_values(array_filter($activeLanguages, fn ($l) => $l['code'] !== 'en'));
+        $multiLang = count($nonEnglishLangs) > 0;
+
+        if ($multiLang) {
+            $expanded = [];
+            $translatableTypes = ['text', 'richtext'];
+            $nonTranslatableEndings = ['_url', '_htag', '_alt', '_new_tab', '_classes', '_id', '_attrs'];
+
+            foreach ($this->contentFields as $field) {
+                $isTranslatable = in_array($field['type'], $translatableTypes, true)
+                    && ! str_starts_with($field['key'], 'toggle_')
+                    && ! collect($nonTranslatableEndings)->contains(fn ($suffix) => str_ends_with($field['key'], $suffix));
+
+                if ($isTranslatable) {
+                    // Rename the English field to include (EN) suffix.
+                    $expanded[] = array_merge($field, ['label' => $field['label'] . ' (EN)']);
+
+                    foreach ($nonEnglishLangs as $lang) {
+                        $langCode = $lang['code'];
+                        $langLabel = strtoupper($langCode);
+                        $expanded[] = array_merge($field, [
+                            'key' => $field['key'] . '__' . $langCode,
+                            'label' => $field['label'] . ' (' . $langLabel . ')',
+                            'default' => '',
+                            '_lang_code' => $langCode,
+                            '_source_key' => $field['key'],
+                        ]);
+                    }
+                } else {
+                    $expanded[] = $field;
+                }
+            }
+
+            $this->contentFields = $expanded;
+        }
+
         $slugs = array_unique(array_column($this->contentFields, 'slug'));
         $overrides = ContentOverride::query()
             ->whereIn('row_slug', $slugs)
@@ -2813,6 +2851,436 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
         }
     }
 
+    public function translateField(string $fieldKey, string $sourceLang, string $targetLang): void
+    {
+        // The source key is the field key without the language suffix.
+        $sourceKey = preg_replace('/__[a-z]{2,10}$/', '', $fieldKey);
+        $sourceContent = $this->contentValues[$sourceKey] ?? '';
+        $sourceField = collect($this->contentFields)->firstWhere('key', $sourceKey);
+        $fieldType = $sourceField['type'] ?? 'text';
+
+        if (empty(trim(strip_tags((string) $sourceContent)))) {
+            $this->dispatch('ai-generate-error', fieldKey: $fieldKey, message: 'No source content to translate.');
+
+            return;
+        }
+
+        $langNames = collect(\App\Models\Setting::get('site.languages', []))->keyBy('code');
+        $sourceLangName = $langNames->get($sourceLang, ['label' => strtoupper($sourceLang)])['label'];
+        $targetLangName = $langNames->get($targetLang, ['label' => strtoupper($targetLang)])['label'];
+
+        $isRichText = $fieldType === 'richtext';
+        $systemPrompt = "You are a professional translator. Translate content from {$sourceLangName} to {$targetLangName}. Return only the translated text with no explanation. " . ($isRichText ? 'Preserve all HTML tags exactly as they appear.' : 'Do not add HTML tags.');
+        $userMessage = (string) $sourceContent;
+
+        try {
+            $provider = \App\Models\Setting::get('ai.text_provider', 'claude');
+
+            if ($provider === 'openai') {
+                $apiKey = \App\Models\Setting::get('ai.openai_key', '');
+                $response = \Illuminate\Support\Facades\Http::withHeaders([
+                    'Authorization' => 'Bearer ' . $apiKey,
+                    'Content-Type' => 'application/json',
+                ])->post('https://api.openai.com/v1/chat/completions', [
+                    'model' => 'gpt-4o-mini',
+                    'max_tokens' => 2048,
+                    'messages' => [
+                        ['role' => 'system', 'content' => $systemPrompt],
+                        ['role' => 'user', 'content' => $userMessage],
+                    ],
+                ]);
+
+                if ($response->failed()) {
+                    throw new \Exception($response->json('error.message') ?? 'OpenAI API error.');
+                }
+
+                $translated = $response->json('choices.0.message.content', '');
+            } else {
+                $apiKey = \App\Models\Setting::get('ai.claude_key', '');
+                $response = \Illuminate\Support\Facades\Http::withHeaders([
+                    'x-api-key' => $apiKey,
+                    'anthropic-version' => '2023-06-01',
+                    'content-type' => 'application/json',
+                ])->post('https://api.anthropic.com/v1/messages', [
+                    'model' => 'claude-haiku-4-5-20251001',
+                    'max_tokens' => 2048,
+                    'system' => $systemPrompt,
+                    'messages' => [
+                        ['role' => 'user', 'content' => $userMessage],
+                    ],
+                ]);
+
+                if ($response->failed()) {
+                    throw new \Exception($response->json('error.message') ?? 'Claude API error.');
+                }
+
+                $translated = $response->json('content.0.text', '');
+            }
+
+            $translated = trim($translated);
+            $this->contentValues[$fieldKey] = $translated;
+
+            $targetField = collect($this->contentFields)->firstWhere('key', $fieldKey);
+
+            if ($targetField) {
+                session()->put(
+                    'editor_draft_overrides.' . $targetField['slug'] . ':' . $fieldKey,
+                    ['type' => $fieldType, 'value' => $translated]
+                );
+            }
+
+            $this->dispatch('ai-content-generated', fieldKey: $fieldKey, content: $translated);
+            $this->refreshPreview();
+        } catch (\Exception $e) {
+            $this->dispatch('ai-generate-error', fieldKey: $fieldKey, message: $e->getMessage());
+        }
+    }
+
+    public function translateAllSectionFields(int $rowIndex, string $targetLang): void
+    {
+        $this->openContentEditor($rowIndex);
+
+        $langNames = collect(\App\Models\Setting::get('site.languages', []))->keyBy('code');
+        $targetLangName = $langNames->get($targetLang, ['label' => strtoupper($targetLang)])['label'];
+
+        $translatableTypes = ['text', 'richtext'];
+        $nonTranslatableEndings = ['_url', '_htag', '_alt', '_new_tab', '_classes', '_id', '_attrs'];
+
+        $toTranslate = array_filter(
+            $this->contentFields,
+            fn ($f) => in_array($f['type'], $translatableTypes, true)
+                && ! str_starts_with($f['key'], 'toggle_')
+                && ! collect($nonTranslatableEndings)->contains(fn ($suffix) => str_ends_with($f['key'], $suffix))
+                && str_ends_with($f['key'], '__' . $targetLang)
+        );
+
+        $translated = 0;
+
+        foreach ($toTranslate as $field) {
+            $sourceKey = preg_replace('/__[a-z]{2,10}$/', '', $field['key']);
+            $sourceContent = $this->contentValues[$sourceKey] ?? '';
+
+            if (empty(trim(strip_tags((string) $sourceContent)))) {
+                continue;
+            }
+
+            $isRichText = $field['type'] === 'richtext';
+            $systemPrompt = "You are a professional translator. Translate content to {$targetLangName}. Return only the translated text with no explanation. " . ($isRichText ? 'Preserve all HTML tags exactly as they appear.' : 'Do not add HTML tags.');
+
+            try {
+                $provider = \App\Models\Setting::get('ai.text_provider', 'claude');
+
+                if ($provider === 'openai') {
+                    $apiKey = \App\Models\Setting::get('ai.openai_key', '');
+                    $response = \Illuminate\Support\Facades\Http::withHeaders([
+                        'Authorization' => 'Bearer ' . $apiKey,
+                        'Content-Type' => 'application/json',
+                    ])->post('https://api.openai.com/v1/chat/completions', [
+                        'model' => 'gpt-4o-mini',
+                        'max_tokens' => 2048,
+                        'messages' => [
+                            ['role' => 'system', 'content' => $systemPrompt],
+                            ['role' => 'user', 'content' => (string) $sourceContent],
+                        ],
+                    ]);
+
+                    $result = $response->failed() ? '' : $response->json('choices.0.message.content', '');
+                } else {
+                    $apiKey = \App\Models\Setting::get('ai.claude_key', '');
+                    $response = \Illuminate\Support\Facades\Http::withHeaders([
+                        'x-api-key' => $apiKey,
+                        'anthropic-version' => '2023-06-01',
+                        'content-type' => 'application/json',
+                    ])->post('https://api.anthropic.com/v1/messages', [
+                        'model' => 'claude-haiku-4-5-20251001',
+                        'max_tokens' => 2048,
+                        'system' => $systemPrompt,
+                        'messages' => [['role' => 'user', 'content' => (string) $sourceContent]],
+                    ]);
+
+                    $result = $response->failed() ? '' : $response->json('content.0.text', '');
+                }
+
+                $result = trim($result);
+
+                if ($result) {
+                    $this->contentValues[$field['key']] = $result;
+                    session()->put(
+                        'editor_draft_overrides.' . $field['slug'] . ':' . $field['key'],
+                        ['type' => $field['type'], 'value' => $result]
+                    );
+                    $translated++;
+                }
+            } catch (\Exception $e) {
+                // Continue on individual field failures.
+            }
+        }
+
+        $this->refreshPreview();
+        $this->dispatch('notify', message: $translated > 0 ? "Translated {$translated} field(s) to {$targetLangName}." : 'No translatable content found.');
+    }
+
+    public function triggerPreviewRefresh(): void
+    {
+        $this->refreshPreview();
+    }
+
+    /** @return list<string> */
+    public function prepareTranslation(int $rowIndex, string $targetLang, bool $skipFilled): array
+    {
+        $this->openContentEditor($rowIndex);
+
+        $translatableTypes = ['text', 'richtext'];
+        $nonTranslatableEndings = ['_url', '_htag', '_alt', '_new_tab', '_classes', '_id', '_attrs'];
+        $suffix = '__' . $targetLang;
+
+        // Regular text/richtext field keys.
+        $fieldKeys = array_values(array_column(array_values(array_filter(
+            $this->contentFields,
+            function ($f) use ($targetLang, $skipFilled, $nonTranslatableEndings, $translatableTypes, $suffix): bool {
+                if (! in_array($f['type'], $translatableTypes, true)) {
+                    return false;
+                }
+
+                if (str_starts_with($f['key'], 'toggle_')) {
+                    return false;
+                }
+
+                foreach ($nonTranslatableEndings as $ending) {
+                    if (str_ends_with($f['key'], $ending)) {
+                        return false;
+                    }
+                }
+
+                if (! str_ends_with($f['key'], $suffix)) {
+                    return false;
+                }
+
+                $sourceKey = substr($f['key'], 0, -strlen($suffix));
+                $sourceContent = $this->contentValues[$sourceKey] ?? '';
+
+                if (empty(trim(strip_tags((string) $sourceContent)))) {
+                    // Fall back to the field default when no value has been saved yet.
+                    $sourceField = collect($this->contentFields)->firstWhere('key', $sourceKey);
+                    $sourceContent = $sourceField ? ($sourceField['default'] ?? '') : '';
+                }
+
+                if (empty(trim(strip_tags((string) $sourceContent)))) {
+                    return false;
+                }
+
+                if ($skipFilled && ! empty(trim(strip_tags((string) ($this->contentValues[$f['key']] ?? ''))))) {
+                    return false;
+                }
+
+                return true;
+            }
+        )), 'key'));
+
+        // Grid item sub-field translation paths.
+        $gridPaths = [];
+        $nonTranslatableGridKey = function (string $k): bool {
+            if (in_array($k, ['icon', 'image', 'alt', 'url'], true)) {
+                return true;
+            }
+            if (str_starts_with($k, 'toggle_')) {
+                return true;
+            }
+            if (str_ends_with($k, '_image') || str_ends_with($k, '_alt') || str_ends_with($k, '_url')) {
+                return true;
+            }
+            return false;
+        };
+
+        foreach ($this->contentFields as $gf) {
+            if ($gf['type'] !== 'grid') {
+                continue;
+            }
+            $items = json_decode($this->contentValues[$gf['key']] ?? '[]', true) ?: [];
+            foreach ($items as $idx => $item) {
+                foreach (array_keys($item) as $subKey) {
+                    if (str_contains($subKey, '__')) {
+                        continue; // skip existing lang variant keys
+                    }
+                    if ($nonTranslatableGridKey($subKey)) {
+                        continue;
+                    }
+                    $sourceContent = (string) ($item[$subKey] ?? '');
+                    if (empty(trim(strip_tags($sourceContent)))) {
+                        continue;
+                    }
+                    if ($skipFilled && ! empty(trim(strip_tags((string) ($item[$subKey . '__' . $targetLang] ?? ''))))) {
+                        continue;
+                    }
+                    $gridPaths[] = '@grid:' . $gf['key'] . ':' . $idx . ':' . $subKey;
+                }
+            }
+        }
+
+        return array_merge($fieldKeys, $gridPaths);
+    }
+
+    public function translateNextField(string $fieldKey, string $targetLang): void
+    {
+        // Handle grid item sub-field translation paths.
+        if (str_starts_with($fieldKey, '@grid:')) {
+            $this->translateGridItemField($fieldKey, $targetLang);
+
+            return;
+        }
+
+        $field = collect($this->contentFields)->firstWhere('key', $fieldKey);
+
+        if (! $field) {
+            return;
+        }
+
+        $suffix = '__' . $targetLang;
+        $sourceKey = substr($fieldKey, 0, -strlen($suffix));
+        $sourceContent = $this->contentValues[$sourceKey] ?? '';
+
+        if (empty(trim(strip_tags((string) $sourceContent)))) {
+            // Fall back to the field default when no value has been saved yet.
+            $sourceField = collect($this->contentFields)->firstWhere('key', $sourceKey);
+            $sourceContent = $sourceField ? ($sourceField['default'] ?? '') : '';
+        }
+
+        if (empty(trim(strip_tags((string) $sourceContent)))) {
+            return;
+        }
+
+        $langNames = collect(\App\Models\Setting::get('site.languages', []))->keyBy('code');
+        $targetLangName = $langNames->get($targetLang, ['label' => strtoupper($targetLang)])['label'];
+
+        $isRichText = $field['type'] === 'richtext';
+        $systemPrompt = 'You are a professional translator. Translate content to ' . $targetLangName . '. Return only the translated text with no explanation. ' . ($isRichText ? 'Preserve all HTML tags exactly as they appear.' : 'Do not add HTML tags.');
+
+        try {
+            $provider = \App\Models\Setting::get('ai.text_provider', 'claude');
+
+            if ($provider === 'openai') {
+                $apiKey = \App\Models\Setting::get('ai.openai_key', '');
+                $response = \Illuminate\Support\Facades\Http::withHeaders([
+                    'Authorization' => 'Bearer ' . $apiKey,
+                    'Content-Type' => 'application/json',
+                ])->post('https://api.openai.com/v1/chat/completions', [
+                    'model' => 'gpt-4o-mini',
+                    'max_tokens' => 2048,
+                    'messages' => [
+                        ['role' => 'system', 'content' => $systemPrompt],
+                        ['role' => 'user', 'content' => (string) $sourceContent],
+                    ],
+                ]);
+                $result = $response->failed() ? '' : $response->json('choices.0.message.content', '');
+            } else {
+                $apiKey = \App\Models\Setting::get('ai.claude_key', '');
+                $response = \Illuminate\Support\Facades\Http::withHeaders([
+                    'x-api-key' => $apiKey,
+                    'anthropic-version' => '2023-06-01',
+                    'content-type' => 'application/json',
+                ])->post('https://api.anthropic.com/v1/messages', [
+                    'model' => 'claude-haiku-4-5-20251001',
+                    'max_tokens' => 2048,
+                    'system' => $systemPrompt,
+                    'messages' => [['role' => 'user', 'content' => (string) $sourceContent]],
+                ]);
+                $result = $response->failed() ? '' : $response->json('content.0.text', '');
+            }
+
+            $result = trim($result);
+
+            if ($result) {
+                $this->contentValues[$fieldKey] = $result;
+                session()->put(
+                    'editor_draft_overrides.' . $field['slug'] . ':' . $fieldKey,
+                    ['type' => $field['type'], 'value' => $result]
+                );
+            }
+        } catch (\Exception $e) {
+            // Continue on individual field failures.
+        }
+    }
+
+    private function translateGridItemField(string $path, string $targetLang): void
+    {
+        // Format: @grid:{gridFieldKey}:{itemIndex}:{subKey}
+        $parts = explode(':', $path, 4);
+        if (count($parts) !== 4) {
+            return;
+        }
+
+        [, $gridFieldKey, $rawIndex, $subKey] = $parts;
+        $itemIndex = (int) $rawIndex;
+
+        $rawJson = $this->contentValues[$gridFieldKey] ?? '[]';
+        $items = json_decode($rawJson ?: '[]', true) ?: [];
+
+        if (! isset($items[$itemIndex][$subKey])) {
+            return;
+        }
+
+        $sourceContent = (string) $items[$itemIndex][$subKey];
+        if (empty(trim(strip_tags($sourceContent)))) {
+            return;
+        }
+
+        $langNames = collect(\App\Models\Setting::get('site.languages', []))->keyBy('code');
+        $targetLangName = $langNames->get($targetLang, ['label' => strtoupper($targetLang)])['label'];
+        $systemPrompt = 'You are a professional translator. Translate content to ' . $targetLangName . '. Return only the translated text with no explanation. Do not add HTML tags.';
+
+        try {
+            $provider = \App\Models\Setting::get('ai.text_provider', 'claude');
+
+            if ($provider === 'openai') {
+                $apiKey = \App\Models\Setting::get('ai.openai_key', '');
+                $response = Http::withHeaders([
+                    'Authorization' => 'Bearer ' . $apiKey,
+                    'Content-Type' => 'application/json',
+                ])->post('https://api.openai.com/v1/chat/completions', [
+                    'model' => 'gpt-4o-mini',
+                    'max_tokens' => 2048,
+                    'messages' => [
+                        ['role' => 'system', 'content' => $systemPrompt],
+                        ['role' => 'user', 'content' => $sourceContent],
+                    ],
+                ]);
+                $result = $response->failed() ? '' : $response->json('choices.0.message.content', '');
+            } else {
+                $apiKey = \App\Models\Setting::get('ai.claude_key', '');
+                $response = Http::withHeaders([
+                    'x-api-key' => $apiKey,
+                    'anthropic-version' => '2023-06-01',
+                    'content-type' => 'application/json',
+                ])->post('https://api.anthropic.com/v1/messages', [
+                    'model' => 'claude-haiku-4-5-20251001',
+                    'max_tokens' => 2048,
+                    'system' => $systemPrompt,
+                    'messages' => [['role' => 'user', 'content' => $sourceContent]],
+                ]);
+                $result = $response->failed() ? '' : $response->json('content.0.text', '');
+            }
+
+            $result = trim($result);
+
+            if ($result) {
+                $items[$itemIndex][$subKey . '__' . $targetLang] = $result;
+                $newJson = json_encode(array_values($items));
+                $this->contentValues[$gridFieldKey] = $newJson;
+
+                $gridField = collect($this->contentFields)->firstWhere('key', $gridFieldKey);
+                if ($gridField) {
+                    session()->put(
+                        'editor_draft_overrides.' . $gridField['slug'] . ':' . $gridFieldKey,
+                        ['type' => 'grid', 'value' => $newJson]
+                    );
+                }
+                $this->dispatch('content-grid-reset', key: $gridFieldKey, value: $newJson);
+            }
+        } catch (\Exception) {
+            // Continue on individual field failures.
+        }
+    }
+
     public function rewriteAiContent(string $fieldKey, string $fieldType, string $tone): void
     {
         $currentContent = $this->contentValues[$fieldKey] ?? '';
@@ -4180,6 +4648,31 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                             @else
                                 @php
                                     $dlComponents = $this->extractTopLevelComponentsFromBlade($rows[$editingRowIndex]['blade']);
+
+                                    // Detect language suffixes present in the injected variant fields (e.g. '__es', '__fr').
+                                    $injectedLangSuffixes = collect($contentFields)
+                                        ->pluck('key')
+                                        ->filter(fn ($k) => (bool) preg_match('/__[a-z]{2,10}$/', $k))
+                                        ->map(fn ($k) => preg_replace('/^.+(?=__[a-z]{2,10}$)/', '', $k))
+                                        ->unique()
+                                        ->values()
+                                        ->all();
+
+                                    // Expand each component's fieldKeys to include language variant keys so that
+                                    // injected __es / __fr fields appear in the correct sidebar group.
+                                    if (! empty($injectedLangSuffixes)) {
+                                        foreach ($dlComponents as &$dlComp) {
+                                            $expanded = $dlComp['fieldKeys'];
+                                            foreach ($dlComp['fieldKeys'] as $baseKey) {
+                                                foreach ($injectedLangSuffixes as $suffix) {
+                                                    $expanded[] = $baseKey . $suffix;
+                                                }
+                                            }
+                                            $dlComp['fieldKeys'] = array_unique($expanded);
+                                        }
+                                        unset($dlComp);
+                                    }
+
                                     $allComponentFieldKeys = ! empty($dlComponents)
                                         ? array_merge(...array_map(fn ($c) => $c['fieldKeys'], $dlComponents))
                                         : [];
@@ -4456,6 +4949,22 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                                         <flux:icon name="finger-print" class="size-3.5" />
                                     </button>
                                 </flux:tooltip>
+                                @php
+                                    $globalMultiLangs = array_values(array_filter(
+                                        \App\Models\Setting::get('site.languages', [['code' => 'en']]),
+                                        fn ($l) => $l['code'] !== 'en'
+                                    ));
+                                @endphp
+                                @if (! empty($globalMultiLangs) && (\App\Models\Setting::get('ai.claude_key') || \App\Models\Setting::get('ai.openai_key')))
+                                    <flux:tooltip content="Translate all sections" position="bottom">
+                                        <button type="button"
+                                            x-on:click="$dispatch('open-translate-modal', { rowIndex: null, lang: '', rowCount: {{ count($rows) }} }); $flux.modal('translate-options').show()"
+                                            class="p-1 rounded text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors"
+                                        >
+                                            <flux:icon name="language" class="size-3.5" />
+                                        </button>
+                                    </flux:tooltip>
+                                @endif
                             </div>
                         </div>
 
@@ -4553,6 +5062,43 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                                                     :class="panelMode === 'browse' ? 'text-primary' : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 transition-colors'"
                                                 ><flux:icon name="rectangle-stack" class="size-3.5" /></button>
                                             </flux:tooltip>
+                                            @php
+                                                $rowMultiLangs = array_values(array_filter(
+                                                    \App\Models\Setting::get('site.languages', [['code' => 'en']]),
+                                                    fn ($l) => $l['code'] !== 'en'
+                                                ));
+                                            @endphp
+                                            @if (! empty($rowMultiLangs) && (\App\Models\Setting::get('ai.claude_key') || \App\Models\Setting::get('ai.openai_key')))
+                                                <div class="relative" x-data="{ tlOpen: false }" @click.outside="tlOpen = false">
+                                                    <flux:tooltip content="Translate section">
+                                                        <button type="button" @click.stop="tlOpen = !tlOpen"
+                                                            :class="tlOpen ? 'text-primary' : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 transition-colors'"
+                                                        ><flux:icon name="language" class="size-3.5" /></button>
+                                                    </flux:tooltip>
+                                                    <div
+                                                        x-show="tlOpen"
+                                                        x-transition:enter="transition ease-out duration-100"
+                                                        x-transition:enter-start="opacity-0 scale-95"
+                                                        x-transition:enter-end="opacity-100 scale-100"
+                                                        x-transition:leave="transition ease-in duration-75"
+                                                        x-transition:leave-start="opacity-100 scale-100"
+                                                        x-transition:leave-end="opacity-0 scale-95"
+                                                        class="absolute right-0 top-full mt-1 z-20 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg shadow-lg py-1 min-w-40"
+                                                    >
+                                                        <p class="px-3 pt-1 pb-0.5 text-[10px] font-medium text-zinc-400 dark:text-zinc-500 uppercase tracking-wide">Translate to</p>
+                                                        @foreach ($rowMultiLangs as $rl)
+                                                            <button
+                                                                type="button"
+                                                                @click.stop="tlOpen = false; $dispatch('open-translate-modal', { rowIndex: {{ $index }}, lang: '{{ $rl['code'] }}', rowCount: 1 }); $flux.modal('translate-options').show()"
+                                                                class="w-full text-left px-3 py-1.5 text-xs text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-700 transition-colors flex items-center gap-2"
+                                                            >
+                                                                <span>{{ $rl['flag'] }}</span>
+                                                                <span>{{ $rl['label'] }}</span>
+                                                            </button>
+                                                        @endforeach
+                                                    </div>
+                                                </div>
+                                            @endif
                                         @endif
                                         <flux:tooltip :content="!empty($row['hidden']) ? 'Row hidden — click to show' : 'Click to hide row'">
                                             <flux:switch
@@ -5674,6 +6220,149 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
             <flux:modal.close>
                 <flux:button variant="primary" wire:click="applyAutoBemAllRows">Apply</flux:button>
             </flux:modal.close>
+        </div>
+    </flux:modal>
+
+    @php
+        $tlModalLangs = array_values(array_filter(
+            \App\Models\Setting::get('site.languages', [['code' => 'en']]),
+            fn ($l) => $l['code'] !== 'en'
+        ));
+    @endphp
+    <flux:modal name="translate-options" class="w-full max-w-md">
+        <div
+            data-langs="{{ e(json_encode($tlModalLangs)) }}"
+            x-data="{
+                rowIndex: null,
+                rowCount: 0,
+                targetLang: '',
+                mode: 'all',
+                running: false,
+                cancelled: false,
+                total: 0,
+                done: 0,
+                langs: [],
+                init() {
+                    this.langs = JSON.parse(this.$el.dataset.langs || '[]');
+                },
+                get pct() {
+                    return this.total ? Math.round((this.done / this.total) * 100) : 0;
+                },
+                get langLabel() {
+                    const tl = this.targetLang;
+                    const l = this.langs.find(function(x) { return x.code === tl; });
+                    return l ? (l.flag + ' ' + l.label) : tl;
+                },
+                handleOpen(detail) {
+                    this.rowIndex = detail.rowIndex ?? null;
+                    this.rowCount = detail.rowCount ?? 0;
+                    this.targetLang = detail.lang || (this.langs.length === 1 ? this.langs[0].code : '');
+                    this.mode = 'all';
+                    this.running = false;
+                    this.cancelled = false;
+                    this.total = 0;
+                    this.done = 0;
+                },
+                async start() {
+                    if (!this.targetLang) return;
+                    this.running = true;
+                    this.cancelled = false;
+                    this.total = 0;
+                    this.done = 0;
+                    const skipFilled = this.mode === 'empty';
+                    const indices = this.rowIndex !== null
+                        ? [this.rowIndex]
+                        : [...Array(this.rowCount).keys()];
+                    for (const idx of indices) {
+                        if (this.cancelled) break;
+                        const fields = await $wire.prepareTranslation(idx, this.targetLang, skipFilled);
+                        this.total += fields.length;
+                        for (const fieldKey of fields) {
+                            if (this.cancelled) break;
+                            await $wire.translateNextField(fieldKey, this.targetLang);
+                            this.done++;
+                        }
+                    }
+                    if (!this.cancelled) { await $wire.triggerPreviewRefresh(); }
+                    const msg = this.done
+                        ? ('Translated ' + this.done + ' field(s).')
+                        : 'No translatable content found.';
+                    this.running = false;
+                    $flux.modal('translate-options').close();
+                    this.$dispatch('notify', { message: msg });
+                },
+                cancel() { this.cancelled = true; }
+            }"
+            x-on:open-translate-modal.window="handleOpen($event.detail)"
+        >
+            <flux:heading size="lg" x-text="rowIndex !== null ? 'Translate section' : 'Translate all sections'"></flux:heading>
+            <flux:text class="mt-1" x-text="rowIndex !== null ? 'Translate all text fields in this section.' : 'Translate all text fields across every section on this page.'"></flux:text>
+
+            <div class="mt-4 space-y-4" x-show="!running">
+                <div x-show="rowIndex === null">
+                    <flux:label>Translate to</flux:label>
+                    <select x-model="targetLang" class="mt-1 block w-full rounded-lg border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary">
+                        <option value="">Select language…</option>
+                        @foreach ($tlModalLangs as $tl)
+                            <option value="{{ $tl['code'] }}">{{ $tl['flag'] }} {{ $tl['label'] }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div x-show="rowIndex !== null">
+                    <flux:text class="text-sm">Translating to: <span class="font-medium text-zinc-800 dark:text-zinc-200" x-text="langLabel"></span></flux:text>
+                </div>
+                <div>
+                    <flux:label class="mb-2">What to translate</flux:label>
+                    <div class="mt-2 space-y-2.5">
+                        <label class="flex items-start gap-2.5 cursor-pointer">
+                            <input type="radio" x-model="mode" value="all" class="mt-0.5 text-primary shrink-0">
+                            <div>
+                                <span class="text-sm font-medium text-zinc-700 dark:text-zinc-300">Overwrite all</span>
+                                <p class="text-xs text-zinc-400 dark:text-zinc-500">Translate every field, replacing any existing translations</p>
+                            </div>
+                        </label>
+                        <label class="flex items-start gap-2.5 cursor-pointer">
+                            <input type="radio" x-model="mode" value="empty" class="mt-0.5 text-primary shrink-0">
+                            <div>
+                                <span class="text-sm font-medium text-zinc-700 dark:text-zinc-300">Fill empty only</span>
+                                <p class="text-xs text-zinc-400 dark:text-zinc-500">Skip fields that already have a translation</p>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <div x-show="running" class="mt-4 space-y-3">
+                <div class="flex items-center justify-between text-sm">
+                    <span class="text-zinc-600 dark:text-zinc-400">Translating…</span>
+                    <span class="font-medium text-zinc-700 dark:text-zinc-300" x-text="total > 0 ? `${done} / ${total} fields` : 'Preparing…'"></span>
+                </div>
+                <div class="h-2 bg-zinc-100 dark:bg-zinc-700 rounded-full overflow-hidden">
+                    <div
+                        class="h-full bg-primary rounded-full transition-all duration-300 ease-out"
+                        x-bind:style="`width: ${total > 0 ? pct : 0}%`"
+                        x-bind:class="total === 0 ? 'animate-pulse w-full opacity-30' : ''"
+                    ></div>
+                </div>
+                <p class="text-xs text-zinc-400 dark:text-zinc-500">This may take a moment — each field is translated individually.</p>
+            </div>
+
+            <div class="mt-6 flex justify-end gap-3">
+                <template x-if="!running">
+                    <flux:modal.close>
+                        <flux:button variant="ghost">Cancel</flux:button>
+                    </flux:modal.close>
+                </template>
+                <template x-if="running">
+                    <flux:button variant="ghost" @click="cancel()">Stop</flux:button>
+                </template>
+                <flux:button
+                    variant="primary"
+                    x-show="!running"
+                    x-bind:disabled="!targetLang"
+                    @click="start()"
+                >Translate</flux:button>
+            </div>
         </div>
     </flux:modal>
 

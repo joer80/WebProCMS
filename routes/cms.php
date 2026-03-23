@@ -135,3 +135,55 @@ Route::middleware(['auth', 'verified'])->group(function (): void {
 });
 
 require __DIR__.'/settings.php';
+
+// Language-prefixed public page routing (e.g. /es/about serves the same page as /about with Spanish content).
+// This must be registered last so it only catches URLs not matched by other routes.
+Route::get('/{lang}/{path?}', function (string $lang, string $path = '') {
+    $activeLanguages = \App\Models\Setting::get('site.languages', [['code' => 'en']]);
+    $langCodes = array_filter(array_column($activeLanguages, 'code'));
+
+    if (! in_array($lang, $langCodes, true) || $lang === 'en') {
+        abort(404);
+    }
+
+    // Store the active language so content() can resolve translated values.
+    config(['cms.current_language' => $lang]);
+
+    $pathToMatch = '/'.ltrim($path ?: '', '/');
+    $router = app(\Illuminate\Routing\Router::class);
+    $fakeRequest = \Illuminate\Http\Request::create(
+        $pathToMatch,
+        'GET',
+        request()->query->all(),
+        request()->cookies->all(),
+        [],
+        request()->server->all(),
+    );
+    $fakeRequest->server->set('REQUEST_URI', $pathToMatch);
+
+    try {
+        $matchedRoute = $router->getRoutes()->match($fakeRequest);
+    } catch (\Symfony\Component\HttpKernel\Exception\NotFoundHttpException $e) {
+        abort(404);
+    }
+
+    $matchedRoute->bind($fakeRequest);
+
+    // LivewirePageController reads request()->route()->action['livewire_component'], so
+    // we must point the real request's route resolver at the matched route before running it.
+    $realRequest = request();
+    $originalResolver = $realRequest->getRouteResolver();
+    $realRequest->setRouteResolver(fn () => $matchedRoute);
+
+    try {
+        $result = $matchedRoute->run();
+    } finally {
+        $realRequest->setRouteResolver($originalResolver);
+    }
+
+    if ($result instanceof \Symfony\Component\HttpFoundation\Response) {
+        return $result;
+    }
+
+    return response($result);
+})->where(['lang' => '[a-z]{2,10}', 'path' => '.*'])->middleware('web');

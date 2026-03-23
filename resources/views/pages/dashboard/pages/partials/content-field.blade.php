@@ -11,6 +11,10 @@ $isAltField = $field['type'] === 'text' && str_ends_with($field['key'], '_alt');
 $showShortcodeBtn = ($field['type'] === 'text' && ! str_ends_with($field['key'], '_url') && ! str_ends_with($field['key'], '_htag') && ! $isAltField) || $field['key'] === 'subheadline';
 $pageTypeSlug = preg_match('#^pages/([^/]+)/⚡show\.blade\.php$#u', $file ?? '', $ptm) ? $ptm[1] : '';
 $aiEnabled = (bool) (\App\Models\Setting::get('ai.claude_key') || \App\Models\Setting::get('ai.openai_key'));
+// Language translation: detect if this is a non-English variant field (key ends with __xx).
+$isLangVariant = (bool) preg_match('/__([a-z]{2,10})$/', $field['key'], $_langMatch);
+$fieldLangCode = $isLangVariant ? $_langMatch[1] : null;
+$showTranslateBtn = $isLangVariant && $aiEnabled && in_array($field['type'], ['text', 'richtext'], true);
 $showAiBtn = $aiEnabled && ! $isAltField && ($showShortcodeBtn || $field['type'] === 'richtext' || $field['type'] === 'classes');
 $showAiRewriteBtn = $aiEnabled && ! $isAltField && ($showShortcodeBtn || $field['type'] === 'richtext');
 $showAiAltBtn = $aiEnabled && $isAltField;
@@ -185,6 +189,14 @@ if ($field['type'] === 'classes') {
                         ><flux:icon name="sparkles" class="size-3.5" /></button>
                     </flux:tooltip>
                 @endif
+                @if ($showTranslateBtn)
+                    <flux:tooltip content="Translate from English with AI" position="bottom">
+                        <button type="button"
+                            wire:click="translateField('{{ $field['key'] }}', 'en', '{{ $fieldLangCode }}')"
+                            class="text-zinc-400 dark:text-zinc-500 hover:text-primary dark:hover:text-primary transition-colors"
+                        ><flux:icon name="language" class="size-3.5" /></button>
+                    </flux:tooltip>
+                @endif
                 @if ($field['type'] === 'grid')
                     <button wire:click="clearGridItems('{{ $field['key'] }}')" type="button" class="text-xs text-zinc-400 dark:text-zinc-500 hover:text-red-500 dark:hover:text-red-400 transition-colors">Remove All</button>
                 @endif
@@ -325,12 +337,43 @@ if ($field['type'] === 'classes') {
             $gridItems = json_decode($gridRaw, true) ?: [];
             $gridDefaultItems = json_decode($field['default'], true) ?: [];
             $gridKeys = !empty($gridItems) ? array_keys($gridItems[0]) : (!empty($gridDefaultItems) ? array_keys($gridDefaultItems[0]) : []);
+
+            // Expand keys with language variant suffixes for translatable sub-fields.
+            $gridLangs = array_values(array_filter(
+                \App\Models\Setting::get('site.languages', [['code' => 'en']]),
+                fn ($l) => $l['code'] !== 'en'
+            ));
+            $gridNonTranslatableKey = function (string $k): bool {
+                if (in_array($k, ['icon', 'image', 'alt', 'url'], true)) {
+                    return true;
+                }
+                if (str_starts_with($k, 'toggle_')) {
+                    return true;
+                }
+                if (str_ends_with($k, '_image') || str_ends_with($k, '_alt') || str_ends_with($k, '_url')) {
+                    return true;
+                }
+                return false;
+            };
+            $expandedGridKeys = [];
+            foreach ($gridKeys as $gk) {
+                // Skip existing lang variant keys (they'll be expanded from base keys).
+                if (str_contains($gk, '__')) {
+                    continue;
+                }
+                $expandedGridKeys[] = $gk;
+                if (! $gridNonTranslatableKey($gk)) {
+                    foreach ($gridLangs as $gl) {
+                        $expandedGridKeys[] = $gk . '__' . $gl['code'];
+                    }
+                }
+            }
         @endphp
         <div
             wire:ignore
             x-data="{
                 items: {{ json_encode($gridItems) }},
-                keys: {{ json_encode($gridKeys) }},
+                keys: {{ json_encode($expandedGridKeys) }},
                 openItems: {},
                 generatingAlt: {},
                 sync() {
@@ -354,6 +397,17 @@ if ($field['type'] === 'classes') {
                     if (!imagePath) { alert('No image found. Please upload an image first.'); return; }
                     this.generatingAlt = { ...this.generatingAlt, [idx + '-' + fKey]: true };
                     $wire.call('generateAiGridItemAltText', '{{ $field['key'] }}', idx, fKey, imagePath);
+                },
+                keyLabel(fKey) {
+                    const parts = fKey.split('__');
+                    if (parts.length === 2 && parts[1].length >= 2 && parts[1].length <= 10) {
+                        return parts[0].replace(/_/g, ' ') + ' (' + parts[1].toUpperCase() + ')';
+                    }
+                    return fKey.replace(/_/g, ' ');
+                },
+                isTextareaKey(fKey) {
+                    const base = fKey.split('__')[0];
+                    return base === 'desc' || base === 'description' || base === 'answer' || base === 'a';
                 }
             }"
             x-on:content-grid-reset.window="if ($event.detail.key === '{{ $field['key'] }}') {
@@ -394,7 +448,7 @@ if ($field['type'] === 'classes') {
                     <template x-for="fKey in keys" :key="fKey">
                         <div>
                             <div class="flex items-center justify-between mb-1">
-                                <p class="text-[10px] uppercase tracking-wider font-semibold text-zinc-500 dark:text-zinc-400" x-text="fKey"></p>
+                                <p class="text-[10px] uppercase tracking-wider font-semibold text-zinc-500 dark:text-zinc-400" x-text="keyLabel(fKey)"></p>
                                 @if ($aiEnabled)
                                     <flux:tooltip content="Generate alt text from image" position="bottom">
                                         <button
@@ -487,7 +541,7 @@ if ($field['type'] === 'classes') {
                                     </div>
                                 </div>
                             </template>
-                            <template x-if="fKey === 'desc' || fKey === 'description' || fKey === 'answer' || fKey === 'a'">
+                            <template x-if="isTextareaKey(fKey)">
                                 <textarea
                                     :value="item[fKey]"
                                     @change="updateField(idx, fKey, $event.target.value)"
@@ -519,7 +573,7 @@ if ($field['type'] === 'classes') {
                                     class="w-full text-sm rounded-lg border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-900 text-zinc-900 dark:text-white px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition"
                                 />
                             </template>
-                            <template x-if="fKey !== 'icon' && fKey !== 'desc' && fKey !== 'description' && fKey !== 'answer' && fKey !== 'a' && fKey !== 'image' && !fKey.endsWith('_image') && !fKey.endsWith('_alt') && fKey !== 'alt'">
+                            <template x-if="fKey !== 'icon' && !isTextareaKey(fKey) && fKey !== 'image' && !fKey.endsWith('_image') && !fKey.endsWith('_alt') && fKey !== 'alt'">
                                 <input
                                     :value="item[fKey]"
                                     @change="updateField(idx, fKey, $event.target.value)"

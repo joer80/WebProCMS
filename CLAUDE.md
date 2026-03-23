@@ -865,6 +865,25 @@ This avoids both issues: `"'[^']*'"` is a double-quoted string containing single
 
 When asked to update many design library rows at once (e.g. "make all classes editable"), **skip directly to a single Task subagent call** (subagent_type: `general-purpose`). Do NOT attempt Read → Write/Edit in the main context — context compression causes the "File has not been read yet" error on Write/Edit even after successful reads. The subagent has fresh context, reads and writes files without that issue, and handles all files in one shot. Provide the full list of files and required changes in the prompt.
 
+### Complex Alpine `x-data` in Livewire Components: Two Hard Rules
+
+**1. Never use `>` or `=>` inside an `x-data` attribute value.**
+
+Livewire's internal HTML parser treats `>` as a tag-closing character even inside quoted attribute values. A comparison like `this.total > 0` or an arrow function `l => l.code` inside `x-data="..."` will silently truncate the attribute at that character — the rest of the JS becomes visible text content in the modal/element. Fix by replacing:
+- `value > 0` → `value` (truthy) or `value !== 0`
+- `arr.find(x => x.id === id)` → `arr.find(function(x) { return x.id === id; })`
+
+**2. Never put Blade directives (`@json`, `@php`, etc.) inside `<script>` tags in Livewire component views.**
+
+Vite extracts inline `<script>` blocks from Blade files during compilation and bundles them as plain JavaScript — without running them through PHP. Blade directives like `@json($var)` become literal text in the compiled bundle, causing a `SyntaxError: Invalid or unexpected token` at runtime.
+
+**To pass PHP data into Alpine:** use a `data-*` attribute on the element and read it in `init()`:
+```html
+<div data-langs="{{ e(json_encode($langs)) }}" x-data="{ langs: [], init() { this.langs = JSON.parse(this.$el.dataset.langs || '[]'); } }">
+```
+
+**To register Alpine components (Alpine.data):** do it in the Vite JS entry file, not in a `<script>` tag inside a Blade component. Inline `<script>` blocks also have timing issues — `alpine:init` may have already fired before they run.
+
 ### Tiptap Rich Text Editor (Alpine + Livewire)
 
 Tiptap (`@tiptap/core`, `@tiptap/starter-kit`) is the rich text editor used in this project. These rules must be followed every time Tiptap is integrated:

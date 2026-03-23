@@ -65,6 +65,22 @@ if (! function_exists('content')) {
             }
         }
 
+        // Language-aware lookup: try the translated key first, fall back to the default key.
+        $currentLang = config('cms.current_language', 'en');
+        if ($currentLang && $currentLang !== 'en') {
+            $langKey = $key.'__'.$currentLang;
+            $langValue = app(ContentCache::class)->get($slug, $langKey);
+
+            if ($langValue !== null && $langValue !== '') {
+                return match ($resolvedType) {
+                    'image' => Storage::url($langValue),
+                    'richtext' => ShortcodeProcessor::containsShortcodes($langValue) ? ShortcodeProcessor::processRaw($langValue) : $langValue,
+                    'text' => ShortcodeProcessor::containsShortcodes($langValue) ? ShortcodeProcessor::processRaw($langValue) : $langValue,
+                    default => $langValue,
+                };
+            }
+        }
+
         $value = app(ContentCache::class)->get($slug, $key);
 
         if ($value === null) {
