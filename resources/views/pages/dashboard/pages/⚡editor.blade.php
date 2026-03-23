@@ -2532,6 +2532,79 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
         }
     }
 
+    public function rewriteAiContent(string $fieldKey, string $fieldType, string $tone): void
+    {
+        $currentContent = $this->contentValues[$fieldKey] ?? '';
+
+        if (empty(trim(strip_tags((string) $currentContent)))) {
+            $this->dispatch('ai-generate-error', fieldKey: $fieldKey, message: 'No content to rewrite. Add some text first.');
+
+            return;
+        }
+
+        $provider = \App\Models\Setting::get('ai.text_provider', 'claude');
+        $isRichText = $fieldType === 'richtext';
+
+        $toneInstruction = match ($tone) {
+            'proof' => 'Proofread and lightly edit the following text to fix grammar, spelling, punctuation, and clarity issues. Preserve the original meaning, voice, and length as closely as possible.',
+            'professional' => 'Rewrite the following text in a professional, polished tone suitable for a business audience. Keep the core message.',
+            'casual' => 'Rewrite the following text in a casual, conversational tone. Make it feel approachable and natural.',
+            'playful' => 'Rewrite the following text in a playful, fun, and energetic tone. Add personality while keeping the core message.',
+            default => 'Rewrite the following text.',
+        };
+
+        $systemPrompt = $isRichText
+            ? "You are a content editor. {$toneInstruction} The content is HTML — preserve the HTML structure and tags, only modify the text nodes. Return only the HTML, no markdown code fences, no explanation."
+            : "You are a content editor. {$toneInstruction} Return only the rewritten text, no quotes, no explanation.";
+
+        try {
+            if ($provider === 'openai') {
+                $apiKey = \App\Models\Setting::get('ai.openai_key', '');
+                $response = Http::withHeaders([
+                    'Authorization' => 'Bearer '.$apiKey,
+                    'Content-Type' => 'application/json',
+                ])->post('https://api.openai.com/v1/chat/completions', [
+                    'model' => 'gpt-4o-mini',
+                    'max_tokens' => 1024,
+                    'messages' => [
+                        ['role' => 'system', 'content' => $systemPrompt],
+                        ['role' => 'user', 'content' => $currentContent],
+                    ],
+                ]);
+
+                if ($response->failed()) {
+                    throw new \Exception($response->json('error.message') ?? 'OpenAI API error.');
+                }
+
+                $content = $response->json('choices.0.message.content', '');
+            } else {
+                $apiKey = \App\Models\Setting::get('ai.claude_key', '');
+                $response = Http::withHeaders([
+                    'x-api-key' => $apiKey,
+                    'anthropic-version' => '2023-06-01',
+                    'content-type' => 'application/json',
+                ])->post('https://api.anthropic.com/v1/messages', [
+                    'model' => 'claude-haiku-4-5-20251001',
+                    'max_tokens' => 1024,
+                    'system' => $systemPrompt,
+                    'messages' => [
+                        ['role' => 'user', 'content' => $currentContent],
+                    ],
+                ]);
+
+                if ($response->failed()) {
+                    throw new \Exception($response->json('error.message') ?? 'Claude API error.');
+                }
+
+                $content = $response->json('content.0.text', '');
+            }
+
+            $this->dispatch('ai-content-generated', fieldKey: $fieldKey, content: $content);
+        } catch (\Exception $e) {
+            $this->dispatch('ai-generate-error', fieldKey: $fieldKey, message: $e->getMessage());
+        }
+    }
+
     public function generateAiGridItemAltText(string $gridKey, int $idx, string $altKey, string $imagePath): void
     {
         if (empty($imagePath)) {

@@ -12,6 +12,7 @@ $showShortcodeBtn = ($field['type'] === 'text' && ! str_ends_with($field['key'],
 $pageTypeSlug = preg_match('#^pages/([^/]+)/⚡show\.blade\.php$#u', $file ?? '', $ptm) ? $ptm[1] : '';
 $aiEnabled = (bool) (\App\Models\Setting::get('ai.claude_key') || \App\Models\Setting::get('ai.openai_key'));
 $showAiBtn = $aiEnabled && ! $isAltField && ($showShortcodeBtn || $field['type'] === 'richtext' || $field['type'] === 'classes');
+$showAiRewriteBtn = $aiEnabled && ! $isAltField && ($showShortcodeBtn || $field['type'] === 'richtext');
 $showAiAltBtn = $aiEnabled && $isAltField;
 $aiImageEnabled = (bool) \App\Models\Setting::get('ai.openai_key');
 $showAiImageBtn = $aiImageEnabled && $field['type'] === 'image';
@@ -103,7 +104,7 @@ if ($field['type'] === 'classes') {
                         title="Generate with AI"
                     ><flux:icon name="sparkles" class="size-3.5" /></button>
                 @endif
-                <button wire:click="resetClassesField('{{ $field['key'] }}')" type="button" class="text-xs text-zinc-400 dark:text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 transition-colors">Reset</button>
+                <button wire:click="resetClassesField('{{ $field['key'] }}')" type="button" class="text-zinc-400 dark:text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 transition-colors" title="Reset"><flux:icon name="arrow-path" class="size-3.5" /></button>
             </div>
         </div>
     @elseif (! in_array($field['type'], ['toggle', 'note']))
@@ -123,6 +124,35 @@ if ($field['type'] === 'classes') {
                         class="text-zinc-400 dark:text-zinc-500 hover:text-primary dark:hover:text-primary transition-colors"
                         title="Insert dummy text"
                     ><flux:icon name="document-text" class="size-3.5" /></button>
+                @endif
+                @if ($showAiRewriteBtn)
+                    <div class="relative" x-data="{ open: false }" @click.away="open = false">
+                        <button
+                            type="button"
+                            @click="open = !open"
+                            class="text-zinc-400 dark:text-zinc-500 hover:text-primary dark:hover:text-primary transition-colors"
+                            title="Rewrite with AI"
+                        ><flux:icon name="light-bulb" class="size-3.5" /></button>
+                        <div
+                            x-show="open"
+                            x-transition:enter="transition ease-out duration-100"
+                            x-transition:enter-start="opacity-0 scale-95"
+                            x-transition:enter-end="opacity-100 scale-100"
+                            x-transition:leave="transition ease-in duration-75"
+                            x-transition:leave-start="opacity-100 scale-100"
+                            x-transition:leave-end="opacity-0 scale-95"
+                            class="absolute right-0 top-full mt-1 z-20 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg shadow-lg py-1 min-w-37"
+                        >
+                            <p class="px-3 pt-1 pb-0.5 text-[10px] font-medium text-zinc-400 dark:text-zinc-500 uppercase tracking-wide">Rewrite as</p>
+                            @foreach (['proof' => 'Proof Only', 'professional' => 'Professional', 'casual' => 'Casual', 'playful' => 'Playful'] as $toneKey => $toneLabel)
+                                <button
+                                    type="button"
+                                    @click="open = false; window.dispatchEvent(new CustomEvent('open-ai-rewrite', { detail: { fieldKey: '{{ $field['key'] }}', fieldType: '{{ $field['type'] }}', fieldLabel: '{{ addslashes($field['label']) }}', tone: '{{ $toneKey }}', toneLabel: '{{ $toneLabel }}' }, bubbles: true }))"
+                                    class="w-full text-left px-3 py-1.5 text-xs text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-700 transition-colors"
+                                >{{ $toneLabel }}</button>
+                            @endforeach
+                        </div>
+                    </div>
                 @endif
                 @if ($showAiBtn)
                     <button type="button"
@@ -148,7 +178,7 @@ if ($field['type'] === 'classes') {
                 @if ($field['type'] === 'grid')
                     <button wire:click="clearGridItems('{{ $field['key'] }}')" type="button" class="text-xs text-zinc-400 dark:text-zinc-500 hover:text-red-500 dark:hover:text-red-400 transition-colors">Remove All</button>
                 @endif
-                <button wire:click="resetContentField('{{ $field['key'] }}')" type="button" class="text-xs text-zinc-400 dark:text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 transition-colors">Reset</button>
+                <button wire:click="resetContentField('{{ $field['key'] }}')" type="button" class="text-zinc-400 dark:text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 transition-colors" title="Reset"><flux:icon name="arrow-path" class="size-3.5" /></button>
             </div>
         </div>
     @endif
@@ -507,7 +537,7 @@ if ($field['type'] === 'classes') {
         <div class="flex items-center gap-2">
             <flux:switch wire:model.live="contentValues.{{ $field['key'] }}" />
             <span class="text-sm text-zinc-500 dark:text-zinc-400">{{ $field['label'] }}</span>
-            <button wire:click="resetContentField('{{ $field['key'] }}')" type="button" class="ml-auto text-xs text-zinc-400 dark:text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 transition-colors">Reset</button>
+            <button wire:click="resetContentField('{{ $field['key'] }}')" type="button" class="ml-auto text-zinc-400 dark:text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 transition-colors" title="Reset"><flux:icon name="arrow-path" class="size-3.5" /></button>
         </div>
     @elseif (str_ends_with($field['key'], '_htag'))
         <flux:select wire:model.live="contentValues.{{ $field['key'] }}">

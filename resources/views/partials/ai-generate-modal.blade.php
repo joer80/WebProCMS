@@ -1,11 +1,14 @@
 <div
     x-data="{
         open: false,
+        mode: 'generate',
         fieldKey: null,
         fieldType: null,
         fieldLabel: '',
         currentClasses: '',
         prompt: '',
+        tone: '',
+        toneLabel: '',
         generating: false,
         error: '',
         async generate() {
@@ -19,7 +22,8 @@
             }
         }
     }"
-    @open-ai-generate.window="open = true; fieldKey = $event.detail.fieldKey; fieldType = $event.detail.fieldType; fieldLabel = $event.detail.fieldLabel || ''; currentClasses = $event.detail.currentClasses || ''; prompt = ''; error = ''; if ($event.detail.fieldType === 'alt') { generating = true; $wire.generateAiAltText($event.detail.fieldKey, $event.detail.imageFieldKey); }"
+    @open-ai-generate.window="open = true; mode = 'generate'; fieldKey = $event.detail.fieldKey; fieldType = $event.detail.fieldType; fieldLabel = $event.detail.fieldLabel || ''; currentClasses = $event.detail.currentClasses || ''; prompt = ''; tone = ''; toneLabel = ''; error = ''; if ($event.detail.fieldType === 'alt') { generating = true; $wire.generateAiAltText($event.detail.fieldKey, $event.detail.imageFieldKey); }"
+    @open-ai-rewrite.window="open = true; mode = 'rewrite'; fieldKey = $event.detail.fieldKey; fieldType = $event.detail.fieldType; fieldLabel = $event.detail.fieldLabel || ''; tone = $event.detail.tone; toneLabel = $event.detail.toneLabel; prompt = ''; currentClasses = ''; error = ''; generating = true; $wire.rewriteAiContent($event.detail.fieldKey, $event.detail.fieldType, $event.detail.tone);"
     @ai-content-generated.window="if ($event.detail.fieldKey === fieldKey) { open = false; generating = false; prompt = ''; }"
     @ai-image-generated.window="if ($event.detail.fieldKey === fieldKey) { open = false; generating = false; prompt = ''; }"
     @ai-generate-error.window="if ($event.detail.fieldKey === fieldKey) { error = $event.detail.message; generating = false; }"
@@ -34,8 +38,8 @@
         {{-- Header --}}
         <div class="flex items-center justify-between px-5 py-4 border-b border-zinc-200 dark:border-zinc-700">
             <div>
-                <h2 class="text-base font-semibold text-zinc-900 dark:text-zinc-100">Generate with AI</h2>
-                <p class="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5" x-text="fieldLabel ? 'Generating for: ' + fieldLabel : 'Enter a prompt to generate content.'"></p>
+                <h2 class="text-base font-semibold text-zinc-900 dark:text-zinc-100" x-text="mode === 'rewrite' ? 'Rewrite with AI' : 'Generate with AI'"></h2>
+                <p class="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5" x-text="mode === 'rewrite' ? (fieldLabel ? 'Rewriting: ' + fieldLabel : 'Rewriting content…') : (fieldLabel ? 'Generating for: ' + fieldLabel : 'Enter a prompt to generate content.')"></p>
             </div>
             <button type="button" @click="if (!generating) open = false" class="text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 transition-colors">
                 <flux:icon name="x-mark" class="size-5" />
@@ -44,7 +48,16 @@
 
         {{-- Body --}}
         <div class="p-5 space-y-4">
-            <div x-show="fieldType === 'alt'" class="py-2 text-center">
+            <div x-show="mode === 'rewrite'" class="py-2 text-center">
+                <div class="flex items-center justify-center gap-2 text-sm text-zinc-600 dark:text-zinc-400">
+                    <svg x-show="generating" class="size-4 animate-spin shrink-0" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    <span x-show="generating" x-text="'Rewriting as ' + toneLabel + '…'"></span>
+                </div>
+            </div>
+            <div x-show="fieldType === 'alt' && mode === 'generate'" class="py-2 text-center">
                 <div class="flex items-center justify-center gap-2 text-sm text-zinc-600 dark:text-zinc-400">
                     <svg class="size-4 animate-spin shrink-0" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
@@ -53,7 +66,7 @@
                     <span>Analyzing image for alt text…</span>
                 </div>
             </div>
-            <div x-show="fieldType !== 'alt'">
+            <div x-show="mode === 'generate' && fieldType !== 'alt'">
                 <label class="text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1.5 block">Prompt</label>
                 <textarea
                     x-model="prompt"
@@ -79,7 +92,7 @@
                 class="text-sm text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 transition-colors disabled:opacity-50"
             >Cancel</button>
             <button
-                x-show="fieldType !== 'alt'"
+                x-show="mode === 'generate' && fieldType !== 'alt'"
                 type="button"
                 @click="generate()"
                 :disabled="generating || !prompt.trim()"
