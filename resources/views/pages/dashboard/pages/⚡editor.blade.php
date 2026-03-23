@@ -2823,17 +2823,25 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                 throw new \Exception('Failed to download generated image.');
             }
 
-            $defaultCategory = \App\Models\MediaCategory::where('is_default', true)->first()
-                ?? \App\Models\MediaCategory::first();
+            $isRowBg = str_starts_with($fieldKey, 'row-design-bg:');
 
-            $categorySlug = $defaultCategory?->slug ?? 'uncategorized';
+            if ($isRowBg) {
+                $category = \App\Models\MediaCategory::where('slug', 'backgrounds')->first()
+                    ?? \App\Models\MediaCategory::where('is_default', true)->first()
+                    ?? \App\Models\MediaCategory::first();
+            } else {
+                $category = \App\Models\MediaCategory::where('is_default', true)->first()
+                    ?? \App\Models\MediaCategory::first();
+            }
+
+            $categorySlug = $category?->slug ?? 'uncategorized';
             $filename = 'ai-' . now()->format('YmdHis') . '-' . substr(md5($prompt), 0, 6) . '.jpg';
             $storagePath = $categorySlug . '/' . $filename;
 
             \Illuminate\Support\Facades\Storage::disk('public')->put($storagePath, $imageResponse->body());
 
             \App\Models\MediaItem::create([
-                'media_category_id' => $defaultCategory?->id,
+                'media_category_id' => $category?->id,
                 'path' => $storagePath,
                 'filename' => $filename,
                 'alt' => $prompt,
@@ -2841,11 +2849,20 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                 'mime_type' => 'image/jpeg',
             ]);
 
-            $this->contentValues[$fieldKey] = $storagePath;
+            if ($isRowBg) {
+                $slug = substr($fieldKey, 14);
+                $this->rowDesignValues[$slug]['section_bg_image'] = $storagePath;
 
-            $field = collect($this->contentFields)->firstWhere('key', $fieldKey);
-            if ($field) {
-                session()->put('editor_draft_overrides.'.$field['slug'].':'.$fieldKey, ['type' => 'image', 'value' => $storagePath]);
+                $drafts = session('editor_draft_overrides', []);
+                $drafts[$slug.':section_bg_image'] = ['type' => 'image', 'value' => $storagePath];
+                session(['editor_draft_overrides' => $drafts]);
+            } else {
+                $this->contentValues[$fieldKey] = $storagePath;
+
+                $field = collect($this->contentFields)->firstWhere('key', $fieldKey);
+                if ($field) {
+                    session()->put('editor_draft_overrides.'.$field['slug'].':'.$fieldKey, ['type' => 'image', 'value' => $storagePath]);
+                }
             }
 
             $this->isDirty = true;
@@ -4062,7 +4079,18 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                                         <div x-show="panelMode !== null" x-collapse class="border-t border-zinc-200 dark:border-zinc-700">
                                             {{-- Content mode: background image --}}
                                             <div x-show="panelMode === 'content'" class="p-3 space-y-2">
-                                                <span class="text-[11px] uppercase tracking-wider font-semibold text-zinc-500 dark:text-zinc-400 block">Background Image</span>
+                                                @php $aiRowBgEnabled = (bool) \App\Models\Setting::get('ai.openai_key'); @endphp
+                                                <div class="flex items-center justify-between">
+                                                    <span class="text-[11px] uppercase tracking-wider font-semibold text-zinc-500 dark:text-zinc-400">Background Image</span>
+                                                    @if ($aiRowBgEnabled)
+                                                        <button
+                                                            type="button"
+                                                            onclick="window.dispatchEvent(new CustomEvent('open-ai-generate', { detail: { fieldKey: 'row-design-bg:{{ $row['slug'] }}', fieldType: 'image', fieldLabel: 'Background Image' } }))"
+                                                            class="text-zinc-400 dark:text-zinc-500 hover:text-primary dark:hover:text-primary transition-colors"
+                                                            title="Generate background image with AI"
+                                                        ><flux:icon name="sparkles" class="size-3.5" /></button>
+                                                    @endif
+                                                </div>
                                                 @if (($rowDesignValues[$row['slug']]['section_bg_image'] ?? '') !== '')
                                                     <div class="relative inline-block">
                                                         <img
