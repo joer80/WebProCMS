@@ -76,7 +76,14 @@
       "WebSearch",
       "Bash(head -50 /Users/joepersonal/Sites/WebProCMS/app/Models/*.php)",
       "Bash(curl -s -o /dev/null -w \"%{http_code}\" \"https://webprocms.test/es/about\")",
-      "Bash(curl -sk -o /dev/null -w \"%{http_code}\" \"https://webprocms.test/es/about\")"
+      "Bash(curl -sk -o /dev/null -w \"%{http_code}\" \"https://webprocms.test/es/about\")",
+      "Bash(sed -i '' \"s/''model'' => ''gpt-4o-mini''/''model'' => \\\\\\\\App\\\\\\\\Models\\\\\\\\Setting::get\\(''ai.openai_model'', ''gpt-4o-mini''\\)/g\" \"/Users/joepersonal/Sites/WebProCMS/resources/views/pages/dashboard/pages/⚡editor.blade.php\")",
+      "Bash(sed -i '' \"s/''model'' => ''claude-haiku-4-5-20251001''/''model'' => \\\\\\\\App\\\\\\\\Models\\\\\\\\Setting::get\\(''ai.claude_model'', ''claude-haiku-4-5-20251001''\\)/g\" \"/Users/joepersonal/Sites/WebProCMS/resources/views/pages/dashboard/pages/⚡editor.blade.php\")",
+      "Bash(sed -i '' \"s/''model'' => ''gpt-4o-mini''/''model'' => \\\\\\\\App\\\\\\\\Models\\\\\\\\Setting::get\\(''ai.openai_model'', ''gpt-4o-mini''\\)/g\" \"/Users/joepersonal/Sites/WebProCMS/resources/views/pages/dashboard/media-library/⚡index.blade.php\" \"/Users/joepersonal/Sites/WebProCMS/resources/views/pages/dashboard/media-library/⚡picker.blade.php\")",
+      "Bash(sed -i '' \"s/''model'' => ''claude-haiku-4-5-20251001''/''model'' => \\\\\\\\App\\\\\\\\Models\\\\\\\\Setting::get\\(''ai.claude_model'', ''claude-haiku-4-5-20251001''\\)/g\" \"/Users/joepersonal/Sites/WebProCMS/resources/views/pages/dashboard/media-library/⚡index.blade.php\" \"/Users/joepersonal/Sites/WebProCMS/resources/views/pages/dashboard/media-library/⚡picker.blade.php\")",
+      "Bash(for f:*)",
+      "Bash(sed -i '' \"s/Setting::get\\(''ai\\\\.claude_model'', ''claude-haiku-4-5-20251001''\\)/Setting::get\\(''ai.claude_model''\\)/g\" \"$f\")",
+      "Bash(sed -i '' \"s/Setting::get\\(''ai\\\\.openai_model'', ''gpt-4o-mini''\\)/Setting::get\\(''ai.openai_model''\\)/g\" \"$f\")"
     ]
   },
   "defaultMode": "acceptEdits"

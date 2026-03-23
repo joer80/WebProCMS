@@ -192,7 +192,7 @@ new class extends Component {
                     'Authorization' => 'Bearer ' . $apiKey,
                     'Content-Type' => 'application/json',
                 ])->post('https://api.openai.com/v1/chat/completions', [
-                    'model' => 'gpt-4o-mini',
+                    'model' => \App\Models\Setting::get('ai.openai_model'),
                     'max_tokens' => 100,
                     'messages' => [[
                         'role' => 'user',
@@ -211,7 +211,7 @@ new class extends Component {
                     'anthropic-version' => '2023-06-01',
                     'content-type' => 'application/json',
                 ])->post('https://api.anthropic.com/v1/messages', [
-                    'model' => 'claude-haiku-4-5-20251001',
+                    'model' => \App\Models\Setting::get('ai.claude_model'),
                     'max_tokens' => 100,
                     'messages' => [[
                         'role' => 'user',

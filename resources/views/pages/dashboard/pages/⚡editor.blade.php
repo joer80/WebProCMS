@@ -2791,7 +2791,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                     'Authorization' => 'Bearer ' . $apiKey,
                     'Content-Type' => 'application/json',
                 ])->post('https://api.openai.com/v1/chat/completions', [
-                    'model' => 'gpt-4o-mini',
+                    'model' => \App\Models\Setting::get('ai.openai_model'),
                     'max_tokens' => 1024,
                     'messages' => [
                         ['role' => 'system', 'content' => $systemPrompt],
@@ -2811,7 +2811,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                     'anthropic-version' => '2023-06-01',
                     'content-type' => 'application/json',
                 ])->post('https://api.anthropic.com/v1/messages', [
-                    'model' => 'claude-haiku-4-5-20251001',
+                    'model' => \App\Models\Setting::get('ai.claude_model'),
                     'max_tokens' => 1024,
                     'system' => $systemPrompt,
                     'messages' => [
@@ -2882,7 +2882,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                     'Authorization' => 'Bearer ' . $apiKey,
                     'Content-Type' => 'application/json',
                 ])->post('https://api.openai.com/v1/chat/completions', [
-                    'model' => 'gpt-4o-mini',
+                    'model' => \App\Models\Setting::get('ai.openai_model'),
                     'max_tokens' => 2048,
                     'messages' => [
                         ['role' => 'system', 'content' => $systemPrompt],
@@ -2902,7 +2902,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                     'anthropic-version' => '2023-06-01',
                     'content-type' => 'application/json',
                 ])->post('https://api.anthropic.com/v1/messages', [
-                    'model' => 'claude-haiku-4-5-20251001',
+                    'model' => \App\Models\Setting::get('ai.claude_model'),
                     'max_tokens' => 2048,
                     'system' => $systemPrompt,
                     'messages' => [
@@ -2976,7 +2976,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                         'Authorization' => 'Bearer ' . $apiKey,
                         'Content-Type' => 'application/json',
                     ])->post('https://api.openai.com/v1/chat/completions', [
-                        'model' => 'gpt-4o-mini',
+                        'model' => \App\Models\Setting::get('ai.openai_model'),
                         'max_tokens' => 2048,
                         'messages' => [
                             ['role' => 'system', 'content' => $systemPrompt],
@@ -2992,7 +2992,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                         'anthropic-version' => '2023-06-01',
                         'content-type' => 'application/json',
                     ])->post('https://api.anthropic.com/v1/messages', [
-                        'model' => 'claude-haiku-4-5-20251001',
+                        'model' => \App\Models\Setting::get('ai.claude_model'),
                         'max_tokens' => 2048,
                         'system' => $systemPrompt,
                         'messages' => [['role' => 'user', 'content' => (string) $sourceContent]],
@@ -3164,7 +3164,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                     'Authorization' => 'Bearer ' . $apiKey,
                     'Content-Type' => 'application/json',
                 ])->post('https://api.openai.com/v1/chat/completions', [
-                    'model' => 'gpt-4o-mini',
+                    'model' => \App\Models\Setting::get('ai.openai_model'),
                     'max_tokens' => 2048,
                     'messages' => [
                         ['role' => 'system', 'content' => $systemPrompt],
@@ -3179,7 +3179,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                     'anthropic-version' => '2023-06-01',
                     'content-type' => 'application/json',
                 ])->post('https://api.anthropic.com/v1/messages', [
-                    'model' => 'claude-haiku-4-5-20251001',
+                    'model' => \App\Models\Setting::get('ai.claude_model'),
                     'max_tokens' => 2048,
                     'system' => $systemPrompt,
                     'messages' => [['role' => 'user', 'content' => (string) $sourceContent]],
@@ -3237,7 +3237,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                     'Authorization' => 'Bearer ' . $apiKey,
                     'Content-Type' => 'application/json',
                 ])->post('https://api.openai.com/v1/chat/completions', [
-                    'model' => 'gpt-4o-mini',
+                    'model' => \App\Models\Setting::get('ai.openai_model'),
                     'max_tokens' => 2048,
                     'messages' => [
                         ['role' => 'system', 'content' => $systemPrompt],
@@ -3252,7 +3252,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                     'anthropic-version' => '2023-06-01',
                     'content-type' => 'application/json',
                 ])->post('https://api.anthropic.com/v1/messages', [
-                    'model' => 'claude-haiku-4-5-20251001',
+                    'model' => \App\Models\Setting::get('ai.claude_model'),
                     'max_tokens' => 2048,
                     'system' => $systemPrompt,
                     'messages' => [['role' => 'user', 'content' => $sourceContent]],
@@ -3313,7 +3313,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                     'Authorization' => 'Bearer '.$apiKey,
                     'Content-Type' => 'application/json',
                 ])->post('https://api.openai.com/v1/chat/completions', [
-                    'model' => 'gpt-4o-mini',
+                    'model' => \App\Models\Setting::get('ai.openai_model'),
                     'max_tokens' => 1024,
                     'messages' => [
                         ['role' => 'system', 'content' => $systemPrompt],
@@ -3333,7 +3333,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                     'anthropic-version' => '2023-06-01',
                     'content-type' => 'application/json',
                 ])->post('https://api.anthropic.com/v1/messages', [
-                    'model' => 'claude-haiku-4-5-20251001',
+                    'model' => \App\Models\Setting::get('ai.claude_model'),
                     'max_tokens' => 1024,
                     'system' => $systemPrompt,
                     'messages' => [
@@ -3382,7 +3382,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                     'Authorization' => 'Bearer ' . $apiKey,
                     'Content-Type' => 'application/json',
                 ])->post('https://api.openai.com/v1/chat/completions', [
-                    'model' => 'gpt-4o-mini',
+                    'model' => \App\Models\Setting::get('ai.openai_model'),
                     'max_tokens' => 100,
                     'messages' => [
                         [
@@ -3410,7 +3410,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                     'anthropic-version' => '2023-06-01',
                     'content-type' => 'application/json',
                 ])->post('https://api.anthropic.com/v1/messages', [
-                    'model' => 'claude-haiku-4-5-20251001',
+                    'model' => \App\Models\Setting::get('ai.claude_model'),
                     'max_tokens' => 100,
                     'messages' => [
                         [
@@ -3473,7 +3473,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                     'Authorization' => 'Bearer ' . $apiKey,
                     'Content-Type' => 'application/json',
                 ])->post('https://api.openai.com/v1/chat/completions', [
-                    'model' => 'gpt-4o-mini',
+                    'model' => \App\Models\Setting::get('ai.openai_model'),
                     'max_tokens' => 100,
                     'messages' => [
                         [
@@ -3501,7 +3501,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                     'anthropic-version' => '2023-06-01',
                     'content-type' => 'application/json',
                 ])->post('https://api.anthropic.com/v1/messages', [
-                    'model' => 'claude-haiku-4-5-20251001',
+                    'model' => \App\Models\Setting::get('ai.claude_model'),
                     'max_tokens' => 100,
                     'messages' => [
                         [
@@ -3715,7 +3715,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                     'Authorization' => 'Bearer '.$apiKey,
                     'Content-Type' => 'application/json',
                 ])->post('https://api.openai.com/v1/chat/completions', [
-                    'model' => 'gpt-4o-mini',
+                    'model' => \App\Models\Setting::get('ai.openai_model'),
                     'max_tokens' => 2048,
                     'messages' => [
                         ['role' => 'system', 'content' => $systemPrompt],
@@ -3735,7 +3735,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                     'anthropic-version' => '2023-06-01',
                     'content-type' => 'application/json',
                 ])->post('https://api.anthropic.com/v1/messages', [
-                    'model' => 'claude-haiku-4-5-20251001',
+                    'model' => \App\Models\Setting::get('ai.claude_model'),
                     'max_tokens' => 2048,
                     'system' => $systemPrompt,
                     'messages' => [
@@ -6231,7 +6231,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
     @endphp
     <flux:modal name="translate-options" class="w-full max-w-md">
         <div
-            data-langs="{{ e(json_encode($tlModalLangs)) }}"
+            data-langs='{!! json_encode($tlModalLangs, JSON_HEX_APOS) !!}'
             x-data="{
                 rowIndex: null,
                 rowCount: 0,

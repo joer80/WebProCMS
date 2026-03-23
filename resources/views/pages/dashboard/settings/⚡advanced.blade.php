@@ -56,6 +56,10 @@ new #[Layout('layouts.app')] #[Title('Advanced Settings')] class extends Compone
 
     public string $aiImageProvider = 'openai';
 
+    public ?string $aiClaudeModel = null;
+
+    public ?string $aiOpenaiModel = null;
+
     public string $aiClaudeKey = '';
 
     public string $aiOpenaiKey = '';
@@ -92,6 +96,8 @@ new #[Layout('layouts.app')] #[Title('Advanced Settings')] class extends Compone
 
         $this->aiTextProvider = \App\Models\Setting::get('ai.text_provider', 'claude');
         $this->aiImageProvider = \App\Models\Setting::get('ai.image_provider', 'openai');
+        $this->aiClaudeModel = \App\Models\Setting::get('ai.claude_model') ?? 'claude-haiku-4-5-20251001';
+        $this->aiOpenaiModel = \App\Models\Setting::get('ai.openai_model') ?? 'gpt-4o-mini';
         $this->aiClaudeKey = \App\Models\Setting::get('ai.claude_key', '');
         $this->aiOpenaiKey = \App\Models\Setting::get('ai.openai_key', '');
     }
@@ -281,12 +287,16 @@ new #[Layout('layouts.app')] #[Title('Advanced Settings')] class extends Compone
         $this->validate([
             'aiTextProvider' => ['required', 'in:claude,openai'],
             'aiImageProvider' => ['required', 'in:openai'],
+            'aiClaudeModel' => ['nullable', 'in:claude-haiku-4-5-20251001,claude-sonnet-4-6'],
+            'aiOpenaiModel' => ['nullable', 'in:gpt-4o-mini,gpt-4o'],
             'aiClaudeKey' => ['nullable', 'string', 'max:500'],
             'aiOpenaiKey' => ['nullable', 'string', 'max:500'],
         ]);
 
         \App\Models\Setting::set('ai.text_provider', $this->aiTextProvider);
         \App\Models\Setting::set('ai.image_provider', $this->aiImageProvider);
+        \App\Models\Setting::set('ai.claude_model', $this->aiClaudeModel);
+        \App\Models\Setting::set('ai.openai_model', $this->aiOpenaiModel);
         \App\Models\Setting::set('ai.claude_key', $this->aiClaudeKey);
         \App\Models\Setting::set('ai.openai_key', $this->aiOpenaiKey);
 
@@ -408,14 +418,22 @@ new #[Layout('layouts.app')] #[Title('Advanced Settings')] class extends Compone
                                 </div>
                                 <div class="mt-3 space-y-3">
                                     <flux:radio.group wire:model="aiTextProvider" label="Provider">
-                                        <flux:radio value="claude" label="Claude (Anthropic)" description="Uses claude-haiku-4-5 for fast, high-quality generation." />
-                                        <flux:radio value="openai" label="ChatGPT (OpenAI)" description="Uses gpt-4o-mini for fast, high-quality generation." />
+                                        <flux:radio value="claude" label="Claude (Anthropic)" />
+                                        <flux:radio value="openai" label="ChatGPT (OpenAI)" />
                                     </flux:radio.group>
-                                    <div x-show="$wire.aiTextProvider === 'claude'">
+                                    <div x-show="$wire.aiTextProvider === 'claude'" class="space-y-3">
+                                        <flux:select wire:model="aiClaudeModel" label="Model">
+                                            <flux:select.option value="claude-haiku-4-5-20251001">claude-haiku-4-5 — Fast &amp; cost-effective (recommended)</flux:select.option>
+                                            <flux:select.option value="claude-sonnet-4-6">claude-sonnet-4-6 — Higher quality, higher cost</flux:select.option>
+                                        </flux:select>
                                         <flux:input wire:model="aiClaudeKey" label="Claude API Key" type="password" placeholder="sk-ant-..." />
                                         <flux:text class="mt-1 text-xs">Get your key at console.anthropic.com</flux:text>
                                     </div>
-                                    <div x-show="$wire.aiTextProvider === 'openai'">
+                                    <div x-show="$wire.aiTextProvider === 'openai'" class="space-y-3">
+                                        <flux:select wire:model="aiOpenaiModel" label="Model">
+                                            <flux:select.option value="gpt-4o-mini">gpt-4o-mini — Fast &amp; cost-effective (recommended)</flux:select.option>
+                                            <flux:select.option value="gpt-4o">gpt-4o — Higher quality, higher cost</flux:select.option>
+                                        </flux:select>
                                         <flux:input wire:model="aiOpenaiKey" label="OpenAI API Key" type="password" placeholder="sk-..." />
                                         <flux:text class="mt-1 text-xs">Get your key at platform.openai.com</flux:text>
                                     </div>
