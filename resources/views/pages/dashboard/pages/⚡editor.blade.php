@@ -3536,90 +3536,170 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
 
     public function generateAiImage(string $fieldKey, string $prompt): void
     {
-        $apiKey = \App\Models\Setting::get('ai.openai_key', '');
+        $provider = \App\Models\Setting::get('ai.image_provider', 'openai');
 
-        if (empty($apiKey)) {
-            $this->dispatch('ai-generate-error', fieldKey: $fieldKey, message: 'No OpenAI API key configured.');
+        try {
+            $imageContents = match ($provider) {
+                'fal' => $this->generateImageViaFal($prompt),
+                'stability' => $this->generateImageViaStability($prompt),
+                default => $this->generateImageViaOpenAi($prompt),
+            };
+        } catch (\Exception $e) {
+            $this->dispatch('ai-generate-error', fieldKey: $fieldKey, message: $e->getMessage());
 
             return;
         }
 
-        try {
-            $response = Http::withHeaders([
-                'Authorization' => 'Bearer ' . $apiKey,
-                'Content-Type' => 'application/json',
-            ])->timeout(60)->post('https://api.openai.com/v1/images/generations', [
-                'model' => 'dall-e-3',
-                'prompt' => $prompt,
-                'n' => 1,
-                'size' => '1792x1024',
-                'response_format' => 'url',
-            ]);
+        $isRowBg = str_starts_with($fieldKey, 'row-design-bg:');
 
-            if ($response->failed()) {
-                throw new \Exception($response->json('error.message') ?? 'OpenAI image generation failed.');
-            }
-
-            $imageUrl = $response->json('data.0.url');
-
-            if (empty($imageUrl)) {
-                throw new \Exception('No image URL returned from OpenAI.');
-            }
-
-            $imageResponse = Http::timeout(30)->get($imageUrl);
-
-            if ($imageResponse->failed()) {
-                throw new \Exception('Failed to download generated image.');
-            }
-
-            $isRowBg = str_starts_with($fieldKey, 'row-design-bg:');
-
-            if ($isRowBg) {
-                $category = \App\Models\MediaCategory::where('slug', 'backgrounds')->first()
-                    ?? \App\Models\MediaCategory::where('is_default', true)->first()
-                    ?? \App\Models\MediaCategory::first();
-            } else {
-                $category = \App\Models\MediaCategory::where('is_default', true)->first()
-                    ?? \App\Models\MediaCategory::first();
-            }
-
-            $categorySlug = $category?->slug ?? 'uncategorized';
-            $filename = 'ai-' . now()->format('YmdHis') . '-' . substr(md5($prompt), 0, 6) . '.jpg';
-            $storagePath = $categorySlug . '/' . $filename;
-
-            \Illuminate\Support\Facades\Storage::disk('public')->put($storagePath, $imageResponse->body());
-
-            \App\Models\MediaItem::create([
-                'media_category_id' => $category?->id,
-                'path' => $storagePath,
-                'filename' => $filename,
-                'alt' => $prompt,
-                'size' => strlen($imageResponse->body()),
-                'mime_type' => 'image/jpeg',
-            ]);
-
-            if ($isRowBg) {
-                $slug = substr($fieldKey, 14);
-                $this->rowDesignValues[$slug]['section_bg_image'] = $storagePath;
-
-                $drafts = session('editor_draft_overrides', []);
-                $drafts[$slug.':section_bg_image'] = ['type' => 'image', 'value' => $storagePath];
-                session(['editor_draft_overrides' => $drafts]);
-            } else {
-                $this->contentValues[$fieldKey] = $storagePath;
-
-                $field = collect($this->contentFields)->firstWhere('key', $fieldKey);
-                if ($field) {
-                    session()->put('editor_draft_overrides.'.$field['slug'].':'.$fieldKey, ['type' => 'image', 'value' => $storagePath]);
-                }
-            }
-
-            $this->isDirty = true;
-            $this->dispatch('ai-image-generated', fieldKey: $fieldKey, path: $storagePath);
-            $this->refreshPreview();
-        } catch (\Exception $e) {
-            $this->dispatch('ai-generate-error', fieldKey: $fieldKey, message: $e->getMessage());
+        if ($isRowBg) {
+            $category = \App\Models\MediaCategory::where('slug', 'backgrounds')->first()
+                ?? \App\Models\MediaCategory::where('is_default', true)->first()
+                ?? \App\Models\MediaCategory::first();
+        } else {
+            $category = \App\Models\MediaCategory::where('is_default', true)->first()
+                ?? \App\Models\MediaCategory::first();
         }
+
+        $categorySlug = $category?->slug ?? 'uncategorized';
+        $filename = 'ai-' . now()->format('YmdHis') . '-' . substr(md5($prompt), 0, 6) . '.jpg';
+        $storagePath = $categorySlug . '/' . $filename;
+
+        \Illuminate\Support\Facades\Storage::disk('public')->put($storagePath, $imageContents);
+
+        \App\Models\MediaItem::create([
+            'media_category_id' => $category?->id,
+            'path' => $storagePath,
+            'filename' => $filename,
+            'alt' => $prompt,
+            'size' => strlen($imageContents),
+            'mime_type' => 'image/jpeg',
+        ]);
+
+        if ($isRowBg) {
+            $slug = substr($fieldKey, 14);
+            $this->rowDesignValues[$slug]['section_bg_image'] = $storagePath;
+
+            $drafts = session('editor_draft_overrides', []);
+            $drafts[$slug.':section_bg_image'] = ['type' => 'image', 'value' => $storagePath];
+            session(['editor_draft_overrides' => $drafts]);
+        } else {
+            $this->contentValues[$fieldKey] = $storagePath;
+
+            $field = collect($this->contentFields)->firstWhere('key', $fieldKey);
+            if ($field) {
+                session()->put('editor_draft_overrides.'.$field['slug'].':'.$fieldKey, ['type' => 'image', 'value' => $storagePath]);
+            }
+        }
+
+        $this->isDirty = true;
+        $this->dispatch('ai-image-generated', fieldKey: $fieldKey, path: $storagePath);
+        $this->refreshPreview();
+    }
+
+    protected function generateImageViaOpenAi(string $prompt): string
+    {
+        $apiKey = \App\Models\Setting::get('ai.openai_key', '');
+
+        if (empty($apiKey)) {
+            throw new \Exception('No OpenAI API key configured.');
+        }
+
+        $response = Http::withHeaders([
+            'Authorization' => 'Bearer ' . $apiKey,
+            'Content-Type' => 'application/json',
+        ])->timeout(60)->post('https://api.openai.com/v1/images/generations', [
+            'model' => 'dall-e-3',
+            'prompt' => $prompt,
+            'n' => 1,
+            'size' => '1792x1024',
+            'response_format' => 'url',
+        ]);
+
+        if ($response->failed()) {
+            throw new \Exception($response->json('error.message') ?? 'OpenAI image generation failed.');
+        }
+
+        $imageUrl = $response->json('data.0.url');
+
+        if (empty($imageUrl)) {
+            throw new \Exception('No image URL returned from OpenAI.');
+        }
+
+        $imageResponse = Http::timeout(30)->get($imageUrl);
+
+        if ($imageResponse->failed()) {
+            throw new \Exception('Failed to download generated image from OpenAI.');
+        }
+
+        return $imageResponse->body();
+    }
+
+    protected function generateImageViaFal(string $prompt): string
+    {
+        $apiKey = \App\Models\Setting::get('ai.fal_key', '');
+
+        if (empty($apiKey)) {
+            throw new \Exception('No fal.ai API key configured.');
+        }
+
+        $response = Http::withHeaders([
+            'Authorization' => 'Key ' . $apiKey,
+            'Content-Type' => 'application/json',
+        ])->timeout(120)->post('https://fal.run/fal-ai/flux/schnell', [
+            'prompt' => $prompt,
+            'image_size' => 'landscape_16_9',
+            'num_inference_steps' => 4,
+            'num_images' => 1,
+        ]);
+
+        if ($response->failed()) {
+            throw new \Exception($response->json('detail') ?? $response->json('error') ?? 'fal.ai image generation failed.');
+        }
+
+        $imageUrl = $response->json('images.0.url');
+
+        if (empty($imageUrl)) {
+            throw new \Exception('No image URL returned from fal.ai.');
+        }
+
+        $imageResponse = Http::timeout(30)->get($imageUrl);
+
+        if ($imageResponse->failed()) {
+            throw new \Exception('Failed to download generated image from fal.ai.');
+        }
+
+        return $imageResponse->body();
+    }
+
+    protected function generateImageViaStability(string $prompt): string
+    {
+        $apiKey = \App\Models\Setting::get('ai.stability_key', '');
+
+        if (empty($apiKey)) {
+            throw new \Exception('No Stability AI API key configured.');
+        }
+
+        $response = Http::withHeaders([
+            'Authorization' => 'Bearer ' . $apiKey,
+            'Accept' => 'application/json',
+        ])->timeout(60)->asMultipart()->post('https://api.stability.ai/v2beta/stable-image/generate/core', [
+            ['name' => 'prompt', 'contents' => $prompt],
+            ['name' => 'output_format', 'contents' => 'jpeg'],
+            ['name' => 'aspect_ratio', 'contents' => '16:9'],
+        ]);
+
+        if ($response->failed()) {
+            throw new \Exception($response->json('errors.0') ?? $response->json('message') ?? 'Stability AI image generation failed.');
+        }
+
+        $base64 = $response->json('image');
+
+        if (empty($base64)) {
+            throw new \Exception('No image data returned from Stability AI.');
+        }
+
+        return base64_decode($base64);
     }
 
     public function generateAiAllRowText(int $rowIndex, string $prompt, bool $overwriteAll, bool $useHtml): array

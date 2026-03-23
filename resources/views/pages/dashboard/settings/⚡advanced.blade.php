@@ -64,6 +64,10 @@ new #[Layout('layouts.app')] #[Title('Advanced Settings')] class extends Compone
 
     public string $aiOpenaiKey = '';
 
+    public string $aiFalKey = '';
+
+    public string $aiStabilityKey = '';
+
     public function mount(): void
     {
         $this->envWritable = is_writable(base_path('.env'));
@@ -100,6 +104,8 @@ new #[Layout('layouts.app')] #[Title('Advanced Settings')] class extends Compone
         $this->aiOpenaiModel = \App\Models\Setting::get('ai.openai_model') ?? 'gpt-4o-mini';
         $this->aiClaudeKey = \App\Models\Setting::get('ai.claude_key', '');
         $this->aiOpenaiKey = \App\Models\Setting::get('ai.openai_key', '');
+        $this->aiFalKey = \App\Models\Setting::get('ai.fal_key', '');
+        $this->aiStabilityKey = \App\Models\Setting::get('ai.stability_key', '');
     }
 
     public function saveMailSettings(): void
@@ -286,11 +292,13 @@ new #[Layout('layouts.app')] #[Title('Advanced Settings')] class extends Compone
     {
         $this->validate([
             'aiTextProvider' => ['required', 'in:claude,openai'],
-            'aiImageProvider' => ['required', 'in:openai'],
+            'aiImageProvider' => ['required', 'in:openai,fal,stability'],
             'aiClaudeModel' => ['nullable', 'in:claude-haiku-4-5-20251001,claude-sonnet-4-6'],
             'aiOpenaiModel' => ['nullable', 'in:gpt-4o-mini,gpt-4o'],
             'aiClaudeKey' => ['nullable', 'string', 'max:500'],
             'aiOpenaiKey' => ['nullable', 'string', 'max:500'],
+            'aiFalKey' => ['nullable', 'string', 'max:500'],
+            'aiStabilityKey' => ['nullable', 'string', 'max:500'],
         ]);
 
         \App\Models\Setting::set('ai.text_provider', $this->aiTextProvider);
@@ -299,6 +307,8 @@ new #[Layout('layouts.app')] #[Title('Advanced Settings')] class extends Compone
         \App\Models\Setting::set('ai.openai_model', $this->aiOpenaiModel);
         \App\Models\Setting::set('ai.claude_key', $this->aiClaudeKey);
         \App\Models\Setting::set('ai.openai_key', $this->aiOpenaiKey);
+        \App\Models\Setting::set('ai.fal_key', $this->aiFalKey);
+        \App\Models\Setting::set('ai.stability_key', $this->aiStabilityKey);
 
         $this->dispatch('notify', message: 'AI settings saved.');
     }
@@ -445,14 +455,24 @@ new #[Layout('layouts.app')] #[Title('Advanced Settings')] class extends Compone
                             {{-- Image Generation --}}
                             <div>
                                 <flux:subheading>Image Generation</flux:subheading>
-                                <flux:text class="mt-0.5 text-sm">Used for generating images via DALL·E 3. Generated images are saved to your Media Library.</flux:text>
+                                <flux:text class="mt-0.5 text-sm">Used for generating images from text descriptions. Generated images are saved to your Media Library.</flux:text>
                                 <div class="mt-3 space-y-3">
                                     <flux:radio.group wire:model="aiImageProvider" label="Provider">
-                                        <flux:radio value="openai" label="OpenAI (DALL·E 3)" description="Generates high-quality images from text descriptions." />
+                                        <flux:radio value="openai" label="OpenAI (DALL·E 3)" description="High-quality image generation from OpenAI." />
+                                        <flux:radio value="fal" label="fal.ai (FLUX)" description="Fast, high-quality image generation via FLUX models." />
+                                        <flux:radio value="stability" label="Stability AI (Stable Diffusion)" description="Image generation via Stability AI's core model." />
                                     </flux:radio.group>
-                                    <div>
+                                    <div x-show="$wire.aiImageProvider === 'openai'">
                                         <flux:input wire:model="aiOpenaiKey" label="OpenAI API Key" type="password" placeholder="sk-..." />
                                         <flux:text class="mt-1 text-xs">Uses the same OpenAI key as text generation. Get your key at platform.openai.com</flux:text>
+                                    </div>
+                                    <div x-show="$wire.aiImageProvider === 'fal'">
+                                        <flux:input wire:model="aiFalKey" label="fal.ai API Key" type="password" placeholder="..." />
+                                        <flux:text class="mt-1 text-xs">Get your key at fal.ai — go to Dashboard → API Keys.</flux:text>
+                                    </div>
+                                    <div x-show="$wire.aiImageProvider === 'stability'">
+                                        <flux:input wire:model="aiStabilityKey" label="Stability AI API Key" type="password" placeholder="sk-..." />
+                                        <flux:text class="mt-1 text-xs">Get your key at platform.stability.ai — go to Account → API Keys.</flux:text>
                                     </div>
                                 </div>
                             </div>
