@@ -33,7 +33,7 @@ if ($field['type'] === 'classes') {
     } catch (\Throwable) {}
 }
 @endphp
-<div wire:key="field-{{ str_replace(':', '-', $field['slug']) }}-{{ $field['key'] }}" x-show="{{ $fieldShow }}">
+<div wire:key="field-{{ str_replace(':', '-', $field['slug']) }}-{{ $field['key'] }}" data-field-key="{{ $field['key'] }}" x-show="{{ $fieldShow }}">
     @if ($field['type'] === 'classes')
         <div class="flex items-center justify-between mb-1.5">
             <flux:label class="text-zinc-500 dark:text-zinc-400">{{ $field['label'] }}</flux:label>

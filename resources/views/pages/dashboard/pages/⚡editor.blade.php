@@ -99,6 +99,17 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
 
     public string $requiredRole = '';
 
+    public bool $showAccessibilityModal = false;
+
+    public string $accessibilityKey = '';
+
+    public int $accessibilitySaveCount = 0;
+
+    public int $accessibilityScannedSaveCount = -1;
+
+    /** @var array<int, array{severity: string, type: string, message: string, row: string}> */
+    public array $accessibilityIssues = [];
+
     #[Validate('required|in:draft,published,unlisted,unpublished')]
     public string $pageStatus = 'published';
 
@@ -406,6 +417,22 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
             ->all();
     }
 
+    #[Computed]
+    public function accessibilityButtonTooltip(): string
+    {
+        if ($this->accessibilityScannedSaveCount < 0) {
+            return 'Accessibility Audit — Never scanned';
+        }
+
+        $savesAgo = $this->accessibilitySaveCount - $this->accessibilityScannedSaveCount;
+
+        if ($savesAgo === 0) {
+            return 'Accessibility Audit — Just scanned';
+        }
+
+        return 'Accessibility Audit — Scanned '.($savesAgo === 1 ? '1 save ago' : "{$savesAgo} saves ago");
+    }
+
     public function loadFile(string $relativePath): void
     {
         $this->file = $relativePath;
@@ -458,6 +485,16 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
 
         $this->loadPreviewContextOptions();
         $this->refreshPreview();
+
+        if ($this->pageSlug) {
+            $this->accessibilityKey = $this->pageSlug;
+        } else {
+            $this->accessibilityKey = preg_replace('/[^a-z0-9_-]/', '_', strtolower(str_replace(['.blade.php', '⚡'], ['', ''], $this->file)));
+        }
+
+        $this->accessibilitySaveCount = (int) \App\Models\Setting::get("accessibility.{$this->accessibilityKey}.save_count", 0);
+        $this->accessibilityScannedSaveCount = (int) \App\Models\Setting::get("accessibility.{$this->accessibilityKey}.scanned_save_count", -1);
+        $this->accessibilityIssues = \App\Models\Setting::get("accessibility.{$this->accessibilityKey}.issues", []) ?: [];
     }
 
     public function updatedPreviewContext(): void
@@ -1810,6 +1847,12 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
 
         $this->isDirty = false;
         $this->savedHistoryIndex = $this->historyIndex;
+
+        if ($this->accessibilityKey) {
+            $this->accessibilitySaveCount++;
+            \App\Models\Setting::set("accessibility.{$this->accessibilityKey}.save_count", $this->accessibilitySaveCount);
+        }
+
         $this->dispatch('notify', message: 'Page saved.');
     }
 
@@ -2133,6 +2176,255 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
         }
 
         return array_map(fn ($field) => array_merge($field, ['slug' => $slug]), $schemaFields);
+    }
+
+    public function runAccessibilityAudit(): void
+    {
+        if (! $this->accessibilityKey || empty($this->rows)) {
+            return;
+        }
+
+        $issues = [];
+        $headings = [];
+        $drafts = session('editor_draft_overrides', []);
+
+        foreach ($this->rows as $row) {
+            $fields = $this->parseContentFields($row['blade'], $row['slug']);
+
+            if (empty($fields)) {
+                continue;
+            }
+
+            $slugs = array_unique(array_column($fields, 'slug'));
+            $overrides = ContentOverride::query()
+                ->whereIn('row_slug', $slugs)
+                ->get()
+                ->keyBy(fn (ContentOverride $o) => $o->row_slug.':'.$o->key);
+
+            $values = [];
+
+            foreach ($fields as $field) {
+                $dbKey = $field['slug'].':'.$field['key'];
+                $dbValue = $overrides->get($dbKey)?->value;
+                $draft = $drafts[$dbKey] ?? null;
+                $rawValue = $draft !== null ? ($draft['value'] ?? null) : $dbValue;
+                $values[$field['key']] = match (true) {
+                    $field['type'] === 'toggle' => ($rawValue !== null ? $rawValue === '1' : $field['default'] === '1'),
+                    in_array($field['type'], ['classes', 'grid'], true) => $rawValue ?: $field['default'],
+                    default => $rawValue ?? '',
+                };
+            }
+
+            $fieldMap = collect($fields)->keyBy('key');
+            $rowName = $row['name'] ?? Str::title(str_replace(['-', '_'], ' ', Str::before($row['slug'], ':')));
+
+            // Resolve alt text from MediaItem for any image fields (same as the editor does).
+            $imagePaths = collect($fields)
+                ->filter(fn ($f) => $f['type'] === 'image')
+                ->map(fn ($f) => $values[$f['key']] ?? '')
+                ->filter()
+                ->values()
+                ->all();
+
+            $mediaAlts = $imagePaths
+                ? MediaItem::query()->whereIn('path', $imagePaths)->pluck('alt', 'path')->all()
+                : [];
+
+            // Check image alt text
+            foreach ($fields as $field) {
+                if ($field['type'] !== 'image') {
+                    continue;
+                }
+
+                $imageValue = $values[$field['key']] ?? '';
+
+                if (empty($imageValue)) {
+                    continue;
+                }
+
+                $altKey = $field['key'].'_alt';
+                // Prefer MediaItem.alt (canonical), fall back to ContentOverride value.
+                $altValue = trim($mediaAlts[$imageValue] ?? $values[$altKey] ?? '');
+
+                if ($altValue === '') {
+                    $label = $field['label'] ?? $field['key'];
+                    $altField = $fieldMap->get($altKey);
+                    $issues[] = [
+                        'severity' => 'error',
+                        'type' => 'missing-alt',
+                        'message' => 'Image "'.ucwords(str_replace('_', ' ', $label)).'" is missing alt text.',
+                        'row' => $rowName,
+                        'row_slug' => $row['slug'],
+                        'field_key' => $altKey,
+                        'group' => $altField['group'] ?? $field['group'] ?? '',
+                    ];
+                }
+            }
+
+            // Check grid items for images without alt text
+            foreach ($fields as $field) {
+                if ($field['type'] !== 'grid') {
+                    continue;
+                }
+
+                $gridValue = $values[$field['key']] ?? '';
+                $items = json_decode($gridValue, true) ?: [];
+
+                foreach ($items as $itemIndex => $item) {
+                    if (! is_array($item)) {
+                        continue;
+                    }
+
+                    foreach ($item as $subKey => $subValue) {
+                        if (! (str_ends_with($subKey, '_image') || $subKey === 'image') || empty($subValue)) {
+                            continue;
+                        }
+
+                        $altSubKey = $subKey === 'image' ? 'alt' : substr($subKey, 0, -5).'alt';
+                        $altValue = trim($item[$altSubKey] ?? $item[$subKey.'_alt'] ?? '');
+
+                        if ($altValue === '') {
+                            $fieldLabel = $field['label'] ?? $field['key'];
+                            $issues[] = [
+                                'severity' => 'error',
+                                'type' => 'missing-alt',
+                                'message' => 'Image in "'.ucwords(str_replace('_', ' ', $fieldLabel)).'" (item '.($itemIndex + 1).') is missing alt text.',
+                                'row' => $rowName,
+                                'row_slug' => $row['slug'],
+                                'field_key' => $field['key'],
+                                'group' => $field['group'] ?? '',
+                            ];
+                        }
+                    }
+                }
+            }
+
+            // Collect heading levels (in document order)
+            foreach ($fields as $field) {
+                if (! str_ends_with($field['key'], '_htag')) {
+                    continue;
+                }
+
+                $prefix = substr($field['key'], 0, -5);
+                $toggleKey = 'toggle_'.$prefix;
+                $isVisible = ! array_key_exists($toggleKey, $values) || $values[$toggleKey] === true || $values[$toggleKey] === '1';
+
+                if (! $isVisible) {
+                    continue;
+                }
+
+                $htag = $values[$field['key']] ?? $field['default'] ?? 'h2';
+
+                if (! empty($htag) && preg_match('/^h([1-6])$/', $htag, $m)) {
+                    $headings[] = [
+                        'level' => (int) $m[1],
+                        'row' => $rowName,
+                        'row_slug' => $row['slug'],
+                        'field_key' => $field['key'],
+                        'group' => $field['group'] ?? '',
+                    ];
+                }
+            }
+
+            // Check link labels (fields ending in _url with a value but empty label)
+            foreach ($fields as $field) {
+                if (! str_ends_with($field['key'], '_url') && $field['key'] !== 'url') {
+                    continue;
+                }
+
+                $urlValue = trim($values[$field['key']] ?? '');
+
+                if (empty($urlValue)) {
+                    continue;
+                }
+
+                $prefix = str_ends_with($field['key'], '_url') ? substr($field['key'], 0, -4) : 'link';
+                $toggleKey = 'toggle_'.$prefix;
+                $isVisible = ! array_key_exists($toggleKey, $values) || $values[$toggleKey] === true || $values[$toggleKey] === '1';
+
+                if (! $isVisible) {
+                    continue;
+                }
+
+                $labelValue = trim($values[$prefix] ?? '');
+
+                if ($labelValue === '') {
+                    $labelField = $fieldMap->get($prefix);
+                    $issues[] = [
+                        'severity' => 'warning',
+                        'type' => 'empty-link-label',
+                        'message' => 'Link "'.ucwords(str_replace('_', ' ', $prefix)).'" has a URL but no label text.',
+                        'row' => $rowName,
+                        'row_slug' => $row['slug'],
+                        'field_key' => $prefix,
+                        'group' => $labelField['group'] ?? '',
+                    ];
+                }
+            }
+        }
+
+        // Check heading hierarchy across whole page
+        if (! empty($headings)) {
+            $h1Count = count(array_filter($headings, fn ($h) => $h['level'] === 1));
+
+            if ($h1Count === 0) {
+                $issues[] = [
+                    'severity' => 'warning',
+                    'type' => 'no-h1',
+                    'message' => 'No H1 heading found on this page. Every page should have one H1.',
+                    'row' => 'Page',
+                    'row_slug' => '',
+                    'field_key' => '',
+                    'group' => '',
+                ];
+            } elseif ($h1Count > 1) {
+                $issues[] = [
+                    'severity' => 'error',
+                    'type' => 'multiple-h1',
+                    'message' => "Multiple H1 headings found ({$h1Count}). A page should have only one H1.",
+                    'row' => 'Page',
+                    'row_slug' => '',
+                    'field_key' => '',
+                    'group' => '',
+                ];
+            }
+
+            $prevLevel = 0;
+
+            foreach ($headings as $heading) {
+                if ($prevLevel > 0 && $heading['level'] > $prevLevel + 1) {
+                    $skipped = $prevLevel + 1;
+                    $issues[] = [
+                        'severity' => 'warning',
+                        'type' => 'heading-skip',
+                        'message' => "Heading jumps from H{$prevLevel} to H{$heading['level']} (skipping H{$skipped}).",
+                        'row' => $heading['row'],
+                        'row_slug' => $heading['row_slug'],
+                        'field_key' => $heading['field_key'],
+                        'group' => $heading['group'],
+                    ];
+                }
+
+                $prevLevel = $heading['level'];
+            }
+        }
+
+        // Sort: errors first, then warnings
+        usort($issues, fn ($a, $b) => ($a['severity'] === 'error' ? 0 : 1) <=> ($b['severity'] === 'error' ? 0 : 1));
+
+        $this->accessibilityIssues = $issues;
+        $this->accessibilityScannedSaveCount = $this->accessibilitySaveCount;
+
+        \App\Models\Setting::set("accessibility.{$this->accessibilityKey}.issues", $issues);
+        \App\Models\Setting::set("accessibility.{$this->accessibilityKey}.scanned_save_count", $this->accessibilitySaveCount);
+
+        $this->dispatch('notify', message: count($issues) === 0 ? 'No accessibility issues found.' : count($issues).' accessibility issue(s) found.');
+    }
+
+    public function navigateToIssue(string $rowSlug, string $fieldKey, string $group): void
+    {
+        $this->showAccessibilityModal = false;
+        $this->dispatch('navigate-to-accessibility-issue', rowSlug: $rowSlug, fieldKey: $fieldKey, group: $group);
     }
 
     public function saveSeoSettings(): void
@@ -3335,6 +3627,23 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
             }
             else if ($event.origin === window.location.origin && $event.data && $event.data.type === 'editor-save-page' && $wire.file) { $wire.saveFile(); }
         "
+        @navigate-to-accessibility-issue.window="
+            const { rowSlug, fieldKey, group } = $event.detail;
+            if (group) $dispatch('pending-group', { group: group });
+            selectRowBySlug(rowSlug, true);
+            if (fieldKey) {
+                setTimeout(() => {
+                    const el = document.querySelector('[data-field-key=\'' + fieldKey + '\']');
+                    if (el) {
+                        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        el.style.transition = 'box-shadow 0.2s';
+                        el.style.boxShadow = '0 0 0 2px var(--color-primary)';
+                        el.style.borderRadius = '6px';
+                        setTimeout(() => { el.style.boxShadow = ''; el.style.borderRadius = ''; }, 1800);
+                    }
+                }, 400);
+            }
+        "
         class="flex flex-col min-h-screen bg-white dark:bg-zinc-900"
     >
         {{-- Editor toolbar --}}
@@ -3352,7 +3661,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
 
                 @if (! $this->isLayoutPartial)
                     <flux:tooltip content="Selected Page">
-                        <flux:select wire:model.live="file" placeholder="Select a page to edit…" size="sm" class="w-48">
+                        <flux:select wire:model.live="file" placeholder="Select a page to edit…" size="sm" class="w-36">
                             <flux:select.option value="">{{ __('Select a page…') }}</flux:select.option>
                             @foreach ($this->voltFiles as $label => $path)
                                 <flux:select.option value="{{ $path }}">{{ $label }}</flux:select.option>
@@ -3371,9 +3680,24 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                     @endif
 
                     @if ($file)
-                        <flux:tooltip content="Page Settings" position="bottom">
-                            <flux:button variant="outline" size="sm" icon="cog-6-tooth" wire:click="$set('showSeoModal', true)" :loading="false" />
-                        </flux:tooltip>
+                        <div class="flex items-center gap-2">
+                            <flux:tooltip content="Page Settings" position="bottom">
+                                <flux:button variant="outline" size="sm" icon="cog-6-tooth" wire:click="$set('showSeoModal', true)" :loading="false" />
+                            </flux:tooltip>
+                            <flux:tooltip content="{{ $this->accessibilityButtonTooltip }}" position="bottom">
+                                <flux:button
+                                    variant="outline"
+                                    size="sm"
+                                    wire:click="$set('showAccessibilityModal', true)"
+                                    :loading="false"
+                                    class="{{ count($accessibilityIssues) > 0 ? 'text-amber-600 border-amber-300 dark:text-amber-400 dark:border-amber-700' : ($accessibilityScannedSaveCount >= 0 ? 'text-green-600 border-green-300 dark:text-green-400 dark:border-green-700' : '') }}"
+                                >
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="size-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75m-3-7.036A11.959 11.959 0 0 1 3.598 6 11.955 11.955 0 0 0 3 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285Z" />
+                                    </svg>
+                                </flux:button>
+                            </flux:tooltip>
+                        </div>
                     @endif
                 @endif
 
@@ -3417,6 +3741,15 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                             @click="$wire.showSeoModal = true; $dispatch('open-settings-section', 'seo')"
                         ></span>
                     </flux:tooltip>
+
+                    @if ($accessibilityScannedSaveCount >= 0)
+                        <flux:tooltip content="{{ count($accessibilityIssues) > 0 ? count($accessibilityIssues).' accessibility issue(s) found.' : 'No accessibility issues found.' }}" position="bottom">
+                            <span
+                                class="text-xs font-medium px-2 py-0.5 rounded-full cursor-pointer {{ count($accessibilityIssues) > 0 ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' : 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' }}"
+                                wire:click="$set('showAccessibilityModal', true)"
+                            >{{ count($accessibilityIssues) > 0 ? 'A11y Failed' : 'A11y Passed' }}</span>
+                        </flux:tooltip>
+                    @endif
 
                     <flux:tooltip content="{{ $seoNoindex ? 'Search engines are prevented from indexing this page.' : 'Search engines can index this page.' }}" position="bottom">
                         <span
@@ -5235,6 +5568,112 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
             <flux:modal.close>
                 <flux:button>Close</flux:button>
             </flux:modal.close>
+        </div>
+    </flux:modal>
+
+    {{-- Accessibility Audit modal --}}
+    <flux:modal wire:model="showAccessibilityModal" class="w-full max-w-2xl">
+        <div class="flex items-start justify-between gap-4">
+            <div>
+                <flux:heading size="lg">Accessibility Audit</flux:heading>
+                <flux:text class="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
+                    @if ($accessibilityScannedSaveCount < 0)
+                        Never scanned.
+                    @else
+                        @php $savesAgo = $accessibilitySaveCount - $accessibilityScannedSaveCount; @endphp
+                        @if ($savesAgo === 0)
+                            Scanned just now.
+                        @elseif ($savesAgo === 1)
+                            Scanned 1 save ago.
+                        @else
+                            Scanned {{ $savesAgo }} saves ago.
+                        @endif
+                    @endif
+                </flux:text>
+            </div>
+        </div>
+
+        <div class="mt-6">
+            @if ($accessibilityScannedSaveCount < 0)
+                <div class="flex flex-col items-center justify-center py-12 text-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="size-12 text-zinc-300 dark:text-zinc-600 mb-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75m-3-7.036A11.959 11.959 0 0 1 3.598 6 11.955 11.955 0 0 0 3 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285Z" />
+                    </svg>
+                    <p class="text-sm font-medium text-zinc-700 dark:text-zinc-200">No scan run yet</p>
+                    <p class="mt-1 text-xs text-zinc-400 dark:text-zinc-500">Click "Run Scan" to check this page for accessibility issues.</p>
+                </div>
+            @elseif (empty($accessibilityIssues))
+                <div class="flex flex-col items-center justify-center py-12 text-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="size-12 text-green-400 dark:text-green-500 mb-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75m-3-7.036A11.959 11.959 0 0 1 3.598 6 11.955 11.955 0 0 0 3 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285Z" />
+                    </svg>
+                    <p class="text-sm font-medium text-green-700 dark:text-green-400">No issues found</p>
+                    <p class="mt-1 text-xs text-zinc-400 dark:text-zinc-500">Great work — this page passed all accessibility checks.</p>
+                </div>
+            @else
+                @php
+                    $errorCount = count(array_filter($accessibilityIssues, fn($i) => $i['severity'] === 'error'));
+                    $warningCount = count(array_filter($accessibilityIssues, fn($i) => $i['severity'] === 'warning'));
+                @endphp
+                <div class="flex items-center gap-3 mb-4">
+                    @if ($errorCount > 0)
+                        <span class="inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="size-3" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M18 10a8 8 0 1 1-16 0 8 8 0 0 1 16 0Zm-8-5a.75.75 0 0 1 .75.75v4.5a.75.75 0 0 1-1.5 0v-4.5A.75.75 0 0 1 10 5Zm0 10a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z" clip-rule="evenodd" /></svg>
+                            {{ $errorCount }} {{ Str::plural('error', $errorCount) }}
+                        </span>
+                    @endif
+                    @if ($warningCount > 0)
+                        <span class="inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="size-3" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M8.485 2.495c.673-1.167 2.357-1.167 3.03 0l6.28 10.875c.673 1.167-.17 2.625-1.516 2.625H3.72c-1.347 0-2.189-1.458-1.515-2.625L8.485 2.495ZM10 5a.75.75 0 0 1 .75.75v3.5a.75.75 0 0 1-1.5 0v-3.5A.75.75 0 0 1 10 5Zm0 9a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z" clip-rule="evenodd" /></svg>
+                            {{ $warningCount }} {{ Str::plural('warning', $warningCount) }}
+                        </span>
+                    @endif
+                </div>
+
+                <div class="space-y-2">
+                    @foreach ($accessibilityIssues as $issue)
+                        @php $isNavigable = ! empty($issue['row_slug']); @endphp
+                        <div
+                            class="flex items-start gap-3 p-3 rounded-lg transition-opacity {{ $issue['severity'] === 'error' ? 'bg-red-50 dark:bg-red-900/10 border border-red-100 dark:border-red-900/30' : 'bg-amber-50 dark:bg-amber-900/10 border border-amber-100 dark:border-amber-900/30' }} {{ $isNavigable ? 'cursor-pointer hover:opacity-75' : '' }}"
+                            @if ($isNavigable)
+                                wire:click="navigateToIssue('{{ $issue['row_slug'] }}', '{{ $issue['field_key'] }}', '{{ $issue['group'] }}')"
+                            @endif
+                        >
+                            @if ($issue['severity'] === 'error')
+                                <svg xmlns="http://www.w3.org/2000/svg" class="size-4 text-red-500 dark:text-red-400 shrink-0 mt-0.5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M18 10a8 8 0 1 1-16 0 8 8 0 0 1 16 0Zm-8-5a.75.75 0 0 1 .75.75v4.5a.75.75 0 0 1-1.5 0v-4.5A.75.75 0 0 1 10 5Zm0 10a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z" clip-rule="evenodd" /></svg>
+                            @else
+                                <svg xmlns="http://www.w3.org/2000/svg" class="size-4 text-amber-500 dark:text-amber-400 shrink-0 mt-0.5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M8.485 2.495c.673-1.167 2.357-1.167 3.03 0l6.28 10.875c.673 1.167-.17 2.625-1.516 2.625H3.72c-1.347 0-2.189-1.458-1.515-2.625L8.485 2.495ZM10 5a.75.75 0 0 1 .75.75v3.5a.75.75 0 0 1-1.5 0v-3.5A.75.75 0 0 1 10 5Zm0 9a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z" clip-rule="evenodd" /></svg>
+                            @endif
+                            <div class="flex-1 min-w-0">
+                                <p class="text-xs font-medium {{ $issue['severity'] === 'error' ? 'text-red-700 dark:text-red-400' : 'text-amber-700 dark:text-amber-400' }}">{{ $issue['message'] }}</p>
+                                <p class="mt-0.5 text-xs text-zinc-400 dark:text-zinc-500">
+                                    Row: {{ $issue['row'] }}
+                                    @if ($isNavigable)
+                                        <span class="ml-1 text-zinc-300 dark:text-zinc-600">— click to fix</span>
+                                    @endif
+                                </p>
+                            </div>
+                            @if ($isNavigable)
+                                <svg xmlns="http://www.w3.org/2000/svg" class="size-3.5 shrink-0 mt-0.5 text-zinc-300 dark:text-zinc-600" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" /></svg>
+                            @endif
+                        </div>
+                    @endforeach
+                </div>
+            @endif
+        </div>
+
+        <div class="mt-6 flex items-start justify-between gap-4">
+            <p class="text-xs text-zinc-400 dark:text-zinc-500 leading-relaxed max-w-sm">
+                Checks: missing alt text, heading hierarchy (H1 count, skipped levels), and empty link labels.
+            </p>
+            <div class="flex items-center gap-2 shrink-0">
+                <flux:button wire:click="runAccessibilityAudit" icon="shield-check" variant="outline">
+                    {{ $accessibilityScannedSaveCount < 0 ? 'Run Scan' : 'Re-scan' }}
+                </flux:button>
+                <flux:modal.close>
+                    <flux:button>Close</flux:button>
+                </flux:modal.close>
+            </div>
         </div>
     </flux:modal>
 
