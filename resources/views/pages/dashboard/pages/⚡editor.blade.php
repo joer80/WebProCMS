@@ -4390,7 +4390,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                     {{-- Row list view --}}
                     <div x-show="!editorOpen" class="flex flex-col flex-1">
                         <div class="shrink-0 px-4 py-3 border-b border-zinc-200 dark:border-zinc-700 flex items-center justify-between">
-                            <flux:heading size="sm" class="text-zinc-600 dark:text-zinc-400">{{ __('Page Rows') }}</flux:heading>
+                            <flux:heading size="sm" class="text-zinc-600 dark:text-zinc-400">{{ __('Page Sections') }}</flux:heading>
                             <div class="flex items-center gap-0.5" x-data="{ allDesignsOpen: false, allAdvancedOpen: false, allBrowseOpen: false }">
                                 <flux:tooltip content="Copy all rows" position="bottom">
                                     <button type="button"
