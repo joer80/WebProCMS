@@ -1573,7 +1573,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
             $slug = substr($draftKey, 0, $lastColon);
             $key = substr($draftKey, $lastColon + 1);
 
-            if ($draft['type'] !== 'text' || ! str_ends_with($key, '_alt') || $draft['value'] === '') {
+            if ($draft['type'] !== 'text' || ! str_ends_with($key, '_alt')) {
                 continue;
             }
 
@@ -1596,10 +1596,14 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                 ->where('row_slug', '!=', $slug)
                 ->pluck('row_slug')
                 ->each(function (string $affectedSlug) use ($key, $draft): void {
-                    ContentOverride::updateOrCreate(
-                        ['row_slug' => $affectedSlug, 'key' => $key],
-                        ['type' => 'text', 'value' => $draft['value']]
-                    );
+                    if ($draft['value'] === '') {
+                        ContentOverride::query()->where('row_slug', $affectedSlug)->where('key', $key)->delete();
+                    } else {
+                        ContentOverride::updateOrCreate(
+                            ['row_slug' => $affectedSlug, 'key' => $key],
+                            ['type' => 'text', 'value' => $draft['value']]
+                        );
+                    }
                 });
         }
 
@@ -1851,6 +1855,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
         if ($this->accessibilityKey) {
             $this->accessibilitySaveCount++;
             \App\Models\Setting::set("accessibility.{$this->accessibilityKey}.save_count", $this->accessibilitySaveCount);
+            $this->runAccessibilityAudit();
         }
 
         $this->dispatch('notify', message: 'Page saved.');
