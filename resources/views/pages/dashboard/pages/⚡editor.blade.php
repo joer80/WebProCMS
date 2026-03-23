@@ -3622,6 +3622,424 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
         }
     }
 
+    public function generateAiAllRowText(int $rowIndex, string $prompt, bool $overwriteAll, bool $useHtml): array
+    {
+        if (! isset($this->rows[$rowIndex])) {
+            return ['updated' => 0, 'rowSlug' => '', 'imageFields' => [], 'error' => null];
+        }
+
+        $row = $this->rows[$rowIndex];
+        $rowSlug = $row['slug'];
+
+        $skipKeys = [
+            'section_classes', 'section_container_classes', 'section_id', 'section_attrs',
+            'section_animation', 'section_animation_delay', 'section_bg_image',
+            'section_bg_position', 'section_bg_size', 'section_bg_repeat',
+        ];
+
+        $isStructuralGridSubKey = function (string $k): bool {
+            if (in_array($k, ['icon', 'image', 'alt', 'url'], true)) {
+                return true;
+            }
+            if (str_starts_with($k, 'toggle_')) {
+                return true;
+            }
+            if (
+                str_ends_with($k, '_image') ||
+                str_ends_with($k, '_alt') ||
+                str_ends_with($k, '_url') ||
+                str_ends_with($k, '_new_tab') ||
+                str_ends_with($k, '_classes') ||
+                str_ends_with($k, '_htag') ||
+                str_ends_with($k, '_id') ||
+                str_ends_with($k, '_attrs')
+            ) {
+                return true;
+            }
+
+            return false;
+        };
+
+        $allFields = $this->parseContentFields($row['blade'], $rowSlug);
+        $drafts = session('editor_draft_overrides', []);
+
+        $imageFields = [];
+        foreach ($allFields as $field) {
+            if ($field['type'] !== 'image') {
+                continue;
+            }
+            if (in_array($field['key'], $skipKeys, true)) {
+                continue;
+            }
+            $draftKey = $field['slug'].':'.$field['key'];
+            $draft = $drafts[$draftKey] ?? null;
+            $currentValue = $draft !== null
+                ? ($draft['value'] ?? '')
+                : (ContentOverride::query()->where('row_slug', $rowSlug)->where('key', $field['key'])->value('value') ?? '');
+            if (! $overwriteAll && ! empty($currentValue)) {
+                continue;
+            }
+            $imageFields[] = $field['key'];
+        }
+
+        // Also collect image sub-fields within grid items.
+        foreach ($allFields as $field) {
+            if ($field['type'] !== 'grid' || ! str_starts_with($field['key'], 'grid_')) {
+                continue;
+            }
+            $draftKey = $field['slug'].':'.$field['key'];
+            $draft = $drafts[$draftKey] ?? null;
+            $savedJson = $draft !== null
+                ? ($draft['value'] ?? '')
+                : (ContentOverride::query()->where('row_slug', $rowSlug)->where('key', $field['key'])->value('value') ?? '');
+            $gridItems = json_decode((string) ($savedJson ?: ($field['default'] ?? '')), true) ?: [];
+            foreach ($gridItems as $idx => $item) {
+                foreach (array_keys($item) as $subKey) {
+                    if ($subKey !== 'image' && ! str_ends_with($subKey, '_image')) {
+                        continue;
+                    }
+                    if (! $overwriteAll && ! empty($item[$subKey])) {
+                        continue;
+                    }
+                    $imageFields[] = '@grid:'.$field['key'].':'.$idx.':'.$subKey;
+                }
+            }
+        }
+
+        $gridFields = [];
+        foreach ($allFields as $field) {
+            if ($field['type'] !== 'grid' || ! str_starts_with($field['key'], 'grid_')) {
+                continue;
+            }
+            $draftKey = $field['slug'].':'.$field['key'];
+            $draft = $drafts[$draftKey] ?? null;
+            $savedJson = $draft !== null
+                ? ($draft['value'] ?? '')
+                : (ContentOverride::query()->where('row_slug', $rowSlug)->where('key', $field['key'])->value('value') ?? '');
+            $hasSavedItems = ! empty($savedJson);
+            $currentJson = $hasSavedItems ? $savedJson : ($field['default'] ?? '');
+            $items = json_decode((string) $currentJson, true);
+            if (! is_array($items) || empty($items)) {
+                $items = json_decode((string) ($field['default'] ?? ''), true) ?: [];
+            }
+            if (empty($items)) {
+                continue;
+            }
+            if (! $overwriteAll && $hasSavedItems) {
+                $hasContent = false;
+                foreach ($items as $item) {
+                    foreach ($item as $subKey => $subVal) {
+                        if (! $isStructuralGridSubKey($subKey) && ! empty(trim(strip_tags((string) $subVal)))) {
+                            $hasContent = true;
+                            break 2;
+                        }
+                    }
+                }
+                if ($hasContent) {
+                    continue;
+                }
+            }
+            $gridFields[] = [
+                'slug' => $field['slug'],
+                'key' => $field['key'],
+                'label' => $field['label'],
+                'items' => $items,
+            ];
+        }
+
+        $textFields = array_values(array_filter($allFields, function (array $field) use ($skipKeys, $overwriteAll, $rowSlug, $drafts): bool {
+            if (in_array($field['key'], $skipKeys, true)) {
+                return false;
+            }
+            if (! in_array($field['type'], ['text', 'richtext'], true)) {
+                return false;
+            }
+            if (
+                str_ends_with($field['key'], '_classes') ||
+                str_ends_with($field['key'], '_url') ||
+                str_ends_with($field['key'], '_alt') ||
+                str_ends_with($field['key'], '_new_tab') ||
+                str_ends_with($field['key'], '_id') ||
+                str_ends_with($field['key'], '_attrs') ||
+                str_ends_with($field['key'], '_htag') ||
+                str_starts_with($field['key'], 'toggle_')
+            ) {
+                return false;
+            }
+            if (! $overwriteAll) {
+                $draftKey = $field['slug'].':'.$field['key'];
+                $draft = $drafts[$draftKey] ?? null;
+                // Only check explicitly saved values — don't fall back to $field['default'],
+                // as default placeholder text should be treated as empty for "fill empty only" mode.
+                $savedValue = $draft !== null
+                    ? ($draft['value'] ?? '')
+                    : (ContentOverride::query()->where('row_slug', $rowSlug)->where('key', $field['key'])->value('value') ?? '');
+                if (! empty(trim(strip_tags((string) $savedValue)))) {
+                    return false;
+                }
+            }
+
+            return true;
+        }));
+
+        if (empty($textFields) && empty($gridFields)) {
+            return ['updated' => 0, 'rowSlug' => $rowSlug, 'imageFields' => $imageFields, 'error' => null];
+        }
+
+        $provider = \App\Models\Setting::get('ai.text_provider', 'claude');
+
+        $overrides = ContentOverride::query()
+            ->where('row_slug', $rowSlug)
+            ->whereIn('key', array_column($textFields, 'key'))
+            ->get()
+            ->keyBy('key');
+
+        $fieldSchema = [];
+        foreach ($textFields as $field) {
+            $draftKey = $field['slug'].':'.$field['key'];
+            $draft = $drafts[$draftKey] ?? null;
+            $currentValue = $draft !== null
+                ? ($draft['value'] ?? '')
+                : ($overrides->get($field['key'])?->value ?? '');
+            $fieldSchema[] = [
+                'key' => $field['key'],
+                'label' => $field['label'],
+                'type' => $field['type'],
+                'current' => strip_tags((string) $currentValue),
+            ];
+        }
+
+        $htmlInstruction = $useHtml
+            ? 'For richtext fields, use simple HTML tags only: <p>, <strong>, <em>, <ul>, <ol>, <li>, <br>. For text fields, return plain text only.'
+            : 'Return plain text for all fields — no HTML tags.';
+
+        $systemPrompt = 'You are a web content writer. You will be given a list of text fields for a website section and a description of what the section should contain. Generate appropriate content for each field. Respond ONLY with valid JSON where each key is a field key and each value is the content string or array. '.$htmlInstruction.' For grid fields (type="grid"), return a JSON array of the same length as the items provided — update only the text sub-fields in each item and preserve all structural sub-fields (icon, image, alt, url, toggle_*, *_image, *_url, *_alt, *_new_tab, *_classes) exactly as given. Keep content concise and professional. No explanations, no markdown code fences, no extra keys.';
+
+        $aiFieldsList = array_map(fn (array $f): array => ['key' => $f['key'], 'label' => $f['label'], 'type' => $f['type']], $fieldSchema);
+        foreach ($gridFields as $gf) {
+            $aiFieldsList[] = ['key' => $gf['key'], 'label' => $gf['label'], 'type' => 'grid', 'items' => $gf['items']];
+        }
+        $fieldsJson = json_encode($aiFieldsList);
+        $userMessage = "Section name: {$row['name']}\nSection fields (JSON): {$fieldsJson}\n\nInstruction: {$prompt}";
+
+        $currentContent = collect($fieldSchema)
+            ->filter(fn (array $f): bool => ! empty($f['current']))
+            ->map(fn (array $f): string => $f['label'].': '.$f['current'])
+            ->implode("\n");
+
+        if ($currentContent) {
+            $userMessage .= "\n\nExisting content for reference:\n{$currentContent}";
+        }
+
+        try {
+            if ($provider === 'openai') {
+                $apiKey = \App\Models\Setting::get('ai.openai_key', '');
+                $response = Http::withHeaders([
+                    'Authorization' => 'Bearer '.$apiKey,
+                    'Content-Type' => 'application/json',
+                ])->post('https://api.openai.com/v1/chat/completions', [
+                    'model' => \App\Models\Setting::get('ai.openai_model'),
+                    'max_tokens' => 4096,
+                    'messages' => [
+                        ['role' => 'system', 'content' => $systemPrompt],
+                        ['role' => 'user', 'content' => $userMessage],
+                    ],
+                ]);
+
+                if ($response->failed()) {
+                    throw new \Exception($response->json('error.message') ?? 'OpenAI API error.');
+                }
+
+                $content = $response->json('choices.0.message.content', '');
+            } else {
+                $apiKey = \App\Models\Setting::get('ai.claude_key', '');
+                $response = Http::withHeaders([
+                    'x-api-key' => $apiKey,
+                    'anthropic-version' => '2023-06-01',
+                    'content-type' => 'application/json',
+                ])->post('https://api.anthropic.com/v1/messages', [
+                    'model' => \App\Models\Setting::get('ai.claude_model'),
+                    'max_tokens' => 4096,
+                    'system' => $systemPrompt,
+                    'messages' => [
+                        ['role' => 'user', 'content' => $userMessage],
+                    ],
+                ]);
+
+                if ($response->failed()) {
+                    throw new \Exception($response->json('error.message') ?? 'Claude API error.');
+                }
+
+                $content = $response->json('content.0.text', '');
+            }
+
+            $stripped = trim(preg_replace('/^```(?:json)?\s*/i', '', preg_replace('/\s*```$/i', '', trim($content))));
+            $data = json_decode($stripped, true);
+
+            if (! is_array($data)) {
+                throw new \Exception('AI returned an unexpected response for section '.$row['name'].'.');
+            }
+
+            $updated = 0;
+
+            foreach ($textFields as $field) {
+                $key = $field['key'];
+                if (! array_key_exists($key, $data)) {
+                    continue;
+                }
+                $value = (string) $data[$key];
+                $draftKey = $field['slug'].':'.$key;
+                $drafts[$draftKey] = ['type' => $field['type'], 'value' => $value];
+                $updated++;
+                if (
+                    $this->editingRowIndex !== null &&
+                    isset($this->rows[$this->editingRowIndex]) &&
+                    $this->rows[$this->editingRowIndex]['slug'] === $rowSlug
+                ) {
+                    $this->contentValues[$key] = $value;
+                }
+            }
+
+            foreach ($gridFields as $gf) {
+                $key = $gf['key'];
+                if (! array_key_exists($key, $data) || ! is_array($data[$key])) {
+                    continue;
+                }
+                $mergedItems = [];
+                foreach ($gf['items'] as $idx => $existingItem) {
+                    $generated = $data[$key][$idx] ?? [];
+                    $merged = $existingItem;
+                    foreach ($generated as $subKey => $subVal) {
+                        if (! $isStructuralGridSubKey($subKey)) {
+                            $merged[$subKey] = (string) $subVal;
+                        }
+                    }
+                    $mergedItems[] = $merged;
+                }
+                $gridJson = json_encode($mergedItems);
+                $draftKey = $gf['slug'].':'.$key;
+                $drafts[$draftKey] = ['type' => 'grid', 'value' => $gridJson];
+                $updated++;
+                if (
+                    $this->editingRowIndex !== null &&
+                    isset($this->rows[$this->editingRowIndex]) &&
+                    $this->rows[$this->editingRowIndex]['slug'] === $rowSlug
+                ) {
+                    $this->contentValues[$key] = $gridJson;
+                }
+            }
+
+            session(['editor_draft_overrides' => $drafts]);
+            $this->isDirty = true;
+            $this->dispatch('ai-section-content-generated', rowSlug: $rowSlug, values: array_column($textFields, 'key'));
+
+            return ['updated' => $updated, 'rowSlug' => $rowSlug, 'imageFields' => $imageFields, 'error' => null];
+        } catch (\Exception $e) {
+            return ['updated' => 0, 'rowSlug' => $rowSlug, 'imageFields' => $imageFields, 'error' => $e->getMessage()];
+        }
+    }
+
+    public function generateAiAllRowImage(string $rowSlug, string $fieldKey, string $imagePrompt): array
+    {
+        $apiKey = \App\Models\Setting::get('ai.openai_key', '');
+
+        if (empty($apiKey)) {
+            return ['path' => null, 'error' => 'No OpenAI API key configured.'];
+        }
+
+        try {
+            $response = Http::withHeaders([
+                'Authorization' => 'Bearer '.$apiKey,
+                'Content-Type' => 'application/json',
+            ])->timeout(60)->post('https://api.openai.com/v1/images/generations', [
+                'model' => 'dall-e-3',
+                'prompt' => $imagePrompt,
+                'n' => 1,
+                'size' => '1792x1024',
+                'response_format' => 'url',
+            ]);
+
+            if ($response->failed()) {
+                throw new \Exception($response->json('error.message') ?? 'OpenAI image generation failed.');
+            }
+
+            $imageUrl = $response->json('data.0.url');
+
+            if (empty($imageUrl)) {
+                throw new \Exception('No image URL returned from OpenAI.');
+            }
+
+            $imageResponse = Http::timeout(30)->get($imageUrl);
+
+            if ($imageResponse->failed()) {
+                throw new \Exception('Failed to download generated image.');
+            }
+
+            $category = MediaItem::query()->whereNull('media_category_id')->first()?->mediaCategory
+                ?? \App\Models\MediaCategory::where('is_default', true)->first()
+                ?? \App\Models\MediaCategory::first();
+
+            $categorySlug = $category?->slug ?? 'uncategorized';
+            $filename = 'ai-'.now()->format('YmdHis').'-'.substr(md5($imagePrompt), 0, 6).'.jpg';
+            $storagePath = $categorySlug.'/'.$filename;
+
+            Storage::disk('public')->put($storagePath, $imageResponse->body());
+
+            MediaItem::create([
+                'media_category_id' => $category?->id,
+                'path' => $storagePath,
+                'filename' => $filename,
+                'alt' => Str::limit($imagePrompt, 191),
+                'size' => strlen($imageResponse->body()),
+                'mime_type' => 'image/jpeg',
+            ]);
+
+            $drafts = session('editor_draft_overrides', []);
+
+            if (str_starts_with($fieldKey, '@grid:')) {
+                // @grid:grid_cards:0:image — update the sub-field inside the grid JSON.
+                [, $gridKey, $itemIdx, $subKey] = explode(':', $fieldKey, 4);
+                $itemIdx = (int) $itemIdx;
+                $gridDraftKey = $rowSlug.':'.$gridKey;
+                $existingJson = $drafts[$gridDraftKey]['value']
+                    ?? ContentOverride::query()->where('row_slug', $rowSlug)->where('key', $gridKey)->value('value')
+                    ?? '';
+                $items = json_decode((string) $existingJson, true) ?: [];
+                if (isset($items[$itemIdx])) {
+                    $items[$itemIdx][$subKey] = $storagePath;
+                }
+                $drafts[$gridDraftKey] = ['type' => 'grid', 'value' => json_encode($items)];
+
+                if (
+                    $this->editingRowIndex !== null &&
+                    isset($this->rows[$this->editingRowIndex]) &&
+                    $this->rows[$this->editingRowIndex]['slug'] === $rowSlug
+                ) {
+                    $this->contentValues[$gridKey] = json_encode($items);
+                }
+            } else {
+                $drafts[$rowSlug.':'.$fieldKey] = ['type' => 'image', 'value' => $storagePath];
+
+                if (
+                    $this->editingRowIndex !== null &&
+                    isset($this->rows[$this->editingRowIndex]) &&
+                    $this->rows[$this->editingRowIndex]['slug'] === $rowSlug
+                ) {
+                    $this->contentValues[$fieldKey] = $storagePath;
+                }
+            }
+
+            session(['editor_draft_overrides' => $drafts]);
+
+            $this->isDirty = true;
+            $this->dispatch('ai-section-content-generated', rowSlug: $rowSlug, values: [$fieldKey]);
+
+            return ['path' => $storagePath, 'error' => null];
+        } catch (\Exception $e) {
+            return ['path' => null, 'error' => $e->getMessage()];
+        }
+    }
+
     public function generateAiSectionContent(string $rowSlug, string $prompt): void
     {
         $row = collect($this->rows)->firstWhere('slug', $rowSlug);
@@ -3638,7 +4056,55 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
             'section_bg_position', 'section_bg_size', 'section_bg_repeat',
         ];
 
+        $isStructuralGridSubKey = function (string $k): bool {
+            if (in_array($k, ['icon', 'image', 'alt', 'url'], true)) {
+                return true;
+            }
+            if (str_starts_with($k, 'toggle_')) {
+                return true;
+            }
+            if (
+                str_ends_with($k, '_image') ||
+                str_ends_with($k, '_alt') ||
+                str_ends_with($k, '_url') ||
+                str_ends_with($k, '_new_tab') ||
+                str_ends_with($k, '_classes') ||
+                str_ends_with($k, '_htag') ||
+                str_ends_with($k, '_id') ||
+                str_ends_with($k, '_attrs')
+            ) {
+                return true;
+            }
+
+            return false;
+        };
+
         $allFields = $this->parseContentFields($row['blade'], $rowSlug);
+        $drafts = session('editor_draft_overrides', []);
+
+        $gridFields = [];
+        foreach ($allFields as $field) {
+            if ($field['type'] !== 'grid' || ! str_starts_with($field['key'], 'grid_')) {
+                continue;
+            }
+            $draftKey = $field['slug'].':'.$field['key'];
+            $draft = $drafts[$draftKey] ?? null;
+            $currentJson = $draft !== null
+                ? ($draft['value'] ?? '')
+                : (\App\Models\ContentOverride::query()->where('row_slug', $rowSlug)->where('key', $field['key'])->value('value') ?? $field['default'] ?? '');
+            $items = json_decode((string) $currentJson, true);
+            if (! is_array($items) || empty($items)) {
+                $items = json_decode((string) ($field['default'] ?? ''), true) ?: [];
+            }
+            if (! empty($items)) {
+                $gridFields[] = [
+                    'slug' => $field['slug'],
+                    'key' => $field['key'],
+                    'label' => $field['label'],
+                    'items' => $items,
+                ];
+            }
+        }
 
         $textFields = array_values(array_filter($allFields, function (array $field) use ($skipKeys): bool {
             if (in_array($field['key'], $skipKeys, true)) {
@@ -3655,8 +4121,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                 str_ends_with($field['key'], '_id') ||
                 str_ends_with($field['key'], '_attrs') ||
                 str_ends_with($field['key'], '_htag') ||
-                str_starts_with($field['key'], 'toggle_') ||
-                str_starts_with($field['key'], 'grid_')
+                str_starts_with($field['key'], 'toggle_')
             ) {
                 return false;
             }
@@ -3664,13 +4129,12 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
             return true;
         }));
 
-        if (empty($textFields)) {
+        if (empty($textFields) && empty($gridFields)) {
             $this->dispatch('ai-section-content-error', rowSlug: $rowSlug, message: 'No editable text fields found in this section.');
 
             return;
         }
 
-        $drafts = session('editor_draft_overrides', []);
         $overrides = \App\Models\ContentOverride::query()
             ->where('row_slug', $rowSlug)
             ->whereIn('key', array_column($textFields, 'key'))
@@ -3699,9 +4163,13 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
             ->map(fn (array $f): string => $f['label'].': '.$f['current'])
             ->implode("\n");
 
-        $fieldsJson = json_encode(array_map(fn (array $f): array => ['key' => $f['key'], 'label' => $f['label'], 'type' => $f['type']], $fieldSchema));
+        $aiFieldsList = array_map(fn (array $f): array => ['key' => $f['key'], 'label' => $f['label'], 'type' => $f['type']], $fieldSchema);
+        foreach ($gridFields as $gf) {
+            $aiFieldsList[] = ['key' => $gf['key'], 'label' => $gf['label'], 'type' => 'grid', 'items' => $gf['items']];
+        }
+        $fieldsJson = json_encode($aiFieldsList);
 
-        $systemPrompt = 'You are a web content writer. You will be given a list of text fields for a website section and a description of what the section should contain. Generate appropriate content for each field. Respond ONLY with valid JSON where each key is a field key and each value is the content string. For richtext fields, use simple HTML (p, strong, em tags only). For text fields, return plain text only. Keep content concise and professional. No explanations, no markdown code fences, no extra keys.';
+        $systemPrompt = 'You are a web content writer. You will be given a list of text fields for a website section and a description of what the section should contain. Generate appropriate content for each field. Respond ONLY with valid JSON where each key is a field key and each value is the content string or array. For richtext fields, use simple HTML (p, strong, em tags only). For text fields, return plain text only. For grid fields (type="grid"), return a JSON array of the same length as the items provided — update only the text sub-fields in each item and preserve all structural sub-fields (icon, image, alt, url, toggle_*, *_image, *_url, *_alt, *_new_tab, *_classes) exactly as given. Keep content concise and professional. No explanations, no markdown code fences, no extra keys.';
         $userMessage = "Section fields (JSON): {$fieldsJson}\n\nInstruction: {$prompt}";
 
         if ($currentContent) {
@@ -3716,7 +4184,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                     'Content-Type' => 'application/json',
                 ])->post('https://api.openai.com/v1/chat/completions', [
                     'model' => \App\Models\Setting::get('ai.openai_model'),
-                    'max_tokens' => 2048,
+                    'max_tokens' => 4096,
                     'messages' => [
                         ['role' => 'system', 'content' => $systemPrompt],
                         ['role' => 'user', 'content' => $userMessage],
@@ -3736,7 +4204,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                     'content-type' => 'application/json',
                 ])->post('https://api.anthropic.com/v1/messages', [
                     'model' => \App\Models\Setting::get('ai.claude_model'),
-                    'max_tokens' => 2048,
+                    'max_tokens' => 4096,
                     'system' => $systemPrompt,
                     'messages' => [
                         ['role' => 'user', 'content' => $userMessage],
@@ -3757,7 +4225,6 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                 throw new \Exception('AI returned an unexpected response. Please try again with more detail.');
             }
 
-            $drafts = session('editor_draft_overrides', []);
             $updatedValues = [];
 
             foreach ($textFields as $field) {
@@ -3778,6 +4245,36 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                     $this->rows[$this->editingRowIndex]['slug'] === $rowSlug
                 ) {
                     $this->contentValues[$key] = $value;
+                }
+            }
+
+            foreach ($gridFields as $gf) {
+                $key = $gf['key'];
+                if (! array_key_exists($key, $data) || ! is_array($data[$key])) {
+                    continue;
+                }
+                $mergedItems = [];
+                foreach ($gf['items'] as $idx => $existingItem) {
+                    $generated = $data[$key][$idx] ?? [];
+                    $merged = $existingItem;
+                    foreach ($generated as $subKey => $subVal) {
+                        if (! $isStructuralGridSubKey($subKey)) {
+                            $merged[$subKey] = (string) $subVal;
+                        }
+                    }
+                    $mergedItems[] = $merged;
+                }
+                $gridJson = json_encode($mergedItems);
+                $draftKey = $gf['slug'].':'.$key;
+                $drafts[$draftKey] = ['type' => 'grid', 'value' => $gridJson];
+                $updatedValues[$key] = $gridJson;
+
+                if (
+                    $this->editingRowIndex !== null &&
+                    isset($this->rows[$this->editingRowIndex]) &&
+                    $this->rows[$this->editingRowIndex]['slug'] === $rowSlug
+                ) {
+                    $this->contentValues[$key] = $gridJson;
                 }
             }
 
@@ -4949,6 +5446,16 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                                         <flux:icon name="finger-print" class="size-3.5" />
                                     </button>
                                 </flux:tooltip>
+                                @if (\App\Models\Setting::get('ai.claude_key') || \App\Models\Setting::get('ai.openai_key'))
+                                    <flux:tooltip content="Generate content for all sections" position="bottom">
+                                        <button type="button"
+                                            x-on:click="$dispatch('open-generate-all-modal', { rowCount: {{ count($rows) }} }); $flux.modal('generate-all-content').show()"
+                                            class="p-1 rounded text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors"
+                                        >
+                                            <flux:icon name="sparkles" class="size-3.5" />
+                                        </button>
+                                    </flux:tooltip>
+                                @endif
                                 @php
                                     $globalMultiLangs = array_values(array_filter(
                                         \App\Models\Setting::get('site.languages', [['code' => 'en']]),
@@ -6207,6 +6714,187 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
             <flux:modal.close>
                 <flux:button variant="danger" wire:click="removeAllRows">Remove All</flux:button>
             </flux:modal.close>
+        </div>
+    </flux:modal>
+
+    <flux:modal name="generate-all-content" class="w-full max-w-lg">
+        <div
+            x-data="{
+                prompt: '',
+                mode: 'all',
+                useHtml: true,
+                generateImages: false,
+                running: false,
+                cancelled: false,
+                total: 0,
+                done: 0,
+                rowCount: 0,
+                errors: [],
+                get pct() {
+                    return this.total ? Math.round((this.done / this.total) * 100) : 0;
+                },
+                handleOpen(detail) {
+                    this.rowCount = detail.rowCount || 0;
+                    this.prompt = '';
+                    this.mode = 'all';
+                    this.useHtml = true;
+                    this.generateImages = false;
+                    this.running = false;
+                    this.cancelled = false;
+                    this.total = 0;
+                    this.done = 0;
+                    this.errors = [];
+                },
+                async start() {
+                    if (!this.prompt.trim()) return;
+                    this.running = true;
+                    this.cancelled = false;
+                    this.total = this.rowCount;
+                    this.done = 0;
+                    this.errors = [];
+                    const overwriteAll = this.mode === 'all';
+                    const useHtml = this.useHtml;
+                    const generateImages = this.generateImages;
+                    const allImageTasks = [];
+                    for (let idx = 0; idx < this.rowCount; idx++) {
+                        if (this.cancelled) break;
+                        const result = await $wire.generateAiAllRowText(idx, this.prompt, overwriteAll, useHtml);
+                        if (result.error) {
+                            this.errors.push(result.error);
+                        }
+                        if (generateImages && result.imageFields && result.imageFields.length) {
+                            this.total += result.imageFields.length;
+                            for (const fieldKey of result.imageFields) {
+                                allImageTasks.push({ rowSlug: result.rowSlug, fieldKey: fieldKey });
+                            }
+                        }
+                        this.done++;
+                    }
+                    for (const task of allImageTasks) {
+                        if (this.cancelled) break;
+                        const imgResult = await $wire.generateAiAllRowImage(task.rowSlug, task.fieldKey, this.prompt);
+                        if (imgResult.error) {
+                            this.errors.push(imgResult.error);
+                        }
+                        this.done++;
+                    }
+                    if (!this.cancelled) { await $wire.triggerPreviewRefresh(); }
+                    this.running = false;
+                    $flux.modal('generate-all-content').close();
+                    const msg = this.errors.length ? 'Content generated with ' + this.errors.length + ' error(s).' : 'Content generated for all sections.';
+                    this.$dispatch('notify', { message: msg });
+                },
+                cancel() { this.cancelled = true; }
+            }"
+            x-on:open-generate-all-modal.window="handleOpen($event.detail)"
+        >
+            <flux:heading size="lg">Generate content for all sections</flux:heading>
+            <flux:text class="mt-1">Describe what the page is about and AI will write content for every text field across all sections at once.</flux:text>
+
+            <div class="mt-4 space-y-4" x-show="!running">
+                <div>
+                    <flux:label>Prompt</flux:label>
+                    <textarea
+                        x-model="prompt"
+                        placeholder="e.g. A plumbing company in Austin TX specializing in emergency repairs and residential plumbing. Family owned, 24/7 service, licensed and insured."
+                        rows="4"
+                        class="mt-1 w-full text-sm rounded-lg border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-900 text-zinc-900 dark:text-white px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition resize-none placeholder-zinc-400"
+                    ></textarea>
+                    <p class="mt-1 text-xs text-zinc-400 dark:text-zinc-500">Describe the business, page purpose, and tone. AI will use this context to write each section appropriately.</p>
+                </div>
+
+                <div>
+                    <flux:label class="mb-2">What to generate</flux:label>
+                    <div class="mt-2 space-y-2.5">
+                        <label class="flex items-start gap-2.5 cursor-pointer">
+                            <input type="radio" x-model="mode" value="all" class="mt-0.5 text-primary shrink-0">
+                            <div>
+                                <span class="text-sm font-medium text-zinc-700 dark:text-zinc-300">Overwrite all</span>
+                                <p class="text-xs text-zinc-400 dark:text-zinc-500">Replace every text field, including fields that already have content</p>
+                            </div>
+                        </label>
+                        <label class="flex items-start gap-2.5 cursor-pointer">
+                            <input type="radio" x-model="mode" value="empty" class="mt-0.5 text-primary shrink-0">
+                            <div>
+                                <span class="text-sm font-medium text-zinc-700 dark:text-zinc-300">Fill empty only</span>
+                                <p class="text-xs text-zinc-400 dark:text-zinc-500">Skip fields that already have content saved</p>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="space-y-3 rounded-lg border border-zinc-200 dark:border-zinc-700 p-3">
+                    <label class="flex items-center justify-between gap-3 cursor-pointer">
+                        <div>
+                            <span class="text-sm font-medium text-zinc-700 dark:text-zinc-300">Use HTML in rich text fields</span>
+                            <p class="text-xs text-zinc-400 dark:text-zinc-500">Generate &lt;p&gt;, &lt;strong&gt;, &lt;em&gt;, &lt;ul&gt;, &lt;li&gt; tags where supported</p>
+                        </div>
+                        <button
+                            type="button"
+                            x-on:click="useHtml = !useHtml"
+                            class="relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none"
+                            x-bind:class="useHtml ? 'bg-primary' : 'bg-zinc-200 dark:bg-zinc-600'"
+                        >
+                            <span class="pointer-events-none inline-block h-4 w-4 rounded-full bg-white shadow transform transition-transform duration-200 ease-in-out" x-bind:class="useHtml ? 'translate-x-4' : 'translate-x-0'"></span>
+                        </button>
+                    </label>
+                    <label class="flex items-center justify-between gap-3 cursor-pointer">
+                        <div>
+                            <span class="text-sm font-medium text-zinc-700 dark:text-zinc-300">Generate images</span>
+                            <p class="text-xs text-zinc-400 dark:text-zinc-500">Use DALL-E 3 to fill empty image fields (requires OpenAI key, adds ~15s per image)</p>
+                        </div>
+                        <button
+                            type="button"
+                            x-on:click="generateImages = !generateImages"
+                            class="relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none"
+                            x-bind:class="generateImages ? 'bg-primary' : 'bg-zinc-200 dark:bg-zinc-600'"
+                        >
+                            <span class="pointer-events-none inline-block h-4 w-4 rounded-full bg-white shadow transform transition-transform duration-200 ease-in-out" x-bind:class="generateImages ? 'translate-x-4' : 'translate-x-0'"></span>
+                        </button>
+                    </label>
+                </div>
+            </div>
+
+            <div x-show="running" class="mt-4 space-y-3">
+                <div class="flex items-center justify-between text-sm">
+                    <span class="text-zinc-600 dark:text-zinc-400">Generating content…</span>
+                    <span class="font-medium text-zinc-700 dark:text-zinc-300" x-text="total ? (done + ' / ' + total + ' steps') : 'Preparing…'"></span>
+                </div>
+                <div class="h-2 bg-zinc-100 dark:bg-zinc-700 rounded-full overflow-hidden">
+                    <div
+                        class="h-full bg-primary rounded-full transition-all duration-300 ease-out"
+                        x-bind:style="'width: ' + (total ? pct : 0) + '%'"
+                        x-bind:class="total === 0 ? 'animate-pulse w-full opacity-30' : ''"
+                    ></div>
+                </div>
+                <p class="text-xs text-zinc-400 dark:text-zinc-500">Processing each section — this may take a moment.</p>
+                <div x-show="errors.length" class="rounded-lg bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800 px-3 py-2">
+                    <p class="text-xs font-medium text-red-700 dark:text-red-400 mb-1">Some sections had errors:</p>
+                    <template x-for="err in errors">
+                        <p class="text-xs text-red-600 dark:text-red-400" x-text="err"></p>
+                    </template>
+                </div>
+            </div>
+
+            <div class="mt-6 flex justify-end gap-3">
+                <template x-if="!running">
+                    <flux:modal.close>
+                        <flux:button variant="ghost">Cancel</flux:button>
+                    </flux:modal.close>
+                </template>
+                <template x-if="running">
+                    <flux:button variant="ghost" x-on:click="cancel()">Stop</flux:button>
+                </template>
+                <flux:button
+                    variant="primary"
+                    x-show="!running"
+                    x-bind:disabled="!prompt.trim()"
+                    x-on:click="start()"
+                >
+                    <flux:icon name="sparkles" class="size-4" />
+                    Generate
+                </flux:button>
+            </div>
         </div>
     </flux:modal>
 
