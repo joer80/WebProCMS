@@ -5,7 +5,7 @@
 --}}
 <x-dl.section slug="__SLUG__"
     default-section-classes="py-section px-6 bg-white dark:bg-zinc-900"
-    default-container-classes="max-w-5xl mx-auto grid lg:grid-cols-2 gap-12 items-start">
+    default-container-classes="max-w-6xl mx-auto grid lg:grid-cols-2 gap-12 items-start">
     <div>
         <x-dl.heading slug="__SLUG__" prefix="headline" default="Get in Touch"
             default-tag="h1"
