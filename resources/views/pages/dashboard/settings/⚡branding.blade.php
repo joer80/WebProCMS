@@ -10,6 +10,8 @@ use Livewire\Component;
 new #[Layout('layouts.app')] #[Title('Branding')] class extends Component {
     public string $logoUrl = '';
 
+    public bool $whiteLabelEnabled = false;
+
     public bool $showMediaPicker = false;
 
     /** @var array<string, string> */
@@ -18,7 +20,14 @@ new #[Layout('layouts.app')] #[Title('Branding')] class extends Component {
     public function mount(): void
     {
         $this->logoUrl = (string) Setting::get('branding.logo_url', '');
+        $this->whiteLabelEnabled = (bool) Setting::get('branding.white_label', false);
         $this->loadThemeColors();
+    }
+
+    public function updatedWhiteLabelEnabled(): void
+    {
+        Setting::set('branding.white_label', $this->whiteLabelEnabled);
+        $this->dispatch('notify', message: $this->whiteLabelEnabled ? 'White label enabled.' : 'White label disabled.');
     }
 
     public function openMediaPicker(): void
@@ -127,6 +136,19 @@ new #[Layout('layouts.app')] #[Title('Branding')] class extends Component {
                     <flux:button variant="outline" icon="photo" wire:click="openMediaPicker">
                         {{ $logoUrl ? 'Change logo' : 'Pick from Media Library' }}
                     </flux:button>
+                </div>
+            </div>
+
+            <div class="rounded-lg border border-zinc-200 dark:border-zinc-700 p-6">
+                <div class="flex items-center justify-between gap-6">
+                    <div>
+                        <flux:heading>White Label</flux:heading>
+                        <flux:text class="mt-1">Use your uploaded logo in the admin sign-in page and sidebar instead of the WebProCMS logo.</flux:text>
+                        @if (! $logoUrl)
+                            <flux:text class="mt-2 text-xs text-amber-600 dark:text-amber-400">⚠ Upload a logo above for this to take effect.</flux:text>
+                        @endif
+                    </div>
+                    <flux:switch wire:model.live="whiteLabelEnabled" />
                 </div>
             </div>
 
