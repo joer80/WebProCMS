@@ -564,9 +564,18 @@ if ($field['type'] === 'classes') {
                             </template>
                             <template x-if="fKey === 'image' || fKey.endsWith('_image')">
                                 <div>
-                                    <div x-show="item[fKey]" class="mb-2">
+                                    <div x-show="item[fKey]" class="mb-2 relative inline-block">
                                         <img :src="item[fKey] ? '/storage/' + item[fKey] : ''"
                                             class="h-16 w-24 rounded-lg object-cover border border-zinc-200 dark:border-zinc-700" />
+                                        <flux:tooltip content="Remove image">
+                                            <button
+                                                type="button"
+                                                @click="updateField(idx, fKey, '')"
+                                                class="absolute -top-2 -right-2 size-5 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600"
+                                            >
+                                                <flux:icon name="x-mark" class="size-3" />
+                                            </button>
+                                        </flux:tooltip>
                                     </div>
                                     <button
                                         type="button"
