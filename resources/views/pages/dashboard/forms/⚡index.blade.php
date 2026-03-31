@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\ContentOverride;
 use App\Models\Form;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Lazy;
@@ -36,6 +37,21 @@ new #[Layout('layouts.app')] #[Title('Forms')] #[Lazy] class extends Component {
             ->orderBy('name')
             ->get();
     }
+
+    /**
+     * Returns a map of form_id => array of page slugs that use that form.
+     *
+     * @return array<int, array<int, string|null>>
+     */
+    public function getPagesByFormProperty(): array
+    {
+        return ContentOverride::query()
+            ->where('key', 'form_id')
+            ->get(['value', 'page_slug'])
+            ->groupBy(fn ($row) => (int) $row->value)
+            ->map(fn ($rows) => $rows->pluck('page_slug')->filter()->unique()->values()->all())
+            ->all();
+    }
 }; ?>
 
 <div>
@@ -65,6 +81,7 @@ new #[Layout('layouts.app')] #[Title('Forms')] #[Lazy] class extends Component {
                             <th class="text-left px-4 py-3 font-medium text-zinc-600 dark:text-zinc-400 hidden lg:table-cell">Notification Email</th>
                             <th class="text-left px-4 py-3 font-medium text-zinc-600 dark:text-zinc-400 hidden sm:table-cell">Submissions</th>
                             <th class="text-left px-4 py-3 font-medium text-zinc-600 dark:text-zinc-400 hidden lg:table-cell">Save to DB</th>
+                            <th class="text-left px-4 py-3 font-medium text-zinc-600 dark:text-zinc-400 hidden xl:table-cell">Used on</th>
                             <th class="px-4 py-3"></th>
                         </tr>
                     </thead>
@@ -102,6 +119,42 @@ new #[Layout('layouts.app')] #[Title('Forms')] #[Lazy] class extends Component {
                                         <flux:badge color="green" size="sm">Yes</flux:badge>
                                     @else
                                         <flux:badge color="zinc" size="sm">No</flux:badge>
+                                    @endif
+                                </td>
+                                <td class="px-4 py-3 hidden xl:table-cell">
+                                    @php $pageSlugs = $this->pagesByForm[$form->id] ?? []; @endphp
+                                    @if (empty($pageSlugs))
+                                        <span class="text-zinc-400 dark:text-zinc-500 text-sm">Not used</span>
+                                    @else
+                                        <div class="relative" x-data="{ open: false }" x-on:click.outside="open = false">
+                                            <button
+                                                type="button"
+                                                x-on:click="open = !open"
+                                                class="text-sm text-primary hover:text-primary/80 transition-colors font-medium"
+                                            >
+                                                {{ count($pageSlugs) }} {{ Str::plural('page', count($pageSlugs)) }}
+                                            </button>
+                                            <div
+                                                x-show="open"
+                                                x-transition
+                                                class="absolute z-20 left-0 mt-1 w-48 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-lg py-1"
+                                            >
+                                                @foreach ($pageSlugs as $pageSlug)
+                                                    @php
+                                                        $pagePath = 'pages/⚡'.$pageSlug.'.blade.php';
+                                                        $editorUrl = route('dashboard.design-library.editor').'?file='.urlencode($pagePath);
+                                                    @endphp
+                                                    <a
+                                                        href="{{ $editorUrl }}"
+                                                        wire:navigate
+                                                        class="flex items-center gap-2 px-3 py-2 text-sm text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors"
+                                                    >
+                                                        <flux:icon name="document-text" class="size-4 text-zinc-400 shrink-0" />
+                                                        {{ ucfirst($pageSlug) }}
+                                                    </a>
+                                                @endforeach
+                                            </div>
+                                        </div>
                                     @endif
                                 </td>
                                 <td class="px-4 py-3">

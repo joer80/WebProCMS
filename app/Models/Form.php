@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\FormType;
+use App\Enums\SpamProtection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -18,6 +19,7 @@ class Form extends Model
         'type',
         'notification_email',
         'save_submissions',
+        'spam_protection',
         'fields',
         'is_seeded',
     ];
@@ -26,6 +28,7 @@ class Form extends Model
     {
         return [
             'type' => FormType::class,
+            'spam_protection' => SpamProtection::class,
             'save_submissions' => 'boolean',
             'is_seeded' => 'boolean',
             'fields' => 'array',

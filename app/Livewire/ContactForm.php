@@ -3,10 +3,14 @@
 namespace App\Livewire;
 
 use App\Enums\FormType;
+use App\Enums\SpamProtection;
 use App\Mail\FormSubmissionMail;
 use App\Models\Form;
 use App\Models\FormSubmission;
+use App\Models\Setting;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\RateLimiter;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 
@@ -27,6 +31,9 @@ class ContactForm extends Component
     /** @var array<string, bool> */
     public array $checkboxes = [];
 
+    /** Honeypot field — must remain empty for real users. */
+    public string $hpField = '';
+
     public bool $submitted = false;
 
     public function mount(int $formId): void
@@ -46,8 +53,45 @@ class ContactForm extends Component
         }
     }
 
-    public function submit(): void
+    public function submit(?string $captchaToken = null): void
     {
+        $protection = $this->form?->spam_protection ?? SpamProtection::None;
+
+        if ($protection === SpamProtection::Honeypot) {
+            if ($this->hpField !== '') {
+                // Bot detected — silently succeed without saving or emailing.
+                $this->submitted = true;
+
+                return;
+            }
+
+            $rateLimitKey = 'contact-form:'.$this->formId.':'.request()->ip();
+
+            if (RateLimiter::tooManyAttempts($rateLimitKey, 5)) {
+                $this->addError('general', 'Too many submissions. Please try again in a few minutes.');
+
+                return;
+            }
+
+            RateLimiter::hit($rateLimitKey, 600);
+        }
+
+        if ($protection === SpamProtection::Recaptcha) {
+            if (! $this->verifyRecaptcha($captchaToken ?? '')) {
+                $this->addError('general', 'CAPTCHA verification failed. Please try again.');
+
+                return;
+            }
+        }
+
+        if ($protection === SpamProtection::Turnstile) {
+            if (! $this->verifyTurnstile($captchaToken ?? '')) {
+                $this->addError('general', 'CAPTCHA verification failed. Please try again.');
+
+                return;
+            }
+        }
+
         $this->validate($this->buildRules());
 
         $data = $this->buildSubmissionData();
@@ -66,6 +110,56 @@ class ContactForm extends Component
         }
 
         $this->submitted = true;
+    }
+
+    /**
+     * Verify a Google reCAPTCHA v3 token.
+     */
+    private function verifyRecaptcha(string $token): bool
+    {
+        if (empty($token)) {
+            return false;
+        }
+
+        $secretKey = Setting::get('spam.recaptcha_secret_key', '');
+
+        if (empty($secretKey)) {
+            return false;
+        }
+
+        $response = Http::asForm()->post('https://www.google.com/recaptcha/api/siteverify', [
+            'secret' => $secretKey,
+            'response' => $token,
+            'remoteip' => request()->ip(),
+        ]);
+
+        $result = $response->json();
+
+        return ($result['success'] ?? false) && ($result['score'] ?? 0) >= 0.5;
+    }
+
+    /**
+     * Verify a Cloudflare Turnstile token.
+     */
+    private function verifyTurnstile(string $token): bool
+    {
+        if (empty($token)) {
+            return false;
+        }
+
+        $secretKey = Setting::get('spam.turnstile_secret_key', '');
+
+        if (empty($secretKey)) {
+            return false;
+        }
+
+        $response = Http::asForm()->post('https://challenges.cloudflare.com/turnstile/v0/siteverify', [
+            'secret' => $secretKey,
+            'response' => $token,
+            'remoteip' => request()->ip(),
+        ]);
+
+        return $response->json('success', false);
     }
 
     /**

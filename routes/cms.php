@@ -51,6 +51,7 @@ Route::middleware(['auth', 'verified'])->group(function (): void {
         Route::livewire('dashboard/settings/branding', 'pages::dashboard.settings.branding')->name('dashboard.settings.branding');
         Route::livewire('dashboard/settings/design', 'pages::dashboard.settings.design')->name('dashboard.settings.design');
         Route::livewire('dashboard/settings/advanced', 'pages::dashboard.settings.advanced')->name('dashboard.settings.advanced');
+        Route::livewire('dashboard/settings/api-keys', 'pages::dashboard.settings.api-keys')->name('dashboard.settings.api-keys');
 
         Route::livewire('dashboard/users', 'pages::dashboard.users')->name('dashboard.users');
 

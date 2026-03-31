@@ -89,6 +89,9 @@
                         <flux:sidebar.item :href="route('dashboard.settings.design')" :current="request()->routeIs('dashboard.settings.design')" wire:navigate>
                             {{ __('Design') }}
                         </flux:sidebar.item>
+                        <flux:sidebar.item :href="route('dashboard.settings.api-keys')" :current="request()->routeIs('dashboard.settings.api-keys')" wire:navigate>
+                            {{ __('API Keys') }}
+                        </flux:sidebar.item>
                         <flux:sidebar.item :href="route('dashboard.settings.advanced')" :current="request()->routeIs('dashboard.settings.advanced')" wire:navigate>
                             {{ __('Advanced') }}
                         </flux:sidebar.item>

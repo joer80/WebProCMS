@@ -1,12 +1,16 @@
 <?php
 
 use App\Enums\Role;
+use App\Enums\SpamProtection;
 use App\Mail\FormSubmissionMail;
 use App\Models\Form;
 use App\Models\FormSubmission;
+use App\Models\Setting;
 use App\Models\User;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Storage;
 use Livewire\Livewire;
 use Spatie\ResponseCache\Facades\ResponseCache;
@@ -418,6 +422,152 @@ it('requires terms to be accepted on photo contest form', function (): void {
         ->set('checkboxes.terms', false)
         ->call('submit')
         ->assertHasErrors(['checkboxes.terms']);
+});
+
+// --- Spam protection: edit page ---
+
+it('loads spam_protection value on the edit page', function (): void {
+    $user = User::factory()->create();
+    $form = Form::factory()->create(['spam_protection' => SpamProtection::Honeypot->value]);
+
+    Livewire::actingAs($user)
+        ->test('pages::dashboard.forms.edit', ['form' => $form])
+        ->assertSet('spamProtection', 'honeypot');
+});
+
+it('saves spam_protection when updating a form', function (): void {
+    $user = User::factory()->create();
+    $form = Form::factory()->create(['spam_protection' => 'none']);
+
+    Livewire::actingAs($user)
+        ->test('pages::dashboard.forms.edit', ['form' => $form])
+        ->set('spamProtection', 'honeypot')
+        ->call('save');
+
+    expect($form->fresh()->spam_protection)->toBe(SpamProtection::Honeypot);
+});
+
+// --- Spam protection: honeypot ---
+
+it('silently succeeds when the honeypot field is filled', function (): void {
+    $form = Form::factory()->create([
+        'save_submissions' => true,
+        'spam_protection' => SpamProtection::Honeypot->value,
+    ]);
+
+    Livewire::test(\App\Livewire\ContactForm::class, ['formId' => $form->id])
+        ->set('hpField', 'bot-filled-this')
+        ->call('submit')
+        ->assertSet('submitted', true);
+
+    // No real submission should be stored.
+    expect(FormSubmission::where('form_id', $form->id)->count())->toBe(0);
+});
+
+it('blocks submission when rate limit is exceeded for honeypot protection', function (): void {
+    $form = Form::factory()->create(['spam_protection' => SpamProtection::Honeypot->value]);
+
+    // Exhaust the 5-attempt rate limit for this form + IP combination.
+    $rateLimitKey = 'contact-form:'.$form->id.':127.0.0.1';
+    for ($i = 0; $i < 5; $i++) {
+        RateLimiter::hit($rateLimitKey, 600);
+    }
+
+    Livewire::test(\App\Livewire\ContactForm::class, ['formId' => $form->id])
+        ->set('values.first_name', 'Jane')
+        ->set('values.last_name', 'Smith')
+        ->set('values.email', 'jane@example.com')
+        ->set('values.inquiry', 'Test.')
+        ->call('submit')
+        ->assertHasErrors(['general'])
+        ->assertSet('submitted', false);
+});
+
+// --- Spam protection: reCAPTCHA ---
+
+it('rejects a reCAPTCHA submission when the token is missing', function (): void {
+    $form = Form::factory()->create(['spam_protection' => SpamProtection::Recaptcha->value]);
+    Setting::set('spam.recaptcha_site_key', 'site-key');
+    Setting::set('spam.recaptcha_secret_key', 'secret-key');
+
+    Livewire::test(\App\Livewire\ContactForm::class, ['formId' => $form->id])
+        ->call('submit', '')
+        ->assertHasErrors(['general'])
+        ->assertSet('submitted', false);
+});
+
+it('accepts a reCAPTCHA submission when Google returns success with a high score', function (): void {
+    $form = Form::factory()->create([
+        'save_submissions' => true,
+        'spam_protection' => SpamProtection::Recaptcha->value,
+    ]);
+    Setting::set('spam.recaptcha_site_key', 'site-key');
+    Setting::set('spam.recaptcha_secret_key', 'secret-key');
+
+    Http::fake([
+        'https://www.google.com/recaptcha/api/siteverify' => Http::response(['success' => true, 'score' => 0.9]),
+    ]);
+
+    Livewire::test(\App\Livewire\ContactForm::class, ['formId' => $form->id])
+        ->set('values.first_name', 'Jane')
+        ->set('values.last_name', 'Smith')
+        ->set('values.email', 'jane@example.com')
+        ->set('values.inquiry', 'Test.')
+        ->call('submit', 'valid-token')
+        ->assertSet('submitted', true);
+
+    expect(FormSubmission::where('form_id', $form->id)->count())->toBe(1);
+});
+
+it('rejects a reCAPTCHA submission when Google returns a low score', function (): void {
+    $form = Form::factory()->create(['spam_protection' => SpamProtection::Recaptcha->value]);
+    Setting::set('spam.recaptcha_site_key', 'site-key');
+    Setting::set('spam.recaptcha_secret_key', 'secret-key');
+
+    Http::fake([
+        'https://www.google.com/recaptcha/api/siteverify' => Http::response(['success' => true, 'score' => 0.2]),
+    ]);
+
+    Livewire::test(\App\Livewire\ContactForm::class, ['formId' => $form->id])
+        ->call('submit', 'low-score-token')
+        ->assertHasErrors(['general'])
+        ->assertSet('submitted', false);
+});
+
+// --- Spam protection: Turnstile ---
+
+it('rejects a Turnstile submission when the token is missing', function (): void {
+    $form = Form::factory()->create(['spam_protection' => SpamProtection::Turnstile->value]);
+    Setting::set('spam.turnstile_site_key', 'site-key');
+    Setting::set('spam.turnstile_secret_key', 'secret-key');
+
+    Livewire::test(\App\Livewire\ContactForm::class, ['formId' => $form->id])
+        ->call('submit', '')
+        ->assertHasErrors(['general'])
+        ->assertSet('submitted', false);
+});
+
+it('accepts a Turnstile submission when Cloudflare returns success', function (): void {
+    $form = Form::factory()->create([
+        'save_submissions' => true,
+        'spam_protection' => SpamProtection::Turnstile->value,
+    ]);
+    Setting::set('spam.turnstile_site_key', 'site-key');
+    Setting::set('spam.turnstile_secret_key', 'secret-key');
+
+    Http::fake([
+        'https://challenges.cloudflare.com/turnstile/v0/siteverify' => Http::response(['success' => true]),
+    ]);
+
+    Livewire::test(\App\Livewire\ContactForm::class, ['formId' => $form->id])
+        ->set('values.first_name', 'Jane')
+        ->set('values.last_name', 'Smith')
+        ->set('values.email', 'jane@example.com')
+        ->set('values.inquiry', 'Test.')
+        ->call('submit', 'valid-turnstile-token')
+        ->assertSet('submitted', true);
+
+    expect(FormSubmission::where('form_id', $form->id)->count())->toBe(1);
 });
 
 // --- Submissions page ---

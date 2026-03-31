@@ -1,6 +1,8 @@
 <?php
 
+use App\Enums\SpamProtection;
 use App\Models\Form;
+use App\Models\Setting;
 use App\Rules\CommaSeparatedEmails;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
@@ -18,6 +20,8 @@ new #[Layout('layouts.app')] #[Title('Edit Form')] class extends Component {
 
     public bool $saveSubmissions = true;
 
+    public string $spamProtection = 'none';
+
     /** @var array<string, array{enabled: bool, required: bool, label: string, field_type: string}> */
     public array $fields = [];
 
@@ -27,6 +31,7 @@ new #[Layout('layouts.app')] #[Title('Edit Form')] class extends Component {
         $this->name = $form->name;
         $this->notificationEmail = $form->notification_email ?? '';
         $this->saveSubmissions = $form->save_submissions;
+        $this->spamProtection = $form->spam_protection?->value ?? 'none';
         $this->fields = array_merge($form->type->defaultFields(), $form->fields ?? []);
     }
 
@@ -36,6 +41,7 @@ new #[Layout('layouts.app')] #[Title('Edit Form')] class extends Component {
         return [
             'name'              => ['required', 'string', 'max:255'],
             'notificationEmail' => ['nullable', new CommaSeparatedEmails, 'max:500'],
+            'spamProtection'    => ['required', 'in:none,honeypot,recaptcha,turnstile'],
         ];
     }
 
@@ -47,6 +53,7 @@ new #[Layout('layouts.app')] #[Title('Edit Form')] class extends Component {
             'name'               => $this->name,
             'notification_email' => $this->notificationEmail ?: null,
             'save_submissions'   => $this->saveSubmissions,
+            'spam_protection'    => $this->spamProtection,
             'fields'             => $this->fields,
         ]);
 
@@ -85,6 +92,37 @@ new #[Layout('layouts.app')] #[Title('Edit Form')] class extends Component {
                     <flux:label>Save submissions to database</flux:label>
                     <flux:description>Store each submission so you can review them in the dashboard.</flux:description>
                 </div>
+            </div>
+
+            <div>
+                <flux:heading size="lg" class="mb-1">Spam Protection</flux:heading>
+                <flux:text class="mb-4 text-zinc-500">Choose how to protect this form from bots and automated submissions.</flux:text>
+
+                @php
+                    $recaptchaConfigured = \App\Models\Setting::get('spam.recaptcha_site_key') && \App\Models\Setting::get('spam.recaptcha_secret_key');
+                    $turnstileConfigured = \App\Models\Setting::get('spam.turnstile_site_key') && \App\Models\Setting::get('spam.turnstile_secret_key');
+                @endphp
+
+                <flux:radio.group wire:model="spamProtection">
+                    <flux:radio value="none" label="None" description="No spam protection. Not recommended for public forms." />
+                    <flux:radio value="honeypot" label="Honeypot + Rate Limiting" description="Adds a hidden field bots fill in, plus limits submissions to 5 per IP per 10 minutes. No impact on real users." />
+                    @if ($recaptchaConfigured)
+                        <flux:radio value="recaptcha" label="Google reCAPTCHA v3" description="Invisible score-based verification by Google. No user interaction required." />
+                    @else
+                        <flux:radio value="recaptcha" label="Google reCAPTCHA v3" description="API keys not configured. Add them in Advanced Settings to enable this option." disabled />
+                    @endif
+                    @if ($turnstileConfigured)
+                        <flux:radio value="turnstile" label="Cloudflare Turnstile" description="Privacy-friendly, invisible challenge by Cloudflare. No user interaction required for most visitors." />
+                    @else
+                        <flux:radio value="turnstile" label="Cloudflare Turnstile" description="API keys not configured. Add them in Advanced Settings to enable this option." disabled />
+                    @endif
+                </flux:radio.group>
+
+                @if (!$recaptchaConfigured || !$turnstileConfigured)
+                    <flux:text class="mt-3 text-xs text-zinc-400">
+                        <a href="{{ route('dashboard.settings.advanced') }}" wire:navigate class="text-primary underline hover:text-primary/80">Advanced Settings</a> → Spam Protection to add API keys.
+                    </flux:text>
+                @endif
             </div>
 
             <div>
