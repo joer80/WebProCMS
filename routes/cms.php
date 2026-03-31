@@ -23,6 +23,10 @@ Route::middleware(['auth', 'verified'])->group(function (): void {
         Route::livewire('dashboard/blog/create', 'pages::dashboard.blog.create')->name('dashboard.blog.create');
         Route::livewire('dashboard/blog/{post}/edit', 'pages::dashboard.blog.edit')->name('dashboard.blog.edit');
 
+        Route::livewire('dashboard/events', 'pages::dashboard.events.index')->name('dashboard.events.index');
+        Route::livewire('dashboard/events/create', 'pages::dashboard.events.create')->name('dashboard.events.create');
+        Route::livewire('dashboard/events/{event}/edit', 'pages::dashboard.events.edit')->name('dashboard.events.edit');
+
         Route::livewire('dashboard/categories', 'pages::dashboard.categories.index')->name('dashboard.categories.index');
         Route::livewire('dashboard/categories/create', 'pages::dashboard.categories.create')->name('dashboard.categories.create');
         Route::livewire('dashboard/categories/{category}/edit', 'pages::dashboard.categories.edit')->name('dashboard.categories.edit');

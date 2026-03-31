@@ -8,6 +8,7 @@ enum RowCategory: string
     case NotFound = '404';
     case Login = 'login';
     case Blog = 'blog';
+    case Events = 'events';
     case BlogDetail = 'blog-detail';
     case Contact = 'contact';
     case Hero = 'hero';

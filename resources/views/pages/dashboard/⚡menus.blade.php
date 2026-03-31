@@ -104,7 +104,7 @@ new #[Layout('layouts.app')] #[Title('Menus')] class extends Component {
             })
             ->sort()
             ->mapWithKeys(fn (string $name): array => [
-                $name => ucwords(str_replace(['.', '-', '_'], ' ', $name)),
+                $name => ucwords(str_replace(['.', '-', '_'], ' ', preg_replace('/\.index$/', '', $name))),
             ])
             ->all();
     }
@@ -118,7 +118,7 @@ new #[Layout('layouts.app')] #[Title('Menus')] class extends Component {
     public function updatedNewPageRoute(string $value): void
     {
         if ($value !== '' && $this->newPageLabel === '') {
-            $this->newPageLabel = ucwords(str_replace(['.', '-', '_'], ' ', $value));
+            $this->newPageLabel = ucwords(str_replace(['.', '-', '_'], ' ', preg_replace('/\.index$/', '', $value)));
         }
     }
 

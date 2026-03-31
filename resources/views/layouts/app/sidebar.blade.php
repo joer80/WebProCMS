@@ -35,6 +35,9 @@
                         <flux:sidebar.item icon="document-text" :href="route('dashboard.blog.index')" :current="request()->routeIs('dashboard.blog.*')" wire:navigate>
                             {{ __('Blog') }}
                         </flux:sidebar.item>
+                        <flux:sidebar.item icon="calendar-days" :href="route('dashboard.events.index')" :current="request()->routeIs('dashboard.events.*')" wire:navigate>
+                            {{ __('Events') }}
+                        </flux:sidebar.item>
                         <flux:sidebar.item icon="photo" :href="route('dashboard.media-library.index')" :current="request()->routeIs('dashboard.media-library.*')" wire:navigate>
                             {{ __('Media Library') }}
                         </flux:sidebar.item>

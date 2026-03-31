@@ -51,6 +51,8 @@ new #[Layout('layouts.app')] #[Title('General Settings')] class extends Componen
 
     public string $languageSwitcherTheme = 'light';
 
+    public string $siteTimezone = '';
+
     /** @return list<array{code: string, label: string, flag: string}> */
     public static function predefinedLanguages(): array
     {
@@ -93,6 +95,7 @@ new #[Layout('layouts.app')] #[Title('General Settings')] class extends Componen
         $this->activeLanguageCodes = array_values(array_column($saved, 'code'));
         $this->customLanguages = array_values(array_filter($saved, fn ($l) => ! in_array($l['code'], $predefinedCodes, true)));
         $this->languageSwitcherTheme = (string) Setting::get('site.language_switcher_theme', 'light');
+        $this->siteTimezone = (string) Setting::get('site.timezone', date_default_timezone_get());
     }
 
     public function saveBusinessInfo(): void
@@ -104,6 +107,7 @@ new #[Layout('layouts.app')] #[Title('General Settings')] class extends Componen
             'businessAddressStreet' => ['nullable', 'string', 'max:255'],
             'businessAddressCityStateZip' => ['nullable', 'string', 'max:255'],
             'businessHours' => ['nullable', 'string', 'max:255'],
+            'siteTimezone' => ['nullable', 'string', 'max:255'],
         ]);
 
         Setting::set('business.url', $this->businessUrl);
@@ -112,6 +116,7 @@ new #[Layout('layouts.app')] #[Title('General Settings')] class extends Componen
         Setting::set('business.address_street', $this->businessAddressStreet);
         Setting::set('business.address_city_state_zip', $this->businessAddressCityStateZip);
         Setting::set('business.hours', $this->businessHours);
+        Setting::set('site.timezone', $this->siteTimezone);
 
         $this->dispatch('notify', message: 'Business info saved.');
     }
@@ -241,6 +246,23 @@ new #[Layout('layouts.app')] #[Title('General Settings')] class extends Componen
                             <flux:input wire:model="businessAddressStreet" label="Street address" placeholder="100 Congress Ave, Suite 200" />
                             <flux:input wire:model="businessAddressCityStateZip" label="City, state, zip" placeholder="Austin, TX 78701" />
                             <flux:input wire:model="businessHours" label="Business hours" placeholder="Monday – Friday, 9am – 5pm CT" />
+                            <flux:select wire:model="siteTimezone" label="Site timezone">
+                                @php
+                                    $tzRegions = [];
+                                    foreach (\DateTimeZone::listIdentifiers() as $tz) {
+                                        $parts = explode('/', $tz, 2);
+                                        $region = $parts[0];
+                                        $tzRegions[$region][] = $tz;
+                                    }
+                                @endphp
+                                @foreach ($tzRegions as $region => $timezones)
+                                    <optgroup label="{{ $region }}">
+                                        @foreach ($timezones as $tz)
+                                            <option value="{{ $tz }}" @selected($siteTimezone === $tz)>{{ $tz }}</option>
+                                        @endforeach
+                                    </optgroup>
+                                @endforeach
+                            </flux:select>
                         </div>
                     </div>
                     <flux:button wire:click="saveBusinessInfo" variant="outline" class="shrink-0">Save</flux:button>

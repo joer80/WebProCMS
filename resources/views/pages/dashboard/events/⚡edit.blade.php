@@ -1,7 +1,6 @@
 <?php
 
-use App\Models\Category;
-use App\Models\Post;
+use App\Models\Event;
 use App\Support\ImageResizer;
 use Illuminate\Support\Facades\Storage;
 use Livewire\Attributes\Layout;
@@ -10,8 +9,10 @@ use Livewire\Attributes\Validate;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 
-new #[Layout('layouts.app')] #[Title('New Post')] class extends Component {
+new #[Layout('layouts.app')] #[Title('Edit Event')] class extends Component {
     use WithFileUploads;
+
+    public Event $event;
 
     #[Validate('required|string|max:255')]
     public string $title = '';
@@ -19,17 +20,14 @@ new #[Layout('layouts.app')] #[Title('New Post')] class extends Component {
     #[Validate('nullable|string|max:500')]
     public string $excerpt = '';
 
-    #[Validate('required|string')]
+    #[Validate('nullable|string')]
     public string $content = '';
 
     #[Validate('required|in:draft,published,unlisted,unpublished')]
-    public string $status = 'published';
+    public string $status = 'draft';
 
     #[Validate('required|in:image-top,image-right')]
     public string $layout = 'image-top';
-
-    #[Validate('nullable|integer|exists:categories,id')]
-    public ?int $categoryId = null;
 
     #[Validate('nullable|image|max:51200')]
     public $featuredImage = null;
@@ -65,16 +63,90 @@ new #[Layout('layouts.app')] #[Title('New Post')] class extends Component {
     #[Validate('nullable|boolean')]
     public bool $isNoindex = false;
 
-    #[Validate('nullable|string|max:255')]
-    public string $ogTitle = '';
-
-    #[Validate('nullable|string|max:320')]
-    public string $ogDescription = '';
-
     #[Validate('nullable|url|max:2048')]
     public string $ogImage = '';
 
-    public string $newCategoryName = '';
+    #[Validate('required|date')]
+    public string $startDate = '';
+
+    #[Validate('nullable|date')]
+    public string $endDate = '';
+
+    #[Validate('nullable|boolean')]
+    public bool $isAllDay = false;
+
+    #[Validate('nullable|string|max:255')]
+    public string $eventTimezone = '';
+
+    #[Validate('nullable|string|max:255')]
+    public string $venueName = '';
+
+    #[Validate('nullable|string|max:1000')]
+    public string $venueAddress = '';
+
+    #[Validate('nullable|url|max:2048')]
+    public string $websiteUrl = '';
+
+    #[Validate('nullable|string|max:255')]
+    public string $cost = '';
+
+    #[Validate('nullable|boolean')]
+    public bool $isRepeating = false;
+
+    #[Validate('nullable|in:daily,weekly,monthly,yearly')]
+    public string $repeatFrequency = 'weekly';
+
+    #[Validate('nullable|integer|min:1|max:365')]
+    public int $repeatInterval = 1;
+
+    #[Validate('nullable|date')]
+    public string $repeatEndsAt = '';
+
+    #[Validate('nullable|array')]
+    public array $repeatDays = [];
+
+    public string $repeatEndsOption = 'never';
+
+    public function mount(Event $event): void
+    {
+        $this->event = $event;
+        $this->title = $event->title;
+        $this->excerpt = $event->excerpt ?? '';
+        $this->content = $event->content ?? '';
+        $this->status = $event->status;
+        $this->layout = $event->layout ?? 'image-top';
+        $this->featuredImageAlt = $event->featured_image_alt ?? '';
+        $this->ctaButtons = array_map(fn ($btn) => [
+            'text' => $btn['text'] ?? '',
+            'url' => $btn['url'] ?? '',
+            'newTab' => ($btn['target'] ?? '_self') === '_blank',
+        ], $event->cta_buttons ?? []);
+
+        $this->galleryImages = array_values(array_map(
+            fn ($item) => is_string($item) ? ['path' => $item, 'alt' => ''] : ['path' => $item['path'] ?? '', 'alt' => $item['alt'] ?? ''],
+            $event->gallery_images ?? []
+        ));
+        $this->galleryColumns = $event->gallery_columns ?? 4;
+        $this->metaTitle = $event->meta_title ?? '';
+        $this->metaDescription = $event->meta_description ?? '';
+        $this->isNoindex = $event->is_noindex ?? false;
+        $this->ogImage = $event->og_image ?? '';
+
+        $this->startDate = $event->start_date?->format('Y-m-d\TH:i') ?? '';
+        $this->endDate = $event->end_date?->format('Y-m-d\TH:i') ?? '';
+        $this->isAllDay = $event->is_all_day ?? false;
+        $this->eventTimezone = $event->timezone ?? \App\Models\Setting::get('site.timezone', date_default_timezone_get());
+        $this->venueName = $event->venue_name ?? '';
+        $this->venueAddress = $event->venue_address ?? '';
+        $this->websiteUrl = $event->website_url ?? '';
+        $this->cost = $event->cost ?? '';
+        $this->isRepeating = $event->is_repeating ?? false;
+        $this->repeatFrequency = $event->repeat_frequency ?? 'weekly';
+        $this->repeatInterval = $event->repeat_interval ?? 1;
+        $this->repeatEndsAt = $event->repeat_ends_at?->format('Y-m-d') ?? '';
+        $this->repeatDays = $event->repeat_days ?? [];
+        $this->repeatEndsOption = $event->repeat_ends_at ? 'on' : 'never';
+    }
 
     public function addCtaButton(): void
     {
@@ -93,7 +165,7 @@ new #[Layout('layouts.app')] #[Title('New Post')] class extends Component {
     {
         $this->validateOnly('newGalleryImage');
 
-        $path = $this->newGalleryImage->store('posts', 'public');
+        $path = $this->newGalleryImage->store('events', 'public');
         ImageResizer::resizeToMaxWidth($path);
 
         $this->galleryImages[] = ['path' => $path, 'alt' => ''];
@@ -111,25 +183,29 @@ new #[Layout('layouts.app')] #[Title('New Post')] class extends Component {
         }
     }
 
-    public function createCategory(): void
+    public function removeFeaturedImage(): void
     {
-        $this->validate(['newCategoryName' => 'required|string|max:255|unique:categories,name']);
-
-        $category = Category::create(['name' => $this->newCategoryName]);
-
-        $this->newCategoryName = '';
-        $this->categoryId = $category->id;
-        $this->dispatch('category-created');
+        if ($this->event->featured_image) {
+            Storage::disk('public')->delete($this->event->featured_image);
+            $this->event->update(['featured_image' => null]);
+        }
     }
 
-    private function performSave(): Post
+    private function performSave(): void
     {
         $this->validate();
 
-        $imagePath = null;
+        $wasRepeating = $this->event->is_repeating;
+        $wasLive = in_array($this->event->status, ['published', 'unlisted']);
+        $isGoingLive = in_array($this->status, ['published', 'unlisted']);
+
+        $imagePath = $this->event->featured_image;
 
         if ($this->featuredImage) {
-            $imagePath = $this->featuredImage->store('posts', 'public');
+            if ($imagePath) {
+                Storage::disk('public')->delete($imagePath);
+            }
+            $imagePath = $this->featuredImage->store('events', 'public');
             ImageResizer::resizeToMaxWidth($imagePath);
         }
 
@@ -142,64 +218,89 @@ new #[Layout('layouts.app')] #[Title('New Post')] class extends Component {
             fn ($btn) => $btn['text'] !== '' && $btn['url'] !== ''
         ));
 
-        return Post::create([
+        // If toggling repeating off, delete child events
+        if ($wasRepeating && ! $this->isRepeating) {
+            $this->event->childEvents()->delete();
+        }
+
+        $this->event->update([
             'title' => $this->title,
             'excerpt' => $this->excerpt ?: null,
-            'content' => $this->content,
+            'content' => $this->content ?: null,
             'cta_buttons' => $ctaButtons ?: null,
             'gallery_images' => ! empty($this->galleryImages) ? $this->galleryImages : null,
             'gallery_columns' => $this->galleryColumns,
             'status' => $this->status,
             'layout' => $this->layout,
-            'category_id' => $this->categoryId,
             'featured_image' => $imagePath,
             'featured_image_alt' => $this->featuredImageAlt ?: null,
-            'published_at' => in_array($this->status, ['published', 'unlisted']) ? now() : null,
+            'published_at' => $isGoingLive && ! $wasLive ? now() : $this->event->published_at,
             'meta_title' => $this->metaTitle ?: null,
             'meta_description' => $this->metaDescription ?: null,
             'is_noindex' => $this->isNoindex,
-            'og_title' => $this->ogTitle ?: null,
-            'og_description' => $this->ogDescription ?: null,
             'og_image' => $this->ogImage ?: null,
+            'start_date' => $this->startDate,
+            'end_date' => $this->endDate ?: null,
+            'is_all_day' => $this->isAllDay,
+            'timezone' => $this->eventTimezone ?: null,
+            'venue_name' => $this->venueName ?: null,
+            'venue_address' => $this->venueAddress ?: null,
+            'website_url' => $this->websiteUrl ?: null,
+            'cost' => $this->cost ?: null,
+            'is_repeating' => $this->isRepeating,
+            'repeat_frequency' => $this->isRepeating ? $this->repeatFrequency : null,
+            'repeat_interval' => $this->isRepeating ? $this->repeatInterval : 1,
+            'repeat_ends_at' => ($this->isRepeating && $this->repeatEndsOption === 'on') ? ($this->repeatEndsAt ?: null) : null,
+            'repeat_days' => ($this->isRepeating && $this->repeatFrequency === 'weekly') ? $this->repeatDays : null,
         ]);
     }
 
     public function save(): void
     {
-        $post = $this->performSave();
-        $this->redirect(route('dashboard.blog.edit', $post), navigate: true);
+        $this->performSave();
+        $this->dispatch('notify', message: 'Event saved.');
     }
 
     public function saveAndExit(): void
     {
         $this->performSave();
-        $this->redirect(route('dashboard.blog.index'), navigate: true);
+        $this->redirect(route('dashboard.events.index'), navigate: true);
     }
 
     public function saveAndView(): void
     {
-        $post = $this->performSave();
-        $this->redirect(route('blog.show', $post->slug));
+        $this->performSave();
+        $this->redirect(route('events.show', $this->event->slug));
     }
 
     public function saveAndAddNew(): void
     {
         $this->performSave();
-        $this->redirect(route('dashboard.blog.create'), navigate: true);
+        $this->redirect(route('dashboard.events.create'), navigate: true);
     }
 
-    /** @return \Illuminate\Database\Eloquent\Collection<int, Category> */
-    public function getCategoriesProperty(): \Illuminate\Database\Eloquent\Collection
+    public function saveAndNext(): void
     {
-        return Category::query()->orderBy('name')->get();
+        $this->performSave();
+
+        $nextEvent = Event::query()
+            ->where('id', '>', $this->event->id)
+            ->orderBy('id')
+            ->first();
+
+        if ($nextEvent) {
+            $this->redirect(route('dashboard.events.edit', $nextEvent), navigate: true);
+        } else {
+            $this->redirect(route('dashboard.events.index'), navigate: true);
+        }
     }
 }; ?>
 
 <div>
     <flux:main>
         <div class="mb-8 flex items-center gap-4">
-            <flux:button href="{{ route('dashboard.blog.index') }}" variant="ghost" icon="arrow-left" wire:navigate />
-            <flux:heading size="xl">New Post</flux:heading>
+            <flux:button href="{{ route('dashboard.events.index') }}" variant="ghost" icon="arrow-left" wire:navigate />
+            <flux:heading size="xl">Edit Event</flux:heading>
         </div>
 
         <form wire:submit="save">
@@ -209,7 +310,7 @@ new #[Layout('layouts.app')] #[Title('New Post')] class extends Component {
                 <div class="space-y-6">
                     <flux:field>
                         <flux:label>Title</flux:label>
-                        <flux:input wire:model="title" type="text" placeholder="Post title…" autofocus required />
+                        <flux:input wire:model="title" type="text" placeholder="Event title…" autofocus required />
                         <flux:error name="title" />
                     </flux:field>
 
@@ -218,12 +319,15 @@ new #[Layout('layouts.app')] #[Title('New Post')] class extends Component {
                             Excerpt
                             <flux:badge size="sm" variant="outline" class="ml-1">Optional</flux:badge>
                         </flux:label>
-                        <flux:input wire:model="excerpt" type="text" placeholder="A brief summary of this post…" />
+                        <flux:input wire:model="excerpt" type="text" placeholder="A brief summary of this event…" />
                         <flux:error name="excerpt" />
                     </flux:field>
 
                     <flux:field>
-                        <flux:label>Content</flux:label>
+                        <flux:label>
+                            Content
+                            <flux:badge size="sm" variant="outline" class="ml-1">Optional</flux:badge>
+                        </flux:label>
                         <div
                             wire:ignore
                             x-data="richEditor(@js($content))"
@@ -267,11 +371,180 @@ new #[Layout('layouts.app')] #[Title('New Post')] class extends Component {
                             </div>
 
                             {{-- Editor --}}
-                            <div x-ref="editorEl" class="min-h-120" x-show="!sourceMode"></div>
-                            <textarea x-show="sourceMode" x-model="sourceHtml" class="w-full min-h-120 p-4 font-mono text-sm text-zinc-800 dark:text-zinc-200 bg-white dark:bg-zinc-900 outline-none resize-y border-0"></textarea>
+                            <div x-ref="editorEl" class="min-h-80" x-show="!sourceMode"></div>
+                            <textarea x-show="sourceMode" x-model="sourceHtml" class="w-full min-h-80 p-4 font-mono text-sm text-zinc-800 dark:text-zinc-200 bg-white dark:bg-zinc-900 outline-none resize-y border-0"></textarea>
                         </div>
                         <flux:error name="content" />
                     </flux:field>
+
+                    {{-- Event Details --}}
+                    <div
+                        x-data="{ open: true }"
+                        class="rounded-lg border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-900"
+                    >
+                        <button
+                            type="button"
+                            @click="open = !open"
+                            class="w-full flex items-center justify-between p-4 text-left"
+                        >
+                            <span class="text-sm font-medium text-zinc-700 dark:text-zinc-300">Event Details</span>
+                            <svg xmlns="http://www.w3.org/2000/svg" class="size-4 text-zinc-400 transition-transform duration-200" :class="open ? 'rotate-180' : ''" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="m19 9-7 7-7-7" />
+                            </svg>
+                        </button>
+
+                        <div x-show="open" x-transition class="px-4 pb-4">
+                            <div class="border-t border-zinc-200 dark:border-zinc-700 pt-4 space-y-4">
+
+                                {{-- Time & Date --}}
+                                <p class="text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">Time & Date</p>
+
+                                <div class="grid grid-cols-2 gap-4">
+                                    <flux:field>
+                                        <flux:label>Start Date & Time</flux:label>
+                                        <flux:input wire:model="startDate" type="datetime-local" />
+                                        <flux:error name="startDate" />
+                                    </flux:field>
+                                    <flux:field>
+                                        <flux:label>
+                                            End Date & Time
+                                            <flux:badge size="sm" variant="outline" class="ml-1">Optional</flux:badge>
+                                        </flux:label>
+                                        <flux:input wire:model="endDate" type="datetime-local" />
+                                        <flux:error name="endDate" />
+                                    </flux:field>
+                                </div>
+
+                                <flux:switch wire:model="isAllDay" label="All Day Event" />
+
+                                <flux:field>
+                                    <flux:label>Timezone</flux:label>
+                                    <flux:select wire:model="eventTimezone">
+                                        @php
+                                            $tzRegions = [];
+                                            foreach (\DateTimeZone::listIdentifiers() as $tz) {
+                                                $parts = explode('/', $tz, 2);
+                                                $region = $parts[0];
+                                                $tzRegions[$region][] = $tz;
+                                            }
+                                        @endphp
+                                        @foreach ($tzRegions as $region => $timezones)
+                                            <optgroup label="{{ $region }}">
+                                                @foreach ($timezones as $tz)
+                                                    <option value="{{ $tz }}" @selected($eventTimezone === $tz)>{{ $tz }}</option>
+                                                @endforeach
+                                            </optgroup>
+                                        @endforeach
+                                    </flux:select>
+                                    <flux:error name="eventTimezone" />
+                                </flux:field>
+
+                                {{-- Location --}}
+                                <div class="border-t border-zinc-200 dark:border-zinc-700 pt-4">
+                                    <p class="text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400 mb-4">Location</p>
+                                    <div class="space-y-4">
+                                        <flux:field>
+                                            <flux:label>
+                                                Venue Name
+                                                <flux:badge size="sm" variant="outline" class="ml-1">Optional</flux:badge>
+                                            </flux:label>
+                                            <flux:input wire:model="venueName" type="text" placeholder="e.g. Convention Center" />
+                                            <flux:error name="venueName" />
+                                        </flux:field>
+                                        <flux:field>
+                                            <flux:label>
+                                                Venue Address
+                                                <flux:badge size="sm" variant="outline" class="ml-1">Optional</flux:badge>
+                                            </flux:label>
+                                            <flux:textarea wire:model="venueAddress" rows="3" placeholder="123 Main St, City, State 12345" />
+                                            <flux:error name="venueAddress" />
+                                        </flux:field>
+                                    </div>
+                                </div>
+
+                                {{-- Event URL & Cost --}}
+                                <div class="border-t border-zinc-200 dark:border-zinc-700 pt-4 space-y-4">
+                                    <flux:field>
+                                        <flux:label>
+                                            Event Website URL
+                                            <flux:badge size="sm" variant="outline" class="ml-1">Optional</flux:badge>
+                                        </flux:label>
+                                        <flux:input wire:model="websiteUrl" type="url" placeholder="https://…" />
+                                        <flux:error name="websiteUrl" />
+                                    </flux:field>
+                                    <flux:field>
+                                        <flux:label>
+                                            Cost
+                                            <flux:badge size="sm" variant="outline" class="ml-1">Optional</flux:badge>
+                                        </flux:label>
+                                        <flux:input wire:model="cost" type="text" placeholder="Free, $25, $10–$50" />
+                                        <flux:error name="cost" />
+                                    </flux:field>
+                                </div>
+
+                                {{-- Repeating Event --}}
+                                <div class="border-t border-zinc-200 dark:border-zinc-700 pt-4" x-data="{ repeating: @entangle('isRepeating'), frequency: @entangle('repeatFrequency'), endsOption: @entangle('repeatEndsOption') }">
+                                    <flux:switch wire:model.live="isRepeating" label="Repeating Event" x-model="repeating" />
+
+                                    <div x-show="repeating" x-transition class="mt-4 space-y-4">
+                                        <div class="grid grid-cols-2 gap-4">
+                                            <flux:field>
+                                                <flux:label>Frequency</flux:label>
+                                                <flux:select wire:model.live="repeatFrequency" x-model="frequency">
+                                                    <flux:select.option value="daily">Daily</flux:select.option>
+                                                    <flux:select.option value="weekly">Weekly</flux:select.option>
+                                                    <flux:select.option value="monthly">Monthly</flux:select.option>
+                                                    <flux:select.option value="yearly">Yearly</flux:select.option>
+                                                </flux:select>
+                                                <flux:error name="repeatFrequency" />
+                                            </flux:field>
+                                            <flux:field>
+                                                <flux:label>
+                                                    Every
+                                                    <span x-text="frequency === 'daily' ? 'day(s)' : frequency === 'weekly' ? 'week(s)' : frequency === 'monthly' ? 'month(s)' : 'year(s)'" class="text-zinc-400 ml-1"></span>
+                                                </flux:label>
+                                                <flux:input wire:model="repeatInterval" type="number" min="1" max="365" />
+                                                <flux:error name="repeatInterval" />
+                                            </flux:field>
+                                        </div>
+
+                                        {{-- Repeat days (weekly only) --}}
+                                        <div x-show="frequency === 'weekly'" class="space-y-2">
+                                            <flux:label>Repeat on Days</flux:label>
+                                            <div class="flex flex-wrap gap-2">
+                                                @foreach (['mon' => 'Mon', 'tue' => 'Tue', 'wed' => 'Wed', 'thu' => 'Thu', 'fri' => 'Fri', 'sat' => 'Sat', 'sun' => 'Sun'] as $value => $label)
+                                                    <label class="cursor-pointer">
+                                                        <input type="checkbox" wire:model="repeatDays" value="{{ $value }}" class="sr-only peer" />
+                                                        <span class="inline-flex items-center justify-center w-10 h-10 rounded-full border-2 border-zinc-200 dark:border-zinc-700 peer-checked:border-blue-500 peer-checked:bg-blue-500 peer-checked:text-white text-sm font-medium text-zinc-700 dark:text-zinc-300 transition-colors">{{ $label }}</span>
+                                                    </label>
+                                                @endforeach
+                                            </div>
+                                            <flux:error name="repeatDays" />
+                                        </div>
+
+                                        {{-- Ends --}}
+                                        <div class="space-y-3">
+                                            <flux:label>Ends</flux:label>
+                                            <div class="space-y-2">
+                                                <label class="flex items-center gap-2 cursor-pointer">
+                                                    <input type="radio" wire:model.live="repeatEndsOption" value="never" x-model="endsOption" class="text-blue-500" />
+                                                    <span class="text-sm text-zinc-700 dark:text-zinc-300">Never</span>
+                                                </label>
+                                                <label class="flex items-center gap-2 cursor-pointer">
+                                                    <input type="radio" wire:model.live="repeatEndsOption" value="on" x-model="endsOption" class="text-blue-500" />
+                                                    <span class="text-sm text-zinc-700 dark:text-zinc-300">On date</span>
+                                                    <div x-show="endsOption === 'on'" class="flex-1">
+                                                        <flux:input wire:model="repeatEndsAt" type="date" />
+                                                        <flux:error name="repeatEndsAt" />
+                                                    </div>
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
 
                     {{-- Call to Action Buttons --}}
                     <div
@@ -295,7 +568,7 @@ new #[Layout('layouts.app')] #[Title('New Post')] class extends Component {
                         <div x-show="open" x-transition class="px-4 pb-4">
                             <div class="border-t border-zinc-200 dark:border-zinc-700 pt-4 space-y-4">
                                 <div class="flex items-center justify-between">
-                                    <flux:description>Displayed below the post content.</flux:description>
+                                    <flux:description>Displayed below the event content.</flux:description>
                                     @if (count($ctaButtons) < 2)
                                         <flux:button type="button" wire:click="addCtaButton" size="sm" variant="ghost" icon="plus">Add Button</flux:button>
                                     @endif
@@ -316,7 +589,7 @@ new #[Layout('layouts.app')] #[Title('New Post')] class extends Component {
 
                                                 <flux:field>
                                                     <flux:label>Button Text</flux:label>
-                                                    <flux:input wire:model="ctaButtons.{{ $index }}.text" type="text" placeholder="Get Started" />
+                                                    <flux:input wire:model="ctaButtons.{{ $index }}.text" type="text" placeholder="Register Now" />
                                                     <flux:error name="ctaButtons.{{ $index }}.text" />
                                                 </flux:field>
 
@@ -358,7 +631,7 @@ new #[Layout('layouts.app')] #[Title('New Post')] class extends Component {
 
                         <div x-show="open" x-transition class="px-4 pb-4">
                             <div class="border-t border-zinc-200 dark:border-zinc-700 pt-4 space-y-4">
-                                <flux:description>Displayed below the post content and buttons.</flux:description>
+                                <flux:description>Displayed below the event content and buttons.</flux:description>
 
                                 @if (count($galleryImages) > 0)
                                     <div class="grid grid-cols-4 gap-2">
@@ -490,7 +763,6 @@ new #[Layout('layouts.app')] #[Title('New Post')] class extends Component {
                         <div x-show="open" x-transition class="px-4 pb-4 space-y-4">
                             <div class="border-t border-zinc-200 dark:border-zinc-700 pt-4 space-y-4">
 
-                                {{-- Meta Title --}}
                                 <div x-data="{ length: $wire.metaTitle.length }">
                                     <flux:field>
                                         <div class="flex items-center justify-between mb-1">
@@ -501,14 +773,13 @@ new #[Layout('layouts.app')] #[Title('New Post')] class extends Component {
                                             wire:model="metaTitle"
                                             x-on:input="length = $event.target.value.length"
                                             type="text"
-                                            placeholder="Defaults to post title…"
+                                            placeholder="Defaults to event title…"
                                         />
                                         <flux:description>50–60 characters recommended. Shown in browser tabs and search results.</flux:description>
                                         <flux:error name="metaTitle" />
                                     </flux:field>
                                 </div>
 
-                                {{-- Meta Description --}}
                                 <div x-data="{ length: $wire.metaDescription.length }">
                                     <flux:field>
                                         <div class="flex items-center justify-between mb-1">
@@ -519,17 +790,15 @@ new #[Layout('layouts.app')] #[Title('New Post')] class extends Component {
                                             wire:model="metaDescription"
                                             x-on:input="length = $event.target.value.length"
                                             rows="3"
-                                            placeholder="Defaults to post excerpt…"
+                                            placeholder="Defaults to event excerpt…"
                                         />
                                         <flux:description>150–160 characters recommended. Shown in search result snippets.</flux:description>
                                         <flux:error name="metaDescription" />
                                     </flux:field>
                                 </div>
 
-                                {{-- Noindex --}}
-                                <flux:switch wire:model="isNoindex" label="Hide from search engines (noindex)" description="Prevents this post from appearing in search results." />
+                                <flux:switch wire:model="isNoindex" label="Hide from search engines (noindex)" description="Prevents this event from appearing in search results." />
 
-                                {{-- Open Graph --}}
                                 <div x-data="{ ogOpen: false }" class="pt-4 border-t border-zinc-200 dark:border-zinc-700">
                                     <button
                                         type="button"
@@ -538,26 +807,14 @@ new #[Layout('layouts.app')] #[Title('New Post')] class extends Component {
                                     >
                                         <div>
                                             <p class="text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">Open Graph</p>
-                                            <p class="text-xs text-zinc-400 dark:text-zinc-500 mt-0.5">Customize how this post appears when shared on social media.</p>
+                                            <p class="text-xs text-zinc-400 dark:text-zinc-500 mt-0.5">Customize how this event appears when shared on social media.</p>
                                         </div>
                                         <svg xmlns="http://www.w3.org/2000/svg" class="size-4 text-zinc-400 transition-transform duration-200 shrink-0 ml-3" :class="ogOpen ? 'rotate-180' : ''" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                             <path stroke-linecap="round" stroke-linejoin="round" d="m19 9-7 7-7-7" />
                                         </svg>
                                     </button>
 
-                                    <div x-show="ogOpen" x-transition class="mt-4 space-y-4">
-                                        <flux:field>
-                                            <flux:label>OG Title</flux:label>
-                                            <flux:input wire:model="ogTitle" type="text" placeholder="Defaults to meta title or post title…" />
-                                            <flux:error name="ogTitle" />
-                                        </flux:field>
-
-                                        <flux:field>
-                                            <flux:label>OG Description</flux:label>
-                                            <flux:textarea wire:model="ogDescription" rows="2" placeholder="Defaults to meta description or excerpt…" />
-                                            <flux:error name="ogDescription" />
-                                        </flux:field>
-
+                                    <div x-show="ogOpen" x-transition class="mt-4">
                                         <flux:field>
                                             <flux:label>OG Image URL</flux:label>
                                             <flux:input wire:model="ogImage" type="url" placeholder="Defaults to featured image…" />
@@ -584,7 +841,7 @@ new #[Layout('layouts.app')] #[Title('New Post')] class extends Component {
                             wire:loading.attr="disabled"
                             wire:target="save"
                         >
-                            Save Post
+                            Update Event
                         </flux:button>
                         <flux:dropdown position="bottom" align="end">
                             <flux:button variant="primary" icon="chevron-down" wire:loading.attr="disabled" />
@@ -593,7 +850,9 @@ new #[Layout('layouts.app')] #[Title('New Post')] class extends Component {
                                 <flux:menu.item wire:click="saveAndView" icon="arrow-top-right-on-square">Save + View</flux:menu.item>
                                 <flux:menu.item wire:click="saveAndAddNew" icon="document-plus">Save + Add New</flux:menu.item>
                                 <flux:menu.separator />
-                                <flux:menu.item :href="route('dashboard.blog.index')" wire:navigate icon="x-mark">Cancel</flux:menu.item>
+                                <flux:menu.item wire:click="saveAndNext" icon="chevron-right">Save + Next</flux:menu.item>
+                                <flux:menu.separator />
+                                <flux:menu.item :href="route('dashboard.events.index')" wire:navigate icon="x-mark">Cancel</flux:menu.item>
                             </flux:menu>
                         </flux:dropdown>
                     </flux:button.group>
@@ -669,6 +928,23 @@ new #[Layout('layouts.app')] #[Title('New Post')] class extends Component {
                             </button>
                         </div>
 
+                        @if ($event->featured_image)
+                            <div x-show="!preview" class="relative group">
+                                <img src="{{ $event->featuredImageUrl() }}" alt="Current featured image" class="h-36 w-full object-cover rounded-md" />
+                                <div class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/20 rounded-md">
+                                    <flux:button
+                                        type="button"
+                                        wire:click="removeFeaturedImage"
+                                        wire:confirm="Remove the featured image?"
+                                        variant="danger"
+                                        size="sm"
+                                    >
+                                        Remove
+                                    </flux:button>
+                                </div>
+                            </div>
+                        @endif
+
                         <input
                             type="file"
                             x-ref="fileInput"
@@ -680,7 +956,7 @@ new #[Layout('layouts.app')] #[Title('New Post')] class extends Component {
 
                         <flux:field>
                             <flux:label>Alt Text</flux:label>
-                            <flux:input wire:model="featuredImageAlt" type="text" :placeholder="$title ?: 'Defaults to post title'" />
+                            <flux:input wire:model="featuredImageAlt" type="text" :placeholder="$title ?: 'Defaults to event title'" />
                             <flux:error name="featuredImageAlt" />
                         </flux:field>
                     </div>
@@ -692,7 +968,6 @@ new #[Layout('layouts.app')] #[Title('New Post')] class extends Component {
                             <label class="cursor-pointer">
                                 <input type="radio" wire:model="layout" value="image-top" class="sr-only peer" />
                                 <div class="rounded-md border-2 border-zinc-200 dark:border-zinc-700 peer-checked:border-blue-500 dark:peer-checked:border-blue-400 p-2 transition-colors">
-                                    {{-- Mini preview: image-top --}}
                                     <div class="space-y-1 mb-2">
                                         <div class="h-6 w-full bg-zinc-300 dark:bg-zinc-600 rounded-sm"></div>
                                         <div class="h-1.5 w-full bg-zinc-200 dark:bg-zinc-700 rounded-sm"></div>
@@ -705,7 +980,6 @@ new #[Layout('layouts.app')] #[Title('New Post')] class extends Component {
                             <label class="cursor-pointer">
                                 <input type="radio" wire:model="layout" value="image-right" class="sr-only peer" />
                                 <div class="rounded-md border-2 border-zinc-200 dark:border-zinc-700 peer-checked:border-blue-500 dark:peer-checked:border-blue-400 p-2 transition-colors">
-                                    {{-- Mini preview: image-right --}}
                                     <div class="flex gap-1 mb-2">
                                         <div class="flex-1 space-y-1">
                                             <div class="h-1.5 w-full bg-zinc-200 dark:bg-zinc-700 rounded-sm"></div>
@@ -722,7 +996,7 @@ new #[Layout('layouts.app')] #[Title('New Post')] class extends Component {
                         <flux:error name="layout" />
                     </div>
 
-                    {{-- Status & Category --}}
+                    {{-- Status --}}
                     <div class="rounded-lg border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-900 p-4 space-y-4">
                         <flux:field>
                             <flux:label>Status</flux:label>
@@ -740,51 +1014,7 @@ new #[Layout('layouts.app')] #[Title('New Post')] class extends Component {
                             </div>
                             <flux:error name="status" />
                         </flux:field>
-
-                        <div x-data="{ adding: false }">
-                            <flux:field>
-                                <div class="flex items-center justify-between mb-2">
-                                    <flux:label class="mb-0">
-                                        Category
-                                        <flux:badge size="sm" variant="outline" class="ml-1">Optional</flux:badge>
-                                    </flux:label>
-                                    <button
-                                        type="button"
-                                        x-show="!adding"
-                                        @click="adding = true"
-                                        class="text-xs text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 transition-colors"
-                                    >+ New</button>
-                                </div>
-
-                                <flux:select wire:model="categoryId" x-show="!adding">
-                                    <flux:select.option value="">No category</flux:select.option>
-                                    @foreach ($this->categories as $category)
-                                        <flux:select.option value="{{ $category->id }}">{{ $category->name }}</flux:select.option>
-                                    @endforeach
-                                </flux:select>
-                                <flux:error name="categoryId" />
-                            </flux:field>
-
-                            <div x-show="adding" x-cloak class="mt-2 space-y-2">
-                                <flux:input
-                                    wire:model="newCategoryName"
-                                    type="text"
-                                    placeholder="Category name…"
-                                    x-on:category-created.window="adding = false"
-                                />
-                                <div class="flex gap-2">
-                                    <flux:button type="button" wire:click="createCategory" variant="primary" size="sm">
-                                        Create
-                                    </flux:button>
-                                    <flux:button type="button" @click="adding = false; $wire.set('newCategoryName', '')" variant="ghost" size="sm">
-                                        Cancel
-                                    </flux:button>
-                                </div>
-                            </div>
-                            <flux:error name="newCategoryName" />
-                        </div>
                     </div>
-
 
                 </div>
             </div>
