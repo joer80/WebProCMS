@@ -17,7 +17,7 @@ class DesignPageFactory extends Factory
 
         return [
             'name' => fake()->words(3, true),
-            'website_category' => $category,
+            'categories' => [$category->value],
             'description' => fake()->sentence(),
             'blade_code' => null,
             'php_code' => null,

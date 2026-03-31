@@ -9,7 +9,7 @@ class DesignLibraryService
     /**
      * Parse a design library .blade.php template file into structured data.
      *
-     * @return array{name: string, description: string, sort_order: int, source_file: string, schema_fields: list<array{key: string, type: string, group: string, default: string, label: string}>, row_names: list<string>}
+     * @return array{name: string, description: string, sort_order: int, source_file: string, schema_fields: list<array{key: string, type: string, group: string, default: string, label: string}>, row_names: list<string>, categories: list<string>}
      */
     public function parseTemplateFile(string $fullPath): array
     {
@@ -21,6 +21,7 @@ class DesignLibraryService
         $phpCode = '';
         $schemaFields = [];
         $rowNames = [];
+        $categories = [];
 
         // Extract frontmatter from the first {{-- ... --}} block
         if (preg_match('/^\{\{--\s*(.*?)\s*--\}\}/s', $contents, $frontmatterMatch)) {
@@ -40,6 +41,10 @@ class DesignLibraryService
 
             if (preg_match('/@rows\s+(.+)/i', $frontmatter, $m)) {
                 $rowNames = array_values(array_filter(array_map('trim', explode(',', $m[1]))));
+            }
+
+            if (preg_match('/@categories\s+(.+)/i', $frontmatter, $m)) {
+                $categories = array_values(array_filter(array_map('trim', explode(',', $m[1]))));
             }
 
             // Remove the frontmatter block from content
@@ -62,13 +67,14 @@ class DesignLibraryService
             'source_file' => $this->relativeSourcePath($fullPath),
             'schema_fields' => $schemaFields,
             'row_names' => $rowNames,
+            'categories' => $categories,
         ];
     }
 
     /**
      * Build a page bundle .blade.php file string (frontmatter only, no blade code).
      *
-     * @param  array{name: string, description?: string, sort_order?: int, row_names?: list<string>}  $data
+     * @param  array{name: string, description?: string, sort_order?: int, row_names?: list<string>, categories?: list<string>}  $data
      */
     public function buildPageFile(array $data): string
     {
@@ -82,6 +88,10 @@ class DesignLibraryService
 
         if (! empty($data['sort_order'])) {
             $lines[] = '@sort '.$data['sort_order'];
+        }
+
+        if (! empty($data['categories'])) {
+            $lines[] = '@categories '.implode(', ', $data['categories']);
         }
 
         if (! empty($data['row_names'])) {

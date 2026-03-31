@@ -2,6 +2,7 @@
 
 use App\Enums\PageCategory;
 use App\Enums\RowCategory;
+use Illuminate\Database\Eloquent\Builder;
 use App\Jobs\IndexDesignLibraryJob;
 use App\Models\DesignPage;
 use App\Models\DesignRow;
@@ -43,6 +44,9 @@ new #[Layout('layouts.app')] #[Title('Design Library')] class extends Component 
 
     // Page form fields
     /** @var list<string> */
+    public array $formCategories = [];
+
+    /** @var list<string> */
     public array $formRowNames = [];
 
     // Confirm delete
@@ -63,8 +67,7 @@ new #[Layout('layouts.app')] #[Title('Design Library')] class extends Component 
     public function pages(): \Illuminate\Pagination\LengthAwarePaginator
     {
         return DesignPage::query()
-            ->when($this->category, fn ($q) => $q->where('website_category', $this->category))
-            ->orderBy('website_category')
+            ->when($this->category, fn (Builder $q) => $q->whereJsonContains('categories', $this->category))
             ->orderBy('sort_order')
             ->orderBy('name')
             ->paginate(20, pageName: 'pagesPage');
@@ -144,7 +147,7 @@ new #[Layout('layouts.app')] #[Title('Design Library')] class extends Component 
         } else {
             $page = DesignPage::query()->findOrFail($id);
             $this->formName = $page->name;
-            $this->formCategory = $page->website_category->value;
+            $this->formCategories = $page->categories ?? [];
             $this->formDescription = $page->description ?? '';
             $this->formRowNames = $page->row_names ?? [];
         }
@@ -163,7 +166,7 @@ new #[Layout('layouts.app')] #[Title('Design Library')] class extends Component 
         } else {
             $this->validate([
                 'formName' => ['required', 'string', 'max:255'],
-                'formCategory' => ['required', 'string'],
+                'formCategories' => ['required', 'array', 'min:1'],
             ]);
         }
 
@@ -209,11 +212,12 @@ new #[Layout('layouts.app')] #[Title('Design Library')] class extends Component 
 
             unset($this->rows);
         } else {
+            $categories = array_values(array_filter($this->formCategories));
             $data = [
                 'name' => $this->formName,
                 'description' => $this->formDescription ?: null,
                 'row_names' => array_values(array_filter($this->formRowNames)),
-                'website_category' => $this->formCategory,
+                'categories' => $categories,
             ];
 
             if ($this->editingId) {
@@ -229,8 +233,9 @@ new #[Layout('layouts.app')] #[Title('Design Library')] class extends Component 
 
                 $message = 'Page bundle updated.';
             } else {
-                $slug = $this->formCategory.'-'.now()->format('YmdHis');
-                $data['source_file'] = 'pages/'.$this->formCategory.'/'.$slug.'.blade.php';
+                $primaryCategory = $categories[0];
+                $slug = $primaryCategory.'-'.now()->format('YmdHis');
+                $data['source_file'] = 'pages/'.$primaryCategory.'/'.$slug.'.blade.php';
                 $data['sort_order'] = 0;
                 $page = DesignPage::query()->create($data);
 
@@ -290,6 +295,7 @@ new #[Layout('layouts.app')] #[Title('Design Library')] class extends Component 
         $this->editingId = null;
         $this->formName = '';
         $this->formCategory = '';
+        $this->formCategories = [];
         $this->formDescription = '';
         $this->formBladeCode = '';
         $this->formPhpCode = '';
@@ -413,12 +419,27 @@ new #[Layout('layouts.app')] #[Title('Design Library')] class extends Component 
             <div class="grid sm:grid-cols-2 gap-4">
                 <flux:input wire:model="formName" label="Name" required autofocus />
 
-                <flux:select wire:model="formCategory" label="Category" required>
-                    <flux:select.option value="">Select a category…</flux:select.option>
-                    @foreach ($tab === 'rows' ? $this->rowCategories : $this->pageCategories as $value => $label)
-                        <flux:select.option value="{{ $value }}">{{ $label }}</flux:select.option>
-                    @endforeach
-                </flux:select>
+                @if ($tab === 'rows')
+                    <flux:select wire:model="formCategory" label="Category" required>
+                        <flux:select.option value="">Select a category…</flux:select.option>
+                        @foreach ($this->rowCategories as $value => $label)
+                            <flux:select.option value="{{ $value }}">{{ $label }}</flux:select.option>
+                        @endforeach
+                    </flux:select>
+                @else
+                    <flux:field>
+                        <flux:label>Categories <span class="text-red-500">*</span></flux:label>
+                        <div class="mt-1 flex flex-wrap gap-x-4 gap-y-2">
+                            @foreach ($this->pageCategories as $value => $label)
+                                <label class="flex items-center gap-1.5 text-sm text-zinc-700 dark:text-zinc-300 cursor-pointer">
+                                    <flux:checkbox wire:model="formCategories" value="{{ $value }}" />
+                                    {{ $label }}
+                                </label>
+                            @endforeach
+                        </div>
+                        <flux:error name="formCategories" />
+                    </flux:field>
+                @endif
             </div>
 
             <flux:input wire:model="formDescription" label="Description (optional)" />
@@ -784,7 +805,12 @@ new #[Layout('layouts.app')] #[Title('Design Library')] class extends Component 
                                                     <p class="mt-0.5 text-xs text-zinc-500 dark:text-zinc-400 line-clamp-2">{{ $page->description }}</p>
                                                 @endif
                                             </div>
-                                            <flux:badge size="sm" class="shrink-0">{{ $page->website_category->label() }}</flux:badge>
+                                            <div class="flex flex-wrap gap-1 shrink-0">
+                                                @foreach (array_filter($page->categories ?? []) as $cat)
+                                                    @php $catEnum = \App\Enums\PageCategory::tryFrom($cat); @endphp
+                                                    <flux:badge size="sm">{{ $catEnum?->label() ?? $cat }}</flux:badge>
+                                                @endforeach
+                                            </div>
                                         </div>
 
                                         <div class="mt-4 pt-3 border-t border-zinc-100 dark:border-zinc-800 flex items-center gap-2">

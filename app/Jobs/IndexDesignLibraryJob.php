@@ -37,11 +37,6 @@ class IndexDesignLibraryJob implements ShouldQueue
                 $data = $service->parseTemplateFile($fullPath);
                 $seenSourceFiles[] = $data['source_file'];
 
-                $attributes = array_merge(
-                    ['category' => $category],
-                    $type === 'page' ? ['website_category' => $category] : ['category' => $category]
-                );
-
                 if ($type === 'row') {
                     DesignRow::updateOrCreate(
                         ['source_file' => $data['source_file']],
@@ -54,11 +49,14 @@ class IndexDesignLibraryJob implements ShouldQueue
                         ]
                     );
                 } else {
+                    // Use @categories from frontmatter if present, otherwise fall back to the folder category
+                    $categories = ! empty($data['categories']) ? $data['categories'] : [$category];
+
                     DesignPage::updateOrCreate(
                         ['source_file' => $data['source_file']],
                         [
                             'name' => $data['name'],
-                            'website_category' => $category,
+                            'categories' => $categories,
                             'description' => $data['description'],
                             'row_names' => $data['row_names'] ?: null,
                             'blade_code' => null,

@@ -116,7 +116,7 @@ it('can create a new page template', function (): void {
         ->call('setTab', 'pages')
         ->call('openCreateModal')
         ->set('formName', 'My SaaS Page')
-        ->set('formCategory', PageCategory::SaaS->value)
+        ->set('formCategories', [PageCategory::SaaS->value])
         ->set('formBladeCode', '<div>SaaS Page</div>')
         ->call('save')
         ->assertHasNoErrors();

@@ -2,7 +2,6 @@
 
 namespace App\Models;
 
-use App\Enums\PageCategory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -13,7 +12,7 @@ class DesignPage extends Model
 
     protected $fillable = [
         'name',
-        'website_category',
+        'categories',
         'description',
         'blade_code',
         'php_code',
@@ -25,7 +24,7 @@ class DesignPage extends Model
     protected function casts(): array
     {
         return [
-            'website_category' => PageCategory::class,
+            'categories' => 'array',
             'sort_order' => 'integer',
             'row_names' => 'array',
         ];
