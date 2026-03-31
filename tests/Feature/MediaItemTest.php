@@ -65,8 +65,8 @@ it('does not reorder images from different categories', function (): void {
 });
 
 it('deletes an image and removes the file from storage', function (): void {
-    Storage::fake('public');
-    Storage::disk('public')->put('uncategorized/test.jpg', 'fake-image');
+    Storage::fake('media');
+    Storage::disk('media')->put('uncategorized/test.jpg', 'fake-image');
 
     $user = User::factory()->create();
     $item = MediaItem::factory()->create(['path' => 'uncategorized/test.jpg']);
@@ -76,11 +76,11 @@ it('deletes an image and removes the file from storage', function (): void {
         ->call('deleteImage', $item->id);
 
     expect(MediaItem::find($item->id))->toBeNull();
-    Storage::disk('public')->assertMissing('uncategorized/test.jpg');
+    Storage::disk('media')->assertMissing('uncategorized/test.jpg');
 });
 
 it('uploads images into a folder named after the category slug', function (): void {
-    Storage::fake('public');
+    Storage::fake('media');
 
     $user = User::factory()->create();
     $category = MediaCategory::factory()->create(['name' => 'Team Photos', 'slug' => 'team-photos']);
@@ -94,15 +94,15 @@ it('uploads images into a folder named after the category slug', function (): vo
 
     expect($item)->not->toBeNull();
     expect($item->path)->toStartWith('team-photos/');
-    Storage::disk('public')->assertExists($item->path);
+    Storage::disk('media')->assertExists($item->path);
 });
 
 it('bulk deletes selected images', function (): void {
-    Storage::fake('public');
+    Storage::fake('media');
 
     $user = User::factory()->create();
     $items = MediaItem::factory(3)->create()->each(function (MediaItem $item): void {
-        Storage::disk('public')->put($item->path, 'fake');
+        Storage::disk('media')->put($item->path, 'fake');
     });
 
     Livewire::actingAs($user)

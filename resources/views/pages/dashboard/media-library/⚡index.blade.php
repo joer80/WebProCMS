@@ -136,8 +136,9 @@ new #[Layout('layouts.app')] #[Title('Media Library')] class extends Component {
         $count = 0;
 
         foreach ($this->newImages as $file) {
-            $path = $file->store($category->slug, 'public');
-            ImageResizer::resizeToMaxWidth($path);
+            ImageResizer::resizeAbsolutePath($file->getRealPath());
+            $path = $file->store($category->slug, 'media');
+            $size = filesize($file->getRealPath()) ?: 0;
 
             MediaItem::create([
                 'media_category_id' => $category->id,
@@ -145,7 +146,7 @@ new #[Layout('layouts.app')] #[Title('Media Library')] class extends Component {
                 'filename' => $file->getClientOriginalName(),
                 'alt' => '',
                 'sort_order' => ++$nextSortOrder,
-                'size' => Storage::disk('public')->size($path),
+                'size' => $size,
                 'mime_type' => $file->getMimeType() ?? 'image/jpeg',
             ]);
 
@@ -176,14 +177,14 @@ new #[Layout('layouts.app')] #[Title('Media Library')] class extends Component {
     {
         $item = MediaItem::find($id);
 
-        if (! $item || ! Storage::disk('public')->exists($item->path)) {
+        if (! $item || ! Storage::disk('media')->exists($item->path)) {
             return;
         }
 
         $this->generatingAlt = true;
 
-        $imageContents = Storage::disk('public')->get($item->path);
-        $mimeType = Storage::disk('public')->mimeType($item->path) ?: 'image/jpeg';
+        $imageContents = Storage::disk('media')->get($item->path);
+        $mimeType = Storage::disk('media')->mimeType($item->path) ?: 'image/jpeg';
         $base64 = base64_encode($imageContents);
 
         $provider = \App\Models\Setting::get('ai.text_provider', 'claude');

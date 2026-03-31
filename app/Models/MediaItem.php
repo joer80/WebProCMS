@@ -26,7 +26,7 @@ class MediaItem extends Model
     protected static function booted(): void
     {
         static::deleted(function (MediaItem $item): void {
-            Storage::disk('public')->delete($item->path);
+            Storage::disk('media')->delete($item->path);
             ResponseCache::clear();
         });
 
@@ -43,7 +43,7 @@ class MediaItem extends Model
 
     public function url(): string
     {
-        return Storage::disk('public')->url($this->path);
+        return Storage::disk('media')->url($this->path);
     }
 
     protected function casts(): array

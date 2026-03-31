@@ -92,9 +92,9 @@ new class extends Component {
         $nextSort = ($category->items()->max('sort_order') ?? 0) + 1;
 
         foreach ($this->uploadedImages as $file) {
-            $path = $file->store($category->slug, 'public');
-
-            ImageResizer::resizeToMaxWidth($path);
+            ImageResizer::resizeAbsolutePath($file->getRealPath());
+            $path = $file->store($category->slug, 'media');
+            $size = filesize($file->getRealPath()) ?: 0;
 
             MediaItem::create([
                 'media_category_id' => $category->id,
@@ -102,7 +102,7 @@ new class extends Component {
                 'filename' => $file->getClientOriginalName(),
                 'alt' => '',
                 'sort_order' => $nextSort++,
-                'size' => Storage::disk('public')->size($path),
+                'size' => $size,
                 'mime_type' => $file->getMimeType() ?? 'image/jpeg',
             ]);
         }
@@ -148,7 +148,7 @@ new class extends Component {
             return;
         }
 
-        Storage::disk('public')->delete($item->path);
+        Storage::disk('media')->delete($item->path);
         $item->delete();
 
         if ($this->selectedImageId === $id) {
@@ -172,14 +172,14 @@ new class extends Component {
     {
         $item = MediaItem::find($id);
 
-        if (! $item || ! Storage::disk('public')->exists($item->path)) {
+        if (! $item || ! Storage::disk('media')->exists($item->path)) {
             return;
         }
 
         $this->generatingAlt = true;
 
-        $imageContents = Storage::disk('public')->get($item->path);
-        $mimeType = Storage::disk('public')->mimeType($item->path) ?: 'image/jpeg';
+        $imageContents = Storage::disk('media')->get($item->path);
+        $mimeType = Storage::disk('media')->mimeType($item->path) ?: 'image/jpeg';
         $base64 = base64_encode($imageContents);
 
         $provider = \App\Models\Setting::get('ai.text_provider', 'claude');

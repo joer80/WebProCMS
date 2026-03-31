@@ -10,13 +10,14 @@
     "license": "Elastic-2.0",
     "require": {
         "php": "^8.2",
+        "fakerphp/faker": "^1.23",
         "laravel/fortify": "^1.30",
         "laravel/framework": "^12.0",
         "laravel/tinker": "^2.10.1",
+        "league/flysystem-aws-s3-v3": "^3.0",
         "livewire/blaze": "^1.0",
         "livewire/flux": "^2.9.0",
         "livewire/livewire": "^4.0",
-        "fakerphp/faker": "^1.23",
         "spatie/laravel-responsecache": "*"
     },
     "require-dev": {

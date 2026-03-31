@@ -98,7 +98,8 @@
       "Bash(BASE=\"/Users/joepersonal/Sites/WebProCMS/resources/design-library/rows\")",
       "Read(//Users/joepersonal/Sites/WebProCMS/$BASE/e-commerce/**)",
       "Read(//Users/joepersonal/Sites/WebProCMS/$BASE/blog-detail/**)",
-      "Read(//Users/joepersonal/Sites/WebProCMS/$BASE/404/**)"
+      "Read(//Users/joepersonal/Sites/WebProCMS/$BASE/404/**)",
+      "Bash(php -r \"require ''''vendor/autoload.php''''; $app = require ''''bootstrap/app.php''''; $app->make\\(''''Illuminate\\\\Contracts\\\\Console\\\\Kernel''''\\)->bootstrap\\(\\); echo ''''OK'''';\")"
     ]
   },
   "defaultMode": "acceptEdits"

@@ -7,18 +7,27 @@ use Illuminate\Support\Facades\Storage;
 class ImageResizer
 {
     /**
-     * Resize an image stored on the public disk to a maximum width, in place.
+     * Resize an image stored on the media disk to a maximum width, in place.
      * No-ops if the image is already within the limit or the type is unsupported.
      */
     public static function resizeToMaxWidth(string $storagePath, int $maxWidth = 1920): void
     {
-        $fullPath = Storage::disk('public')->path($storagePath);
+        $fullPath = Storage::disk('media')->path($storagePath);
+        static::resizeAbsolutePath($fullPath, $maxWidth);
+    }
 
-        if (! file_exists($fullPath)) {
+    /**
+     * Resize an image at an absolute filesystem path to a maximum width, in place.
+     * No-ops if the image is already within the limit or the type is unsupported.
+     * Use this before uploading a file to a remote disk.
+     */
+    public static function resizeAbsolutePath(string $absolutePath, int $maxWidth = 1920): void
+    {
+        if (! file_exists($absolutePath)) {
             return;
         }
 
-        $info = @getimagesize($fullPath);
+        $info = @getimagesize($absolutePath);
 
         if (! $info || $info[0] <= $maxWidth) {
             return;
@@ -27,10 +36,10 @@ class ImageResizer
         [$origWidth, $origHeight, $type] = $info;
 
         $src = match ($type) {
-            IMAGETYPE_JPEG => imagecreatefromjpeg($fullPath),
-            IMAGETYPE_PNG => imagecreatefrompng($fullPath),
-            IMAGETYPE_WEBP => imagecreatefromwebp($fullPath),
-            IMAGETYPE_GIF => imagecreatefromgif($fullPath),
+            IMAGETYPE_JPEG => imagecreatefromjpeg($absolutePath),
+            IMAGETYPE_PNG => imagecreatefrompng($absolutePath),
+            IMAGETYPE_WEBP => imagecreatefromwebp($absolutePath),
+            IMAGETYPE_GIF => imagecreatefromgif($absolutePath),
             default => null,
         };
 
@@ -50,10 +59,10 @@ class ImageResizer
         imagecopyresampled($dst, $src, 0, 0, 0, 0, $newWidth, $newHeight, $origWidth, $origHeight);
 
         match ($type) {
-            IMAGETYPE_JPEG => imagejpeg($dst, $fullPath, 85),
-            IMAGETYPE_PNG => imagepng($dst, $fullPath),
-            IMAGETYPE_WEBP => imagewebp($dst, $fullPath, 85),
-            IMAGETYPE_GIF => imagegif($dst, $fullPath),
+            IMAGETYPE_JPEG => imagejpeg($dst, $absolutePath, 85),
+            IMAGETYPE_PNG => imagepng($dst, $absolutePath),
+            IMAGETYPE_WEBP => imagewebp($dst, $absolutePath, 85),
+            IMAGETYPE_GIF => imagegif($dst, $absolutePath),
             default => null,
         };
 

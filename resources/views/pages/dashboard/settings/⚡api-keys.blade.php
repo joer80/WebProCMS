@@ -1,6 +1,8 @@
 <?php
 
+use App\Jobs\MigrateMediaToCloudJob;
 use Livewire\Attributes\Layout;
+use Livewire\Attributes\Polling;
 use Livewire\Attributes\Title;
 use Livewire\Component;
 
@@ -29,6 +31,21 @@ new #[Layout('layouts.app')] #[Title('API Keys')] class extends Component {
 
     public string $spamTurnstileSecretKey = '';
 
+    // Media Storage
+    public string $storageDriver = 'local';
+
+    public string $storageKey = '';
+
+    public string $storageSecret = '';
+
+    public string $storageBucket = '';
+
+    public string $storageRegion = 'us-east-1';
+
+    public string $storageEndpoint = '';
+
+    public string $storageCdnUrl = '';
+
     public function mount(): void
     {
         $this->aiTextProvider = \App\Models\Setting::get('ai.text_provider', 'claude');
@@ -44,6 +61,14 @@ new #[Layout('layouts.app')] #[Title('API Keys')] class extends Component {
         $this->spamRecaptchaSecretKey = \App\Models\Setting::get('spam.recaptcha_secret_key', '');
         $this->spamTurnstileSiteKey = \App\Models\Setting::get('spam.turnstile_site_key', '');
         $this->spamTurnstileSecretKey = \App\Models\Setting::get('spam.turnstile_secret_key', '');
+
+        $this->storageDriver = \App\Models\Setting::get('storage.driver', 'local');
+        $this->storageKey = \App\Models\Setting::get('storage.key', '');
+        $this->storageSecret = \App\Models\Setting::get('storage.secret', '');
+        $this->storageBucket = \App\Models\Setting::get('storage.bucket', '');
+        $this->storageRegion = \App\Models\Setting::get('storage.region', 'us-east-1');
+        $this->storageEndpoint = \App\Models\Setting::get('storage.endpoint', '');
+        $this->storageCdnUrl = \App\Models\Setting::get('storage.cdn_url', '');
     }
 
     public function saveAiSettings(): void
@@ -86,6 +111,122 @@ new #[Layout('layouts.app')] #[Title('API Keys')] class extends Component {
         \App\Models\Setting::set('spam.turnstile_secret_key', $this->spamTurnstileSecretKey);
 
         $this->dispatch('notify', message: 'Spam protection settings saved.');
+    }
+
+    public function saveStorageSettings(): void
+    {
+        $this->validate([
+            'storageDriver' => ['required', 'in:local,s3,backblaze,digitalocean'],
+            'storageKey'    => ['nullable', 'string', 'max:500'],
+            'storageSecret' => ['nullable', 'string', 'max:500'],
+            'storageBucket' => ['nullable', 'string', 'max:255'],
+            'storageRegion' => ['nullable', 'string', 'max:100'],
+            'storageEndpoint' => ['nullable', 'string', 'max:500'],
+            'storageCdnUrl'   => ['nullable', 'string', 'max:500'],
+        ]);
+
+        \App\Models\Setting::set('storage.driver', $this->storageDriver);
+        \App\Models\Setting::set('storage.key', $this->storageKey);
+        \App\Models\Setting::set('storage.secret', $this->storageSecret);
+        \App\Models\Setting::set('storage.bucket', $this->storageBucket);
+        \App\Models\Setting::set('storage.region', $this->storageRegion);
+        \App\Models\Setting::set('storage.endpoint', $this->storageEndpoint);
+        \App\Models\Setting::set('storage.cdn_url', $this->storageCdnUrl);
+
+        // Reset migration status when settings change
+        \App\Models\Setting::set('storage.migration_status', 'idle');
+        \App\Models\Setting::set('storage.migration_progress', 0);
+        \App\Models\Setting::set('storage.migration_total', 0);
+
+        $this->dispatch('notify', message: 'Storage settings saved.');
+    }
+
+    public function migrateToCloud(): void
+    {
+        $savedDriver = \App\Models\Setting::get('storage.driver', 'local');
+
+        if ($savedDriver === 'local') {
+            return;
+        }
+
+        \App\Models\Setting::set('storage.migration_status', 'running');
+        \App\Models\Setting::set('storage.migration_progress', 0);
+
+        MigrateMediaToCloudJob::dispatch();
+    }
+
+    public function deleteLocalFiles(): void
+    {
+        $migrationStatus = \App\Models\Setting::get('storage.migration_status', 'idle');
+
+        if ($migrationStatus !== 'done') {
+            return;
+        }
+
+        $localPath = storage_path('app/public');
+
+        if (is_dir($localPath)) {
+            $files = new \RecursiveIteratorIterator(
+                new \RecursiveDirectoryIterator($localPath, \RecursiveDirectoryIterator::SKIP_DOTS),
+                \RecursiveIteratorIterator::CHILD_FIRST
+            );
+
+            foreach ($files as $file) {
+                if ($file->isFile()) {
+                    @unlink($file->getPathname());
+                }
+            }
+        }
+
+        \App\Models\Setting::set('storage.migration_status', 'deleted');
+        $this->dispatch('notify', message: 'Local media files deleted.');
+    }
+
+    public function getMigrationStatusProperty(): string
+    {
+        return \App\Models\Setting::get('storage.migration_status', 'idle');
+    }
+
+    public function getMigrationProgressProperty(): int
+    {
+        return (int) \App\Models\Setting::get('storage.migration_progress', 0);
+    }
+
+    public function getMigrationTotalProperty(): int
+    {
+        return (int) \App\Models\Setting::get('storage.migration_total', 0);
+    }
+
+    public function getMigrationLogProperty(): string
+    {
+        return (string) \App\Models\Setting::get('storage.migration_log', '');
+    }
+
+    public function getLocalFileCountProperty(): int
+    {
+        $path = storage_path('app/public');
+
+        if (! is_dir($path)) {
+            return 0;
+        }
+
+        $count = 0;
+        $iterator = new \RecursiveIteratorIterator(
+            new \RecursiveDirectoryIterator($path, \RecursiveDirectoryIterator::SKIP_DOTS)
+        );
+
+        foreach ($iterator as $file) {
+            if ($file->isFile()) {
+                $count++;
+            }
+        }
+
+        return $count;
+    }
+
+    public function pollMigration(): void
+    {
+        // Triggers a re-render to refresh computed migration props
     }
 }; ?>
 
@@ -203,6 +344,166 @@ new #[Layout('layouts.app')] #[Title('API Keys')] class extends Component {
                     </div>
                     <flux:button wire:click="saveSpamSettings" variant="outline" class="shrink-0">Save</flux:button>
                 </div>
+            </div>
+
+
+            {{-- Media Storage --}}
+            <div class="rounded-lg border border-zinc-200 dark:border-zinc-700 p-6" x-data="{ driver: $wire.entangle('storageDriver') }">
+                <div class="flex items-start justify-between gap-6">
+                    <div class="flex-1">
+                        <flux:heading>Media Storage</flux:heading>
+                        <flux:text class="mt-1">Choose where your Media Library files are stored. The default is the server's local filesystem. Switch to a cloud provider for scalable, offsite storage.</flux:text>
+
+                        <div class="mt-5 space-y-5">
+
+                            {{-- Provider --}}
+                            <flux:radio.group wire:model="storageDriver" x-model="driver" label="Storage Provider">
+                                <flux:radio value="local" label="Local Filesystem" description="Files are stored on this server's disk (default)." />
+                                <flux:radio value="s3" label="Amazon S3" description="Store files in an AWS S3 bucket." />
+                                <flux:radio value="backblaze" label="Backblaze B2" description="S3-compatible object storage from Backblaze." />
+                                <flux:radio value="digitalocean" label="DigitalOcean Spaces" description="S3-compatible object storage from DigitalOcean." />
+                            </flux:radio.group>
+
+                            {{-- S3 instructions --}}
+                            <div x-show="driver === 's3'" class="rounded-lg bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200 dark:border-zinc-700 px-4 py-3 text-sm text-zinc-600 dark:text-zinc-400 space-y-1">
+                                <p><strong class="font-medium text-zinc-800 dark:text-zinc-200">Amazon S3 setup:</strong></p>
+                                <ol class="list-decimal list-inside space-y-1">
+                                    <li>Sign in at <span class="font-mono text-xs">console.aws.amazon.com</span> and open <strong>S3</strong>.</li>
+                                    <li>Create a new bucket. Uncheck "Block all public access" and confirm.</li>
+                                    <li>Add a bucket policy granting public read: <span class="font-mono text-xs">{"Statement":[{"Effect":"Allow","Principal":"*","Action":"s3:GetObject","Resource":"arn:aws:s3:::YOUR-BUCKET/*"}]}</span></li>
+                                    <li>Create an IAM user with <strong>AmazonS3FullAccess</strong> (or a scoped policy), then generate an access key.</li>
+                                    <li>Enter the credentials below and save, then click <strong>Migrate Files to Cloud</strong>.</li>
+                                </ol>
+                            </div>
+
+                            {{-- Backblaze B2 instructions --}}
+                            <div x-show="driver === 'backblaze'" class="rounded-lg bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200 dark:border-zinc-700 px-4 py-3 text-sm text-zinc-600 dark:text-zinc-400 space-y-1">
+                                <p><strong class="font-medium text-zinc-800 dark:text-zinc-200">Backblaze B2 setup:</strong></p>
+                                <ol class="list-decimal list-inside space-y-1">
+                                    <li>Sign in at <span class="font-mono text-xs">backblaze.com</span> and go to <strong>B2 Cloud Storage → Buckets</strong>.</li>
+                                    <li>Create a bucket with <strong>Public</strong> access.</li>
+                                    <li>Note your bucket's <strong>Endpoint</strong> from the bucket details page (e.g. <span class="font-mono text-xs">s3.us-west-004.backblazeb2.com</span>).</li>
+                                    <li>Go to <strong>App Keys</strong> and create a key with read/write access to your bucket.</li>
+                                    <li>Use the <strong>keyID</strong> as Access Key and <strong>applicationKey</strong> as Secret Key below.</li>
+                                </ol>
+                            </div>
+
+                            {{-- DigitalOcean instructions --}}
+                            <div x-show="driver === 'digitalocean'" class="rounded-lg bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200 dark:border-zinc-700 px-4 py-3 text-sm text-zinc-600 dark:text-zinc-400 space-y-1">
+                                <p><strong class="font-medium text-zinc-800 dark:text-zinc-200">DigitalOcean Spaces setup:</strong></p>
+                                <ol class="list-decimal list-inside space-y-1">
+                                    <li>Sign in at <span class="font-mono text-xs">cloud.digitalocean.com</span> and go to <strong>Spaces Object Storage</strong>.</li>
+                                    <li>Create a Space and set <strong>File Listing</strong> to Public.</li>
+                                    <li>Note your Space name (bucket) and region (e.g. <span class="font-mono text-xs">nyc3</span>).</li>
+                                    <li>Go to <strong>API → Spaces Keys</strong> and generate a new key pair.</li>
+                                    <li>Set Endpoint to <span class="font-mono text-xs">{region}.digitaloceanspaces.com</span> (e.g. <span class="font-mono text-xs">nyc3.digitaloceanspaces.com</span>).</li>
+                                </ol>
+                            </div>
+
+                            {{-- Cloud credentials (shown for any cloud provider) --}}
+                            <div x-show="driver !== 'local'" class="space-y-3">
+                                <div class="border-t border-zinc-200 dark:border-zinc-700"></div>
+
+                                <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                                    <flux:input wire:model="storageKey" label="Access Key ID" type="password" placeholder="..." />
+                                    <flux:input wire:model="storageSecret" label="Secret Access Key" type="password" placeholder="..." />
+                                </div>
+
+                                <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                                    <flux:input wire:model="storageBucket" label="Bucket Name" placeholder="my-media-bucket" />
+                                    <flux:input wire:model="storageRegion" label="Region" placeholder="us-east-1" />
+                                </div>
+
+                                <flux:input wire:model="storageEndpoint" label="Custom Endpoint (S3-compatible)" placeholder="e.g. s3.us-west-004.backblazeb2.com or nyc3.digitaloceanspaces.com">
+                                    <flux:text slot="description" class="text-xs">Leave blank for Amazon S3. Required for Backblaze B2 and DigitalOcean Spaces.</flux:text>
+                                </flux:input>
+
+                                <flux:input wire:model="storageCdnUrl" label="CDN URL (optional)" placeholder="e.g. https://cdn.example.com">
+                                    <flux:text slot="description" class="text-xs">If set, media URLs will use this base instead of the bucket URL.</flux:text>
+                                </flux:input>
+                            </div>
+
+                        </div>
+                    </div>
+                    <flux:button wire:click="saveStorageSettings" variant="outline" class="shrink-0">Save</flux:button>
+                </div>
+
+                {{-- Migration panel — shown when a cloud driver is saved and there are local files --}}
+                @php
+                    $savedDriver = \App\Models\Setting::get('storage.driver', 'local');
+                    $migrationStatus = $this->migrationStatus;
+                    $migrationProgress = $this->migrationProgress;
+                    $migrationTotal = $this->migrationTotal;
+                    $migrationLog = $this->migrationLog;
+                    $localCount = $this->localFileCount;
+                @endphp
+
+                @if ($savedDriver !== 'local')
+                    <div class="mt-6 border-t border-zinc-200 dark:border-zinc-700 pt-5 space-y-4"
+                        wire:poll.2500ms="pollMigration"
+                    >
+                        <flux:subheading>Migrate Existing Files to Cloud</flux:subheading>
+                        <flux:text class="text-sm">Upload your existing local media files to your cloud storage bucket. After migration completes you can delete the local copies to free up disk space.</flux:text>
+
+                        @if ($migrationStatus === 'running')
+                            <div class="space-y-2">
+                                <div class="flex items-center justify-between text-sm text-zinc-600 dark:text-zinc-400">
+                                    <span>Uploading files…</span>
+                                    <span>{{ $migrationProgress }} / {{ $migrationTotal }}</span>
+                                </div>
+                                @if ($migrationTotal > 0)
+                                    <div class="w-full bg-zinc-200 dark:bg-zinc-700 rounded-full h-2">
+                                        <div class="bg-primary h-2 rounded-full transition-all duration-300"
+                                            style="width: {{ $migrationTotal > 0 ? round(($migrationProgress / $migrationTotal) * 100) : 0 }}%">
+                                        </div>
+                                    </div>
+                                @endif
+                            </div>
+                        @elseif ($migrationStatus === 'done' || $migrationStatus === 'deleted')
+                            <div class="flex items-center gap-2 text-sm text-green-600 dark:text-green-400">
+                                <flux:icon name="check-circle" class="size-4 shrink-0" />
+                                <span>Migration complete. All {{ $migrationTotal }} files are in your cloud bucket.</span>
+                            </div>
+                            @if ($migrationStatus === 'done' && $localCount > 0)
+                                <div class="flex items-center justify-between gap-4 rounded-lg border border-amber-200 dark:border-amber-700 bg-amber-50 dark:bg-amber-900/20 px-4 py-3">
+                                    <flux:text class="text-sm text-amber-800 dark:text-amber-300">
+                                        {{ $localCount }} local {{ $localCount === 1 ? 'file' : 'files' }} found on this server. Delete them to free up disk space.
+                                    </flux:text>
+                                    <flux:button wire:click="deleteLocalFiles" wire:confirm="Permanently delete all {{ $localCount }} local media files? This cannot be undone." variant="danger" size="sm" class="shrink-0">
+                                        Delete Local Files
+                                    </flux:button>
+                                </div>
+                            @elseif ($migrationStatus === 'deleted')
+                                <flux:text class="text-sm text-zinc-500">Local files have been removed. All media is served from the cloud.</flux:text>
+                            @endif
+                        @elseif ($migrationStatus === 'error')
+                            <div class="space-y-3">
+                                <div class="flex items-center gap-2 text-sm text-red-600 dark:text-red-400">
+                                    <flux:icon name="exclamation-triangle" class="size-4 shrink-0" />
+                                    <span>Migration finished with errors. Check credentials and bucket permissions, then try again.</span>
+                                </div>
+                                @if ($migrationLog)
+                                    <pre class="text-xs bg-zinc-100 dark:bg-zinc-800 rounded p-3 overflow-x-auto text-red-600 dark:text-red-400 whitespace-pre-wrap">{{ $migrationLog }}</pre>
+                                @endif
+                                <flux:button wire:click="migrateToCloud" variant="outline" size="sm">Retry Migration</flux:button>
+                            </div>
+                        @else
+                            <flux:button
+                                wire:click="migrateToCloud"
+                                variant="outline"
+                                :disabled="$savedDriver === 'local'"
+                                icon="cloud-arrow-up"
+                            >
+                                Migrate Files to Cloud
+                            </flux:button>
+                            @if ($localCount > 0)
+                                <flux:text class="text-xs text-zinc-500">{{ $localCount }} local {{ $localCount === 1 ? 'file' : 'files' }} will be uploaded.</flux:text>
+                            @else
+                                <flux:text class="text-xs text-zinc-500">No local files found — nothing to migrate.</flux:text>
+                            @endif
+                        @endif
+                    </div>
+                @endif
             </div>
 
         </div>

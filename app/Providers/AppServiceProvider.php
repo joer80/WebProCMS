@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Models\Setting;
 use App\Support\ContentCache;
 use App\Support\SchemaCache;
 use Carbon\CarbonImmutable;
@@ -28,7 +29,46 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->configureDefaults();
+        $this->configureMediaDisk();
         $this->registerBladeDirectives();
+    }
+
+    /**
+     * Configure the `media` storage disk based on persisted settings.
+     * Falls back to the local public disk if settings are unavailable or driver is local.
+     */
+    protected function configureMediaDisk(): void
+    {
+        try {
+            $driver = Setting::get('storage.driver', 'local');
+
+            if ($driver === 'local') {
+                return;
+            }
+
+            $key = Setting::get('storage.key', '');
+            $secret = Setting::get('storage.secret', '');
+            $bucket = Setting::get('storage.bucket', '');
+            $region = Setting::get('storage.region', 'us-east-1');
+            $endpoint = Setting::get('storage.endpoint', '');
+            $cdnUrl = Setting::get('storage.cdn_url', '');
+
+            config(['filesystems.disks.media' => [
+                'driver' => 's3',
+                'key' => $key,
+                'secret' => $secret,
+                'region' => $region ?: 'us-east-1',
+                'bucket' => $bucket,
+                'url' => $cdnUrl ?: null,
+                'endpoint' => $endpoint ?: null,
+                'use_path_style_endpoint' => $driver === 'backblaze',
+                'visibility' => 'public',
+                'throw' => false,
+                'report' => false,
+            ]]);
+        } catch (\Throwable) {
+            // DB may not be available during migrations — keep the local fallback
+        }
     }
 
     /**
