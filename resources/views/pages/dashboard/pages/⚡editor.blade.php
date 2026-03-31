@@ -5839,7 +5839,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                                         <div x-show="panelMode !== null" x-collapse class="border-t border-zinc-200 dark:border-zinc-700">
                                             {{-- Content mode: background image --}}
                                             <div x-show="panelMode === 'content'" class="p-3 space-y-2">
-                                                @php $aiRowBgEnabled = (bool) \App\Models\Setting::get('ai.openai_key'); @endphp
+                                                @php $aiRowBgEnabled = (bool) (\App\Models\Setting::get('ai.openai_key') || \App\Models\Setting::get('ai.fal_key') || \App\Models\Setting::get('ai.stability_key')); @endphp
                                                 <div class="flex items-center justify-between">
                                                     <span class="text-[11px] uppercase tracking-wider font-semibold text-zinc-500 dark:text-zinc-400">Background Image</span>
                                                     @if ($aiRowBgEnabled)

@@ -18,7 +18,7 @@ $showTranslateBtn = $isLangVariant && $aiEnabled && in_array($field['type'], ['t
 $showAiBtn = $aiEnabled && ! $isAltField && ($showShortcodeBtn || $field['type'] === 'richtext' || $field['type'] === 'classes');
 $showAiRewriteBtn = $aiEnabled && ! $isAltField && ($showShortcodeBtn || $field['type'] === 'richtext');
 $showAiAltBtn = $aiEnabled && $isAltField;
-$aiImageEnabled = (bool) \App\Models\Setting::get('ai.openai_key');
+$aiImageEnabled = (bool) (\App\Models\Setting::get('ai.openai_key') || \App\Models\Setting::get('ai.fal_key') || \App\Models\Setting::get('ai.stability_key'));
 $showAiImageBtn = $aiImageEnabled && $field['type'] === 'image';
 $showLoremBtn = $showShortcodeBtn || $field['type'] === 'richtext';
 $loremDefaultLen = strlen(strip_tags($field['default'] ?? ''));
