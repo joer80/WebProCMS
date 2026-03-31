@@ -276,12 +276,14 @@ new #[Layout('layouts.app')] #[Title('Users')] #[Lazy] class extends Component {
                                 </td>
                                 <td class="px-4 py-3">
                                     <div class="flex items-center justify-end gap-2">
-                                        <flux:button
-                                            wire:click="openEditModal({{ $user->id }})"
-                                            variant="ghost"
-                                            size="sm"
-                                            icon="pencil"
-                                        />
+                                        <flux:tooltip content="Edit user" position="bottom">
+                                            <flux:button
+                                                wire:click="openEditModal({{ $user->id }})"
+                                                variant="ghost"
+                                                size="sm"
+                                                icon="pencil"
+                                            />
+                                        </flux:tooltip>
                                         @if ($user->id !== Auth::id())
                                             @if ($confirmingDelete === $user->id)
                                                 <div class="flex items-center gap-1">
@@ -293,13 +295,15 @@ new #[Layout('layouts.app')] #[Title('Users')] #[Lazy] class extends Component {
                                                     </flux:button>
                                                 </div>
                                             @else
-                                                <flux:button
-                                                    wire:click="$set('confirmingDelete', {{ $user->id }})"
-                                                    variant="ghost"
-                                                    size="sm"
-                                                    icon="trash"
-                                                    class="text-red-500 dark:text-red-400"
-                                                />
+                                                <flux:tooltip content="Delete user" position="bottom">
+                                                    <flux:button
+                                                        wire:click="$set('confirmingDelete', {{ $user->id }})"
+                                                        variant="ghost"
+                                                        size="sm"
+                                                        icon="trash"
+                                                        class="text-red-500 dark:text-red-400"
+                                                    />
+                                                </flux:tooltip>
                                             @endif
                                         @endif
                                     </div>

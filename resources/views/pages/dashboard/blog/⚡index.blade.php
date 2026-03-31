@@ -105,22 +105,26 @@ new #[Layout('layouts.app')] #[Title('Blog Posts')] #[Lazy] class extends Compon
                                 </td>
                                 <td class="px-4 py-3">
                                     <div class="flex items-center justify-end gap-2">
-                                        @if (in_array($post->status, ['published', 'unlisted']))
+                                        <flux:tooltip content="Edit post" position="bottom">
                                             <flux:button
-                                                href="{{ route('blog.show', $post->slug) }}"
+                                                href="{{ route('dashboard.blog.edit', $post) }}"
                                                 variant="ghost"
                                                 size="sm"
-                                                icon="arrow-top-right-on-square"
-                                                target="_blank"
+                                                icon="pencil"
+                                                wire:navigate
                                             />
+                                        </flux:tooltip>
+                                        @if (in_array($post->status, ['published', 'unlisted']))
+                                            <flux:tooltip content="View post" position="bottom">
+                                                <flux:button
+                                                    href="{{ route('blog.show', $post->slug) }}"
+                                                    variant="ghost"
+                                                    size="sm"
+                                                    icon="arrow-top-right-on-square"
+                                                    target="_blank"
+                                                />
+                                            </flux:tooltip>
                                         @endif
-                                        <flux:button
-                                            href="{{ route('dashboard.blog.edit', $post) }}"
-                                            variant="ghost"
-                                            size="sm"
-                                            icon="pencil"
-                                            wire:navigate
-                                        />
                                         @if ($confirmingDelete === $post->id)
                                             <div class="flex items-center gap-1">
                                                 <flux:button wire:click="deletePost({{ $post->id }})" variant="danger" size="sm">
@@ -131,13 +135,15 @@ new #[Layout('layouts.app')] #[Title('Blog Posts')] #[Lazy] class extends Compon
                                                 </flux:button>
                                             </div>
                                         @else
-                                            <flux:button
-                                                wire:click="$set('confirmingDelete', {{ $post->id }})"
-                                                variant="ghost"
-                                                size="sm"
-                                                icon="trash"
-                                                class="text-red-500 dark:text-red-400"
-                                            />
+                                            <flux:tooltip content="Delete post" position="bottom">
+                                                <flux:button
+                                                    wire:click="$set('confirmingDelete', {{ $post->id }})"
+                                                    variant="ghost"
+                                                    size="sm"
+                                                    icon="trash"
+                                                    class="text-red-500 dark:text-red-400"
+                                                />
+                                            </flux:tooltip>
                                         @endif
                                     </div>
                                 </td>

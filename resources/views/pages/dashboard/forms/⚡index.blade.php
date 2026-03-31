@@ -159,13 +159,15 @@ new #[Layout('layouts.app')] #[Title('Forms')] #[Lazy] class extends Component {
                                 </td>
                                 <td class="px-4 py-3">
                                     <div class="flex items-center justify-end gap-2">
-                                        <flux:button
-                                            href="{{ route('dashboard.forms.edit', $form) }}"
-                                            variant="ghost"
-                                            size="sm"
-                                            icon="pencil"
-                                            wire:navigate
-                                        />
+                                        <flux:tooltip content="Edit form" position="bottom">
+                                            <flux:button
+                                                href="{{ route('dashboard.forms.edit', $form) }}"
+                                                variant="ghost"
+                                                size="sm"
+                                                icon="pencil"
+                                                wire:navigate
+                                            />
+                                        </flux:tooltip>
                                         @if ($confirmingDelete === $form->id)
                                             <div class="flex items-center gap-1">
                                                 <flux:button wire:click="deleteForm({{ $form->id }})" variant="danger" size="sm">
@@ -176,13 +178,15 @@ new #[Layout('layouts.app')] #[Title('Forms')] #[Lazy] class extends Component {
                                                 </flux:button>
                                             </div>
                                         @else
-                                            <flux:button
-                                                wire:click="$set('confirmingDelete', {{ $form->id }})"
-                                                variant="ghost"
-                                                size="sm"
-                                                icon="trash"
-                                                class="text-red-500 dark:text-red-400"
-                                            />
+                                            <flux:tooltip content="Delete form" position="bottom">
+                                                <flux:button
+                                                    wire:click="$set('confirmingDelete', {{ $form->id }})"
+                                                    variant="ghost"
+                                                    size="sm"
+                                                    icon="trash"
+                                                    class="text-red-500 dark:text-red-400"
+                                                />
+                                            </flux:tooltip>
                                         @endif
                                     </div>
                                 </td>

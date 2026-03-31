@@ -72,21 +72,25 @@ new #[Layout('layouts.app')] #[Title('Content Types')] class extends Component {
                                 </td>
                                 <td class="px-4 py-3">
                                     <div class="flex items-center justify-end gap-2">
-                                        <flux:button
-                                            href="{{ route('dashboard.content-types.edit', $type->id) }}"
-                                            variant="ghost"
-                                            size="sm"
-                                            icon="pencil"
-                                            wire:navigate
-                                        />
-                                        <flux:button
-                                            wire:click="deleteType({{ $type->id }})"
-                                            wire:confirm="Delete '{{ $type->name }}' and all its content? This cannot be undone."
-                                            variant="ghost"
-                                            size="sm"
-                                            icon="trash"
-                                            class="text-red-500 dark:text-red-400"
-                                        />
+                                        <flux:tooltip content="Edit type" position="bottom">
+                                            <flux:button
+                                                href="{{ route('dashboard.content-types.edit', $type->id) }}"
+                                                variant="ghost"
+                                                size="sm"
+                                                icon="pencil"
+                                                wire:navigate
+                                            />
+                                        </flux:tooltip>
+                                        <flux:tooltip content="Delete type" position="bottom">
+                                            <flux:button
+                                                wire:click="deleteType({{ $type->id }})"
+                                                wire:confirm="Delete '{{ $type->name }}' and all its content? This cannot be undone."
+                                                variant="ghost"
+                                                size="sm"
+                                                icon="trash"
+                                                class="text-red-500 dark:text-red-400"
+                                            />
+                                        </flux:tooltip>
                                     </div>
                                 </td>
                             </tr>

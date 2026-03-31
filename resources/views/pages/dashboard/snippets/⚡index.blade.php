@@ -98,13 +98,15 @@ new #[Layout('layouts.app')] #[Title('Snippets')] #[Lazy] class extends Componen
                                 </td>
                                 <td class="px-4 py-3">
                                     <div class="flex items-center justify-end gap-2">
-                                        <flux:button
-                                            href="{{ route('dashboard.snippets.edit', $snippet) }}"
-                                            variant="ghost"
-                                            size="sm"
-                                            icon="pencil"
-                                            wire:navigate
-                                        />
+                                        <flux:tooltip content="Edit snippet" position="bottom">
+                                            <flux:button
+                                                href="{{ route('dashboard.snippets.edit', $snippet) }}"
+                                                variant="ghost"
+                                                size="sm"
+                                                icon="pencil"
+                                                wire:navigate
+                                            />
+                                        </flux:tooltip>
                                         @if ($confirmingDelete === $snippet->id)
                                             <div class="flex items-center gap-1">
                                                 <flux:button wire:click="deleteSnippet({{ $snippet->id }})" variant="danger" size="sm">
@@ -115,13 +117,15 @@ new #[Layout('layouts.app')] #[Title('Snippets')] #[Lazy] class extends Componen
                                                 </flux:button>
                                             </div>
                                         @else
-                                            <flux:button
-                                                wire:click="$set('confirmingDelete', {{ $snippet->id }})"
-                                                variant="ghost"
-                                                size="sm"
-                                                icon="trash"
-                                                class="text-red-500 dark:text-red-400"
-                                            />
+                                            <flux:tooltip content="Delete snippet" position="bottom">
+                                                <flux:button
+                                                    wire:click="$set('confirmingDelete', {{ $snippet->id }})"
+                                                    variant="ghost"
+                                                    size="sm"
+                                                    icon="trash"
+                                                    class="text-red-500 dark:text-red-400"
+                                                />
+                                            </flux:tooltip>
                                         @endif
                                     </div>
                                 </td>

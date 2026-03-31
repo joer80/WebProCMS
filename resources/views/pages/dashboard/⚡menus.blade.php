@@ -510,20 +510,22 @@ new #[Layout('layouts.app')] #[Title('Menus')] class extends Component {
                                     <flux:select.option value="{{ $i }}">{{ $menu['label'] }}</flux:select.option>
                                 @endforeach
                             </flux:select>
-                            <flux:button
-                                wire:click="$set('showCreateMenuModal', true)"
-                                variant="ghost"
-                                size="sm"
-                                icon="plus"
-                                title="{{ __('Create menu') }}"
-                            />
-                            <flux:button
-                                wire:click="$set('showEditMenuModal', true)"
-                                variant="ghost"
-                                size="sm"
-                                icon="pencil-square"
-                                title="{{ __('Edit menu') }}"
-                            />
+                            <flux:tooltip content="{{ __('Create menu') }}" position="bottom">
+                                <flux:button
+                                    wire:click="$set('showCreateMenuModal', true)"
+                                    variant="ghost"
+                                    size="sm"
+                                    icon="plus"
+                                />
+                            </flux:tooltip>
+                            <flux:tooltip content="{{ __('Edit menu') }}" position="bottom">
+                                <flux:button
+                                    wire:click="$set('showEditMenuModal', true)"
+                                    variant="ghost"
+                                    size="sm"
+                                    icon="pencil-square"
+                                />
+                            </flux:tooltip>
                         </div>
                         <div class="flex items-center gap-2">
                             <flux:button wire:click="openAddModal" variant="outline" size="sm" icon="plus">
@@ -592,34 +594,42 @@ new #[Layout('layouts.app')] #[Title('Menus')] class extends Component {
                                                 </td>
                                                 <td class="px-4 py-3">
                                                     <div class="flex items-center justify-end gap-2">
-                                                        <flux:button
-                                                            wire:click="moveItemUp({{ $index }})"
-                                                            variant="ghost"
-                                                            size="sm"
-                                                            icon="chevron-up"
-                                                            :disabled="$index === 0"
-                                                        />
-                                                        <flux:button
-                                                            wire:click="moveItemDown({{ $index }})"
-                                                            variant="ghost"
-                                                            size="sm"
-                                                            icon="chevron-down"
-                                                            :disabled="$index === count($currentItems) - 1"
-                                                        />
+                                                        <flux:tooltip content="Move up" position="bottom">
+                                                            <flux:button
+                                                                wire:click="moveItemUp({{ $index }})"
+                                                                variant="ghost"
+                                                                size="sm"
+                                                                icon="chevron-up"
+                                                                :disabled="$index === 0"
+                                                            />
+                                                        </flux:tooltip>
+                                                        <flux:tooltip content="Move down" position="bottom">
+                                                            <flux:button
+                                                                wire:click="moveItemDown({{ $index }})"
+                                                                variant="ghost"
+                                                                size="sm"
+                                                                icon="chevron-down"
+                                                                :disabled="$index === count($currentItems) - 1"
+                                                            />
+                                                        </flux:tooltip>
                                                         <flux:switch wire:model.live="menus.{{ $activeMenuIndex }}.items.{{ $index }}.active" />
-                                                        <flux:button
-                                                            wire:click="openEditItemModal({{ $index }})"
-                                                            variant="ghost"
-                                                            size="sm"
-                                                            icon="pencil-square"
-                                                        />
-                                                        <flux:button
-                                                            wire:click="removeItem({{ $index }})"
-                                                            variant="ghost"
-                                                            size="sm"
-                                                            icon="trash"
-                                                            class="text-red-500 dark:text-red-400"
-                                                        />
+                                                        <flux:tooltip content="Edit item" position="bottom">
+                                                            <flux:button
+                                                                wire:click="openEditItemModal({{ $index }})"
+                                                                variant="ghost"
+                                                                size="sm"
+                                                                icon="pencil-square"
+                                                            />
+                                                        </flux:tooltip>
+                                                        <flux:tooltip content="Remove item" position="bottom">
+                                                            <flux:button
+                                                                wire:click="removeItem({{ $index }})"
+                                                                variant="ghost"
+                                                                size="sm"
+                                                                icon="trash"
+                                                                class="text-red-500 dark:text-red-400"
+                                                            />
+                                                        </flux:tooltip>
                                                     </div>
                                                 </td>
                                             </tr>

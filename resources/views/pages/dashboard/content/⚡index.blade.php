@@ -83,30 +83,36 @@ new #[Layout('layouts.app')] #[Title('Content')] class extends Component {
                                 </td>
                                 <td class="px-4 py-3">
                                     <div class="flex items-center justify-end gap-2">
-                                        @if (Route::has($typeSlug . '.show'))
+                                        <flux:tooltip content="Edit item" position="bottom">
                                             <flux:button
-                                                href="{{ route($typeSlug . '.show', $item->id) }}"
+                                                href="{{ route('dashboard.content.edit', [$typeSlug, $item->id]) }}"
                                                 variant="ghost"
                                                 size="sm"
-                                                icon="arrow-top-right-on-square"
-                                                target="_blank"
+                                                icon="pencil"
+                                                wire:navigate
                                             />
+                                        </flux:tooltip>
+                                        @if (Route::has($typeSlug . '.show'))
+                                            <flux:tooltip content="View item" position="bottom">
+                                                <flux:button
+                                                    href="{{ route($typeSlug . '.show', $item->id) }}"
+                                                    variant="ghost"
+                                                    size="sm"
+                                                    icon="arrow-top-right-on-square"
+                                                    target="_blank"
+                                                />
+                                            </flux:tooltip>
                                         @endif
-                                        <flux:button
-                                            href="{{ route('dashboard.content.edit', [$typeSlug, $item->id]) }}"
-                                            variant="ghost"
-                                            size="sm"
-                                            icon="pencil"
-                                            wire:navigate
-                                        />
-                                        <flux:button
-                                            wire:click="deleteItem({{ $item->id }})"
-                                            wire:confirm="Delete this item? This cannot be undone."
-                                            variant="ghost"
-                                            size="sm"
-                                            icon="trash"
-                                            class="text-red-500 dark:text-red-400"
-                                        />
+                                        <flux:tooltip content="Delete item" position="bottom">
+                                            <flux:button
+                                                wire:click="deleteItem({{ $item->id }})"
+                                                wire:confirm="Delete this item? This cannot be undone."
+                                                variant="ghost"
+                                                size="sm"
+                                                icon="trash"
+                                                class="text-red-500 dark:text-red-400"
+                                            />
+                                        </flux:tooltip>
                                     </div>
                                 </td>
                             </tr>

@@ -109,13 +109,15 @@ new #[Layout('layouts.app')] #[Title('Shortcodes')] #[Lazy] class extends Compon
                                     </td>
                                     <td class="px-4 py-3">
                                         <div class="flex items-center justify-end gap-2">
-                                            <flux:button
-                                                href="{{ route('dashboard.shortcodes.edit', $shortcode) }}"
-                                                variant="ghost"
-                                                size="sm"
-                                                icon="pencil"
-                                                wire:navigate
-                                            />
+                                            <flux:tooltip content="Edit shortcode" position="bottom">
+                                                <flux:button
+                                                    href="{{ route('dashboard.shortcodes.edit', $shortcode) }}"
+                                                    variant="ghost"
+                                                    size="sm"
+                                                    icon="pencil"
+                                                    wire:navigate
+                                                />
+                                            </flux:tooltip>
                                             @if ($confirmingDelete === $shortcode->id)
                                                 <div class="flex items-center gap-1">
                                                     <flux:button wire:click="deleteShortcode({{ $shortcode->id }})" variant="danger" size="sm">
@@ -126,13 +128,15 @@ new #[Layout('layouts.app')] #[Title('Shortcodes')] #[Lazy] class extends Compon
                                                     </flux:button>
                                                 </div>
                                             @else
-                                                <flux:button
-                                                    wire:click="$set('confirmingDelete', {{ $shortcode->id }})"
-                                                    variant="ghost"
-                                                    size="sm"
-                                                    icon="trash"
-                                                    class="text-red-500 dark:text-red-400"
-                                                />
+                                                <flux:tooltip content="Delete shortcode" position="bottom">
+                                                    <flux:button
+                                                        wire:click="$set('confirmingDelete', {{ $shortcode->id }})"
+                                                        variant="ghost"
+                                                        size="sm"
+                                                        icon="trash"
+                                                        class="text-red-500 dark:text-red-400"
+                                                    />
+                                                </flux:tooltip>
                                             @endif
                                         </div>
                                     </td>
@@ -180,13 +184,15 @@ new #[Layout('layouts.app')] #[Title('Shortcodes')] #[Lazy] class extends Compon
                                 </td>
                                 <td class="px-4 py-3">
                                     <div class="flex items-center justify-end">
-                                        <flux:button
-                                            href="{{ route('dashboard.settings.general') }}"
-                                            variant="ghost"
-                                            size="sm"
-                                            icon="pencil"
-                                            wire:navigate
-                                        />
+                                        <flux:tooltip content="Edit in General Settings" position="bottom">
+                                            <flux:button
+                                                href="{{ route('dashboard.settings.general') }}"
+                                                variant="ghost"
+                                                size="sm"
+                                                icon="pencil"
+                                                wire:navigate
+                                            />
+                                        </flux:tooltip>
                                     </div>
                                 </td>
                             </tr>

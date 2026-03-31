@@ -284,22 +284,30 @@ new #[Layout('layouts.app')] #[Title('Pages')] #[Lazy] class extends Component {
                                                         <flux:button wire:click="deletePage('{{ $path }}')" variant="danger" size="sm">Confirm</flux:button>
                                                         <flux:button wire:click="cancelDelete" variant="ghost" size="sm">Cancel</flux:button>
                                                     @else
-                                                        <flux:button
-                                                            href="{{ $this->getPageUrl($path) }}"
-                                                            variant="outline"
-                                                            size="sm"
-                                                            icon="arrow-top-right-on-square"
-                                                            target="_blank"
-                                                        />
-                                                        <flux:button
-                                                            href="{{ route('dashboard.design-library.editor') . '?file=' . urlencode($path) }}"
-                                                            variant="outline"
-                                                            size="sm"
-                                                            icon="pencil"
-                                                        />
+                                                        <flux:tooltip content="Edit page" position="bottom">
+                                                            <flux:button
+                                                                href="{{ route('dashboard.design-library.editor') . '?file=' . urlencode($path) }}"
+                                                                variant="outline"
+                                                                size="sm"
+                                                                icon="pencil"
+                                                            />
+                                                        </flux:tooltip>
+                                                        <flux:tooltip content="Open page" position="bottom">
+                                                            <flux:button
+                                                                href="{{ $this->getPageUrl($path) }}"
+                                                                variant="outline"
+                                                                size="sm"
+                                                                icon="arrow-top-right-on-square"
+                                                                target="_blank"
+                                                            />
+                                                        </flux:tooltip>
                                                         @if (auth()->user()->isAtLeast(Role::Manager))
-                                                            <flux:button wire:click="openCloneModal('{{ $path }}', '{{ $label }}')" variant="outline" size="sm" icon="document-duplicate" />
-                                                            <flux:button wire:click="confirmDelete('{{ $path }}')" variant="outline" size="sm" icon="trash" class="text-red-500 hover:text-red-600" />
+                                                            <flux:tooltip content="Clone page" position="bottom">
+                                                                <flux:button wire:click="openCloneModal('{{ $path }}', '{{ $label }}')" variant="outline" size="sm" icon="document-duplicate" />
+                                                            </flux:tooltip>
+                                                            <flux:tooltip content="Delete page" position="bottom">
+                                                                <flux:button wire:click="confirmDelete('{{ $path }}')" variant="outline" size="sm" icon="trash" class="text-red-500 hover:text-red-600" />
+                                                            </flux:tooltip>
                                                         @endif
                                                     @endif
                                                 </div>
@@ -339,19 +347,23 @@ new #[Layout('layouts.app')] #[Title('Pages')] #[Lazy] class extends Component {
                                         <div class="text-xs text-zinc-400 dark:text-zinc-500">{{ \Carbon\Carbon::createFromTimestamp($page['mtime'])->diffForHumans() }}</div>
                                     </div>
                                     <div class="flex shrink-0 items-center gap-1">
-                                        <flux:button
-                                            href="{{ route('dashboard.design-library.editor') . '?file=' . urlencode($page['path']) }}"
-                                            variant="ghost"
-                                            size="sm"
-                                            icon="pencil"
-                                        />
-                                        <flux:button
-                                            href="{{ $this->getPageUrl($page['path']) }}"
-                                            variant="ghost"
-                                            size="sm"
-                                            icon="arrow-top-right-on-square"
-                                            target="_blank"
-                                        />
+                                        <flux:tooltip content="Edit page" position="bottom">
+                                            <flux:button
+                                                href="{{ route('dashboard.design-library.editor') . '?file=' . urlencode($page['path']) }}"
+                                                variant="ghost"
+                                                size="sm"
+                                                icon="pencil"
+                                            />
+                                        </flux:tooltip>
+                                        <flux:tooltip content="Open page" position="bottom">
+                                            <flux:button
+                                                href="{{ $this->getPageUrl($page['path']) }}"
+                                                variant="ghost"
+                                                size="sm"
+                                                icon="arrow-top-right-on-square"
+                                                target="_blank"
+                                            />
+                                        </flux:tooltip>
                                     </div>
                                 </li>
                             @endforeach
