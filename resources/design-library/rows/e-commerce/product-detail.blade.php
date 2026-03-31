@@ -43,6 +43,7 @@
                 @dlItems('__SLUG__', 'product_specs', $productSpecs, '[{"label":"Material","value":"Premium Aluminum"},{"label":"Weight","value":"320g"},{"label":"Dimensions","value":"15 x 10 x 3 cm"},{"label":"Warranty","value":"2 Years"}]')
                 @foreach ($productSpecs as $spec)
                     <x-dl.card slug="__SLUG__" prefix="spec_item"
+            data-editor-item-index="{{ $loop->index }}"
                         default-classes="bg-zinc-50 dark:bg-zinc-800 rounded-lg p-3">
                         <x-dl.wrapper slug="__SLUG__" prefix="spec_label" tag="span"
                             default-classes="block text-xs text-zinc-400 mb-0.5">

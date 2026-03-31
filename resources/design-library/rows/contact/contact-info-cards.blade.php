@@ -20,6 +20,7 @@
         @dlItems('__SLUG__', 'channels', $channels, '[{"icon":"envelope","title":"Email Us","desc":"For general inquiries and support.","value":"hello@example.com","link":"mailto:hello@example.com"},{"icon":"phone","title":"Call Us","desc":"Mon–Fri, 9am–5pm EST.","value":"+1 (555) 123-4567","link":"tel:+15551234567"},{"icon":"map-pin","title":"Visit Us","desc":"Come say hello in person.","value":"123 Main St, San Francisco","link":"#"}]')
         @foreach ($channels as $channel)
             <x-dl.card slug="__SLUG__" prefix="channel_card"
+            data-editor-item-index="{{ $loop->index }}"
                 default-classes="rounded-card border border-zinc-200 dark:border-zinc-700 p-6 text-center hover:border-primary transition-colors">
                 <x-dl.icon slug="__SLUG__" prefix="channel_icon" name="{{ $channel['icon'] }}"
                     default-wrapper-classes="mb-4 text-primary"

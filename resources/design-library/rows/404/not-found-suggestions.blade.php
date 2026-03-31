@@ -21,6 +21,7 @@
         @dlItems('__SLUG__', 'suggestions', $suggestions, '[{"title":"Home","desc":"Back to the main page","url":"/","icon":"home"},{"title":"Blog","desc":"Read our latest articles","url":"/blog","icon":"newspaper"},{"title":"Contact","desc":"Get in touch with us","url":"/contact","icon":"envelope"}]')
         @foreach ($suggestions as $suggestion)
             <x-dl.card slug="__SLUG__" prefix="suggestion_card" tag="a"
+                data-editor-item-index="{{ $loop->index }}"
                 href="{{ $suggestion['url'] }}"
                 default-classes="p-5 rounded-card border border-zinc-200 dark:border-zinc-700 hover:border-primary/40 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors group">
                 <x-dl.icon slug="__SLUG__" prefix="suggestion_icon" name="{{ $suggestion['icon'] }}"

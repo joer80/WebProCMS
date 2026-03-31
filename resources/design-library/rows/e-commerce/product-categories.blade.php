@@ -21,6 +21,7 @@
         @foreach ($categories as $cat)
             @php $imgUrl = $cat['image'] ? (str_starts_with($cat['image'], 'http') ? $cat['image'] : \Illuminate\Support\Facades\Storage::url($cat['image'])) : null; @endphp
             <x-dl.card slug="__SLUG__" prefix="category_card" tag="a"
+                data-editor-item-index="{{ $loop->index }}"
                 href="{{ $cat['url'] }}"
                 default-classes="group relative rounded-card overflow-hidden aspect-square bg-zinc-100 dark:bg-zinc-800 block">
                 @if ($imgUrl)

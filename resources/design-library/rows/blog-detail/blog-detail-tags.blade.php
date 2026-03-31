@@ -17,6 +17,7 @@
             @dlItems('__SLUG__', 'tags', $tags, '[{"label":"Technology"},{"label":"Design"},{"label":"Business"},{"label":"Tutorial"},{"label":"News"}]')
             @foreach ($tags as $tag)
                 <x-dl.card slug="__SLUG__" prefix="tag_badge"
+                    data-editor-item-index="{{ $loop->index }}"
                     default-classes="inline-block px-3 py-1 text-sm rounded-full bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 hover:bg-primary/10 hover:text-primary transition-colors">
                     {{ $tag['label'] }}
                 </x-dl.card>

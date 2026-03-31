@@ -18,6 +18,7 @@
         @foreach ($plans as $plan)
             @php $isFeatured = !empty($plan['toggle_featured']); @endphp
             <x-dl.card slug="__SLUG__" prefix="plan_row" :featured="$isFeatured"
+                data-editor-item-index="{{ $loop->index }}"
                 default-classes="py-8 flex flex-col sm:flex-row sm:items-center justify-between gap-6"
                 default-featured-classes="py-8 flex flex-col sm:flex-row sm:items-center justify-between gap-6 bg-primary/5 dark:bg-primary/10 -mx-6 px-6 rounded-card">
                 <x-dl.group slug="__SLUG__" prefix="plan_info"

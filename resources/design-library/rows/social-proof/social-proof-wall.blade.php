@@ -17,6 +17,7 @@
         @dlItems('__SLUG__', 'reviews', $reviews, '[{"quote":"Amazing product! Changed the way our team works.","name":"@alex_t","platform":"Twitter"},{"quote":"Seriously impressed with how fast support responds. 5 stars.","name":"Taylor M.","platform":"G2"},{"quote":"Finally a tool that does exactly what it promises. No bloat, no confusion.","name":"@dev_jamie","platform":"Twitter"},{"quote":"We saw a 40% improvement in productivity in the first month.","name":"Sam R.","platform":"Capterra"},{"quote":"Best investment we made this year. ROI was almost immediate.","name":"Casey L.","platform":"G2"},{"quote":"Incredible onboarding. We were up and running in under an hour.","name":"@morgan_builds","platform":"Twitter"}]')
         @foreach ($reviews as $review)
             <x-dl.card slug="__SLUG__" prefix="review_card"
+                data-editor-item-index="{{ $loop->index }}"
                 default-classes="break-inside-avoid p-5 rounded-card bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 inline-block w-full mb-4">
                 <x-dl.wrapper slug="__SLUG__" prefix="review_quote" tag="p"
                     default-classes="text-zinc-700 dark:text-zinc-300 text-sm leading-relaxed italic">

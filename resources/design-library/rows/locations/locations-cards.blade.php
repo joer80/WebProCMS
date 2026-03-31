@@ -17,6 +17,7 @@
             >
             @foreach ($this->locationsFiltered as $location)
                 <x-dl.card slug="__SLUG__" prefix="location_card"
+                    data-editor-item-index="{{ $loop->index }}"
                     default-classes="rounded-card border border-zinc-200 dark:border-zinc-700 overflow-hidden hover:border-primary transition-colors">
                     @if ($location->photoUrl())
                         <x-dl.wrapper slug="__SLUG__" prefix="location_image_wrapper"

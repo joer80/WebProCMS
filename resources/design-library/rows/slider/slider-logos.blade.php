@@ -23,6 +23,7 @@
             data-marquee="">
             @foreach ($logos as $logo)
                 <x-dl.card slug="__SLUG__" prefix="logo_item"
+                    data-editor-item-index="{{ $loop->index }}"
                     default-classes="inline-flex items-center shrink-0">
                     <x-dl.wrapper slug="__SLUG__" prefix="logo_name" tag="span"
                         default-classes="text-sm font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-widest">

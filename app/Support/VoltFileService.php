@@ -294,15 +294,18 @@ class VoltFileService
         var el = e.target.closest('[data-editor-row]');
         if (el) {
             var node = e.target;
-            var inner = null, outer = null;
+            var inner = null, outer = null, itemIndex = null;
             while (node && node !== el) {
                 if (node.dataset && node.dataset.editorGroup) {
                     if (inner === null) inner = node.dataset.editorGroup;
                     outer = node.dataset.editorGroup;
                 }
+                if (node.dataset && node.dataset.editorItemIndex !== undefined && itemIndex === null) {
+                    itemIndex = parseInt(node.dataset.editorItemIndex, 10);
+                }
                 node = node.parentElement;
             }
-            window.parent.postMessage({ editorRowSlug: el.dataset.editorRow, editorGroup: outer, editorSubgroup: inner !== outer ? inner : null }, '*');
+            window.parent.postMessage({ editorRowSlug: el.dataset.editorRow, editorGroup: outer, editorSubgroup: inner !== outer ? inner : null, editorItemIndex: itemIndex }, '*');
         }
     }, true);
 })();

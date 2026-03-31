@@ -19,6 +19,7 @@
         @dlItems('__SLUG__', 'features', $features, '[{"icon":"bolt","title":"Speed Without Compromise","desc":"Our global CDN and edge computing infrastructure deliver sub-100ms load times everywhere."},{"icon":"shield-check","title":"Security at Every Layer","desc":"End-to-end encryption, 2FA, SSO, and role-based access control right out of the box."},{"icon":"chart-bar","title":"Actionable Insights","desc":"Beautifully designed dashboards that surface the metrics that matter most to your business."},{"icon":"cog-6-tooth","title":"Seamless Integrations","desc":"Connect to 200+ tools your team already uses with one-click native integrations."}]')
         @foreach ($features as $feature)
             <x-dl.card slug="__SLUG__" prefix="feature_card"
+                data-editor-item-index="{{ $loop->index }}"
                 default-classes="p-6 rounded-card border border-zinc-200 dark:border-zinc-700 hover:border-primary/40 transition-colors flex items-start gap-5">
                 <x-dl.icon slug="__SLUG__" prefix="icon" name="{{ $feature['icon'] }}"
                     default-wrapper-classes="shrink-0 size-12 rounded-xl bg-primary/10 flex items-center justify-center text-primary"

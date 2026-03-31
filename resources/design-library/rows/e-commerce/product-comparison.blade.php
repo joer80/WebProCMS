@@ -44,6 +44,7 @@
                     default-classes="divide-y divide-zinc-100 dark:divide-zinc-800">
                     @foreach ($rows as $row)
                         <x-dl.card slug="__SLUG__" prefix="table_row" tag="tr"
+                            data-editor-item-index="{{ $loop->index }}"
                             default-classes="hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors">
                             <x-dl.wrapper slug="__SLUG__" prefix="row_feature" tag="td"
                                 default-classes="px-6 py-4 font-medium text-zinc-700 dark:text-zinc-300">

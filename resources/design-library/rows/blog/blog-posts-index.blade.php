@@ -61,6 +61,7 @@
             default-classes="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
             @foreach ($this->blogPosts as $post)
                 <x-dl.card slug="__SLUG__" prefix="post_card" tag="a"
+                    data-editor-item-index="{{ $loop->index }}"
                     wire:key="post-{{ $post->id }}"
                     wire:transition
                     href="{{ route('blog.show', $post->slug) }}"

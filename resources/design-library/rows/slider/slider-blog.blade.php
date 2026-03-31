@@ -36,6 +36,7 @@
         data-scroll="">
         @foreach ($this->recentPosts ?? [] as $post)
             <x-dl.card slug="__SLUG__" prefix="blog_card" tag="article"
+                data-editor-item-index="{{ $loop->index }}"
                 default-classes="flex-none w-72 group">
                 <a href="{{ route('blog.show', $post->slug) }}">
                     <x-dl.wrapper slug="__SLUG__" prefix="card_image_wrapper"

@@ -17,6 +17,7 @@
         @dlItems('__SLUG__', 'items', $items, '[{"icon":"bolt","title":"Fast"},{"icon":"shield-check","title":"Secure"},{"icon":"chart-bar","title":"Analytics"},{"icon":"adjustments-horizontal","title":"Customizable"},{"icon":"globe-alt","title":"Global"},{"icon":"heart","title":"Loved"}]')
         @foreach ($items as $item)
             <x-dl.card slug="__SLUG__" prefix="grid_item"
+                data-editor-item-index="{{ $loop->index }}"
                 default-classes="flex flex-col items-center gap-3 p-4">
                 <x-dl.icon slug="__SLUG__" prefix="item_icon" name="{{ $item['icon'] }}"
                     default-wrapper-classes="size-12 rounded-xl bg-primary/10 flex items-center justify-center text-primary"

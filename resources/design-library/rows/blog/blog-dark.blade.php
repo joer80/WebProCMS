@@ -19,6 +19,7 @@
         default-classes="grid md:grid-cols-3 gap-8">
         @foreach ($this->recentPosts ?? [] as $post)
             <x-dl.card slug="__SLUG__" prefix="post_card" tag="article"
+                data-editor-item-index="{{ $loop->index }}"
                 default-classes="group bg-zinc-800 rounded-card overflow-hidden border border-zinc-700 hover:border-primary/40 transition-colors">
                 <a href="{{ route('blog.show', $post->slug) }}">
                     <x-dl.wrapper slug="__SLUG__" prefix="post_image_wrapper"

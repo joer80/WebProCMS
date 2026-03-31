@@ -27,6 +27,7 @@
                 @dlItems('__SLUG__', 'pros', $pros, '[{"title":"Unlimited team members"},{"title":"Real-time collaboration"},{"title":"99.9% uptime SLA"},{"title":"24/7 live support"},{"title":"Advanced analytics included"},{"title":"No setup fees ever"}]')
                 @foreach ($pros as $pro)
                     <x-dl.card slug="__SLUG__" prefix="pro_item"
+                        data-editor-item-index="{{ $loop->index }}"
                         default-classes="flex items-center gap-3">
                         <x-dl.icon slug="__SLUG__" prefix="pro_icon" name="check-circle"
                             default-classes="size-5 shrink-0 text-primary" />
@@ -50,6 +51,7 @@
                 @dlItems('__SLUG__', 'cons', $cons, '[{"title":"Per-seat pricing adds up"},{"title":"Async-only collaboration"},{"title":"No SLA on lower plans"},{"title":"Email support only"},{"title":"Analytics as paid add-on"},{"title":"Expensive onboarding fees"}]')
                 @foreach ($cons as $con)
                     <x-dl.card slug="__SLUG__" prefix="con_item"
+                        data-editor-item-index="{{ $loop->index }}"
                         default-classes="flex items-center gap-3">
                         <x-dl.icon slug="__SLUG__" prefix="con_icon" name="x-circle"
                             default-classes="size-5 shrink-0 text-zinc-400" />

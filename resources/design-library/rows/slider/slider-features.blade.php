@@ -17,6 +17,7 @@
         default-classes="grid md:grid-cols-3 gap-2 mb-10">
         @foreach ($features as $i => $feature)
             <x-dl.card slug="__SLUG__" prefix="tab_button" tag="button"
+                data-editor-item-index="{{ $loop->index }}"
                 default-classes="p-4 rounded-lg text-left transition-all border"
                 @click="active = {{ $i }}"
                 :class="active === {{ $i }} ? 'bg-white dark:bg-zinc-900 border-primary shadow-card' : 'border-transparent hover:bg-white/50 dark:hover:bg-zinc-900/50'">

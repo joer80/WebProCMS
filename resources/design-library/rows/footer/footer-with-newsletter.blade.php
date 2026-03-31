@@ -44,6 +44,7 @@
             @dlItems('__SLUG__', 'col1_links', $col1Links, '[{"label":"Features","url":"#"},{"label":"Pricing","url":"#"},{"label":"Changelog","url":"#"}]')
             @foreach ($col1Links as $link)
                 <x-dl.card slug="__SLUG__" prefix="col_link" tag="a"
+                    data-editor-item-index="{{ $loop->index }}"
                     href="{{ $link['url'] }}"
                     default-classes="block text-sm text-zinc-400 hover:text-white transition-colors">
                     {{ $link['label'] }}
@@ -60,6 +61,7 @@
             @dlItems('__SLUG__', 'col2_links', $col2Links, '[{"label":"About","url":"#"},{"label":"Blog","url":"#"},{"label":"Careers","url":"#"}]')
             @foreach ($col2Links as $link)
                 <x-dl.card slug="__SLUG__" prefix="col2_link" tag="a"
+                    data-editor-item-index="{{ $loop->index }}"
                     href="{{ $link['url'] }}"
                     default-classes="block text-sm text-zinc-400 hover:text-white transition-colors">
                     {{ $link['label'] }}

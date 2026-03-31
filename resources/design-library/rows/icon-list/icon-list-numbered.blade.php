@@ -17,6 +17,7 @@
         @dlItems('__SLUG__', 'steps', $steps, '[{"number":"01","title":"Sign Up","desc":"Create your account in seconds. No credit card required to get started."},{"number":"02","title":"Configure","desc":"Set up your workspace with our guided onboarding wizard."},{"number":"03","title":"Invite Your Team","desc":"Add team members and assign roles with one click."},{"number":"04","title":"Launch","desc":"Start your first project and see results from day one."}]')
         @foreach ($steps as $step)
             <x-dl.card slug="__SLUG__" prefix="step_item"
+                data-editor-item-index="{{ $loop->index }}"
                 default-classes="flex items-start gap-6">
                 <x-dl.wrapper slug="__SLUG__" prefix="step_number"
                     default-classes="shrink-0 text-4xl font-black text-zinc-200 dark:text-zinc-700 leading-none w-12">

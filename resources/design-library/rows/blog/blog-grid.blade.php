@@ -19,6 +19,7 @@
         default-classes="grid md:grid-cols-3 gap-8 mt-8">
         @foreach ($this->recentPosts ?? [] as $post)
             <x-dl.card slug="__SLUG__" prefix="article" tag="article"
+                data-editor-item-index="{{ $loop->index }}"
                 default-classes="group">
                 <x-dl.group slug="__SLUG__" prefix="post_link" tag="a"
                     href="{{ route('blog.show', $post->slug) }}"

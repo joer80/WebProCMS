@@ -18,6 +18,7 @@
         @foreach ($plans as $plan)
             @php $isFeatured = !empty($plan['toggle_featured']); @endphp
             <x-dl.card slug="__SLUG__" prefix="card" :featured="$isFeatured"
+                data-editor-item-index="{{ $loop->index }}"
                 default-classes="rounded-card p-8 bg-zinc-800 border border-zinc-700"
                 default-featured-classes="rounded-card p-8 bg-primary ring-2 ring-primary shadow-[0_0_40px_rgba(var(--color-primary),0.3)]">
                 <x-dl.wrapper slug="__SLUG__" prefix="card_name" tag="h3" :featured="$isFeatured"

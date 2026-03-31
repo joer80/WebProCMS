@@ -25,6 +25,7 @@
                 @dlItems('__SLUG__', 'bundle_items', $bundleItems, '[{"name":"Main Product","value":"$99.99"},{"name":"Accessory Pack","value":"$29.99"},{"name":"Premium Case","value":"$24.99"},{"name":"1-Year Warranty","value":"$19.99"}]')
                 @foreach ($bundleItems as $item)
                     <x-dl.card slug="__SLUG__" prefix="bundle_item"
+            data-editor-item-index="{{ $loop->index }}"
                         default-classes="flex items-center justify-between">
                         <x-dl.wrapper slug="__SLUG__" prefix="item_name_row"
                             default-classes="flex items-center gap-3">

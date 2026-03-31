@@ -19,6 +19,7 @@
             @dlItems('__SLUG__', 'testimonials', $testimonials, '[{"quote":"This product completely transformed how our team works. I can\u0027t imagine going back.","name":"Sarah Johnson","role":"CEO at Acme Co"},{"quote":"The best investment we\u0027ve made this year. Setup was a breeze and support is incredible.","name":"Mark Davis","role":"CTO at BuildIt"},{"quote":"Our productivity has doubled since we started using this. Highly recommended.","name":"Lisa Chen","role":"Product Manager at TechCorp"}]')
             @foreach ($testimonials as $testimonial)
                 <x-dl.card slug="__SLUG__" prefix="card"
+                    data-editor-item-index="{{ $loop->index }}"
                     default-classes="p-6 rounded-card bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700">
                     <x-dl.wrapper slug="__SLUG__" prefix="stars"
                         default-classes="flex text-primary mb-4">

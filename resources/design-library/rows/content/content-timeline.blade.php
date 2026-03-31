@@ -19,6 +19,7 @@
         @dlItems('__SLUG__', 'events', $events, '[{"year":"2020","title":"Founded","desc":"Two friends started building in a garage with a shared vision of simpler software."},{"year":"2021","title":"Launched Beta","desc":"Our first 100 customers helped shape the product into what it is today."},{"year":"2022","title":"Series A","desc":"Raised $10M to expand the team and accelerate product development."},{"year":"2023","title":"10K Customers","desc":"Crossed 10,000 active customers across 50 countries worldwide."},{"year":"2024","title":"Enterprise Edition","desc":"Launched our enterprise tier with dedicated SLAs and custom integrations."}]')
         @foreach ($events as $event)
             <x-dl.card slug="__SLUG__" prefix="event_item"
+                data-editor-item-index="{{ $loop->index }}"
                 default-classes="relative">
                 <x-dl.wrapper slug="__SLUG__" prefix="event_dot"
                     default-classes="absolute -left-[2.25rem] top-1 size-4 rounded-full bg-primary border-2 border-white dark:border-zinc-900">

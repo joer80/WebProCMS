@@ -33,6 +33,7 @@
         data-scroll="">
         @foreach ($cards as $card)
             <x-dl.card slug="__SLUG__" prefix="slide_card"
+                data-editor-item-index="{{ $loop->index }}"
                 default-classes="flex-none w-72 p-6 rounded-card border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 snap-start">
                 <x-dl.icon slug="__SLUG__" prefix="card_icon" name="{{ $card['icon'] }}"
                     default-wrapper-classes="mb-4 text-primary"

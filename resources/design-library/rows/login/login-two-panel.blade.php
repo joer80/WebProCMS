@@ -22,6 +22,7 @@
                 @dlItems('__SLUG__', 'brand_features', $brandFeatures, '[{"feature":"Lightning fast setup in under 5 minutes"},{"feature":"Trusted by 10,000+ teams worldwide"},{"feature":"SOC 2 Type II certified and secure"}]')
                 @foreach ($brandFeatures as $item)
                     <x-dl.card slug="__SLUG__" prefix="brand_feature"
+                        data-editor-item-index="{{ $loop->index }}"
                         default-classes="flex items-center gap-3 text-white/90 text-sm">
                         <x-dl.icon slug="__SLUG__" prefix="feature_check" name="check-circle:solid"
                             default-classes="size-5 text-white shrink-0" />

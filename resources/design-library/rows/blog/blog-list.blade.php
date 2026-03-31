@@ -19,6 +19,7 @@
         default-classes="space-y-8">
         @foreach ($this->recentPosts ?? [] as $post)
             <x-dl.card slug="__SLUG__" prefix="post_item" tag="article"
+                data-editor-item-index="{{ $loop->index }}"
                 default-classes="flex gap-6 group">
                 <x-dl.wrapper slug="__SLUG__" prefix="post_thumbnail"
                     default-classes="shrink-0 w-32 h-24 rounded-card overflow-hidden bg-zinc-100 dark:bg-zinc-800">

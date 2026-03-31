@@ -17,6 +17,7 @@
             >
             @foreach ($this->locationsFiltered as $location)
                 <x-dl.card slug="__SLUG__" prefix="location_item"
+                    data-editor-item-index="{{ $loop->index }}"
                     default-classes="py-6 flex items-start justify-between gap-6">
                     <x-dl.group slug="__SLUG__" prefix="location_info"
                         default-classes="">

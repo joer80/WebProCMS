@@ -19,6 +19,7 @@
         @foreach ($plans as $i => $plan)
             @php $isFeatured = !empty($plan['toggle_featured']); @endphp
             <x-dl.card slug="__SLUG__" prefix="plan_card" :featured="$isFeatured"
+                data-editor-item-index="{{ $loop->index }}"
                 default-classes="rounded-card border border-zinc-200 dark:border-zinc-700 overflow-hidden"
                 default-featured-classes="rounded-card border-2 border-primary overflow-hidden"
                 @click="open = open === {{ $i }} ? null : {{ $i }}">

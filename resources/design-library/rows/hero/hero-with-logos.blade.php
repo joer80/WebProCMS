@@ -27,6 +27,7 @@
             @dlItems('__SLUG__', 'logos', $logos, '[{"name":"Acme Corp"},{"name":"TechCorp"},{"name":"BuildIt"},{"name":"StartupXYZ"},{"name":"Innovate"},{"name":"FutureLabs"}]')
             @foreach ($logos as $logo)
                 <x-dl.card slug="__SLUG__" prefix="logo_item"
+                    data-editor-item-index="{{ $loop->index }}"
                     default-classes="flex items-center justify-center">
                     <x-dl.wrapper slug="__SLUG__" prefix="logo_name" tag="span"
                         default-classes="text-sm font-semibold text-zinc-400 dark:text-zinc-500 uppercase tracking-wider">

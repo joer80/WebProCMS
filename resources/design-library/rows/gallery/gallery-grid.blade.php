@@ -42,6 +42,7 @@
         @foreach ($galleryImages as $img)
             @php $imgUrl = $img['image'] ? (str_starts_with($img['image'], 'http') ? $img['image'] : Storage::url($img['image'])) : null; @endphp
             <x-dl.card slug="__SLUG__" prefix="gallery_item"
+                data-editor-item-index="{{ $loop->index }}"
                 default-classes="rounded-card overflow-hidden bg-zinc-100 dark:bg-zinc-800 aspect-square"
                 @click="open($el.querySelector('img[data-lightbox-src]'))"
                 x-bind:class="lightboxEnabled && $el.querySelector('img[data-lightbox-src]') ? 'cursor-zoom-in' : ''">

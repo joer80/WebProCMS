@@ -27,6 +27,7 @@
                 @dlItems('__SLUG__', 'before_items', $beforeItems, '[{"text":"Juggling 5+ disconnected tools"},{"text":"Hours lost to manual reporting"},{"text":"No visibility across teams"},{"text":"Slow, painful onboarding process"},{"text":"Missing deadlines constantly"}]')
                 @foreach ($beforeItems as $item)
                     <x-dl.card slug="__SLUG__" prefix="before_item"
+            data-editor-item-index="{{ $loop->index }}"
                         default-classes="flex items-center gap-3 text-zinc-500 dark:text-zinc-400">
                         <x-dl.icon slug="__SLUG__" prefix="before_icon" name="x-mark"
                             default-classes="size-4 shrink-0 text-zinc-400" />
@@ -50,6 +51,7 @@
                 @dlItems('__SLUG__', 'after_items', $afterItems, '[{"text":"Everything in one unified platform"},{"text":"Automated reports in seconds"},{"text":"Real-time team visibility"},{"text":"Onboard new members in minutes"},{"text":"Hitting goals ahead of schedule"}]')
                 @foreach ($afterItems as $item)
                     <x-dl.card slug="__SLUG__" prefix="after_item"
+            data-editor-item-index="{{ $loop->index }}"
                         default-classes="flex items-center gap-3">
                         <x-dl.icon slug="__SLUG__" prefix="after_icon" name="check-circle"
                             default-classes="size-4 shrink-0 text-primary" />

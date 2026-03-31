@@ -30,7 +30,9 @@
             }
             @endphp
             @foreach ($contactItems as $contactItem)
-                <x-dl.card slug="__SLUG__" prefix="contact_item" default-classes="">
+                <x-dl.card slug="__SLUG__" prefix="contact_item"
+                    data-editor-item-index="{{ $loop->index }}"
+                    default-classes="">
                     <x-dl.wrapper slug="__SLUG__" prefix="item_label" tag="p"
                         default-classes="font-semibold mb-1">{{ $contactItem['label'] }}</x-dl.wrapper>
                     <x-dl.wrapper slug="__SLUG__" prefix="item_value" tag="p"

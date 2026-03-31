@@ -28,6 +28,7 @@
                 @dlItems('__SLUG__', 'product_features', $productFeatures, '[{"feature":"Handcrafted with premium materials"},{"feature":"Lifetime warranty included"},{"feature":"Free shipping on all orders"},{"feature":"30-day return policy"}]')
                 @foreach ($productFeatures as $item)
                     <x-dl.card slug="__SLUG__" prefix="product_feature"
+            data-editor-item-index="{{ $loop->index }}"
                         default-classes="flex items-center gap-2 text-sm text-zinc-600 dark:text-zinc-300">
                         <x-dl.icon slug="__SLUG__" prefix="feature_icon" name="check-circle:solid"
                             default-classes="size-4 text-primary shrink-0" />

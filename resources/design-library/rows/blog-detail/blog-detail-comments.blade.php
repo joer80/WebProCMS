@@ -15,6 +15,7 @@
         @dlItems('__SLUG__', 'comments', $comments, '[{"author":"Jane Doe","date":"January 5, 2025","body":"This was incredibly helpful! I have been struggling with this concept for a while and you explained it perfectly."},{"author":"John Smith","date":"January 6, 2025","body":"Great article. Would love to see a follow-up post exploring some of the edge cases you mentioned."}]')
         @foreach ($comments as $comment)
             <x-dl.card slug="__SLUG__" prefix="comment_card"
+            data-editor-item-index="{{ $loop->index }}"
                 default-classes="p-5 rounded-card bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700">
                 <x-dl.group slug="__SLUG__" prefix="comment_header"
                     default-classes="flex items-center gap-3 mb-3">

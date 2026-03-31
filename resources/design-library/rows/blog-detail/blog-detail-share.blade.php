@@ -14,6 +14,7 @@
         @dlItems('__SLUG__', 'share_links', $shareLinks, '[{"label":"Twitter","url":"#","icon":"share"},{"label":"LinkedIn","url":"#","icon":"share"},{"label":"Facebook","url":"#","icon":"share"},{"label":"Copy Link","url":"#","icon":"link"}]')
         @foreach ($shareLinks as $link)
             <x-dl.card slug="__SLUG__" prefix="share_button" tag="a"
+                data-editor-item-index="{{ $loop->index }}"
                 href="{{ $link['url'] }}"
                 default-classes="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-zinc-300 dark:border-zinc-600 text-sm font-medium text-zinc-700 dark:text-zinc-300 hover:border-primary hover:text-primary transition-colors">
                 <x-dl.icon slug="__SLUG__" prefix="share_icon" name="{{ $link['icon'] }}"

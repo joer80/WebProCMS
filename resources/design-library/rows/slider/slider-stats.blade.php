@@ -39,6 +39,7 @@
         default-grid-classes="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
         @foreach ($stats as $i => $stat)
             <x-dl.card slug="__SLUG__" prefix="stat_item"
+                data-editor-item-index="{{ $loop->index }}"
                 default-classes="p-6">
                 <x-dl.wrapper slug="__SLUG__" prefix="stat_display"
                     default-classes="text-5xl font-black text-white">

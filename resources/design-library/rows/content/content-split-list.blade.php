@@ -26,6 +26,7 @@
         @foreach ($services as $service)
             @php $serviceImg = $service['image'] ? (str_starts_with($service['image'], 'http') ? $service['image'] : \Illuminate\Support\Facades\Storage::url($service['image'])) : null; @endphp
             <x-dl.card slug="__SLUG__" prefix="service_card"
+                data-editor-item-index="{{ $loop->index }}"
                 default-classes="flex items-center gap-4 py-5">
                 <x-dl.wrapper slug="__SLUG__" prefix="service_content"
                     default-classes="flex-1">

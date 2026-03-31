@@ -19,6 +19,7 @@
             @dlItems('__SLUG__', 'social_links', $socialLinks, '[{"icon":"globe-alt","url":"#"},{"icon":"chat-bubble-oval-left-ellipsis","url":"#"},{"icon":"film","url":"#"}]')
             @foreach ($socialLinks as $social)
                 <x-dl.card slug="__SLUG__" prefix="social_link" tag="a"
+                    data-editor-item-index="{{ $loop->index }}"
                     href="{{ $social['url'] }}"
                     default-classes="size-9 rounded-lg bg-zinc-800 flex items-center justify-center text-zinc-400 hover:bg-primary hover:text-white transition-colors">
                     <x-dl.icon slug="__SLUG__" prefix="social_icon" name="{{ $social['icon'] }}"

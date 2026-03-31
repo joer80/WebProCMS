@@ -34,6 +34,7 @@
             @foreach ($this->locationsFiltered as $location)
                 <div wire:key="location-{{ $location->id }}" wire:transition>
                 <x-dl.card slug="__SLUG__" prefix="location_card"
+                    data-editor-item-index="{{ $loop->index }}"
                     default-classes="bg-white dark:bg-zinc-800 rounded-card border border-zinc-200 dark:border-zinc-700 shadow-card overflow-hidden h-full">
                     @if ($location->photoUrl())
                         <x-dl.wrapper slug="__SLUG__" prefix="location_image" tag="img"

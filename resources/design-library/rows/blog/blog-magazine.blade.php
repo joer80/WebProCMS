@@ -56,6 +56,7 @@
             default-classes="space-y-6 divide-y divide-zinc-200 dark:divide-zinc-800">
             @foreach ($sidebarPosts as $post)
                 <x-dl.card slug="__SLUG__" prefix="sidebar_post" tag="article"
+                    data-editor-item-index="{{ $loop->index }}"
                     default-classes="pt-6 first:pt-0 group">
                     <a href="{{ route('blog.show', $post->slug) }}">
                         @if ($post->category)

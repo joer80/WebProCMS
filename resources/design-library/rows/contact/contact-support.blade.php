@@ -20,6 +20,7 @@
         @dlItems('__SLUG__', 'support_options', $supportOptions, '[{"icon":"book-open","title":"Documentation","desc":"Browse our detailed guides and API references.","cta":"View Docs","link":"/docs"},{"icon":"chat-bubble-left-right","title":"Live Chat","desc":"Chat with our support team in real time.","cta":"Start Chat","link":"#"},{"icon":"envelope","title":"Email Support","desc":"Send us a message and we will respond within 24 hours.","cta":"Send Email","link":"mailto:support@example.com"}]')
         @foreach ($supportOptions as $option)
             <x-dl.card slug="__SLUG__" prefix="option_card"
+            data-editor-item-index="{{ $loop->index }}"
                 default-classes="rounded-card border border-zinc-200 dark:border-zinc-700 p-6">
                 <x-dl.icon slug="__SLUG__" prefix="option_icon" name="{{ $option['icon'] }}"
                     default-wrapper-classes="mb-4 text-primary"

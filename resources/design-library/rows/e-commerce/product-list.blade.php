@@ -15,6 +15,7 @@
         @dlItems('__SLUG__', 'products', $products, '[{"name":"Product Alpha","desc":"The most popular choice for professionals who need speed and reliability.","price":"$49.99","badge":""},{"name":"Product Beta","desc":"Advanced features for teams that need more power and integrations.","price":"$79.99","badge":"Best Seller"},{"name":"Product Gamma","desc":"Enterprise-grade with dedicated support and custom SLA agreements.","price":"$129.99","badge":""}]')
         @foreach ($products as $product)
             <x-dl.card slug="__SLUG__" prefix="product_row"
+            data-editor-item-index="{{ $loop->index }}"
                 default-classes="flex items-center gap-6 p-6 rounded-card border border-zinc-200 dark:border-zinc-700 hover:border-primary transition-colors">
                 <x-dl.wrapper slug="__SLUG__" prefix="product_image"
                     default-classes="size-20 shrink-0 rounded-lg bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center text-zinc-400 text-xs overflow-hidden">

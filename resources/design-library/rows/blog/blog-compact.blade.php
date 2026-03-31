@@ -19,6 +19,7 @@
         default-classes="grid md:grid-cols-3 gap-6">
         @foreach ($this->recentPosts ?? [] as $post)
             <x-dl.card slug="__SLUG__" prefix="post_card" tag="article"
+                data-editor-item-index="{{ $loop->index }}"
                 default-classes="group flex gap-4">
                 <x-dl.wrapper slug="__SLUG__" prefix="post_thumbnail"
                     default-classes="shrink-0 size-16 rounded-lg overflow-hidden bg-zinc-100 dark:bg-zinc-800">

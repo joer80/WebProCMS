@@ -15,6 +15,7 @@
         @dlItems('__SLUG__', 'faqs', $faqs, '[{"question":"How do I get started?","answer":"Sign up for a free account and follow the onboarding wizard."},{"question":"Is there a free trial?","answer":"Yes, 14 days free. No credit card required."},{"question":"Can I cancel at any time?","answer":"Yes, cancel anytime from account settings."},{"question":"Do you offer customer support?","answer":"Email support on all plans. Live chat on Pro+."},{"question":"Is my data secure?","answer":"Yes. AES-256 encryption, SOC 2 Type II certified."},{"question":"What payment methods?","answer":"All major credit cards and PayPal accepted."}]')
         @foreach ($faqs as $faq)
             <x-dl.card slug="__SLUG__" prefix="faq_item"
+                data-editor-item-index="{{ $loop->index }}"
                 default-classes="py-6">
                 <x-dl.wrapper slug="__SLUG__" prefix="faq_question" tag="h3"
                     default-classes="text-sm font-semibold text-zinc-900 dark:text-white mb-1.5 uppercase tracking-wide">

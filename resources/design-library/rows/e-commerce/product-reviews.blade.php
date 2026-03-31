@@ -33,6 +33,7 @@
         @dlItems('__SLUG__', 'reviews', $reviews, '[{"name":"Sarah M.","stars":"5","review":"Absolutely love this product! Exceeded all my expectations. Quality is top-notch and delivery was fast."},{"name":"James K.","stars":"5","review":"Best purchase I have made this year. The build quality is exceptional and it looks even better in person."},{"name":"Anna R.","stars":"4","review":"Great product overall. Minor issues with setup but customer support was very helpful. Would recommend."}]')
         @foreach ($reviews as $review)
             <x-dl.card slug="__SLUG__" prefix="review_card"
+            data-editor-item-index="{{ $loop->index }}"
                 default-classes="rounded-card border border-zinc-200 dark:border-zinc-700 p-6">
                 <x-dl.wrapper slug="__SLUG__" prefix="review_stars" tag="div"
                     default-classes="text-yellow-400 text-base mb-3">

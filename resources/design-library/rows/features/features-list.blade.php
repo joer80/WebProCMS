@@ -25,6 +25,7 @@
         @dlItems('__SLUG__', 'features', $features, '[{"icon":"bolt","title":"Lightning Fast","desc":"Optimized for speed at every level of the stack so your team never waits."},{"icon":"shield-check","title":"Enterprise Security","desc":"SOC 2 certified with end-to-end encryption and fine-grained permissions."},{"icon":"chart-bar","title":"Rich Analytics","desc":"Dashboards and reports that give you insight into every corner of your business."},{"icon":"cog-6-tooth","title":"Highly Configurable","desc":"Adapt the platform to your exact workflow with powerful customization options."}]')
         @foreach ($features as $feature)
             <x-dl.card slug="__SLUG__" prefix="feature_item"
+                data-editor-item-index="{{ $loop->index }}"
                 default-classes="flex items-start gap-4">
                 <x-dl.icon slug="__SLUG__" prefix="icon" name="{{ $feature['icon'] }}"
                     default-wrapper-classes="mt-0.5 shrink-0 size-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary"

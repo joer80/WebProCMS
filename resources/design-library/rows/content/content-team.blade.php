@@ -20,6 +20,7 @@
         @foreach ($members as $member)
             @php $memberImg = $member['image'] ? (str_starts_with($member['image'], 'http') ? $member['image'] : \Illuminate\Support\Facades\Storage::url($member['image'])) : null; @endphp
             <x-dl.card slug="__SLUG__" prefix="member_card"
+                data-editor-item-index="{{ $loop->index }}"
                 default-classes="text-center">
                 <x-dl.wrapper slug="__SLUG__" prefix="member_photo_wrapper"
                     default-classes="rounded-full overflow-hidden mx-auto mb-4 size-24 bg-zinc-100 dark:bg-zinc-800">

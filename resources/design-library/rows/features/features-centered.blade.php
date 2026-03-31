@@ -19,6 +19,7 @@
         @dlItems('__SLUG__', 'features', $features, '[{"icon":"bolt","title":"Blazing Fast","desc":"Industry-leading performance so you never miss a beat."},{"icon":"shield-check","title":"Fort Knox Security","desc":"Your data is always protected with military-grade encryption."},{"icon":"chart-bar","title":"Smart Analytics","desc":"Turn raw data into clear, actionable business insights."},{"icon":"users","title":"Team-First Design","desc":"Built with collaboration at its core from the ground up."},{"icon":"globe-alt","title":"Works Anywhere","desc":"Access from any device, any browser, anywhere in the world."},{"icon":"heart","title":"Award-Winning Support","desc":"Our customers rate us 4.9/5 for support and satisfaction."}]')
         @foreach ($features as $feature)
             <x-dl.card slug="__SLUG__" prefix="feature_card"
+                data-editor-item-index="{{ $loop->index }}"
                 default-classes="p-8 rounded-card bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 shadow-card text-center">
                 <x-dl.icon slug="__SLUG__" prefix="icon" name="{{ $feature['icon'] }}"
                     default-wrapper-classes="mx-auto mb-5 size-14 rounded-2xl bg-primary/10 flex items-center justify-center text-primary"

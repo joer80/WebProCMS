@@ -17,6 +17,7 @@
             >
             @foreach ($this->locationsFiltered as $location)
                 <x-dl.card slug="__SLUG__" prefix="location_card"
+                    data-editor-item-index="{{ $loop->index }}"
                     default-classes="rounded-card border border-zinc-200 dark:border-zinc-700 p-6 hover:border-primary transition-colors">
                     <x-dl.wrapper slug="__SLUG__" prefix="location_name" tag="h3"
                         default-classes="text-base font-bold text-zinc-900 dark:text-white mb-4">

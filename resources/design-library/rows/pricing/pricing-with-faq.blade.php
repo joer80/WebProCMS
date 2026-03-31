@@ -34,6 +34,7 @@
                 @dlItems('__SLUG__', 'plan_features', $planFeatures, '[{"feature":"Unlimited projects"},{"feature":"100GB storage"},{"feature":"Priority email support"},{"feature":"Advanced analytics"},{"feature":"API access"},{"feature":"Team collaboration"}]')
                 @foreach ($planFeatures as $item)
                     <x-dl.card slug="__SLUG__" prefix="plan_feature_item"
+                        data-editor-item-index="{{ $loop->index }}"
                         default-classes="flex items-center gap-2 text-sm text-white/90">
                         <x-dl.icon slug="__SLUG__" prefix="plan_feature_icon" name="check"
                             default-classes="size-4 shrink-0 text-white" />

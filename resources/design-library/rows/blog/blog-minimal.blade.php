@@ -19,6 +19,7 @@
         default-classes="divide-y divide-zinc-200 dark:divide-zinc-800">
         @foreach ($this->recentPosts ?? [] as $post)
             <x-dl.card slug="__SLUG__" prefix="post_row" tag="article"
+                data-editor-item-index="{{ $loop->index }}"
                 default-classes="py-5 group">
                 <a href="{{ route('blog.show', $post->slug) }}">
                     <x-dl.group slug="__SLUG__" prefix="post_meta"

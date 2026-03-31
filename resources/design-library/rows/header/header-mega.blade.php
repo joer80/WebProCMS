@@ -60,6 +60,7 @@
                 @dlItems('__SLUG__', 'mega_items', $megaItems, '[{"icon":"bolt","title":"Performance","desc":"Global edge delivery for fast load times."},{"icon":"shield-check","title":"Security","desc":"Zero-trust, end-to-end encryption."},{"icon":"chart-bar","title":"Analytics","desc":"Real-time insights for every metric."}]')
                 @foreach ($megaItems as $item)
                     <x-dl.card slug="__SLUG__" prefix="mega_item"
+                        data-editor-item-index="{{ $loop->index }}"
                         default-classes="flex gap-4 p-4 rounded-card hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors">
                         <x-dl.icon slug="__SLUG__" prefix="mega_icon" name="{{ $item['icon'] }}"
                             default-wrapper-classes="mt-0.5 text-primary shrink-0"

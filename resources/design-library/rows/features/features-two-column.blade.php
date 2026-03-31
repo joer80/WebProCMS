@@ -18,6 +18,7 @@
             @dlItems('__SLUG__', 'features', $features, '[{"icon":"check-circle","title":"Simple Setup","desc":"Up and running in minutes, not days."},{"icon":"check-circle","title":"Powerful Automation","desc":"Automate repetitive tasks and focus on what matters."},{"icon":"check-circle","title":"Team Collaboration","desc":"Work together seamlessly across teams and time zones."},{"icon":"check-circle","title":"Advanced Reporting","desc":"Make data-driven decisions with real-time dashboards."}]')
             @foreach ($features as $feature)
                 <x-dl.card slug="__SLUG__" prefix="feature_item"
+                    data-editor-item-index="{{ $loop->index }}"
                     default-classes="flex items-start gap-3">
                     <x-dl.icon slug="__SLUG__" prefix="icon" name="{{ $feature['icon'] }}"
                         default-classes="size-5 shrink-0 mt-0.5 text-primary" />

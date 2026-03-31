@@ -20,6 +20,7 @@
             @dlItems('__SLUG__', 'benefits', $benefits, '[{"icon":"check-circle","text":"14-day free trial, no credit card required"},{"icon":"check-circle","text":"Onboarding support included with every plan"},{"icon":"check-circle","text":"Scales seamlessly as your business grows"},{"icon":"check-circle","text":"Cancel anytime, no questions asked"}]')
             @foreach ($benefits as $benefit)
                 <x-dl.card slug="__SLUG__" prefix="benefit_item"
+            data-editor-item-index="{{ $loop->index }}"
                     default-classes="flex items-center gap-3">
                     <x-dl.icon slug="__SLUG__" prefix="benefit_icon" name="{{ $benefit['icon'] }}"
                         default-classes="size-5 shrink-0 text-primary" />

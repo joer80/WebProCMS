@@ -4796,6 +4796,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
             if ($event.data && $event.data.editorRowSlug) {
                 if ($event.data.editorGroup) { $dispatch('pending-group', { group: $event.data.editorGroup }); }
                 if ($event.data.editorSubgroup) { $dispatch('pending-subgroup', { subgroup: $event.data.editorSubgroup }); }
+                if ($event.data.editorItemIndex !== null && $event.data.editorItemIndex !== undefined) { $dispatch('pending-item-index', { itemIndex: $event.data.editorItemIndex }); }
                 selectRowBySlug($event.data.editorRowSlug, !!$event.data.editorGroup);
             }
             else if ($event.origin === window.location.origin && $event.data && $event.data.type === 'editor-save-page' && $wire.file) { $wire.saveFile(); }
@@ -5101,18 +5102,21 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                 {{-- Right panel: row list / inline content editor --}}
                 <div
                     class="w-96 shrink-0 order-last border-l border-zinc-200 dark:border-zinc-700 flex flex-col"
-                    x-data="{ editorOpen: false, designMode: false, advancedMode: false, groupMode: null, allGroupsOpen: false, selectedRowIndex: null, pendingGroup: null, pendingSubgroup: null }"
+                    x-data="{ editorOpen: false, designMode: false, advancedMode: false, groupMode: null, allGroupsOpen: false, selectedRowIndex: null, pendingGroup: null, pendingSubgroup: null, pendingItemIndex: null }"
                     x-on:pending-group.window="pendingGroup = $event.detail.group"
                     x-on:pending-subgroup.window="pendingSubgroup = $event.detail.subgroup"
+                    x-on:pending-item-index.window="pendingItemIndex = $event.detail.itemIndex"
                     x-on:content-editor-opened.window="
                         editorOpen = true; designMode = false; advancedMode = false;
                         if (pendingGroup) {
                             const g = pendingGroup; pendingGroup = null;
                             const sg = pendingSubgroup; pendingSubgroup = null;
+                            const gi = pendingItemIndex; pendingItemIndex = null;
                             $nextTick(() => {
                                 $dispatch('open-group', { group: g });
                                 $nextTick(() => {
                                     if (sg) { $dispatch('open-subgroup', { subgroup: sg }); }
+                                    if (gi !== null) { $dispatch('open-grid-item', { group: g, itemIndex: gi }); }
                                     const gEl = document.querySelector('[data-group-id=\'' + g + '\']');
                                     if (gEl) { gEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); }
                                 });

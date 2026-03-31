@@ -19,6 +19,7 @@
         @dlItems('__SLUG__', 'items', $items, '[{"icon":"bolt","title":"Instant Performance","desc":"Optimized from the ground up for speed."},{"icon":"shield-check","title":"Built-in Security","desc":"Zero-trust architecture by default."},{"icon":"chart-bar","title":"Advanced Analytics","desc":"Real-time insights across your entire stack."},{"icon":"users","title":"Collaboration Tools","desc":"Work together, in real time, from anywhere."},{"icon":"globe-alt","title":"Global Delivery","desc":"Edge-cached assets in 200+ locations."},{"icon":"cog-6-tooth","title":"Automation Engine","desc":"Automate any workflow without code."}]')
         @foreach ($items as $item)
             <x-dl.card slug="__SLUG__" prefix="item_card"
+                data-editor-item-index="{{ $loop->index }}"
                 default-classes="p-6 rounded-card bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 hover:border-primary/40 hover:bg-white dark:hover:bg-zinc-700 transition-colors">
                 <x-dl.icon slug="__SLUG__" prefix="icon" name="{{ $item['icon'] }}"
                     default-wrapper-classes="mb-4 text-primary"

@@ -17,6 +17,7 @@
         @dlItems('__SLUG__', 'stats', $stats, '[{"number":"10K+","label":"Happy Customers"},{"number":"99.9%","label":"Uptime"},{"number":"50M","label":"Events/Day"},{"number":"4.9/5","label":"Average Rating"}]')
         @foreach ($stats as $stat)
             <x-dl.card slug="__SLUG__" prefix="stat_item"
+                data-editor-item-index="{{ $loop->index }}"
                 default-classes="p-6">
                 <x-dl.wrapper slug="__SLUG__" prefix="stat_number"
                     default-classes="text-5xl font-black text-primary">

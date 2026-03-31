@@ -19,6 +19,7 @@
         @dlItems('__SLUG__', 'steps', $steps, '[{"step":"01","title":"Create Your Account","desc":"Sign up in seconds with just your email. No credit card required to get started."},{"step":"02","title":"Set Up Your Workspace","desc":"Follow the guided setup to configure your workspace and invite your team."},{"step":"03","title":"Start Building","desc":"Use our templates and tools to launch your first project in minutes."}]')
         @foreach ($steps as $step)
             <x-dl.card slug="__SLUG__" prefix="step_card"
+                data-editor-item-index="{{ $loop->index }}"
                 default-classes="p-6 rounded-card bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700">
                 <x-dl.wrapper slug="__SLUG__" prefix="step_number"
                     default-classes="text-5xl font-black text-zinc-200 dark:text-zinc-700 mb-4 leading-none">

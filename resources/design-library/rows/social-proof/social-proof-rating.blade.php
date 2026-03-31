@@ -24,6 +24,7 @@
         @dlItems('__SLUG__', 'platforms', $platforms, '[{"platform":"G2","score":"4.9","reviews":"500+ reviews"},{"platform":"Capterra","score":"4.8","reviews":"300+ reviews"},{"platform":"Trustpilot","score":"4.9","reviews":"700+ reviews"}]')
         @foreach ($platforms as $platform)
             <x-dl.card slug="__SLUG__" prefix="platform_card"
+                data-editor-item-index="{{ $loop->index }}"
                 default-classes="p-6 rounded-card border border-zinc-200 dark:border-zinc-700">
                 <x-dl.wrapper slug="__SLUG__" prefix="platform_name" tag="h3"
                     default-classes="font-bold text-lg text-zinc-900 dark:text-white">

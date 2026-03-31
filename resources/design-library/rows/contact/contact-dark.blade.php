@@ -21,6 +21,7 @@
                 @dlItems('__SLUG__', 'contact_info', $contactInfo, '[{"icon":"envelope","label":"Email","value":"hello@example.com"},{"icon":"phone","label":"Phone","value":"+1 (555) 123-4567"},{"icon":"map-pin","label":"Office","value":"123 Main St, San Francisco, CA"}]')
                 @foreach ($contactInfo as $item)
                     <x-dl.card slug="__SLUG__" prefix="info_item"
+            data-editor-item-index="{{ $loop->index }}"
                         default-classes="flex items-start gap-3">
                         <x-dl.icon slug="__SLUG__" prefix="info_icon" name="{{ $item['icon'] }}"
                             default-classes="size-5 text-primary mt-0.5 shrink-0" />

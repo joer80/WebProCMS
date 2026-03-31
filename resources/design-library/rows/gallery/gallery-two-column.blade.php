@@ -20,6 +20,7 @@
         @foreach ($galleryImages as $img)
             @php $imgUrl = $img['image'] ? (str_starts_with($img['image'], 'http') ? $img['image'] : \Illuminate\Support\Facades\Storage::url($img['image'])) : null; @endphp
             <x-dl.card slug="__SLUG__" prefix="gallery_item"
+                data-editor-item-index="{{ $loop->index }}"
                 default-classes="group">
                 <x-dl.wrapper slug="__SLUG__" prefix="image_wrapper"
                     default-classes="rounded-card overflow-hidden aspect-video bg-zinc-100 dark:bg-zinc-800 mb-3">

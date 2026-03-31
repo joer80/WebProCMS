@@ -34,6 +34,7 @@
         @dlItems('__SLUG__', 'products', $products, '[{"name":"Product Alpha","price":"$49.99","badge":"#1"},{"name":"Product Beta","price":"$69.99","badge":"#2"},{"name":"Product Gamma","price":"$39.99","badge":"#3"},{"name":"Product Delta","price":"$89.99","badge":"#4"},{"name":"Product Epsilon","price":"$59.99","badge":"#5"}]')
         @foreach ($products as $product)
             <x-dl.card slug="__SLUG__" prefix="product_card"
+            data-editor-item-index="{{ $loop->index }}"
                 default-classes="flex-none w-56 snap-start group">
                 <x-dl.wrapper slug="__SLUG__" prefix="image_wrapper"
                     default-classes="relative rounded-card aspect-square bg-zinc-100 dark:bg-zinc-800 mb-3 overflow-hidden">

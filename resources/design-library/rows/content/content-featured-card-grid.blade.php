@@ -47,6 +47,7 @@
         @foreach ($cards as $card)
             @php $cardImg = !empty($card['image']) ? (str_starts_with($card['image'], 'http') ? $card['image'] : \Illuminate\Support\Facades\Storage::url($card['image'])) : null; @endphp
             <x-dl.card slug="__SLUG__" prefix="card"
+                data-editor-item-index="{{ $loop->index }}"
                 default-classes="rounded-card overflow-hidden bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 shadow-sm flex">
                 <x-dl.wrapper slug="__SLUG__" prefix="card_body" default-classes="flex-1 p-4 flex flex-col min-w-0">
                     <x-dl.wrapper slug="__SLUG__" prefix="card_title" tag="h3"

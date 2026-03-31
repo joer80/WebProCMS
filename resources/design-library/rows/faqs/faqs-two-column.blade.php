@@ -17,6 +17,7 @@
         @dlItems('__SLUG__', 'faqs', $faqs, '[{"question":"How do I get started?","answer":"Simply sign up for a free account and follow the onboarding wizard. You can be up and running in under 5 minutes."},{"question":"Is there a free trial?","answer":"Yes! All plans come with a 14-day free trial. No credit card required."},{"question":"Can I cancel at any time?","answer":"Absolutely. You can cancel your subscription at any time from your account settings."},{"question":"Do you offer customer support?","answer":"We offer email support on all plans, with priority support available on Pro and Enterprise plans."},{"question":"Is my data secure?","answer":"We use AES-256 encryption and are SOC 2 Type II certified. Your data is always protected."},{"question":"Can I export my data?","answer":"Yes, you can export all your data in CSV or JSON format at any time from your account settings."}]')
         @foreach ($faqs as $faq)
             <x-dl.card slug="__SLUG__" prefix="faq_card"
+                data-editor-item-index="{{ $loop->index }}"
                 default-classes="bg-white dark:bg-zinc-900 rounded-card p-6 border border-zinc-200 dark:border-zinc-700">
                 <x-dl.wrapper slug="__SLUG__" prefix="faq_question" tag="h3"
                     default-classes="text-base font-semibold text-zinc-900 dark:text-white mb-2">

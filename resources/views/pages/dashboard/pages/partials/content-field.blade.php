@@ -426,10 +426,14 @@ if ($field['type'] === 'classes') {
                 alert('AI error: ' + $event.detail.message);
                 generatingAlt = { ...generatingAlt, [$event.detail.idx + '-' + $event.detail.altKey]: false };
             }"
+            x-on:open-grid-item.window="if ($event.detail.group === '{{ preg_replace('/^grid_/', '', $field['key']) }}') {
+                openItems = {}; openItems[$event.detail.itemIndex] = true;
+                $nextTick(() => { const el = $el.querySelector('[data-item-index=\'' + $event.detail.itemIndex + '\']'); if (el) { el.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); } });
+            }"
             class="space-y-2"
         >
             <template x-for="(item, idx) in items" :key="idx">
-                <div class="rounded-lg border border-zinc-200 dark:border-zinc-700 overflow-hidden">
+                <div class="rounded-lg border border-zinc-200 dark:border-zinc-700 overflow-hidden" :data-item-index="idx">
                     {{-- Collapsed header --}}
                     <div class="flex items-center gap-1.5 px-3 py-2">
                         <button type="button" @click="const wasOpen = openItems[idx]; openItems = {}; openItems[idx] = !wasOpen" class="flex items-center gap-1.5 flex-1 min-w-0 text-left">

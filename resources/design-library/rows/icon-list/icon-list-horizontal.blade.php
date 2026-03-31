@@ -12,6 +12,7 @@
             @dlItems('__SLUG__', 'items', $items, '[{"icon":"\u2713","label":"No credit card required"},{"icon":"\u2713","label":"14-day free trial"},{"icon":"\u2713","label":"Cancel anytime"},{"icon":"\u2713","label":"SOC 2 compliant"}]')
             @foreach ($items as $item)
                 <x-dl.card slug="__SLUG__" prefix="item"
+                    data-editor-item-index="{{ $loop->index }}"
                     default-classes="flex items-center gap-3">
                     <x-dl.wrapper slug="__SLUG__" prefix="icon"
                         default-classes="size-8 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold text-sm shrink-0">

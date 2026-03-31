@@ -22,6 +22,7 @@
             @dlItems('__SLUG__', 'results', $results, '[{"number":"3×","label":"Revenue Growth"},{"number":"50%","label":"Faster Delivery"},{"number":"90%","label":"Team Satisfaction"}]')
             @foreach ($results as $result)
                 <x-dl.card slug="__SLUG__" prefix="result_item"
+                    data-editor-item-index="{{ $loop->index }}"
                     default-classes="">
                     <x-dl.wrapper slug="__SLUG__" prefix="result_number"
                         default-classes="text-3xl font-black text-primary">

@@ -19,6 +19,7 @@
         @dlItems('__SLUG__', 'awards', $awards, '[{"title":"Best Product 2024","org":"TechAwards","icon":"trophy"},{"title":"Top Rated Spring","org":"G2","icon":"star"},{"title":"Editor Choice","org":"PCMag","icon":"check-badge"},{"title":"Innovation Award","org":"Gartner","icon":"light-bulb"}]')
         @foreach ($awards as $award)
             <x-dl.card slug="__SLUG__" prefix="award_card"
+                data-editor-item-index="{{ $loop->index }}"
                 default-classes="p-6 rounded-card border border-zinc-200 dark:border-zinc-700 text-center hover:border-primary/40 transition-colors">
                 <x-dl.icon slug="__SLUG__" prefix="award_icon" name="{{ $award['icon'] }}"
                     default-wrapper-classes="mx-auto mb-3 text-primary"

@@ -17,6 +17,7 @@
             @dlItems('__SLUG__', 'toc_items', $tocItems, '[{"label":"Introduction","anchor":"#introduction"},{"label":"Getting Started","anchor":"#getting-started"},{"label":"Key Concepts","anchor":"#key-concepts"},{"label":"Advanced Tips","anchor":"#advanced-tips"},{"label":"Conclusion","anchor":"#conclusion"}]')
             @foreach ($tocItems as $i => $item)
                 <x-dl.card slug="__SLUG__" prefix="toc_item" tag="a"
+                    data-editor-item-index="{{ $loop->index }}"
                     href="{{ $item['anchor'] }}"
                     default-classes="flex items-center gap-3 text-sm text-zinc-600 dark:text-zinc-400 hover:text-primary transition-colors py-1 group">
                     <x-dl.wrapper slug="__SLUG__" prefix="toc_number" tag="span"

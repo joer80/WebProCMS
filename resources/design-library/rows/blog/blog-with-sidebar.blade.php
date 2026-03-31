@@ -14,6 +14,7 @@
             default-classes="grid sm:grid-cols-2 gap-8">
             @foreach ($this->recentPosts ?? [] as $post)
                 <x-dl.card slug="__SLUG__" prefix="post_card" tag="article"
+                    data-editor-item-index="{{ $loop->index }}"
                     default-classes="group">
                     <a href="{{ route('blog.show', $post->slug) }}">
                         <x-dl.wrapper slug="__SLUG__" prefix="post_image_wrapper"
@@ -52,6 +53,7 @@
                 @dlItems('__SLUG__', 'categories', $categories, '[{"name":"Technology","count":"12"},{"name":"Design","count":"8"},{"name":"Business","count":"15"},{"name":"Updates","count":"5"}]')
                 @foreach ($categories as $cat)
                     <x-dl.card slug="__SLUG__" prefix="category_item"
+                        data-editor-item-index="{{ $loop->index }}"
                         default-classes="flex items-center justify-between">
                         <x-dl.wrapper slug="__SLUG__" prefix="category_name" tag="span"
                             default-classes="text-sm text-zinc-700 dark:text-zinc-300 hover:text-primary transition-colors">
@@ -76,6 +78,7 @@
                 @dlItems('__SLUG__', 'recent_items', $recentItems, '[{"title":"Post Title One","date":"Jan 1, 2025"},{"title":"Post Title Two","date":"Jan 5, 2025"},{"title":"Post Title Three","date":"Jan 10, 2025"}]')
                 @foreach ($recentItems as $item)
                     <x-dl.card slug="__SLUG__" prefix="recent_item"
+                        data-editor-item-index="{{ $loop->index }}"
                         default-classes="">
                         <x-dl.wrapper slug="__SLUG__" prefix="recent_title" tag="span"
                             default-classes="block text-sm font-medium text-zinc-700 dark:text-zinc-300 hover:text-primary transition-colors">

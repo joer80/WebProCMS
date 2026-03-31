@@ -23,6 +23,7 @@
         @dlItems('__SLUG__', 'items', $items, '[{"icon":"bolt","title":"Performance"},{"icon":"shield-check","title":"Security"},{"icon":"chart-bar","title":"Analytics"},{"icon":"users","title":"Collaboration"},{"icon":"globe-alt","title":"Global CDN"},{"icon":"cog-6-tooth","title":"Automation"}]')
         @foreach ($items as $item)
             <x-dl.card slug="__SLUG__" prefix="list_item"
+                data-editor-item-index="{{ $loop->index }}"
                 default-classes="flex items-center gap-3 p-3 rounded-lg hover:bg-white dark:hover:bg-zinc-900 transition-colors">
                 <x-dl.icon slug="__SLUG__" prefix="item_icon" name="{{ $item['icon'] }}"
                     default-wrapper-classes="shrink-0 size-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary"

@@ -28,6 +28,7 @@
             @dlItems('__SLUG__', 'features', $features, '[{"feature":"Unlimited projects"},{"feature":"100GB storage"},{"feature":"Priority support"},{"feature":"Team collaboration"},{"feature":"Advanced analytics"},{"feature":"Custom domain"},{"feature":"API access"},{"feature":"White-label exports"}]')
             @foreach ($features as $item)
                 <x-dl.card slug="__SLUG__" prefix="feature_item"
+                    data-editor-item-index="{{ $loop->index }}"
                     default-classes="flex items-center gap-2 text-sm text-zinc-600 dark:text-zinc-300">
                     <x-dl.icon slug="__SLUG__" prefix="feature_icon" name="check-circle:solid"
                         default-classes="size-4 shrink-0 text-primary" />

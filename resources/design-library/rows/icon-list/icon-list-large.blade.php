@@ -17,6 +17,7 @@
         @dlItems('__SLUG__', 'items', $items, '[{"icon":"bolt","title":"Blazing Performance","desc":"Our infrastructure is optimized from the ground up for sub-100ms global response times."},{"icon":"shield-check","title":"Security First","desc":"Zero-trust architecture, end-to-end encryption, and SOC 2 Type II certification."},{"icon":"chart-bar","title":"Deep Analytics","desc":"360-degree visibility into your operations with real-time dashboards and custom reports."},{"icon":"cog-6-tooth","title":"Flexible Automation","desc":"Build powerful workflows without writing code using our drag-and-drop automation builder."}]')
         @foreach ($items as $item)
             <x-dl.card slug="__SLUG__" prefix="large_item"
+                data-editor-item-index="{{ $loop->index }}"
                 default-classes="text-center px-6">
                 <x-dl.icon slug="__SLUG__" prefix="large_icon" name="{{ $item['icon'] }}"
                     default-wrapper-classes="mx-auto mb-5 size-16 rounded-2xl bg-primary/10 flex items-center justify-center text-primary"
