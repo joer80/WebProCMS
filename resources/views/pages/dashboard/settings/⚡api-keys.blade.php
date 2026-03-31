@@ -7,9 +7,9 @@ use Livewire\Attributes\Title;
 use Livewire\Component;
 
 new #[Layout('layouts.app')] #[Title('API Keys')] class extends Component {
-    public string $aiTextProvider = 'claude';
+    public string $aiTextProvider = 'google';
 
-    public string $aiImageProvider = 'openai';
+    public string $aiImageProvider = 'google';
 
     public ?string $aiClaudeModel = null;
 
@@ -22,6 +22,10 @@ new #[Layout('layouts.app')] #[Title('API Keys')] class extends Component {
     public string $aiFalKey = '';
 
     public string $aiStabilityKey = '';
+
+    public ?string $aiGoogleModel = null;
+
+    public string $aiGoogleKey = '';
 
     public string $spamRecaptchaSiteKey = '';
 
@@ -48,14 +52,16 @@ new #[Layout('layouts.app')] #[Title('API Keys')] class extends Component {
 
     public function mount(): void
     {
-        $this->aiTextProvider = \App\Models\Setting::get('ai.text_provider', 'claude');
-        $this->aiImageProvider = \App\Models\Setting::get('ai.image_provider', 'openai');
+        $this->aiTextProvider = \App\Models\Setting::get('ai.text_provider', 'google');
+        $this->aiImageProvider = \App\Models\Setting::get('ai.image_provider', 'google');
         $this->aiClaudeModel = \App\Models\Setting::get('ai.claude_model') ?? 'claude-haiku-4-5-20251001';
         $this->aiOpenaiModel = \App\Models\Setting::get('ai.openai_model') ?? 'gpt-4o-mini';
         $this->aiClaudeKey = \App\Models\Setting::get('ai.claude_key', '');
         $this->aiOpenaiKey = \App\Models\Setting::get('ai.openai_key', '');
         $this->aiFalKey = \App\Models\Setting::get('ai.fal_key', '');
         $this->aiStabilityKey = \App\Models\Setting::get('ai.stability_key', '');
+        $this->aiGoogleModel = \App\Models\Setting::get('ai.google_model') ?? 'gemini-2.0-flash';
+        $this->aiGoogleKey = \App\Models\Setting::get('ai.google_key', '');
 
         $this->spamRecaptchaSiteKey = \App\Models\Setting::get('spam.recaptcha_site_key', '');
         $this->spamRecaptchaSecretKey = \App\Models\Setting::get('spam.recaptcha_secret_key', '');
@@ -74,24 +80,28 @@ new #[Layout('layouts.app')] #[Title('API Keys')] class extends Component {
     public function saveAiSettings(): void
     {
         $this->validate([
-            'aiTextProvider' => ['required', 'in:claude,openai'],
-            'aiImageProvider' => ['required', 'in:openai,fal,stability'],
+            'aiTextProvider' => ['required', 'in:claude,openai,google'],
+            'aiImageProvider' => ['required', 'in:openai,fal,stability,google'],
             'aiClaudeModel' => ['nullable', 'in:claude-haiku-4-5-20251001,claude-sonnet-4-6'],
             'aiOpenaiModel' => ['nullable', 'in:gpt-4o-mini,gpt-4o'],
+            'aiGoogleModel' => ['nullable', 'in:gemini-2.0-flash,gemini-1.5-pro'],
             'aiClaudeKey' => ['nullable', 'string', 'max:500'],
             'aiOpenaiKey' => ['nullable', 'string', 'max:500'],
             'aiFalKey' => ['nullable', 'string', 'max:500'],
             'aiStabilityKey' => ['nullable', 'string', 'max:500'],
+            'aiGoogleKey' => ['nullable', 'string', 'max:500'],
         ]);
 
         \App\Models\Setting::set('ai.text_provider', $this->aiTextProvider);
         \App\Models\Setting::set('ai.image_provider', $this->aiImageProvider);
         \App\Models\Setting::set('ai.claude_model', $this->aiClaudeModel);
         \App\Models\Setting::set('ai.openai_model', $this->aiOpenaiModel);
+        \App\Models\Setting::set('ai.google_model', $this->aiGoogleModel);
         \App\Models\Setting::set('ai.claude_key', $this->aiClaudeKey);
         \App\Models\Setting::set('ai.openai_key', $this->aiOpenaiKey);
         \App\Models\Setting::set('ai.fal_key', $this->aiFalKey);
         \App\Models\Setting::set('ai.stability_key', $this->aiStabilityKey);
+        \App\Models\Setting::set('ai.google_key', $this->aiGoogleKey);
 
         $this->dispatch('notify', message: 'AI settings saved.');
     }
@@ -257,10 +267,14 @@ new #[Layout('layouts.app')] #[Title('API Keys')] class extends Component {
                                 <div x-show="$wire.aiTextProvider === 'openai'" class="mt-2 rounded-lg bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200 dark:border-zinc-700 px-4 py-3 text-sm text-zinc-600 dark:text-zinc-400">
                                     <p><strong class="font-medium text-zinc-800 dark:text-zinc-200">ChatGPT (OpenAI):</strong> Sign in at <span class="font-mono text-xs">platform.openai.com</span>, go to <strong>Dashboard → API Keys</strong>, and create a new key.</p>
                                 </div>
+                                <div x-show="$wire.aiTextProvider === 'google'" class="mt-2 rounded-lg bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200 dark:border-zinc-700 px-4 py-3 text-sm text-zinc-600 dark:text-zinc-400">
+                                    <p><strong class="font-medium text-zinc-800 dark:text-zinc-200">Google Gemini:</strong> Sign in at <span class="font-mono text-xs">aistudio.google.com</span>, go to <strong>Get API Key</strong>, and create a new key. The free tier includes generous usage limits.</p>
+                                </div>
                                 <div class="mt-3 space-y-3">
                                     <flux:radio.group wire:model="aiTextProvider" label="Provider">
                                         <flux:radio value="claude" label="Claude (Anthropic)" />
                                         <flux:radio value="openai" label="ChatGPT (OpenAI)" />
+                                        <flux:radio value="google" label="Google Gemini" />
                                     </flux:radio.group>
                                     <div x-show="$wire.aiTextProvider === 'claude'" class="space-y-3">
                                         <flux:select wire:model="aiClaudeModel" label="Model">
@@ -278,6 +292,14 @@ new #[Layout('layouts.app')] #[Title('API Keys')] class extends Component {
                                         <flux:input wire:model="aiOpenaiKey" label="OpenAI API Key" type="password" placeholder="sk-..." />
                                         <flux:text class="mt-1 text-xs">Get your key at platform.openai.com</flux:text>
                                     </div>
+                                    <div x-show="$wire.aiTextProvider === 'google'" class="space-y-3">
+                                        <flux:select wire:model="aiGoogleModel" label="Model">
+                                            <flux:select.option value="gemini-2.0-flash">gemini-2.0-flash — Fast &amp; cost-effective (recommended)</flux:select.option>
+                                            <flux:select.option value="gemini-1.5-pro">gemini-1.5-pro — Higher quality, higher cost</flux:select.option>
+                                        </flux:select>
+                                        <flux:input wire:model="aiGoogleKey" label="Google AI API Key" type="password" placeholder="AIza..." />
+                                        <flux:text class="mt-1 text-xs">Get your key at aistudio.google.com</flux:text>
+                                    </div>
                                 </div>
                             </div>
 
@@ -292,6 +314,7 @@ new #[Layout('layouts.app')] #[Title('API Keys')] class extends Component {
                                         <flux:radio value="openai" label="OpenAI (DALL·E 3)" description="High-quality image generation from OpenAI." />
                                         <flux:radio value="fal" label="fal.ai (FLUX)" description="Fast, high-quality image generation via FLUX models." />
                                         <flux:radio value="stability" label="Stability AI (Stable Diffusion)" description="Image generation via Stability AI's core model." />
+                                        <flux:radio value="google" label="Google Imagen 4" description="High-fidelity image generation via Google's Imagen model." />
                                     </flux:radio.group>
                                     <div x-show="$wire.aiImageProvider === 'openai'">
                                         <flux:input wire:model="aiOpenaiKey" label="OpenAI API Key" type="password" placeholder="sk-..." />
@@ -304,6 +327,10 @@ new #[Layout('layouts.app')] #[Title('API Keys')] class extends Component {
                                     <div x-show="$wire.aiImageProvider === 'stability'">
                                         <flux:input wire:model="aiStabilityKey" label="Stability AI API Key" type="password" placeholder="sk-..." />
                                         <flux:text class="mt-1 text-xs">Get your key at platform.stability.ai — go to Account → API Keys.</flux:text>
+                                    </div>
+                                    <div x-show="$wire.aiImageProvider === 'google'">
+                                        <flux:input wire:model="aiGoogleKey" label="Google AI API Key" type="password" placeholder="AIza..." />
+                                        <flux:text class="mt-1 text-xs">Uses the same Google AI key as text generation. Get your key at aistudio.google.com</flux:text>
                                     </div>
                                 </div>
                             </div>

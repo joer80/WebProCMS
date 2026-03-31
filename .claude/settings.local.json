@@ -99,7 +99,9 @@
       "Read(//Users/joepersonal/Sites/WebProCMS/$BASE/e-commerce/**)",
       "Read(//Users/joepersonal/Sites/WebProCMS/$BASE/blog-detail/**)",
       "Read(//Users/joepersonal/Sites/WebProCMS/$BASE/404/**)",
-      "Bash(php -r \"require ''''vendor/autoload.php''''; $app = require ''''bootstrap/app.php''''; $app->make\\(''''Illuminate\\\\Contracts\\\\Console\\\\Kernel''''\\)->bootstrap\\(\\); echo ''''OK'''';\")"
+      "Bash(php -r \"require ''''vendor/autoload.php''''; $app = require ''''bootstrap/app.php''''; $app->make\\(''''Illuminate\\\\Contracts\\\\Console\\\\Kernel''''\\)->bootstrap\\(\\); echo ''''OK'''';\")",
+      "WebFetch(domain:www.anthropic.com)",
+      "WebFetch(domain:claude.com)"
     ]
   },
   "defaultMode": "acceptEdits"

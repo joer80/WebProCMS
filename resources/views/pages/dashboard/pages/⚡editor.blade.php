@@ -2730,7 +2730,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
 
     public function generateAiContent(string $fieldKey, string $prompt, string $fieldType, string $currentClasses = '', bool $useHtml = true): void
     {
-        $provider = \App\Models\Setting::get('ai.text_provider', 'claude');
+        $provider = \App\Models\Setting::get('ai.text_provider', 'google');
         $isSeo = $fieldType === 'seo';
         $isRichText = $fieldType === 'richtext';
         $isClasses = $fieldType === 'classes';
@@ -2806,6 +2806,22 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                 }
 
                 $content = $response->json('choices.0.message.content', '');
+            } elseif ($provider === 'google') {
+                $apiKey = \App\Models\Setting::get('ai.google_key', '');
+                $model = \App\Models\Setting::get('ai.google_model', 'gemini-2.0-flash');
+                $response = Http::withHeaders([
+                    'x-goog-api-key' => $apiKey,
+                    'Content-Type' => 'application/json',
+                ])->post("https://generativelanguage.googleapis.com/v1beta/models/{$model}:generateContent", [
+                    'system_instruction' => ['parts' => [['text' => $systemPrompt]]],
+                    'contents' => [['parts' => [['text' => $userMessage]]]],
+                ]);
+
+                if ($response->failed()) {
+                    throw new \Exception($response->json('error.message') ?? 'Google AI API error.');
+                }
+
+                $content = $response->json('candidates.0.content.parts.0.text', '');
             } else {
                 $apiKey = \App\Models\Setting::get('ai.claude_key', '');
                 $response = Http::withHeaders([
@@ -2876,7 +2892,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
         $userMessage = (string) $sourceContent;
 
         try {
-            $provider = \App\Models\Setting::get('ai.text_provider', 'claude');
+            $provider = \App\Models\Setting::get('ai.text_provider', 'google');
 
             if ($provider === 'openai') {
                 $apiKey = \App\Models\Setting::get('ai.openai_key', '');
@@ -2897,6 +2913,22 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                 }
 
                 $translated = $response->json('choices.0.message.content', '');
+            } elseif ($provider === 'google') {
+                $apiKey = \App\Models\Setting::get('ai.google_key', '');
+                $model = \App\Models\Setting::get('ai.google_model', 'gemini-2.0-flash');
+                $response = \Illuminate\Support\Facades\Http::withHeaders([
+                    'x-goog-api-key' => $apiKey,
+                    'Content-Type' => 'application/json',
+                ])->post("https://generativelanguage.googleapis.com/v1beta/models/{$model}:generateContent", [
+                    'system_instruction' => ['parts' => [['text' => $systemPrompt]]],
+                    'contents' => [['parts' => [['text' => $userMessage]]]],
+                ]);
+
+                if ($response->failed()) {
+                    throw new \Exception($response->json('error.message') ?? 'Google AI API error.');
+                }
+
+                $translated = $response->json('candidates.0.content.parts.0.text', '');
             } else {
                 $apiKey = \App\Models\Setting::get('ai.claude_key', '');
                 $response = \Illuminate\Support\Facades\Http::withHeaders([
@@ -2970,7 +3002,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
             $systemPrompt = "You are a professional translator. Translate content to {$targetLangName}. Return only the translated text with no explanation. " . ($isRichText ? 'Preserve all HTML tags exactly as they appear.' : 'Do not add HTML tags.');
 
             try {
-                $provider = \App\Models\Setting::get('ai.text_provider', 'claude');
+                $provider = \App\Models\Setting::get('ai.text_provider', 'google');
 
                 if ($provider === 'openai') {
                     $apiKey = \App\Models\Setting::get('ai.openai_key', '');
@@ -2987,6 +3019,18 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                     ]);
 
                     $result = $response->failed() ? '' : $response->json('choices.0.message.content', '');
+                } elseif ($provider === 'google') {
+                    $apiKey = \App\Models\Setting::get('ai.google_key', '');
+                    $model = \App\Models\Setting::get('ai.google_model', 'gemini-2.0-flash');
+                    $response = \Illuminate\Support\Facades\Http::withHeaders([
+                        'x-goog-api-key' => $apiKey,
+                        'Content-Type' => 'application/json',
+                    ])->post("https://generativelanguage.googleapis.com/v1beta/models/{$model}:generateContent", [
+                        'system_instruction' => ['parts' => [['text' => $systemPrompt]]],
+                        'contents' => [['parts' => [['text' => (string) $sourceContent]]]],
+                    ]);
+
+                    $result = $response->failed() ? '' : $response->json('candidates.0.content.parts.0.text', '');
                 } else {
                     $apiKey = \App\Models\Setting::get('ai.claude_key', '');
                     $response = \Illuminate\Support\Facades\Http::withHeaders([
@@ -3158,7 +3202,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
         $systemPrompt = 'You are a professional translator. Translate content to ' . $targetLangName . '. Return only the translated text with no explanation. ' . ($isRichText ? 'Preserve all HTML tags exactly as they appear.' : 'Do not add HTML tags.');
 
         try {
-            $provider = \App\Models\Setting::get('ai.text_provider', 'claude');
+            $provider = \App\Models\Setting::get('ai.text_provider', 'google');
 
             if ($provider === 'openai') {
                 $apiKey = \App\Models\Setting::get('ai.openai_key', '');
@@ -3174,6 +3218,17 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                     ],
                 ]);
                 $result = $response->failed() ? '' : $response->json('choices.0.message.content', '');
+            } elseif ($provider === 'google') {
+                $apiKey = \App\Models\Setting::get('ai.google_key', '');
+                $model = \App\Models\Setting::get('ai.google_model', 'gemini-2.0-flash');
+                $response = \Illuminate\Support\Facades\Http::withHeaders([
+                    'x-goog-api-key' => $apiKey,
+                    'Content-Type' => 'application/json',
+                ])->post("https://generativelanguage.googleapis.com/v1beta/models/{$model}:generateContent", [
+                    'system_instruction' => ['parts' => [['text' => $systemPrompt]]],
+                    'contents' => [['parts' => [['text' => (string) $sourceContent]]]],
+                ]);
+                $result = $response->failed() ? '' : $response->json('candidates.0.content.parts.0.text', '');
             } else {
                 $apiKey = \App\Models\Setting::get('ai.claude_key', '');
                 $response = \Illuminate\Support\Facades\Http::withHeaders([
@@ -3231,7 +3286,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
         $systemPrompt = 'You are a professional translator. Translate content to ' . $targetLangName . '. Return only the translated text with no explanation. Do not add HTML tags.';
 
         try {
-            $provider = \App\Models\Setting::get('ai.text_provider', 'claude');
+            $provider = \App\Models\Setting::get('ai.text_provider', 'google');
 
             if ($provider === 'openai') {
                 $apiKey = \App\Models\Setting::get('ai.openai_key', '');
@@ -3247,6 +3302,17 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                     ],
                 ]);
                 $result = $response->failed() ? '' : $response->json('choices.0.message.content', '');
+            } elseif ($provider === 'google') {
+                $apiKey = \App\Models\Setting::get('ai.google_key', '');
+                $model = \App\Models\Setting::get('ai.google_model', 'gemini-2.0-flash');
+                $response = Http::withHeaders([
+                    'x-goog-api-key' => $apiKey,
+                    'Content-Type' => 'application/json',
+                ])->post("https://generativelanguage.googleapis.com/v1beta/models/{$model}:generateContent", [
+                    'system_instruction' => ['parts' => [['text' => $systemPrompt]]],
+                    'contents' => [['parts' => [['text' => $sourceContent]]]],
+                ]);
+                $result = $response->failed() ? '' : $response->json('candidates.0.content.parts.0.text', '');
             } else {
                 $apiKey = \App\Models\Setting::get('ai.claude_key', '');
                 $response = Http::withHeaders([
@@ -3293,7 +3359,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
             return;
         }
 
-        $provider = \App\Models\Setting::get('ai.text_provider', 'claude');
+        $provider = \App\Models\Setting::get('ai.text_provider', 'google');
         $isRichText = $fieldType === 'richtext';
 
         $toneInstruction = match ($tone) {
@@ -3328,6 +3394,22 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                 }
 
                 $content = $response->json('choices.0.message.content', '');
+            } elseif ($provider === 'google') {
+                $apiKey = \App\Models\Setting::get('ai.google_key', '');
+                $model = \App\Models\Setting::get('ai.google_model', 'gemini-2.0-flash');
+                $response = Http::withHeaders([
+                    'x-goog-api-key' => $apiKey,
+                    'Content-Type' => 'application/json',
+                ])->post("https://generativelanguage.googleapis.com/v1beta/models/{$model}:generateContent", [
+                    'system_instruction' => ['parts' => [['text' => $systemPrompt]]],
+                    'contents' => [['parts' => [['text' => $currentContent]]]],
+                ]);
+
+                if ($response->failed()) {
+                    throw new \Exception($response->json('error.message') ?? 'Google AI API error.');
+                }
+
+                $content = $response->json('candidates.0.content.parts.0.text', '');
             } else {
                 $apiKey = \App\Models\Setting::get('ai.claude_key', '');
                 $response = Http::withHeaders([
@@ -3374,7 +3456,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
         $mimeType = \Illuminate\Support\Facades\Storage::disk('public')->mimeType($imagePath) ?: 'image/jpeg';
         $base64 = base64_encode($imageContents);
 
-        $provider = \App\Models\Setting::get('ai.text_provider', 'claude');
+        $provider = \App\Models\Setting::get('ai.text_provider', 'google');
         $prompt = 'Generate a concise, descriptive alt text for this image suitable for screen readers. Maximum 10 words. Return only the alt text, no quotes, no trailing punctuation, no explanation.';
 
         try {
@@ -3405,6 +3487,24 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                 }
 
                 $content = $response->json('choices.0.message.content', '');
+            } elseif ($provider === 'google') {
+                $apiKey = \App\Models\Setting::get('ai.google_key', '');
+                $model = \App\Models\Setting::get('ai.google_model', 'gemini-2.0-flash');
+                $response = Http::withHeaders([
+                    'x-goog-api-key' => $apiKey,
+                    'Content-Type' => 'application/json',
+                ])->post("https://generativelanguage.googleapis.com/v1beta/models/{$model}:generateContent", [
+                    'contents' => [['parts' => [
+                        ['inline_data' => ['mime_type' => $mimeType, 'data' => $base64]],
+                        ['text' => $prompt],
+                    ]]],
+                ]);
+
+                if ($response->failed()) {
+                    throw new \Exception($response->json('error.message') ?? 'Google AI API error.');
+                }
+
+                $content = $response->json('candidates.0.content.parts.0.text', '');
             } else {
                 $apiKey = \App\Models\Setting::get('ai.claude_key', '');
                 $response = Http::withHeaders([
@@ -3465,7 +3565,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
         $mimeType = \Illuminate\Support\Facades\Storage::disk('public')->mimeType($imagePath) ?: 'image/jpeg';
         $base64 = base64_encode($imageContents);
 
-        $provider = \App\Models\Setting::get('ai.text_provider', 'claude');
+        $provider = \App\Models\Setting::get('ai.text_provider', 'google');
         $prompt = 'Generate a concise, descriptive alt text for this image suitable for screen readers. Maximum 10 words. Return only the alt text, no quotes, no trailing punctuation, no explanation.';
 
         try {
@@ -3496,6 +3596,24 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                 }
 
                 $content = $response->json('choices.0.message.content', '');
+            } elseif ($provider === 'google') {
+                $apiKey = \App\Models\Setting::get('ai.google_key', '');
+                $model = \App\Models\Setting::get('ai.google_model', 'gemini-2.0-flash');
+                $response = Http::withHeaders([
+                    'x-goog-api-key' => $apiKey,
+                    'Content-Type' => 'application/json',
+                ])->post("https://generativelanguage.googleapis.com/v1beta/models/{$model}:generateContent", [
+                    'contents' => [['parts' => [
+                        ['inline_data' => ['mime_type' => $mimeType, 'data' => $base64]],
+                        ['text' => $prompt],
+                    ]]],
+                ]);
+
+                if ($response->failed()) {
+                    throw new \Exception($response->json('error.message') ?? 'Google AI API error.');
+                }
+
+                $content = $response->json('candidates.0.content.parts.0.text', '');
             } else {
                 $apiKey = \App\Models\Setting::get('ai.claude_key', '');
                 $response = Http::withHeaders([
@@ -3544,7 +3662,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
 
     public function generateAiImage(string $fieldKey, string $prompt, string $rowSlug = '', bool $includeContext = true, int $gridItemIdx = -1): void
     {
-        $provider = \App\Models\Setting::get('ai.image_provider', 'openai');
+        $provider = \App\Models\Setting::get('ai.image_provider', 'google');
 
         $fullPrompt = $prompt;
 
@@ -3565,6 +3683,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
             $imageContents = match ($provider) {
                 'fal' => $this->generateImageViaFal($fullPrompt),
                 'stability' => $this->generateImageViaStability($fullPrompt),
+                'google' => $this->generateImageViaGoogle($fullPrompt),
                 default => $this->generateImageViaOpenAi($fullPrompt),
             };
         } catch (\Exception $e) {
@@ -3841,6 +3960,35 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
         return base64_decode($base64);
     }
 
+    protected function generateImageViaGoogle(string $prompt): string
+    {
+        $apiKey = \App\Models\Setting::get('ai.google_key', '');
+
+        if (empty($apiKey)) {
+            throw new \Exception('No Google AI API key configured.');
+        }
+
+        $response = Http::withHeaders([
+            'x-goog-api-key' => $apiKey,
+            'Content-Type' => 'application/json',
+        ])->timeout(60)->post('https://generativelanguage.googleapis.com/v1beta/models/imagen-4.0-generate-001:predict', [
+            'instances' => [['prompt' => $prompt]],
+            'parameters' => ['numberOfImages' => 1, 'aspectRatio' => '16:9'],
+        ]);
+
+        if ($response->failed()) {
+            throw new \Exception($response->json('error.message') ?? 'Google Imagen image generation failed.');
+        }
+
+        $base64 = $response->json('predictions.0.bytesBase64Encoded');
+
+        if (empty($base64)) {
+            throw new \Exception('No image data returned from Google Imagen.');
+        }
+
+        return base64_decode($base64);
+    }
+
     public function generateAiAllRowText(int $rowIndex, string $prompt, bool $overwriteAll, bool $useHtml): array
     {
         if (! isset($this->rows[$rowIndex])) {
@@ -4005,7 +4153,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
             return ['updated' => 0, 'rowSlug' => $rowSlug, 'imageFields' => $imageFields, 'error' => null];
         }
 
-        $provider = \App\Models\Setting::get('ai.text_provider', 'claude');
+        $provider = \App\Models\Setting::get('ai.text_provider', 'google');
 
         $overrides = ContentOverride::query()
             ->where('row_slug', $rowSlug)
@@ -4070,6 +4218,22 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                 }
 
                 $content = $response->json('choices.0.message.content', '');
+            } elseif ($provider === 'google') {
+                $apiKey = \App\Models\Setting::get('ai.google_key', '');
+                $model = \App\Models\Setting::get('ai.google_model', 'gemini-2.0-flash');
+                $response = Http::withHeaders([
+                    'x-goog-api-key' => $apiKey,
+                    'Content-Type' => 'application/json',
+                ])->post("https://generativelanguage.googleapis.com/v1beta/models/{$model}:generateContent", [
+                    'system_instruction' => ['parts' => [['text' => $systemPrompt]]],
+                    'contents' => [['parts' => [['text' => $userMessage]]]],
+                ]);
+
+                if ($response->failed()) {
+                    throw new \Exception($response->json('error.message') ?? 'Google AI API error.');
+                }
+
+                $content = $response->json('candidates.0.content.parts.0.text', '');
             } else {
                 $apiKey = \App\Models\Setting::get('ai.claude_key', '');
                 $response = Http::withHeaders([
@@ -4375,7 +4539,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
             ];
         }
 
-        $provider = \App\Models\Setting::get('ai.text_provider', 'claude');
+        $provider = \App\Models\Setting::get('ai.text_provider', 'google');
 
         $currentContent = collect($fieldSchema)
             ->filter(fn (array $f): bool => ! empty($f['current']))
@@ -4415,6 +4579,22 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                 }
 
                 $content = $response->json('choices.0.message.content', '');
+            } elseif ($provider === 'google') {
+                $apiKey = \App\Models\Setting::get('ai.google_key', '');
+                $model = \App\Models\Setting::get('ai.google_model', 'gemini-2.0-flash');
+                $response = \Illuminate\Support\Facades\Http::withHeaders([
+                    'x-goog-api-key' => $apiKey,
+                    'Content-Type' => 'application/json',
+                ])->post("https://generativelanguage.googleapis.com/v1beta/models/{$model}:generateContent", [
+                    'system_instruction' => ['parts' => [['text' => $systemPrompt]]],
+                    'contents' => [['parts' => [['text' => $userMessage]]]],
+                ]);
+
+                if ($response->failed()) {
+                    throw new \Exception($response->json('error.message') ?? 'Google AI API error.');
+                }
+
+                $content = $response->json('candidates.0.content.parts.0.text', '');
             } else {
                 $apiKey = \App\Models\Setting::get('ai.claude_key', '');
                 $response = \Illuminate\Support\Facades\Http::withHeaders([
