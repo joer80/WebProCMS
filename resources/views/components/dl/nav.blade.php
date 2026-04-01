@@ -34,7 +34,7 @@ $navItems = collect($navItems)->map(function ($item) {
 <nav {{ $attributes }} class="{{ $navClasses }}"{!! $extraAttrsStr !!}>
     @foreach($navItems as $item)
         @if(isset($item['_children']))
-            <div class="relative" x-data="{ open: false }">
+            <div class="relative inline-flex items-center" x-data="{ open: false }">
                 <button type="button" @click="open = !open" @click.outside="open = false"
                         class="{{ $itemClasses }} inline-flex cursor-pointer items-center gap-1.5">
                     {{ $item['label'] }}
