@@ -10,8 +10,8 @@ Route::middleware([
     Route::livewire('minutes/{id}', 'pages::minutes.show')->name('minutes.show');
     Route::livewire('blog/{slug}', 'pages::blog.show')->name('blog.show');
     Route::livewire('blog', 'pages::blog.index')->name('blog.index');
-    Route::livewire('events/{slug}', 'pages::events.show')->name('events.show');
     Route::livewire('events', 'pages::events.index')->name('events.index');
+    Route::livewire('events/{slug}', 'pages::events.show')->name('events.show');
     Route::livewire('404', 'pages::404')->name('404');
     Route::livewire('locations', 'pages::locations')->name('locations');
     Route::livewire('services', 'pages::services')->name('services');

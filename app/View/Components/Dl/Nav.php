@@ -13,6 +13,7 @@ class Nav extends Component
         public string $defaultMenu = 'main-navigation',
         public string $defaultClasses = '',
         public string $defaultItemClasses = '',
+        public string $defaultActiveItemClasses = '',
     ) {}
 
     /**
@@ -30,6 +31,7 @@ class Nav extends Component
             ['key' => "{$prefix}_menu", 'default' => $attrs['default-menu'] ?? 'main-navigation'],
             ['key' => "{$prefix}_classes", 'default' => $attrs['default-classes'] ?? ''],
             ['key' => "{$prefix}_item_classes", 'default' => $attrs['default-item-classes'] ?? ''],
+            ['key' => "{$prefix}_active_item_classes", 'default' => $attrs['default-active-item-classes'] ?? ''],
             ['key' => "{$prefix}_id", 'default' => '', 'label' => 'Element ID'],
             ['key' => "{$prefix}_attrs", 'default' => '[]', 'label' => 'Custom Attributes'],
         ];

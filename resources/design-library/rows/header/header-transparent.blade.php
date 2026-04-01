@@ -13,7 +13,8 @@
     <x-dl.nav slug="__SLUG__" prefix="main_nav"
         default-menu="main-navigation"
         default-classes="hidden md:flex items-center gap-8"
-        default-item-classes="text-sm text-white/80 hover:text-white transition-colors" />
+        default-item-classes="text-sm text-white/80 hover:text-white transition-colors"
+        default-active-item-classes="!text-white" />
     <x-dl.wrapper slug="__SLUG__" prefix="header_button"
         default-classes="flex items-center gap-3">
         <x-dl.link slug="__SLUG__" prefix="primary_cta"
@@ -39,7 +40,8 @@
         <x-dl.nav slug="__SLUG__" prefix="mobile_nav"
             default-menu="main-navigation"
             default-classes="flex flex-col"
-            default-item-classes="block py-3 text-base font-medium text-white/80 hover:text-white border-b border-white/10 last:border-0 transition-colors" />
+            default-item-classes="block py-3 text-base font-medium text-white/80 hover:text-white border-b border-white/10 last:border-0 transition-colors"
+            default-active-item-classes="!text-white" />
         <x-dl.link slug="__SLUG__" prefix="mobile_cta"
             label-toggle="Show Button"
             label-text="Button Text"

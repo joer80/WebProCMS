@@ -149,6 +149,8 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
 
     public ?int $pendingRemoveRowIndex = null;
 
+    public ?int $pendingMakeSharedRowIndex = null;
+
     public string $pendingGridItemSubKey = '';
 
     public bool $showGalleryPicker = false;
@@ -5946,9 +5948,6 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                                                     @keydown.escape.stop="renamingRow = false"
                                                     @blur="$wire.renameRow({{ $index }}, rowNameDraft); renamingRow = false"
                                                 />
-                                                @if (! empty($row['shared']))
-                                                    <flux:badge size="sm" color="blue" class="shrink-0">Shared</flux:badge>
-                                                @endif
                                             </div>
                                         </div>
                                         @if (isset($rowDesignDefaults[$row['slug']]))
@@ -6479,14 +6478,19 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                                                 </flux:button>
                                                 @if (empty($row['shared']))
                                                     <flux:button
-                                                        wire:click="makeRowShared({{ $index }})"
-                                                        wire:confirm="Make this row shared? It will be available to insert on other pages and changes will affect all pages using it."
+                                                        x-on:click="$wire.set('pendingMakeSharedRowIndex', {{ $index }}); $flux.modal('confirm-make-shared-row').show()"
                                                         variant="ghost"
                                                         size="sm"
                                                         icon="share"
                                                         tooltip="Make shared"
                                                         class="opacity-60 hover:opacity-100"
                                                     />
+                                                @else
+                                                    <flux:tooltip content="Shared row">
+                                                        <button type="button" class="inline-flex items-center justify-center h-8 w-8 rounded-md text-primary cursor-default">
+                                                            <flux:icon name="share" variant="mini" class="size-5" />
+                                                        </button>
+                                                    </flux:tooltip>
                                                 @endif
                                                 <flux:button
                                                     x-on:click="$wire.set('pendingRemoveRowIndex', {{ $index }}); $flux.modal('confirm-remove-row').show()"
@@ -7454,6 +7458,19 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                     @click="start()"
                 >Translate</flux:button>
             </div>
+        </div>
+    </flux:modal>
+
+    <flux:modal name="confirm-make-shared-row" class="w-full max-w-sm">
+        <flux:heading size="lg">Make row shared?</flux:heading>
+        <flux:text class="mt-2">This row will be available to insert on other pages. Changes to it will affect all pages using it.</flux:text>
+        <div class="mt-6 flex justify-end gap-3">
+            <flux:modal.close>
+                <flux:button variant="ghost">Cancel</flux:button>
+            </flux:modal.close>
+            <flux:modal.close>
+                <flux:button variant="primary" wire:click="makeRowShared($wire.pendingMakeSharedRowIndex)">Make Shared</flux:button>
+            </flux:modal.close>
         </div>
     </flux:modal>
 

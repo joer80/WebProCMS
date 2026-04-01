@@ -14,7 +14,8 @@
     <x-dl.nav slug="__SLUG__" prefix="main_nav"
         default-menu="main-navigation"
         default-classes="hidden md:flex items-center gap-6 flex-1"
-        default-item-classes="text-sm text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition-colors" />
+        default-item-classes="text-sm text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition-colors"
+        default-active-item-classes="!text-primary" />
     <x-dl.logo slug="__SLUG__" prefix="logo"
         default-classes="h-8 w-auto mx-auto" />
     <x-dl.wrapper slug="__SLUG__" prefix="header_button"
@@ -49,7 +50,8 @@
         <x-dl.nav slug="__SLUG__" prefix="mobile_nav"
             default-menu="main-navigation"
             default-classes="flex flex-col"
-            default-item-classes="block py-3 text-base font-medium text-zinc-700 dark:text-zinc-200 hover:text-zinc-900 dark:hover:text-white border-b border-zinc-100 dark:border-zinc-800 last:border-0 transition-colors" />
+            default-item-classes="block py-3 text-base font-medium text-zinc-700 dark:text-zinc-200 hover:text-zinc-900 dark:hover:text-white border-b border-zinc-100 dark:border-zinc-800 last:border-0 transition-colors"
+            default-active-item-classes="!text-primary" />
         <x-dl.wrapper slug="__SLUG__" prefix="mobile_actions"
             default-classes="mt-4 flex flex-col gap-2">
             <x-dl.link slug="__SLUG__" prefix="mobile_login"

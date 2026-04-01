@@ -101,7 +101,9 @@
       "Read(//Users/joepersonal/Sites/WebProCMS/$BASE/404/**)",
       "Bash(php -r \"require ''''vendor/autoload.php''''; $app = require ''''bootstrap/app.php''''; $app->make\\(''''Illuminate\\\\Contracts\\\\Console\\\\Kernel''''\\)->bootstrap\\(\\); echo ''''OK'''';\")",
       "WebFetch(domain:www.anthropic.com)",
-      "WebFetch(domain:claude.com)"
+      "WebFetch(domain:claude.com)",
+      "Bash(for test_name in \"it saves correct field name derived from label\" \"it deletes a content type and all its items from the index page\" \"it deletes a content type and all its items from the edit page\")",
+      "Bash(do echo:*)"
     ]
   },
   "defaultMode": "acceptEdits"

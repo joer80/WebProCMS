@@ -62,17 +62,26 @@ it('saves correct field name derived from label', function (): void {
 
     Livewire::actingAs($user)
         ->test('pages::dashboard.content-types.create')
-        ->set('name', 'Events')
-        ->set('slug', 'events')
-        ->set('singular', 'Event')
+        ->set('name', 'Press Releases')
+        ->set('slug', 'press-releases')
+        ->set('singular', 'Press Release')
         ->call('addField')
         ->set('fields.0.label', 'Published Date')
         ->set('fields.0.name', 'published_date')
         ->set('fields.0.type', 'date')
         ->call('save');
 
-    $type = ContentTypeDefinition::where('slug', 'events')->first();
+    $type = ContentTypeDefinition::where('slug', 'press-releases')->first();
     expect($type->fields[0]['name'])->toBe('published_date');
+})->after(function (): void {
+    $slug = 'press-releases';
+    $routesPath = base_path('routes/web.php');
+    $contents = file_get_contents($routesPath);
+    $contents = preg_replace('/\n[ \t]*Route::livewire\(\''.preg_quote($slug, '/').'\'[^\n]+;/', '', $contents);
+    $contents = preg_replace('/\n[ \t]*Route::livewire\(\''.preg_quote($slug, '/').'[^\']*\'[^\n]+;/', '', $contents);
+    file_put_contents($routesPath, $contents);
+    app(ContentTypePageGenerator::class)->remove($slug);
+    ContentTypeDefinition::where('slug', $slug)->delete();
 });
 
 it('validates required fields when creating a content type', function (): void {
@@ -87,18 +96,18 @@ it('validates required fields when creating a content type', function (): void {
 it('validates that slug is unique when creating a content type', function (): void {
     $user = User::factory()->create();
     ContentTypeDefinition::create([
-        'name' => 'Events',
-        'slug' => 'events',
-        'singular' => 'Event',
+        'name' => 'Testimonials',
+        'slug' => 'testimonials',
+        'singular' => 'Testimonial',
         'icon' => 'document',
         'fields' => [],
     ]);
 
     Livewire::actingAs($user)
         ->test('pages::dashboard.content-types.create')
-        ->set('name', 'Events')
-        ->set('slug', 'events')
-        ->set('singular', 'Event')
+        ->set('name', 'Testimonials')
+        ->set('slug', 'testimonials')
+        ->set('singular', 'Testimonial')
         ->call('save')
         ->assertHasErrors(['slug']);
 });
@@ -179,33 +188,33 @@ it('updates an existing content type', function (): void {
 it('deletes a content type and all its items from the index page', function (): void {
     $user = User::factory()->create();
     $type = ContentTypeDefinition::create([
-        'name' => 'Events',
-        'slug' => 'events',
-        'singular' => 'Event',
+        'name' => 'Locations',
+        'slug' => 'test-locations',
+        'singular' => 'Location',
         'icon' => 'document',
         'fields' => [],
     ]);
-    ContentItem::create(['type_slug' => 'events', 'data' => [], 'status' => 'draft']);
-    ContentItem::create(['type_slug' => 'events', 'data' => [], 'status' => 'published']);
+    ContentItem::create(['type_slug' => 'test-locations', 'data' => [], 'status' => 'draft']);
+    ContentItem::create(['type_slug' => 'test-locations', 'data' => [], 'status' => 'published']);
 
     Livewire::actingAs($user)
         ->test('pages::dashboard.content-types.index')
         ->call('deleteType', $type->id);
 
     expect(ContentTypeDefinition::find($type->id))->toBeNull();
-    expect(ContentItem::where('type_slug', 'events')->count())->toBe(0);
+    expect(ContentItem::where('type_slug', 'test-locations')->count())->toBe(0);
 });
 
 it('deletes a content type and all its items from the edit page', function (): void {
     $user = User::factory()->create();
     $type = ContentTypeDefinition::create([
-        'name' => 'Events',
-        'slug' => 'events',
-        'singular' => 'Event',
+        'name' => 'Announcements',
+        'slug' => 'test-announcements',
+        'singular' => 'Announcement',
         'icon' => 'document',
         'fields' => [],
     ]);
-    ContentItem::create(['type_slug' => 'events', 'data' => [], 'status' => 'draft']);
+    ContentItem::create(['type_slug' => 'test-announcements', 'data' => [], 'status' => 'draft']);
 
     Livewire::actingAs($user)
         ->test('pages::dashboard.content-types.edit', ['contentTypeId' => $type->id])
@@ -213,7 +222,7 @@ it('deletes a content type and all its items from the edit page', function (): v
         ->assertRedirect(route('dashboard.content-types.index'));
 
     expect(ContentTypeDefinition::find($type->id))->toBeNull();
-    expect(ContentItem::where('type_slug', 'events')->count())->toBe(0);
+    expect(ContentItem::where('type_slug', 'test-announcements')->count())->toBe(0);
 });
 
 it('removes routes and view files when a content type is deleted', function (): void {

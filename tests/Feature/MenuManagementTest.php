@@ -297,7 +297,7 @@ it('auto-populates the page label when a route is selected', function (): void {
         ->test('pages::dashboard.menus')
         ->set('newPageLabel', '')
         ->set('newPageRoute', 'blog.index')
-        ->assertSet('newPageLabel', 'Blog Index');
+        ->assertSet('newPageLabel', 'Blog');
 });
 
 it('does not overwrite a manually set page label when route changes', function (): void {

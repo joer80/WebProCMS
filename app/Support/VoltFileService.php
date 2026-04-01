@@ -171,7 +171,7 @@ class VoltFileService
         $filePath = resource_path('views/shared-rows/'.$filename.'.blade.php');
         file_put_contents($filePath, $bladeContent);
 
-        SharedRow::create(['slug' => $slug, 'name' => $name]);
+        SharedRow::firstOrCreate(['slug' => $slug], ['name' => $name]);
     }
 
     /**
