@@ -13,6 +13,7 @@ Route::middleware([
     Route::livewire('events', 'pages::events.index')->name('events.index');
     Route::livewire('events/{slug}', 'pages::events.show')->name('events.show');
     Route::livewire('404', 'pages::404')->name('404');
+    Route::livewire('locations/{location}', 'pages::locations.show')->name('locations.show');
     Route::livewire('locations', 'pages::locations')->name('locations');
     Route::livewire('services', 'pages::services')->name('services');
     Route::livewire('contact', 'pages::contact')->name('contact');

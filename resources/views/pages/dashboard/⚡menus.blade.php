@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\Setting;
+use App\Services\MenuService;
 use Illuminate\Support\Facades\Route as RoutesFacade;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
@@ -25,6 +26,9 @@ new #[Layout('layouts.app')] #[Title('Menus')] class extends Component {
     public string $newCustomUrl = '';
     public string $newCustomLabel = '';
     public bool $newCustomNewWindow = false;
+    public string $newDynamicSource = '';
+    public bool $newDynamicShowAll = false;
+    public string $newDynamicShowAllLabel = '';
 
     public bool $showCreateMenuModal = false;
     public string $newMenuLabel = '';
@@ -48,6 +52,9 @@ new #[Layout('layouts.app')] #[Title('Menus')] class extends Component {
     public string $editItemRoute = '';
     public string $editItemUrl = '';
     public bool $editItemNewWindow = false;
+    public string $editDynamicSource = '';
+    public bool $editDynamicShowAll = false;
+    public string $editDynamicShowAllLabel = '';
 
     public function mount(): void
     {
@@ -109,6 +116,13 @@ new #[Layout('layouts.app')] #[Title('Menus')] class extends Component {
             ->all();
     }
 
+    /** @return array<string, string> */
+    #[Computed]
+    public function availableSources(): array
+    {
+        return MenuService::availableSources();
+    }
+
     public function openAddModal(): void
     {
         $this->resetAddForm();
@@ -140,6 +154,23 @@ new #[Layout('layouts.app')] #[Title('Menus')] class extends Component {
                 'route' => $this->newPageRoute,
                 'active' => true,
             ];
+        } elseif ($this->addType === 'dynamic') {
+            $this->validate([
+                'newDynamicSource' => ['required', 'string'],
+                'newPageLabel' => ['required', 'string', 'max:255'],
+            ]);
+
+            $item = [
+                'label'  => $this->newPageLabel,
+                'type'   => 'dynamic',
+                'source' => $this->newDynamicSource,
+                'active' => true,
+            ];
+
+            if ($this->newDynamicShowAll) {
+                $item['show_all'] = true;
+                $item['show_all_label'] = $this->newDynamicShowAllLabel ?: 'See All';
+            }
         } else {
             $this->validate([
                 'newCustomLabel' => ['required', 'string', 'max:255'],
@@ -199,7 +230,19 @@ new #[Layout('layouts.app')] #[Title('Menus')] class extends Component {
     {
         $item = $this->menus[$this->activeMenuIndex]['items'][$index];
         $this->editItemIndex = $index;
-        $this->editItemType = isset($item['route']) ? 'page' : 'custom';
+
+        if (($item['type'] ?? null) === 'dynamic') {
+            $this->editItemType = 'dynamic';
+            $this->editDynamicSource = $item['source'] ?? '';
+            $this->editDynamicShowAll = ! empty($item['show_all']);
+            $this->editDynamicShowAllLabel = $item['show_all_label'] ?? '';
+        } else {
+            $this->editItemType = isset($item['route']) ? 'page' : 'custom';
+            $this->editDynamicSource = '';
+            $this->editDynamicShowAll = false;
+            $this->editDynamicShowAllLabel = '';
+        }
+
         $this->editItemLabel = $item['label'] ?? '';
         $this->editItemRoute = $item['route'] ?? '';
         $this->editItemUrl = $item['url'] ?? '';
@@ -209,6 +252,8 @@ new #[Layout('layouts.app')] #[Title('Menus')] class extends Component {
 
     public function saveEditItem(): void
     {
+        $active = $this->menus[$this->activeMenuIndex]['items'][$this->editItemIndex]['active'] ?? true;
+
         if ($this->editItemType === 'page') {
             $this->validate([
                 'editItemRoute' => ['required', 'string'],
@@ -216,20 +261,37 @@ new #[Layout('layouts.app')] #[Title('Menus')] class extends Component {
             ]);
 
             $item = [
-                'label' => $this->editItemLabel,
-                'route' => $this->editItemRoute,
-                'active' => $this->menus[$this->activeMenuIndex]['items'][$this->editItemIndex]['active'] ?? true,
+                'label'  => $this->editItemLabel,
+                'route'  => $this->editItemRoute,
+                'active' => $active,
             ];
-        } else {
+        } elseif ($this->editItemType === 'dynamic') {
             $this->validate([
+                'editDynamicSource' => ['required', 'string'],
                 'editItemLabel' => ['required', 'string', 'max:255'],
-                'editItemUrl' => ['required', 'url', 'max:2048'],
             ]);
 
             $item = [
-                'label' => $this->editItemLabel,
-                'url' => $this->editItemUrl,
-                'active' => $this->menus[$this->activeMenuIndex]['items'][$this->editItemIndex]['active'] ?? true,
+                'label'  => $this->editItemLabel,
+                'type'   => 'dynamic',
+                'source' => $this->editDynamicSource,
+                'active' => $active,
+            ];
+
+            if ($this->editDynamicShowAll) {
+                $item['show_all'] = true;
+                $item['show_all_label'] = $this->editDynamicShowAllLabel ?: 'See All';
+            }
+        } else {
+            $this->validate([
+                'editItemLabel' => ['required', 'string', 'max:255'],
+                'editItemUrl'   => ['required', 'url', 'max:2048'],
+            ]);
+
+            $item = [
+                'label'  => $this->editItemLabel,
+                'url'    => $this->editItemUrl,
+                'active' => $active,
             ];
 
             if ($this->editItemNewWindow) {
@@ -299,6 +361,14 @@ new #[Layout('layouts.app')] #[Title('Menus')] class extends Component {
         $this->dispatch('notify', message: 'Menu saved.');
     }
 
+    public function updatedNewDynamicSource(string $value): void
+    {
+        if ($value !== '' && $this->newPageLabel === '') {
+            $sources = MenuService::availableSources();
+            $this->newPageLabel = $sources[$value] ?? '';
+        }
+    }
+
     private function resetAddForm(): void
     {
         $this->addType = 'page';
@@ -307,6 +377,9 @@ new #[Layout('layouts.app')] #[Title('Menus')] class extends Component {
         $this->newCustomUrl = '';
         $this->newCustomLabel = '';
         $this->newCustomNewWindow = false;
+        $this->newDynamicSource = '';
+        $this->newDynamicShowAll = false;
+        $this->newDynamicShowAllLabel = '';
     }
 }; ?>
 
@@ -383,6 +456,7 @@ new #[Layout('layouts.app')] #[Title('Menus')] class extends Component {
             <flux:radio.group wire:model.live="editItemType" :label="__('Item type')">
                 <flux:radio value="page" :label="__('Existing page')" />
                 <flux:radio value="custom" :label="__('Custom URL')" />
+                <flux:radio value="dynamic" :label="__('Dynamic content')" />
             </flux:radio.group>
 
             @if ($editItemType === 'page')
@@ -390,6 +464,13 @@ new #[Layout('layouts.app')] #[Title('Menus')] class extends Component {
                     <flux:select.option value="">{{ __('Select a page…') }}</flux:select.option>
                     @foreach ($this->availableRoutes as $routeName => $routeLabel)
                         <flux:select.option value="{{ $routeName }}">{{ $routeLabel }}</flux:select.option>
+                    @endforeach
+                </flux:select>
+            @elseif ($editItemType === 'dynamic')
+                <flux:select wire:model.live="editDynamicSource" :label="__('Source')">
+                    <flux:select.option value="">{{ __('Select a source…') }}</flux:select.option>
+                    @foreach ($this->availableSources as $sourceKey => $sourceLabel)
+                        <flux:select.option value="{{ $sourceKey }}">{{ $sourceLabel }}</flux:select.option>
                     @endforeach
                 </flux:select>
             @else
@@ -413,6 +494,21 @@ new #[Layout('layouts.app')] #[Title('Menus')] class extends Component {
                 required
             />
 
+            @if ($editItemType === 'dynamic')
+                <flux:switch
+                    wire:model.live="editDynamicShowAll"
+                    :label="__('Show a See All link at the bottom of the dropdown')"
+                />
+
+                @if ($editDynamicShowAll)
+                    <flux:input
+                        wire:model="editDynamicShowAllLabel"
+                        :label="__('See All label')"
+                        placeholder="e.g. See All Locations"
+                    />
+                @endif
+            @endif
+
             <div class="flex items-center justify-end gap-3 pt-2">
                 <flux:modal.close>
                     <flux:button variant="ghost">{{ __('Cancel') }}</flux:button>
@@ -433,6 +529,7 @@ new #[Layout('layouts.app')] #[Title('Menus')] class extends Component {
             <flux:radio.group wire:model.live="addType" :label="__('Item type')">
                 <flux:radio value="page" :label="__('Existing page')" />
                 <flux:radio value="custom" :label="__('Custom URL')" />
+                <flux:radio value="dynamic" :label="__('Dynamic content')" />
             </flux:radio.group>
 
             @if ($addType === 'page')
@@ -449,6 +546,34 @@ new #[Layout('layouts.app')] #[Title('Menus')] class extends Component {
                     placeholder="e.g. Features"
                     required
                 />
+            @elseif ($addType === 'dynamic')
+                <flux:select wire:model.live="newDynamicSource" :label="__('Source')">
+                    <flux:select.option value="">{{ __('Select a source…') }}</flux:select.option>
+                    @foreach ($this->availableSources as $sourceKey => $sourceLabel)
+                        <flux:select.option value="{{ $sourceKey }}">{{ $sourceLabel }}</flux:select.option>
+                    @endforeach
+                </flux:select>
+
+                <flux:input
+                    wire:model="newPageLabel"
+                    :label="__('Navigation label')"
+                    placeholder="e.g. Locations"
+                    description="{{ __('Shown as the dropdown trigger in the nav.') }}"
+                    required
+                />
+
+                <flux:switch
+                    wire:model.live="newDynamicShowAll"
+                    :label="__('Show a See All link at the bottom of the dropdown')"
+                />
+
+                @if ($newDynamicShowAll)
+                    <flux:input
+                        wire:model="newDynamicShowAllLabel"
+                        :label="__('See All label')"
+                        placeholder="e.g. See All Locations"
+                    />
+                @endif
             @else
                 <flux:input
                     wire:model="newCustomLabel"
@@ -582,7 +707,9 @@ new #[Layout('layouts.app')] #[Title('Menus')] class extends Component {
                                                         {{ $item['label'] }}
                                                     </div>
                                                     <div class="mt-0.5 font-mono text-xs text-zinc-400 dark:text-zinc-500">
-                                                        @if (isset($item['route']))
+                                                        @if (($item['type'] ?? null) === 'dynamic')
+                                                            dynamic · {{ $this->availableSources[$item['source']] ?? $item['source'] }}
+                                                        @elseif (isset($item['route']))
                                                             route: {{ $item['route'] }}
                                                         @else
                                                             {{ $item['url'] }}
