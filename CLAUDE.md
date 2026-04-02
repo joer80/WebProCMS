@@ -768,6 +768,39 @@ Since these are built into the components, any row built using the standard `x-d
 - When a row has both a heading and subheadline, place them as direct children of `x-dl.section` — do **not** wrap them together in a shared `header_wrapper`. Each becomes its own sidebar card. Move any bottom spacing (e.g. `mb-10`) from the wrapper onto the subheadline's `default-classes`.
 - When a row displays data pulled dynamically from the database (e.g. locations, team members, posts), always add a `note` attribute to the `x-dl.wrapper` that wraps that dynamic content. The note should tell the user where that data is managed, with a dashboard link. Example: `note="Content is pulled from the <a href='/dashboard/locations' class='text-primary underline hover:text-primary/80'>Locations</a> page."`
 
+## Editor Preview Context
+
+The page editor's "Preview as" dropdown is driven by a `@previewContext` frontmatter comment at the top of the blade file. **Any data-driven template page (`⚡show.blade.php`) that takes a route parameter must include this comment** so the editor knows what records to offer in the dropdown.
+
+```blade
+{{-- @previewContext model=\App\Models\Event label=title value=slug routeParam=slug orderBy=start_date --}}
+```
+
+| Attribute | Description |
+|-----------|-------------|
+| Attribute | Description |
+|-----------|-------------|
+| `model` | Fully-qualified Eloquent model class |
+| `label` | Column shown as the display label in the dropdown |
+| `value` | Column used as the option value (typically the route param value) |
+| `routeParam` | Route parameter name the template expects in `mount()` |
+| `orderBy` | Column to sort by; append `:desc` for descending (e.g. `published_at:desc`) |
+| `where` | *(optional)* Adds a `where` clause to filter records: `column:value` (e.g. `where=type_slug:minutes`) |
+
+The editor reads only the first 512 bytes of the file, so the comment must appear on the very first line. The dropdown is hidden automatically for any file that omits this comment.
+
+**When creating a new data-driven template page, always add this comment.** Examples:
+
+Standard model by slug:
+```blade
+{{-- @previewContext model=\App\Models\Team label=name value=slug routeParam=slug orderBy=name --}}
+```
+
+**Custom content types** — `ContentTypePageGenerator` adds this automatically when generating `⚡show.blade.php`. The `where` attr scopes the query to that type's items:
+```blade
+{{-- @previewContext model=\App\Models\ContentItem label=title value=id routeParam=id orderBy=published_at:desc where=type_slug:minutes --}}
+```
+
 ## Key Lessons
 
 ### Alpine + Livewire: Always Use `wire:ignore` on Alpine Grid Containers

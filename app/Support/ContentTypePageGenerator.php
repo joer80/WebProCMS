@@ -120,6 +120,7 @@ PHP;
     private function buildShowPhp(string $slug, string $name, string $rowSlug): string
     {
         return <<<PHP
+{{-- @previewContext model=\App\Models\ContentItem label=title value=id routeParam=id orderBy=published_at:desc where=type_slug:{$slug} --}}
 <?php
 
 use App\Models\ContentItem;

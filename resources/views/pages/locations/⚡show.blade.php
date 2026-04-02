@@ -1,3 +1,4 @@
+{{-- @previewContext model=\App\Models\Location label=name value=id routeParam=location orderBy=name --}}
 <?php
 
 use App\Models\Location;

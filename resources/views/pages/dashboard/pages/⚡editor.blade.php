@@ -2675,57 +2675,77 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
     }
 
     /**
-     * Populate $previewContextOptions for files that require route parameters.
+     * Parse the @previewContext frontmatter comment from a blade file.
+     *
+     * Expects a line like:
+     *   {{-- @previewContext model=\App\Models\Event label=title value=slug routeParam=slug orderBy=start_date --}}
+     *
+     * @return array<string, string>|null
+     */
+    private function parsePreviewContextFrontmatter(): ?array
+    {
+        $path = resource_path('views/'.$this->file);
+
+        if (! file_exists($path)) {
+            return null;
+        }
+
+        $head = file_get_contents($path, false, null, 0, 512);
+
+        if (! preg_match('/\{\{--\s*@previewContext\s+(.+?)\s*--\}\}/s', $head, $match)) {
+            return null;
+        }
+
+        $attrs = [];
+        preg_match_all('/(\w+)=([^\s]+)/', $match[1], $pairs, PREG_SET_ORDER);
+
+        foreach ($pairs as $pair) {
+            $attrs[$pair[1]] = $pair[2];
+        }
+
+        foreach (['model', 'label', 'value', 'routeParam', 'orderBy'] as $required) {
+            if (empty($attrs[$required])) {
+                return null;
+            }
+        }
+
+        return $attrs;
+    }
+
+    /**
+     * Populate $previewContextOptions from the file's @previewContext frontmatter.
      * When options are available, auto-selects the first if none is already chosen.
      */
     private function loadPreviewContextOptions(): void
     {
         $this->previewContextOptions = [];
 
-        if ($this->file === 'pages/blog/⚡show.blade.php') {
-            $this->previewContextOptions = \App\Models\Post::query()
-                ->orderByDesc('published_at')
-                ->limit(50)
-                ->pluck('title', 'slug')
-                ->all();
+        $meta = $this->parsePreviewContextFrontmatter();
 
-            if (! $this->previewContext || ! isset($this->previewContextOptions[$this->previewContext])) {
-                $this->previewContext = array_key_first($this->previewContextOptions) ?? '';
-            }
+        if (! $meta) {
+            $this->previewContext = '';
 
             return;
         }
 
-        if ($this->file === 'pages/events/⚡show.blade.php') {
-            $this->previewContextOptions = \App\Models\Event::query()
-                ->orderBy('start_date')
-                ->limit(50)
-                ->pluck('title', 'slug')
-                ->all();
+        [$orderColumn, $orderDir] = array_pad(explode(':', $meta['orderBy'], 2), 2, 'asc');
 
-            if (! $this->previewContext || ! isset($this->previewContextOptions[$this->previewContext])) {
-                $this->previewContext = array_key_first($this->previewContextOptions) ?? '';
-            }
+        $query = $meta['model']::query();
 
-            return;
+        if (! empty($meta['where'])) {
+            [$whereCol, $whereVal] = explode(':', $meta['where'], 2);
+            $query->where($whereCol, $whereVal);
         }
 
-        if ($this->file === 'pages/locations/⚡show.blade.php') {
-            $this->previewContextOptions = \App\Models\Location::query()
-                ->orderBy('name')
-                ->limit(50)
-                ->pluck('name', 'id')
-                ->all();
+        $this->previewContextOptions = $query
+            ->orderBy($orderColumn, $orderDir)
+            ->limit(50)
+            ->pluck($meta['label'], $meta['value'])
+            ->all();
 
-            if (! $this->previewContext || ! isset($this->previewContextOptions[$this->previewContext])) {
-                $this->previewContext = (string) array_key_first($this->previewContextOptions) ?? '';
-            }
-
-            return;
+        if (! $this->previewContext || ! isset($this->previewContextOptions[$this->previewContext])) {
+            $this->previewContext = (string) (array_key_first($this->previewContextOptions) ?? '');
         }
-
-        // No context options for this file — clear any stale selection.
-        $this->previewContext = '';
     }
 
     /**
@@ -2735,19 +2755,17 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
      */
     private function resolvePreviewContext(): array
     {
-        if ($this->file === 'pages/blog/⚡show.blade.php' && $this->previewContext) {
-            return ['slug' => $this->previewContext];
+        if (! $this->previewContext) {
+            return [];
         }
 
-        if ($this->file === 'pages/events/⚡show.blade.php' && $this->previewContext) {
-            return ['slug' => $this->previewContext];
+        $meta = $this->parsePreviewContextFrontmatter();
+
+        if (! $meta) {
+            return [];
         }
 
-        if ($this->file === 'pages/locations/⚡show.blade.php' && $this->previewContext) {
-            return ['location' => $this->previewContext];
-        }
-
-        return [];
+        return [$meta['routeParam'] => $this->previewContext];
     }
 
     private function refreshPreview(): void

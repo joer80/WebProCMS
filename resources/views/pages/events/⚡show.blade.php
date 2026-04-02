@@ -1,3 +1,4 @@
+{{-- @previewContext model=\App\Models\Event label=title value=slug routeParam=slug orderBy=start_date --}}
 <?php
 
 use Livewire\Attributes\Layout;
