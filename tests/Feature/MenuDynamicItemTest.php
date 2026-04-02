@@ -103,10 +103,10 @@ it('availableSources returns the expected keys', function (): void {
     $sources = MenuService::availableSources();
 
     expect($sources)
-        ->toHaveKey('pages')
         ->toHaveKey('locations')
         ->toHaveKey('categories')
-        ->toHaveKey('content-types');
+        ->toHaveKey('content-types')
+        ->not->toHaveKey('pages');
 });
 
 it('expand resolves location children and see all url', function (): void {
