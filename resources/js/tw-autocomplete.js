@@ -129,7 +129,7 @@ function buildTwClasses() {
     // — Max/min width —
     ['max-w','min-w'].forEach(p => {
         SPACING.forEach(s => cls.push(`${p}-${s}`));
-        ['none','full','screen','min','max','fit','xs','sm','md','lg','xl','2xl','3xl','4xl','5xl','6xl','7xl','prose'].forEach(s => cls.push(`${p}-${s}`));
+        ['none','full','screen','min','max','fit','xs','sm','md','lg','xl','2xl','3xl','4xl','5xl','6xl','7xl','prose','container'].forEach(s => cls.push(`${p}-${s}`));
     });
 
     // — Max/min height —

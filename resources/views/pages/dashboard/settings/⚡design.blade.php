@@ -12,6 +12,8 @@ new #[Layout('layouts.app')] #[Title('Design')] class extends Component {
 
     public string $sectionSpacing = 'medium';
 
+    public string $containerWidth = 'medium';
+
     public bool $altRowsEnabled = true;
 
     public string $altRowsStart = 'even';
@@ -41,14 +43,16 @@ new #[Layout('layouts.app')] #[Title('Design')] class extends Component {
         }
 
         $this->validate([
-            'bodyFont' => ['required', 'string', 'in:instrument-sans,inter,system'],
-            'headingFont' => ['required', 'string', 'in:instrument-sans,inter,system'],
+            'bodyFont'       => ['required', 'string', 'in:instrument-sans,inter,system'],
+            'headingFont'    => ['required', 'string', 'in:instrument-sans,inter,system'],
             'sectionSpacing' => ['required', 'string', 'in:small,medium,large'],
+            'containerWidth' => ['required', 'string', 'in:small,medium,large'],
         ]);
 
         $fontSansValue = $this->fontStack($this->bodyFont);
         $fontHeadingValue = $this->fontStack($this->headingFont);
         $spacingValues = $this->spacingValues($this->sectionSpacing);
+        $containerValue = $this->containerWidthValue($this->containerWidth);
 
         $appCssPath = resource_path('css/app.css');
         $appCss = file_get_contents($appCssPath);
@@ -57,6 +61,7 @@ new #[Layout('layouts.app')] #[Title('Design')] class extends Component {
         $appCss = preg_replace('/(--spacing-section:)\s*[^;]+(;[^\/]*)/', '${1} ' . $spacingValues['section'] . '${2}', $appCss);
         $appCss = preg_replace('/(--spacing-section-banner:)\s*[^;]+(;[^\/]*)/', '${1} ' . $spacingValues['banner'] . '${2}', $appCss);
         $appCss = preg_replace('/(--spacing-section-hero:)\s*[^;]+(;[^\/]*)/', '${1} ' . $spacingValues['hero'] . '${2}', $appCss);
+        $appCss = preg_replace('/(--width-container:)\s*[^;]+(;[^\/]*)/', '${1} ' . $containerValue . '${2}', $appCss);
         file_put_contents($appCssPath, $appCss);
 
         foreach ([resource_path('css/public.css'), resource_path('css/editor.css')] as $path) {
@@ -65,6 +70,7 @@ new #[Layout('layouts.app')] #[Title('Design')] class extends Component {
             $css = preg_replace('/(--spacing-section:)\s*[^;]+(;[^\/]*)/', '${1} ' . $spacingValues['section'] . '${2}', $css);
             $css = preg_replace('/(--spacing-section-banner:)\s*[^;]+(;[^\/]*)/', '${1} ' . $spacingValues['banner'] . '${2}', $css);
             $css = preg_replace('/(--spacing-section-hero:)\s*[^;]+(;[^\/]*)/', '${1} ' . $spacingValues['hero'] . '${2}', $css);
+            $css = preg_replace('/(--width-container:)\s*[^;]+(;[^\/]*)/', '${1} ' . $containerValue . '${2}', $css);
             file_put_contents($path, $css);
         }
 
@@ -78,6 +84,7 @@ new #[Layout('layouts.app')] #[Title('Design')] class extends Component {
         $this->bodyFont = (string) Setting::get('branding.body_font', 'instrument-sans');
         $this->headingFont = (string) Setting::get('branding.heading_font', 'instrument-sans');
         $this->sectionSpacing = (string) Setting::get('branding.section_spacing', 'medium');
+        $this->containerWidth = (string) Setting::get('branding.container_width', 'medium');
     }
 
     protected function writeBrandingConfig(): void
@@ -86,6 +93,7 @@ new #[Layout('layouts.app')] #[Title('Design')] class extends Component {
         Setting::set('branding.body_font', $this->bodyFont);
         Setting::set('branding.heading_font', $this->headingFont);
         Setting::set('branding.section_spacing', $this->sectionSpacing);
+        Setting::set('branding.container_width', $this->containerWidth);
         Setting::set('branding.alt_rows_enabled', $this->altRowsEnabled ? '1' : '0');
         Setting::set('branding.alt_rows_start', $this->altRowsStart);
     }
@@ -97,6 +105,15 @@ new #[Layout('layouts.app')] #[Title('Design')] class extends Component {
             'small' => ['section' => '4rem', 'banner' => '3rem', 'hero' => '5rem'],
             'large' => ['section' => '6rem', 'banner' => '5rem', 'hero' => '7rem'],
             default => ['section' => '5rem', 'banner' => '3rem', 'hero' => '6rem'],
+        };
+    }
+
+    private function containerWidthValue(string $size): string
+    {
+        return match ($size) {
+            'small' => '56rem',
+            'large' => '80rem',
+            default => '72rem',
         };
     }
 
@@ -178,6 +195,19 @@ new #[Layout('layouts.app')] #[Title('Design')] class extends Component {
                                             type="button"
                                             wire:click="$set('sectionSpacing', '{{ $value }}')"
                                             class="px-4 py-2 rounded-lg border text-sm font-medium transition-colors {{ $sectionSpacing === $value ? 'bg-primary text-white border-primary' : 'bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 border-zinc-300 dark:border-zinc-600 hover:border-zinc-400' }}"
+                                        >{{ $label }}</button>
+                                    @endforeach
+                                </div>
+                            </div>
+                            <div>
+                                <flux:label>Container Width</flux:label>
+                                <flux:text class="mt-1 text-xs text-zinc-500">Max width of page containers and the mega menu panel. Small = 56rem (896px), Medium = 72rem (1152px), Large = 80rem (1280px).</flux:text>
+                                <div class="mt-2 flex gap-2">
+                                    @foreach (['small' => 'Small', 'medium' => 'Medium', 'large' => 'Large'] as $value => $label)
+                                        <button
+                                            type="button"
+                                            wire:click="$set('containerWidth', '{{ $value }}')"
+                                            class="px-4 py-2 rounded-lg border text-sm font-medium transition-colors {{ $containerWidth === $value ? 'bg-primary text-white border-primary' : 'bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 border-zinc-300 dark:border-zinc-600 hover:border-zinc-400' }}"
                                         >{{ $label }}</button>
                                     @endforeach
                                 </div>

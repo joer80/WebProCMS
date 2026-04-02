@@ -56,6 +56,12 @@ new #[Layout('layouts.app')] #[Title('Menus')] class extends Component {
     public bool $editDynamicShowAll = false;
     public string $editDynamicShowAllLabel = '';
 
+    /** @var list<array{heading: string, links: list<array{icon: string, title: string, desc: string, url: string, new_tab: bool}>}> */
+    public array $newMegaColumns = [];
+
+    /** @var list<array{heading: string, links: list<array{icon: string, title: string, desc: string, url: string, new_tab: bool}>}> */
+    public array $editMegaColumns = [];
+
     public function mount(): void
     {
         $this->menus = Setting::get('navigation.menus', []);
@@ -171,6 +177,17 @@ new #[Layout('layouts.app')] #[Title('Menus')] class extends Component {
                 $item['show_all'] = true;
                 $item['show_all_label'] = $this->newDynamicShowAllLabel ?: 'See All';
             }
+        } elseif ($this->addType === 'mega') {
+            $this->validate([
+                'newPageLabel' => ['required', 'string', 'max:255'],
+            ]);
+
+            $item = [
+                'label'   => $this->newPageLabel,
+                'type'    => 'mega',
+                'active'  => true,
+                'columns' => $this->newMegaColumns,
+            ];
         } else {
             $this->validate([
                 'newCustomLabel' => ['required', 'string', 'max:255'],
@@ -236,11 +253,19 @@ new #[Layout('layouts.app')] #[Title('Menus')] class extends Component {
             $this->editDynamicSource = $item['source'] ?? '';
             $this->editDynamicShowAll = ! empty($item['show_all']);
             $this->editDynamicShowAllLabel = $item['show_all_label'] ?? '';
+            $this->editMegaColumns = [];
+        } elseif (($item['type'] ?? null) === 'mega') {
+            $this->editItemType = 'mega';
+            $this->editMegaColumns = $item['columns'] ?? [];
+            $this->editDynamicSource = '';
+            $this->editDynamicShowAll = false;
+            $this->editDynamicShowAllLabel = '';
         } else {
             $this->editItemType = isset($item['route']) ? 'page' : 'custom';
             $this->editDynamicSource = '';
             $this->editDynamicShowAll = false;
             $this->editDynamicShowAllLabel = '';
+            $this->editMegaColumns = [];
         }
 
         $this->editItemLabel = $item['label'] ?? '';
@@ -282,6 +307,17 @@ new #[Layout('layouts.app')] #[Title('Menus')] class extends Component {
                 $item['show_all'] = true;
                 $item['show_all_label'] = $this->editDynamicShowAllLabel ?: 'See All';
             }
+        } elseif ($this->editItemType === 'mega') {
+            $this->validate([
+                'editItemLabel' => ['required', 'string', 'max:255'],
+            ]);
+
+            $item = [
+                'label'   => $this->editItemLabel,
+                'type'    => 'mega',
+                'active'  => $active,
+                'columns' => $this->editMegaColumns,
+            ];
         } else {
             $this->validate([
                 'editItemLabel' => ['required', 'string', 'max:255'],
@@ -369,6 +405,49 @@ new #[Layout('layouts.app')] #[Title('Menus')] class extends Component {
         }
     }
 
+    public function addMegaColumnToNew(): void
+    {
+        $this->newMegaColumns[] = ['heading' => '', 'links' => [['icon' => '', 'title' => '', 'desc' => '', 'url' => '', 'new_tab' => false]]];
+    }
+
+    public function addMegaColumnToEdit(): void
+    {
+        $this->editMegaColumns[] = ['heading' => '', 'links' => [['icon' => '', 'title' => '', 'desc' => '', 'url' => '', 'new_tab' => false]]];
+    }
+
+    public function removeMegaColumn(string $mode, int $colIndex): void
+    {
+        if ($mode === 'new') {
+            array_splice($this->newMegaColumns, $colIndex, 1);
+            $this->newMegaColumns = array_values($this->newMegaColumns);
+        } else {
+            array_splice($this->editMegaColumns, $colIndex, 1);
+            $this->editMegaColumns = array_values($this->editMegaColumns);
+        }
+    }
+
+    public function addMegaLink(string $mode, int $colIndex): void
+    {
+        $blank = ['icon' => '', 'title' => '', 'desc' => '', 'url' => '', 'new_tab' => false];
+
+        if ($mode === 'new') {
+            $this->newMegaColumns[$colIndex]['links'][] = $blank;
+        } else {
+            $this->editMegaColumns[$colIndex]['links'][] = $blank;
+        }
+    }
+
+    public function removeMegaLink(string $mode, int $colIndex, int $linkIndex): void
+    {
+        if ($mode === 'new') {
+            array_splice($this->newMegaColumns[$colIndex]['links'], $linkIndex, 1);
+            $this->newMegaColumns[$colIndex]['links'] = array_values($this->newMegaColumns[$colIndex]['links']);
+        } else {
+            array_splice($this->editMegaColumns[$colIndex]['links'], $linkIndex, 1);
+            $this->editMegaColumns[$colIndex]['links'] = array_values($this->editMegaColumns[$colIndex]['links']);
+        }
+    }
+
     private function resetAddForm(): void
     {
         $this->addType = 'page';
@@ -380,6 +459,7 @@ new #[Layout('layouts.app')] #[Title('Menus')] class extends Component {
         $this->newDynamicSource = '';
         $this->newDynamicShowAll = false;
         $this->newDynamicShowAllLabel = '';
+        $this->newMegaColumns = [];
     }
 }; ?>
 
@@ -449,7 +529,7 @@ new #[Layout('layouts.app')] #[Title('Menus')] class extends Component {
     </flux:modal>
 
     {{-- Edit item modal --}}
-    <flux:modal wire:model="showEditItemModal" class="max-w-md w-full">
+    <flux:modal wire:model="showEditItemModal" class="max-w-2xl w-full">
         <flux:heading size="lg" class="mb-6">{{ __('Edit Menu Item') }}</flux:heading>
 
         <form wire:submit="saveEditItem" class="space-y-4">
@@ -457,6 +537,7 @@ new #[Layout('layouts.app')] #[Title('Menus')] class extends Component {
                 <flux:radio value="page" :label="__('Existing page')" />
                 <flux:radio value="custom" :label="__('Custom URL')" />
                 <flux:radio value="dynamic" :label="__('Dynamic content')" />
+                <flux:radio value="mega" :label="__('Mega menu')" />
             </flux:radio.group>
 
             @if ($editItemType === 'page')
@@ -473,6 +554,8 @@ new #[Layout('layouts.app')] #[Title('Menus')] class extends Component {
                         <flux:select.option value="{{ $sourceKey }}">{{ $sourceLabel }}</flux:select.option>
                     @endforeach
                 </flux:select>
+            @elseif ($editItemType === 'mega')
+                {{-- Column builder rendered after the label field below --}}
             @else
                 <flux:input
                     wire:model="editItemUrl"
@@ -507,6 +590,36 @@ new #[Layout('layouts.app')] #[Title('Menus')] class extends Component {
                         placeholder="e.g. See All Locations"
                     />
                 @endif
+            @elseif ($editItemType === 'mega')
+                <div class="space-y-3">
+                    @foreach ($editMegaColumns as $colIndex => $col)
+                        <div class="rounded-lg border border-zinc-200 dark:border-zinc-700 p-4 space-y-3">
+                            <div class="flex items-center justify-between">
+                                <flux:heading size="sm">{{ __('Column') }} {{ $colIndex + 1 }}</flux:heading>
+                                <flux:button wire:click="removeMegaColumn('edit', {{ $colIndex }})" variant="ghost" size="sm" icon="trash" class="text-red-500 dark:text-red-400" />
+                            </div>
+                            <flux:input wire:model="editMegaColumns.{{ $colIndex }}.heading" :label="__('Column heading (optional)')" placeholder="e.g. Platform" />
+                            @foreach ($col['links'] as $linkIndex => $link)
+                                <div class="rounded border border-zinc-100 dark:border-zinc-800 p-3 space-y-2">
+                                    <div class="flex items-center justify-between">
+                                        <flux:text size="sm" class="font-medium">{{ __('Link') }} {{ $linkIndex + 1 }}</flux:text>
+                                        <flux:button wire:click="removeMegaLink('edit', {{ $colIndex }}, {{ $linkIndex }})" variant="ghost" size="sm" icon="x-mark" />
+                                    </div>
+                                    <div class="grid grid-cols-2 gap-2">
+                                        <flux:input wire:model="editMegaColumns.{{ $colIndex }}.links.{{ $linkIndex }}.icon" :label="__('Icon')" placeholder="bolt" description="{{ __('Heroicon name') }}" />
+                                        <flux:input wire:model="editMegaColumns.{{ $colIndex }}.links.{{ $linkIndex }}.title" :label="__('Title')" placeholder="Performance" required />
+                                    </div>
+                                    <flux:input wire:model="editMegaColumns.{{ $colIndex }}.links.{{ $linkIndex }}.desc" :label="__('Description')" placeholder="Short description (optional)" />
+                                    <flux:input wire:model="editMegaColumns.{{ $colIndex }}.links.{{ $linkIndex }}.url" :label="__('URL')" placeholder="/pricing or https://…" />
+                                    <flux:checkbox wire:model="editMegaColumns.{{ $colIndex }}.links.{{ $linkIndex }}.new_tab" :label="__('Open in new tab')" />
+                                </div>
+                            @endforeach
+                            <flux:button wire:click="addMegaLink('edit', {{ $colIndex }})" variant="ghost" size="sm" icon="plus">{{ __('Add link') }}</flux:button>
+                        </div>
+                    @endforeach
+                </div>
+
+                <flux:button wire:click="addMegaColumnToEdit" variant="outline" size="sm" icon="plus">{{ __('Add column') }}</flux:button>
             @endif
 
             <div class="flex items-center justify-end gap-3 pt-2">
@@ -522,7 +635,7 @@ new #[Layout('layouts.app')] #[Title('Menus')] class extends Component {
     </flux:modal>
 
     {{-- Add item modal --}}
-    <flux:modal wire:model="showAddModal" class="max-w-md w-full">
+    <flux:modal wire:model="showAddModal" class="max-w-2xl w-full">
         <flux:heading size="lg" class="mb-6">{{ __('Add Menu Item') }}</flux:heading>
 
         <form wire:submit="addItem" class="space-y-4">
@@ -530,6 +643,7 @@ new #[Layout('layouts.app')] #[Title('Menus')] class extends Component {
                 <flux:radio value="page" :label="__('Existing page')" />
                 <flux:radio value="custom" :label="__('Custom URL')" />
                 <flux:radio value="dynamic" :label="__('Dynamic content')" />
+                <flux:radio value="mega" :label="__('Mega menu')" />
             </flux:radio.group>
 
             @if ($addType === 'page')
@@ -574,6 +688,43 @@ new #[Layout('layouts.app')] #[Title('Menus')] class extends Component {
                         placeholder="e.g. See All Locations"
                     />
                 @endif
+            @elseif ($addType === 'mega')
+                <flux:input
+                    wire:model="newPageLabel"
+                    :label="__('Navigation label')"
+                    placeholder="e.g. Products"
+                    required
+                />
+
+                <div class="space-y-3">
+                    @foreach ($newMegaColumns as $colIndex => $col)
+                        <div class="rounded-lg border border-zinc-200 dark:border-zinc-700 p-4 space-y-3">
+                            <div class="flex items-center justify-between">
+                                <flux:heading size="sm">{{ __('Column') }} {{ $colIndex + 1 }}</flux:heading>
+                                <flux:button wire:click="removeMegaColumn('new', {{ $colIndex }})" variant="ghost" size="sm" icon="trash" class="text-red-500 dark:text-red-400" />
+                            </div>
+                            <flux:input wire:model="newMegaColumns.{{ $colIndex }}.heading" :label="__('Column heading (optional)')" placeholder="e.g. Platform" />
+                            @foreach ($col['links'] as $linkIndex => $link)
+                                <div class="rounded border border-zinc-100 dark:border-zinc-800 p-3 space-y-2">
+                                    <div class="flex items-center justify-between">
+                                        <flux:text size="sm" class="font-medium">{{ __('Link') }} {{ $linkIndex + 1 }}</flux:text>
+                                        <flux:button wire:click="removeMegaLink('new', {{ $colIndex }}, {{ $linkIndex }})" variant="ghost" size="sm" icon="x-mark" />
+                                    </div>
+                                    <div class="grid grid-cols-2 gap-2">
+                                        <flux:input wire:model="newMegaColumns.{{ $colIndex }}.links.{{ $linkIndex }}.icon" :label="__('Icon')" placeholder="bolt" description="{{ __('Heroicon name') }}" />
+                                        <flux:input wire:model="newMegaColumns.{{ $colIndex }}.links.{{ $linkIndex }}.title" :label="__('Title')" placeholder="Performance" required />
+                                    </div>
+                                    <flux:input wire:model="newMegaColumns.{{ $colIndex }}.links.{{ $linkIndex }}.desc" :label="__('Description')" placeholder="Short description (optional)" />
+                                    <flux:input wire:model="newMegaColumns.{{ $colIndex }}.links.{{ $linkIndex }}.url" :label="__('URL')" placeholder="/pricing or https://…" />
+                                    <flux:checkbox wire:model="newMegaColumns.{{ $colIndex }}.links.{{ $linkIndex }}.new_tab" :label="__('Open in new tab')" />
+                                </div>
+                            @endforeach
+                            <flux:button wire:click="addMegaLink('new', {{ $colIndex }})" variant="ghost" size="sm" icon="plus">{{ __('Add link') }}</flux:button>
+                        </div>
+                    @endforeach
+                </div>
+
+                <flux:button wire:click="addMegaColumnToNew" variant="outline" size="sm" icon="plus">{{ __('Add column') }}</flux:button>
             @else
                 <flux:input
                     wire:model="newCustomLabel"
@@ -706,15 +857,22 @@ new #[Layout('layouts.app')] #[Title('Menus')] class extends Component {
                                                     <div class="font-medium {{ ($item['active'] ?? true) ? 'text-zinc-900 dark:text-zinc-100' : 'text-zinc-400 dark:text-zinc-500' }}">
                                                         {{ $item['label'] }}
                                                     </div>
-                                                    <div class="mt-0.5 font-mono text-xs text-zinc-400 dark:text-zinc-500">
-                                                        @if (($item['type'] ?? null) === 'dynamic')
-                                                            dynamic · {{ $this->availableSources[$item['source']] ?? $item['source'] }}
+                                                    <div class="mt-0.5 text-xs text-zinc-400 dark:text-zinc-500">
+                                                        @if (($item['type'] ?? null) === 'mega')
+                                                            @php
+                                                                $megaCols = $item['columns'] ?? [];
+                                                                $megaLinkCount = collect($megaCols)->sum(fn ($c) => count($c['links'] ?? []));
+                                                            @endphp
+                                                            <span class="inline-flex items-center rounded-full bg-violet-100 dark:bg-violet-900/30 px-2 py-0.5 text-xs font-medium text-violet-700 dark:text-violet-300 mr-1">Mega</span>
+                                                            <span class="font-mono">{{ count($megaCols) }} {{ Str::plural('column', count($megaCols)) }} · {{ $megaLinkCount }} {{ Str::plural('link', $megaLinkCount) }}</span>
+                                                        @elseif (($item['type'] ?? null) === 'dynamic')
+                                                            <span class="font-mono">dynamic · {{ $this->availableSources[$item['source']] ?? $item['source'] }}</span>
                                                         @elseif (isset($item['route']))
-                                                            route: {{ $item['route'] }}
+                                                            <span class="font-mono">route: {{ $item['route'] }}</span>
                                                         @else
-                                                            {{ $item['url'] }}
+                                                            <span class="font-mono">{{ $item['url'] }}</span>
                                                             @if (!empty($item['new_window']))
-                                                                · {{ __('new window') }}
+                                                                <span class="font-mono"> · {{ __('new window') }}</span>
                                                             @endif
                                                         @endif
                                                     </div>

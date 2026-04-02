@@ -37,6 +37,9 @@
     --spacing-section-banner: 3rem; /* py-section-banner — compact rows (CTA banners) */
     --spacing-section-hero: 6rem;   /* py-section-hero — spacious rows (heroes) */
 
+    /* Container max-width — Small/Medium/Large controlled from Design page */
+    --width-container: 72rem;       /* max-w-container — page container and mega menu width */
+
     --color-accent: var(--color-neutral-800);
     --color-accent-content: var(--color-neutral-800);
     --color-accent-foreground: var(--color-white);
