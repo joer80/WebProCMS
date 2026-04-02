@@ -34,15 +34,6 @@ new #[Layout('layouts.app')] #[Title('Menus')] class extends Component {
     public string $newMenuLabel = '';
     public string $newMenuSlug = '';
 
-    /** @var array<int, string> */
-    public array $footerSlugs = [];
-
-    public bool $currentMenuInFooter = false;
-
-    public bool $showAuthLinks = false;
-
-    public bool $showAccountInFooter = true;
-
     public bool $showEditMenuModal = false;
 
     public int $editItemIndex = -1;
@@ -64,32 +55,6 @@ new #[Layout('layouts.app')] #[Title('Menus')] class extends Component {
     public function mount(): void
     {
         $this->menus = Setting::get('navigation.menus', []);
-        $this->footerSlugs = Setting::get('navigation.footer_slugs', []);
-        $this->showAuthLinks = (bool) Setting::get('navigation.show_auth_links', '0');
-        $this->showAccountInFooter = (bool) Setting::get('navigation.show_account_in_footer', '0');
-        $this->syncCurrentMenuInFooter();
-    }
-
-    public function updatedActiveMenuIndex(): void
-    {
-        $this->syncCurrentMenuInFooter();
-    }
-
-    public function updatedCurrentMenuInFooter(bool $value): void
-    {
-        $slug = $this->menus[$this->activeMenuIndex]['slug'] ?? '';
-
-        if ($value && ! in_array($slug, $this->footerSlugs, true)) {
-            $this->footerSlugs[] = $slug;
-        } elseif (! $value) {
-            $this->footerSlugs = array_values(array_filter($this->footerSlugs, fn (string $s): bool => $s !== $slug));
-        }
-    }
-
-    private function syncCurrentMenuInFooter(): void
-    {
-        $slug = $this->menus[$this->activeMenuIndex]['slug'] ?? '';
-        $this->currentMenuInFooter = in_array($slug, $this->footerSlugs, true);
     }
 
     /** @return array<string, string> */
@@ -437,23 +402,9 @@ new #[Layout('layouts.app')] #[Title('Menus')] class extends Component {
         $this->menus[$this->activeMenuIndex]['items'] = array_values($items);
     }
 
-    public function reorderFooterSlugs(int $from, int $to): void
-    {
-        if ($from === $to) {
-            return;
-        }
-
-        $slug = array_splice($this->footerSlugs, $from, 1)[0];
-        array_splice($this->footerSlugs, $to, 0, [$slug]);
-        $this->footerSlugs = array_values($this->footerSlugs);
-    }
-
     public function save(): void
     {
         Setting::set('navigation.menus', array_values($this->menus));
-        Setting::set('navigation.footer_slugs', array_values($this->footerSlugs));
-        Setting::set('navigation.show_auth_links', $this->showAuthLinks ? '1' : '0');
-        Setting::set('navigation.show_account_in_footer', $this->showAccountInFooter ? '1' : '0');
 
         ResponseCache::clear();
 
@@ -571,7 +522,6 @@ new #[Layout('layouts.app')] #[Title('Menus')] class extends Component {
                         {{ $currentMenu['slug'] }}
                     </code>
                 </div>
-                <flux:switch wire:model.live="currentMenuInFooter" :label="__('Show in footer')" />
             </div>
 
             <div class="mt-6 flex items-center justify-between">
@@ -755,9 +705,7 @@ new #[Layout('layouts.app')] #[Title('Menus')] class extends Component {
                 </div>
             </div>
         @else
-            <div style="display: grid; grid-template-columns: 3fr 1fr; gap: 2rem;">
-                {{-- Left: menu editor (3/4 width) --}}
-                <div>
+            <div class="max-w-3xl">
                     <div class="mb-4 flex items-center justify-between gap-4">
                         <div class="flex items-center gap-2">
                             <flux:select wire:model.live="activeMenuIndex" class="w-52">
@@ -899,7 +847,9 @@ new #[Layout('layouts.app')] #[Title('Menus')] class extends Component {
                                                         @else
                                                             <div class="size-8"></div>
                                                         @endif
-                                                        <flux:switch wire:model.live="menus.{{ $activeMenuIndex }}.items.{{ $index }}.active" />
+                                                        <flux:tooltip content="{{ ($item['active'] ?? true) ? __('Disable item') : __('Enable item') }}" position="bottom">
+                                                            <flux:switch wire:model.live="menus.{{ $activeMenuIndex }}.items.{{ $index }}.active" />
+                                                        </flux:tooltip>
                                                         <flux:tooltip content="Edit item" position="bottom">
                                                             <flux:button
                                                                 wire:click="openEditItemModal({{ $index }})"
@@ -1093,77 +1043,6 @@ new #[Layout('layouts.app')] #[Title('Menus')] class extends Component {
                         @endif
                     @endif
 
-                </div>
-
-                {{-- Right: sidebar (1/4 width) --}}
-                <div style="display: flex; flex-direction: column; gap: 0.5rem;">
-                    {{-- Header settings --}}
-                    <div x-data="{ open: false }" class="overflow-hidden rounded-lg border border-zinc-200 dark:border-zinc-700">
-                        <button
-                            @click="open = !open"
-                            class="flex w-full items-center justify-between px-4 py-3 text-left"
-                            style="background-color: var(--color-zinc-100);"
-                        >
-                            <flux:heading size="sm">{{ __('Header settings') }}</flux:heading>
-                            <span :style="'transform: rotate(' + (open ? \'180deg\' : \'0deg\') + ')'">
-                                <flux:icon name="chevron-down" class="size-4 text-zinc-400" />
-                            </span>
-                        </button>
-                        <div x-show="open" x-cloak class="space-y-3" style="padding: 1rem; border-top: 1px solid var(--color-zinc-200);">
-                            <flux:switch wire:model.live="showAuthLinks" :label="__('Show sign in / register links in header nav')" />
-                        </div>
-                    </div>
-
-                    {{-- Footer settings --}}
-                    <div x-data="{ open: false }" class="overflow-hidden rounded-lg border border-zinc-200 dark:border-zinc-700">
-                        <button
-                            @click="open = !open"
-                            class="flex w-full items-center justify-between px-4 py-3 text-left"
-                            style="background-color: var(--color-zinc-100);"
-                        >
-                            <flux:heading size="sm">{{ __('Footer settings') }}</flux:heading>
-                            <span :style="'transform: rotate(' + (open ? \'180deg\' : \'0deg\') + ')'">
-                                <flux:icon name="chevron-down" class="size-4 text-zinc-400" />
-                            </span>
-                        </button>
-                        <div x-show="open" x-cloak class="space-y-4" style="padding: 1rem; border-top: 1px solid var(--color-zinc-200);">
-                            <flux:switch wire:model.live="showAccountInFooter" :label="__('Show account column in footer')" />
-
-                            @if (count($footerSlugs) > 1)
-                                <div>
-                                    <flux:text size="sm" class="mb-2">{{ __('Drag to reorder how footer menus appear as columns.') }}</flux:text>
-                                    <div
-                                        x-data="{ draggingIdx: null, overIdx: null }"
-                                        class="flex flex-wrap gap-2"
-                                    >
-                                        @foreach ($footerSlugs as $fIdx => $fSlug)
-                                            @php
-                                                $fMenu = collect($menus)->firstWhere('slug', $fSlug);
-                                                $fLabel = $fMenu['label'] ?? $fSlug;
-                                            @endphp
-                                            <div
-                                                wire:key="footer-order-{{ $fIdx }}"
-                                                draggable="true"
-                                                @dragstart="draggingIdx = {{ $fIdx }}"
-                                                @dragover.prevent="overIdx = {{ $fIdx }}"
-                                                @drop="if (draggingIdx !== null) { $wire.reorderFooterSlugs(draggingIdx, overIdx); } draggingIdx = null; overIdx = null"
-                                                @dragend="draggingIdx = null; overIdx = null"
-                                                :class="{
-                                                    'opacity-40': draggingIdx === {{ $fIdx }},
-                                                    'ring-2 ring-zinc-900 dark:ring-zinc-200': overIdx === {{ $fIdx }} && draggingIdx !== null && draggingIdx !== {{ $fIdx }}
-                                                }"
-                                                class="flex cursor-grab items-center gap-1.5 rounded-full border border-zinc-200 bg-white px-3 py-1.5 text-sm font-medium text-zinc-700 active:cursor-grabbing dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300"
-                                            >
-                                                <flux:icon name="bars-2" class="size-3.5 text-zinc-400" />
-                                                {{ $fLabel }}
-                                            </div>
-                                        @endforeach
-                                    </div>
-                                </div>
-                            @endif
-                        </div>
-                    </div>
-                </div>
             </div>
         @endif
     </flux:main>

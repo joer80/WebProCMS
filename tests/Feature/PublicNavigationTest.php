@@ -44,7 +44,6 @@ it('does not show inactive navigation items', function (): void {
 });
 
 it('shows footer menus from the flat navigation config', function (): void {
-    Setting::set('navigation.footer_slugs', ['footer-links']);
     Setting::set('navigation.menus', [
         [
             'slug' => 'main-navigation',
@@ -52,7 +51,7 @@ it('shows footer menus from the flat navigation config', function (): void {
             'items' => [],
         ],
         [
-            'slug' => 'footer-links',
+            'slug' => 'footer-company',
             'label' => 'Company',
             'items' => [
                 ['label' => 'Footer Link One', 'url' => '#', 'active' => true],
@@ -93,9 +92,7 @@ it('falls back to the default logo svg when branding logo url is empty', functio
         ->assertSee('images/logo.svg');
 });
 
-it('always shows the login link in the fallback header regardless of show_auth_links setting', function (): void {
-    Setting::set('navigation.show_auth_links', '0');
-
+it('always shows the login link in the fallback header', function (): void {
     $this->withoutMiddleware(CacheResponse::class)
         ->get(route('home'))
         ->assertOk()

@@ -40,8 +40,10 @@
         default-classes="absolute top-full left-0 right-0 border-t border-zinc-200 dark:border-zinc-800 bg-white/95 dark:bg-zinc-900/95 backdrop-blur shadow-lg px-6 py-4 flex flex-col">
         <x-dl.nav slug="header-simple:header" prefix="mobile_nav"
             default-menu="main-navigation"
+            default-accordion="1"
             default-classes="flex flex-col"
-            default-item-classes="block py-3 text-base font-medium text-zinc-700 dark:text-zinc-200 hover:text-primary border-b border-zinc-100 dark:border-zinc-800 last:border-0 transition-colors" />
+            default-item-classes="block py-3 text-base font-medium text-zinc-700 dark:text-zinc-200 hover:text-primary border-b border-zinc-100 dark:border-zinc-800 last:border-0 transition-colors"
+            default-accordion-item-classes="block py-2 pl-4 text-sm text-zinc-500 dark:text-zinc-400 hover:text-primary border-b border-zinc-100 dark:border-zinc-800 last:border-0 transition-colors" />
         <x-dl.link slug="header-simple:header" prefix="mobile_cta"
             label-toggle="Show Button"
             label-text="Button Text"

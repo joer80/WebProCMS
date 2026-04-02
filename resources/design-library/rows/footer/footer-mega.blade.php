@@ -33,6 +33,7 @@
             default-classes="pt-16 text-xs font-semibold text-white uppercase tracking-widest mb-4" />
         <x-dl.nav slug="__SLUG__" prefix="col1_nav"
             default-menu="main-navigation"
+            default-accordion="1"
             default-classes="space-y-2"
             default-item-classes="block text-sm text-zinc-400 hover:text-white transition-colors" />
     </div>
@@ -41,6 +42,7 @@
             default-classes="pt-16 text-xs font-semibold text-white uppercase tracking-widest mb-4" />
         <x-dl.nav slug="__SLUG__" prefix="col2_nav"
             default-menu="main-navigation"
+            default-accordion="1"
             default-classes="space-y-2"
             default-item-classes="block text-sm text-zinc-400 hover:text-white transition-colors" />
     </div>
@@ -49,6 +51,7 @@
             default-classes="pt-16 text-xs font-semibold text-white uppercase tracking-widest mb-4" />
         <x-dl.nav slug="__SLUG__" prefix="col3_nav"
             default-menu="legal"
+            default-accordion="1"
             default-classes="space-y-2"
             default-item-classes="block text-sm text-zinc-400 hover:text-white transition-colors" />
     </div>

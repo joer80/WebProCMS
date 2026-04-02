@@ -15,6 +15,7 @@
     </div>
     <x-dl.nav slug="__SLUG__" prefix="main_nav"
         default-menu="main-navigation"
+        default-accordion="1"
         default-classes="flex flex-wrap gap-6 text-sm"
         default-item-classes="hover:text-white transition-colors" />
     <x-dl.wrapper slug="__SLUG__" prefix="bottom_bar"

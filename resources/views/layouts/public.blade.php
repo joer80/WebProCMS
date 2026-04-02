@@ -3,13 +3,10 @@
     use App\Enums\SnippetPlacement;
     use App\Models\Snippet;
 
-    $showAuthLinks = (bool) \App\Models\Setting::get('navigation.show_auth_links', '0');
-    $showAccountInFooter = (bool) \App\Models\Setting::get('navigation.show_account_in_footer', '0');
     $allMenus = collect(\App\Models\Setting::get('navigation.menus', []));
     $navMenu = $allMenus->firstWhere('slug', 'main-navigation');
     $navItems = array_filter($navMenu['items'] ?? [], fn ($item) => $item['active'] ?? true);
-    $footerSlugs = \App\Models\Setting::get('navigation.footer_slugs', []);
-    $footerMenus = collect($footerSlugs)->map(fn ($slug) => $allMenus->firstWhere('slug', $slug))->filter()->values()->all();
+    $footerMenus = $allMenus->whereIn('slug', ['main-navigation', 'footer-company', 'legal'])->values()->all();
 
     $layoutBodyClasses = \App\Models\Setting::get('layout.body_classes', '');
     $layoutPhpTop = \App\Models\Setting::get('layout.php_top', '');
@@ -147,21 +144,19 @@
                                 </div>
                             @endif
                         @endforeach
-                        @if ($showAccountInFooter)
-                            <div class="flex flex-col gap-3">
-                                <p class="text-xs font-semibold uppercase tracking-wider text-[#706f6c] dark:text-[#A1A09A]">Account</p>
-                                <nav class="flex flex-col gap-2">
-                                    @auth
-                                        <a href="{{ url('/dashboard') }}" class="text-sm text-[#1b1b18] dark:text-[#EDEDEC] hover:text-[#706f6c] dark:hover:text-[#A1A09A] transition-colors">Dashboard</a>
-                                    @else
-                                        <a href="{{ route('login') }}" class="text-sm text-[#1b1b18] dark:text-[#EDEDEC] hover:text-[#706f6c] dark:hover:text-[#A1A09A] transition-colors">Log in</a>
-                                        @if (Route::has('register'))
-                                            <a href="{{ route('register') }}" class="text-sm text-[#1b1b18] dark:text-[#EDEDEC] hover:text-[#706f6c] dark:hover:text-[#A1A09A] transition-colors">Register</a>
-                                        @endif
-                                    @endauth
-                                </nav>
-                            </div>
-                        @endif
+                        <div class="flex flex-col gap-3">
+                            <p class="text-xs font-semibold uppercase tracking-wider text-[#706f6c] dark:text-[#A1A09A]">Account</p>
+                            <nav class="flex flex-col gap-2">
+                                @auth
+                                    <a href="{{ url('/dashboard') }}" class="text-sm text-[#1b1b18] dark:text-[#EDEDEC] hover:text-[#706f6c] dark:hover:text-[#A1A09A] transition-colors">Dashboard</a>
+                                @else
+                                    <a href="{{ route('login') }}" class="text-sm text-[#1b1b18] dark:text-[#EDEDEC] hover:text-[#706f6c] dark:hover:text-[#A1A09A] transition-colors">Log in</a>
+                                    @if (Route::has('register'))
+                                        <a href="{{ route('register') }}" class="text-sm text-[#1b1b18] dark:text-[#EDEDEC] hover:text-[#706f6c] dark:hover:text-[#A1A09A] transition-colors">Register</a>
+                                    @endif
+                                @endauth
+                            </nav>
+                        </div>
                     </div>
                 </div>
                 <div class="mt-10 border-t border-[#e3e3e0] dark:border-[#3E3E3A] pt-6">

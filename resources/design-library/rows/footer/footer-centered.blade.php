@@ -11,6 +11,7 @@
         default-classes="h-8 w-auto mb-6" />
     <x-dl.nav slug="__SLUG__" prefix="main_nav"
         default-menu="main-navigation"
+        default-accordion="1"
         default-classes="flex flex-wrap items-center justify-center gap-6 mb-8"
         default-item-classes="text-sm text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition-colors" />
     <x-dl.grid slug="__SLUG__" prefix="social_links"
