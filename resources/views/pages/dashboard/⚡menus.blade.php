@@ -34,8 +34,6 @@ new #[Layout('layouts.app')] #[Title('Menus')] class extends Component {
     public string $newMenuLabel = '';
     public string $newMenuSlug = '';
 
-    public bool $showEditMenuModal = false;
-
     /** @var array<int, string> */
     public array $footerSlugs = [];
 
@@ -45,7 +43,8 @@ new #[Layout('layouts.app')] #[Title('Menus')] class extends Component {
 
     public bool $showAccountInFooter = true;
 
-    public bool $showEditItemModal = false;
+    public bool $showEditMenuModal = false;
+
     public int $editItemIndex = -1;
     public string $editItemType = 'page';
     public string $editItemLabel = '';
@@ -245,6 +244,12 @@ new #[Layout('layouts.app')] #[Title('Menus')] class extends Component {
 
     public function openEditItemModal(int $index): void
     {
+        if ($this->editItemIndex === $index) {
+            $this->editItemIndex = -1;
+
+            return;
+        }
+
         $item = $this->menus[$this->activeMenuIndex]['items'][$index];
         $this->editItemIndex = $index;
 
@@ -272,7 +277,6 @@ new #[Layout('layouts.app')] #[Title('Menus')] class extends Component {
         $this->editItemRoute = $item['route'] ?? '';
         $this->editItemUrl = $item['url'] ?? '';
         $this->editItemNewWindow = $item['new_window'] ?? false;
-        $this->showEditItemModal = true;
     }
 
     public function saveEditItem(): void
@@ -336,7 +340,7 @@ new #[Layout('layouts.app')] #[Title('Menus')] class extends Component {
         }
 
         $this->menus[$this->activeMenuIndex]['items'][$this->editItemIndex] = $item;
-        $this->showEditItemModal = false;
+        $this->editItemIndex = -1;
     }
 
     public function moveItemUp(int $index): void
@@ -527,133 +531,6 @@ new #[Layout('layouts.app')] #[Title('Menus')] class extends Component {
                 </flux:modal.close>
             </div>
         @endif
-    </flux:modal>
-
-    {{-- Edit item modal --}}
-    <flux:modal wire:model="showEditItemModal" class="max-w-2xl w-full">
-        <flux:heading size="lg" class="mb-6">{{ __('Edit Menu Item') }}</flux:heading>
-
-        <form wire:submit="saveEditItem" class="space-y-4">
-            <flux:radio.group wire:model.live="editItemType" :label="__('Item type')" variant="segmented">
-                <flux:radio value="page" :label="__('Existing page')" />
-                <flux:radio value="custom" :label="__('Custom URL')" />
-                <flux:radio value="dynamic" :label="__('Dynamic content')" />
-                <flux:radio value="mega" :label="__('Mega menu')" />
-            </flux:radio.group>
-
-            @if ($editItemType === 'page')
-                <flux:select wire:model.live="editItemRoute" :label="__('Page')">
-                    <flux:select.option value="">{{ __('Select a page…') }}</flux:select.option>
-                    @foreach ($this->availableRoutes as $routeName => $routeLabel)
-                        <flux:select.option value="{{ $routeName }}">{{ $routeLabel }}</flux:select.option>
-                    @endforeach
-                </flux:select>
-            @elseif ($editItemType === 'dynamic')
-                <flux:select wire:model.live="editDynamicSource" :label="__('Source')">
-                    <flux:select.option value="">{{ __('Select a source…') }}</flux:select.option>
-                    @foreach ($this->availableSources as $sourceKey => $sourceLabel)
-                        <flux:select.option value="{{ $sourceKey }}">{{ $sourceLabel }}</flux:select.option>
-                    @endforeach
-                </flux:select>
-            @elseif ($editItemType === 'mega')
-                {{-- Column builder rendered after the label field below --}}
-            @else
-                <flux:input
-                    wire:model="editItemUrl"
-                    :label="__('URL')"
-                    placeholder="https://… or #"
-                    required
-                />
-
-                <flux:checkbox
-                    wire:model="editItemNewWindow"
-                    :label="__('Open in new window')"
-                />
-            @endif
-
-            <flux:input
-                wire:model="editItemLabel"
-                :label="__('Navigation label')"
-                placeholder="e.g. Features"
-                required
-            />
-
-            @if ($editItemType === 'dynamic')
-                <flux:switch
-                    wire:model.live="editDynamicShowAll"
-                    :label="__('Show a See All link at the bottom of the dropdown')"
-                />
-
-                @if ($editDynamicShowAll)
-                    <flux:input
-                        wire:model="editDynamicShowAllLabel"
-                        :label="__('See All label')"
-                        placeholder="e.g. See All Locations"
-                    />
-                @endif
-            @elseif ($editItemType === 'mega')
-                <div class="space-y-3">
-                    @foreach ($editMegaColumns as $colIndex => $col)
-                        <div class="rounded-lg border border-zinc-200 dark:border-zinc-700 p-4 space-y-3">
-                            <div class="flex items-center justify-between">
-                                <flux:heading size="sm">{{ __('Column') }} {{ $colIndex + 1 }}</flux:heading>
-                                <flux:button wire:click="removeMegaColumn('edit', {{ $colIndex }})" variant="ghost" size="sm" icon="trash" class="text-red-500 dark:text-red-400" />
-                            </div>
-                            <flux:input wire:model="editMegaColumns.{{ $colIndex }}.heading" :label="__('Column heading (optional)')" placeholder="e.g. Platform" />
-                            @foreach ($col['links'] as $linkIndex => $link)
-                                <div class="rounded border border-zinc-100 dark:border-zinc-800 p-3 space-y-2">
-                                    <div class="flex items-center justify-between">
-                                        <flux:text size="sm" class="font-medium">{{ __('Link') }} {{ $linkIndex + 1 }}</flux:text>
-                                        <flux:button wire:click="removeMegaLink('edit', {{ $colIndex }}, {{ $linkIndex }})" variant="ghost" size="sm" icon="x-mark" />
-                                    </div>
-                                    <div class="grid grid-cols-2 gap-2">
-                                        <div>
-                                            <p class="text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">{{ __('Icon') }}</p>
-                                            <div class="flex items-center gap-2 px-2.5 py-2 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 dark:text-white">
-                                                @php $editIconVal = $link['icon'] ?? ''; @endphp
-                                                <div class="size-5 shrink-0 text-zinc-500 dark:text-zinc-400">
-                                                    @if(str_starts_with($editIconVal, 'ion:'))
-                                                        <x-ionicon name="{{ substr($editIconVal, 4) }}" class="size-5" />
-                                                    @elseif($editIconVal && str_contains($editIconVal, ':'))
-                                                        @php [$_n, $_v] = explode(':', $editIconVal, 2); @endphp
-                                                        <x-heroicon name="{{ $_n }}" variant="{{ $_v }}" class="size-5" />
-                                                    @elseif($editIconVal)
-                                                        <x-heroicon name="{{ $editIconVal }}" class="size-5" />
-                                                    @endif
-                                                </div>
-                                                <span class="text-sm text-zinc-500 dark:text-zinc-400 flex-1 font-mono truncate">{{ $editIconVal ?: '—' }}</span>
-                                                <button type="button"
-                                                    @click="iconPickerOpen = true; iconPickerWireKey = 'editMegaColumns.{{ $colIndex }}.links.{{ $linkIndex }}.icon'"
-                                                    class="text-xs text-primary hover:text-primary/80 shrink-0 transition-colors">
-                                                    {{ __('Change') }}
-                                                </button>
-                                            </div>
-                                        </div>
-                                        <flux:input wire:model="editMegaColumns.{{ $colIndex }}.links.{{ $linkIndex }}.title" :label="__('Title')" placeholder="Performance" required />
-                                    </div>
-                                    <flux:input wire:model="editMegaColumns.{{ $colIndex }}.links.{{ $linkIndex }}.desc" :label="__('Description')" placeholder="Short description (optional)" />
-                                    <flux:input wire:model="editMegaColumns.{{ $colIndex }}.links.{{ $linkIndex }}.url" :label="__('URL')" placeholder="/pricing or https://…" />
-                                    <flux:checkbox wire:model="editMegaColumns.{{ $colIndex }}.links.{{ $linkIndex }}.new_tab" :label="__('Open in new tab')" />
-                                </div>
-                            @endforeach
-                            <flux:button wire:click="addMegaLink('edit', {{ $colIndex }})" variant="ghost" size="sm" icon="plus">{{ __('Add link') }}</flux:button>
-                        </div>
-                    @endforeach
-                </div>
-
-                <flux:button wire:click="addMegaColumnToEdit" variant="outline" size="sm" icon="plus">{{ __('Add column') }}</flux:button>
-            @endif
-
-            <div class="flex items-center justify-end gap-3 pt-2">
-                <flux:modal.close>
-                    <flux:button variant="ghost">{{ __('Cancel') }}</flux:button>
-                </flux:modal.close>
-                <flux:button type="submit" variant="primary" wire:loading.attr="disabled">
-                    <span wire:loading.remove>{{ __('Save') }}</span>
-                    <span wire:loading>{{ __('Saving…') }}</span>
-                </flux:button>
-            </div>
-        </form>
     </flux:modal>
 
     {{-- Add item modal --}}
@@ -943,6 +820,132 @@ new #[Layout('layouts.app')] #[Title('Menus')] class extends Component {
                                                     </div>
                                                 </td>
                                             </tr>
+                                            @if ($editItemIndex === $index)
+                                                <tr wire:key="menu-{{ $activeMenuIndex }}-item-{{ $index }}-edit" class="bg-zinc-50 dark:bg-zinc-800/40">
+                                                    <td colspan="3" class="px-6 py-5">
+                                                        <form wire:submit="saveEditItem" class="space-y-4">
+                                                            <flux:radio.group wire:model.live="editItemType" :label="__('Item type')" variant="segmented">
+                                                                <flux:radio value="page" :label="__('Existing page')" />
+                                                                <flux:radio value="custom" :label="__('Custom URL')" />
+                                                                <flux:radio value="dynamic" :label="__('Dynamic content')" />
+                                                                <flux:radio value="mega" :label="__('Mega menu')" />
+                                                            </flux:radio.group>
+
+                                                            @if ($editItemType === 'page')
+                                                                <flux:select wire:model.live="editItemRoute" :label="__('Page')">
+                                                                    <flux:select.option value="">{{ __('Select a page…') }}</flux:select.option>
+                                                                    @foreach ($this->availableRoutes as $routeName => $routeLabel)
+                                                                        <flux:select.option value="{{ $routeName }}">{{ $routeLabel }}</flux:select.option>
+                                                                    @endforeach
+                                                                </flux:select>
+                                                            @elseif ($editItemType === 'dynamic')
+                                                                <flux:select wire:model.live="editDynamicSource" :label="__('Source')">
+                                                                    <flux:select.option value="">{{ __('Select a source…') }}</flux:select.option>
+                                                                    @foreach ($this->availableSources as $sourceKey => $sourceLabel)
+                                                                        <flux:select.option value="{{ $sourceKey }}">{{ $sourceLabel }}</flux:select.option>
+                                                                    @endforeach
+                                                                </flux:select>
+                                                            @elseif ($editItemType === 'mega')
+                                                                {{-- Column builder rendered after the label field below --}}
+                                                            @else
+                                                                <flux:input
+                                                                    wire:model="editItemUrl"
+                                                                    :label="__('URL')"
+                                                                    placeholder="https://… or #"
+                                                                    required
+                                                                />
+                                                                <flux:checkbox
+                                                                    wire:model="editItemNewWindow"
+                                                                    :label="__('Open in new window')"
+                                                                />
+                                                            @endif
+
+                                                            <flux:input
+                                                                wire:model="editItemLabel"
+                                                                :label="__('Navigation label')"
+                                                                placeholder="e.g. Features"
+                                                                required
+                                                            />
+
+                                                            @if ($editItemType === 'dynamic')
+                                                                <flux:switch
+                                                                    wire:model.live="editDynamicShowAll"
+                                                                    :label="__('Show a See All link at the bottom of the dropdown')"
+                                                                />
+                                                                @if ($editDynamicShowAll)
+                                                                    <flux:input
+                                                                        wire:model="editDynamicShowAllLabel"
+                                                                        :label="__('See All label')"
+                                                                        placeholder="e.g. See All Locations"
+                                                                    />
+                                                                @endif
+                                                            @elseif ($editItemType === 'mega')
+                                                                <div class="space-y-3">
+                                                                    @foreach ($editMegaColumns as $colIndex => $col)
+                                                                        <div class="rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 p-4 space-y-3">
+                                                                            <div class="flex items-center justify-between">
+                                                                                <flux:heading size="sm">{{ __('Column') }} {{ $colIndex + 1 }}</flux:heading>
+                                                                                <flux:button wire:click="removeMegaColumn('edit', {{ $colIndex }})" variant="ghost" size="sm" icon="trash" class="text-red-500 dark:text-red-400" />
+                                                                            </div>
+                                                                            <flux:input wire:model="editMegaColumns.{{ $colIndex }}.heading" :label="__('Column heading (optional)')" placeholder="e.g. Platform" />
+                                                                            @foreach ($col['links'] as $linkIndex => $link)
+                                                                                <div class="rounded border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 p-3 space-y-2">
+                                                                                    <div class="flex items-center justify-between">
+                                                                                        <flux:text size="sm" class="font-medium">{{ __('Link') }} {{ $linkIndex + 1 }}</flux:text>
+                                                                                        <flux:button wire:click="removeMegaLink('edit', {{ $colIndex }}, {{ $linkIndex }})" variant="ghost" size="sm" icon="x-mark" />
+                                                                                    </div>
+                                                                                    <div class="grid grid-cols-2 gap-2">
+                                                                                        <div>
+                                                                                            <p class="text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">{{ __('Icon') }}</p>
+                                                                                            <div class="flex items-center gap-2 px-2.5 py-2 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 dark:text-white">
+                                                                                                @php $editIconVal = $link['icon'] ?? ''; @endphp
+                                                                                                <div class="size-5 shrink-0 text-zinc-500 dark:text-zinc-400">
+                                                                                                    @if(str_starts_with($editIconVal, 'ion:'))
+                                                                                                        <x-ionicon name="{{ substr($editIconVal, 4) }}" class="size-5" />
+                                                                                                    @elseif($editIconVal && str_contains($editIconVal, ':'))
+                                                                                                        @php [$_n, $_v] = explode(':', $editIconVal, 2); @endphp
+                                                                                                        <x-heroicon name="{{ $_n }}" variant="{{ $_v }}" class="size-5" />
+                                                                                                    @elseif($editIconVal)
+                                                                                                        <x-heroicon name="{{ $editIconVal }}" class="size-5" />
+                                                                                                    @endif
+                                                                                                </div>
+                                                                                                <span class="text-sm text-zinc-500 dark:text-zinc-400 flex-1 font-mono truncate">{{ $editIconVal ?: '—' }}</span>
+                                                                                                <button type="button"
+                                                                                                    @click="iconPickerOpen = true; iconPickerWireKey = 'editMegaColumns.{{ $colIndex }}.links.{{ $linkIndex }}.icon'"
+                                                                                                    class="text-xs text-primary hover:text-primary/80 shrink-0 transition-colors">
+                                                                                                    {{ __('Change') }}
+                                                                                                </button>
+                                                                                            </div>
+                                                                                        </div>
+                                                                                        <flux:input wire:model="editMegaColumns.{{ $colIndex }}.links.{{ $linkIndex }}.title" :label="__('Title')" placeholder="Performance" required />
+                                                                                    </div>
+                                                                                    <flux:input wire:model="editMegaColumns.{{ $colIndex }}.links.{{ $linkIndex }}.desc" :label="__('Description')" placeholder="Short description (optional)" />
+                                                                                    <flux:input wire:model="editMegaColumns.{{ $colIndex }}.links.{{ $linkIndex }}.url" :label="__('URL')" placeholder="/pricing or https://…" />
+                                                                                    <flux:checkbox wire:model="editMegaColumns.{{ $colIndex }}.links.{{ $linkIndex }}.new_tab" :label="__('Open in new tab')" />
+                                                                                </div>
+                                                                            @endforeach
+                                                                            <flux:button wire:click="addMegaLink('edit', {{ $colIndex }})" variant="ghost" size="sm" icon="plus">{{ __('Add link') }}</flux:button>
+                                                                        </div>
+                                                                    @endforeach
+                                                                </div>
+                                                                <flux:button wire:click="addMegaColumnToEdit" variant="outline" size="sm" icon="plus">{{ __('Add column') }}</flux:button>
+                                                            @endif
+
+                                                            <div class="flex items-center justify-end gap-3 pt-2">
+                                                                <flux:button
+                                                                    type="button"
+                                                                    wire:click="$set('editItemIndex', -1)"
+                                                                    variant="ghost"
+                                                                >{{ __('Cancel') }}</flux:button>
+                                                                <flux:button type="submit" variant="primary" wire:loading.attr="disabled">
+                                                                    <span wire:loading.remove>{{ __('Save') }}</span>
+                                                                    <span wire:loading>{{ __('Saving…') }}</span>
+                                                                </flux:button>
+                                                            </div>
+                                                        </form>
+                                                    </td>
+                                                </tr>
+                                            @endif
                                         @endforeach
                                     </tbody>
                                 </table>
