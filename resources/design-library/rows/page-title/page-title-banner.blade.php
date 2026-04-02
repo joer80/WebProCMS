@@ -9,7 +9,7 @@
     <x-dl.wrapper slug="__SLUG__" prefix="overlay" tag="div"
         default-toggle="1"
         default-classes="absolute inset-0 bg-black/50" />
-    <x-dl.heading slug="__SLUG__" prefix="headline" default="{{ $pageName ?? 'Page Title' }}"
+    <x-dl.heading slug="__SLUG__" prefix="headline" default="{{ $pageName ?: 'Page Title' }}"
         default-tag="h1"
         default-classes="relative z-10 font-heading text-4xl sm:text-5xl font-bold text-white" />
 </x-dl.section>

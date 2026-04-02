@@ -7,9 +7,9 @@ use Livewire\Component;
 new #[Layout('layouts.public')] class extends Component {
     public Location $location;
 
-    public function mount(Location $location): void
+    public function mount(string $location): void
     {
-        $this->location = $location;
+        $this->location = Location::findOrFail($location);
     }
 
     public function title(): string
@@ -45,7 +45,7 @@ new #[Layout('layouts.public')] class extends Component {
     <x-dl.wrapper slug="location-detail:Kp7mNq" prefix="content_grid"
         default-classes="grid md:grid-cols-2 gap-10 items-start">
 
-        @if ($location->photoUrl())
+        @if (isset($location) && $location->photoUrl())
             <x-dl.wrapper slug="location-detail:Kp7mNq" prefix="photo" tag="img"
                 src="{{ $location->photoUrl() }}"
                 alt="{{ $location->name }}"
@@ -67,7 +67,7 @@ new #[Layout('layouts.public')] class extends Component {
                 <p>{{ $location->address }}</p>
                 <p>{{ $location->city }}, {{ $location->state }} {{ $location->zip }}</p>
             </x-dl.wrapper>
-            @if ($location->phone)
+            @if (isset($location) && $location->phone)
                 <x-dl.wrapper slug="location-detail:Kp7mNq" prefix="phone" tag="p"
                     default-classes="text-zinc-600 dark:text-zinc-400">
                     {{ $location->phone }}

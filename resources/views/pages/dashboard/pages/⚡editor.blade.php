@@ -2696,6 +2696,34 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
             return;
         }
 
+        if ($this->file === 'pages/events/⚡show.blade.php') {
+            $this->previewContextOptions = \App\Models\Event::query()
+                ->orderBy('start_date')
+                ->limit(50)
+                ->pluck('title', 'slug')
+                ->all();
+
+            if (! $this->previewContext || ! isset($this->previewContextOptions[$this->previewContext])) {
+                $this->previewContext = array_key_first($this->previewContextOptions) ?? '';
+            }
+
+            return;
+        }
+
+        if ($this->file === 'pages/locations/⚡show.blade.php') {
+            $this->previewContextOptions = \App\Models\Location::query()
+                ->orderBy('name')
+                ->limit(50)
+                ->pluck('name', 'id')
+                ->all();
+
+            if (! $this->previewContext || ! isset($this->previewContextOptions[$this->previewContext])) {
+                $this->previewContext = (string) array_key_first($this->previewContextOptions) ?? '';
+            }
+
+            return;
+        }
+
         // No context options for this file — clear any stale selection.
         $this->previewContext = '';
     }
@@ -2709,6 +2737,14 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
     {
         if ($this->file === 'pages/blog/⚡show.blade.php' && $this->previewContext) {
             return ['slug' => $this->previewContext];
+        }
+
+        if ($this->file === 'pages/events/⚡show.blade.php' && $this->previewContext) {
+            return ['slug' => $this->previewContext];
+        }
+
+        if ($this->file === 'pages/locations/⚡show.blade.php' && $this->previewContext) {
+            return ['location' => $this->previewContext];
         }
 
         return [];
