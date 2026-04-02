@@ -7,7 +7,7 @@ $navClasses = content($slug, "{$prefix}_classes", $defaultClasses);
 $itemClasses = content($slug, "{$prefix}_item_classes", $defaultItemClasses);
 $activeItemClasses = content($slug, "{$prefix}_active_item_classes", $defaultActiveItemClasses);
 $dropdownClasses = content($slug, "{$prefix}_dropdown_classes", $defaultDropdownClasses ?: 'absolute top-full left-0 z-50 mt-7 min-w-48 rounded-b-lg border border-zinc-200 bg-white shadow-lg dark:border-zinc-700 dark:bg-zinc-900 py-1');
-$dropdownItemClasses = content($slug, "{$prefix}_dropdown_item_classes", $defaultDropdownItemClasses ?: 'block px-4 py-2 text-sm text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors');
+$dropdownItemClasses = content($slug, "{$prefix}_dropdown_item_classes", $defaultDropdownItemClasses ?: 'block px-4 py-2 text-sm text-zinc-700 dark:text-zinc-300 hover:bg-primary hover:text-white transition-colors');
 $navId = content($slug, "{$prefix}_id", '');
 $navAttrsRaw = json_decode(content($slug, "{$prefix}_attrs", '[]'), true) ?: [];
 $extraAttrsStr = ' data-editor-group="' . e($prefix) . '"';

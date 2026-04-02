@@ -20,6 +20,12 @@ new #[Layout('layouts.app')] #[Title('Templates')] class extends Component {
 
     public string $pendingDeleteSlug = '';
 
+    public bool $showConfirmModal = false;
+
+    public string $confirmAction = '';
+
+    public int $confirmId = 0;
+
     public function mount(): void
     {
         $config = (new LayoutService)->getConfig();
@@ -173,6 +179,47 @@ new #[Layout('layouts.app')] #[Title('Templates')] class extends Component {
             route('dashboard.design-library.editor').'?file='.urlencode("shared-row-wrappers/{$filename}.blade.php"),
             navigate: true
         );
+    }
+
+    public function confirmActivateHeader(int $id): void
+    {
+        $this->confirmAction = 'activateHeader';
+        $this->confirmId = $id;
+        $this->showConfirmModal = true;
+    }
+
+    public function confirmDeactivateHeader(): void
+    {
+        $this->confirmAction = 'deactivateHeader';
+        $this->showConfirmModal = true;
+    }
+
+    public function confirmActivateFooter(int $id): void
+    {
+        $this->confirmAction = 'activateFooter';
+        $this->confirmId = $id;
+        $this->showConfirmModal = true;
+    }
+
+    public function confirmDeactivateFooter(): void
+    {
+        $this->confirmAction = 'deactivateFooter';
+        $this->showConfirmModal = true;
+    }
+
+    public function executeConfirm(): void
+    {
+        match ($this->confirmAction) {
+            'activateHeader' => $this->activateHeader($this->confirmId),
+            'deactivateHeader' => $this->deactivateHeader(),
+            'activateFooter' => $this->activateFooter($this->confirmId),
+            'deactivateFooter' => $this->deactivateFooter(),
+            default => null,
+        };
+
+        $this->confirmAction = '';
+        $this->confirmId = 0;
+        $this->showConfirmModal = false;
     }
 
     public function confirmDeleteSharedRow(string $slug): void
@@ -353,8 +400,7 @@ new #[Layout('layouts.app')] #[Title('Templates')] class extends Component {
                                     </flux:button>
                                 @endif
                                 <flux:button
-                                    wire:click="deactivateHeader"
-                                    wire:confirm="Revert to the built-in header?"
+                                    wire:click="confirmDeactivateHeader"
                                     variant="ghost"
                                     icon="x-mark"
                                 >
@@ -388,8 +434,7 @@ new #[Layout('layouts.app')] #[Title('Templates')] class extends Component {
                                 </div>
                                 @if(! $isActive)
                                     <flux:button
-                                        wire:click="activateHeader({{ $header->id }})"
-                                        wire:confirm="Activate '{{ $header->name }}' as your site header? This will replace the current header."
+                                        wire:click="confirmActivateHeader({{ $header->id }})"
                                         variant="outline"
                                         size="sm"
                                         class="shrink-0"
@@ -445,8 +490,7 @@ new #[Layout('layouts.app')] #[Title('Templates')] class extends Component {
                                     </flux:button>
                                 @endif
                                 <flux:button
-                                    wire:click="deactivateFooter"
-                                    wire:confirm="Revert to the built-in footer?"
+                                    wire:click="confirmDeactivateFooter"
                                     variant="ghost"
                                     icon="x-mark"
                                 >
@@ -480,8 +524,7 @@ new #[Layout('layouts.app')] #[Title('Templates')] class extends Component {
                                 </div>
                                 @if(! $isActive)
                                     <flux:button
-                                        wire:click="activateFooter({{ $footer->id }})"
-                                        wire:confirm="Activate '{{ $footer->name }}' as your site footer? This will replace the current footer."
+                                        wire:click="confirmActivateFooter({{ $footer->id }})"
                                         variant="outline"
                                         size="sm"
                                         class="shrink-0"
@@ -583,6 +626,32 @@ new #[Layout('layouts.app')] #[Title('Templates')] class extends Component {
             </div>
         @endif
     </flux:main>
+
+    <flux:modal wire:model="showConfirmModal" class="w-full max-w-sm">
+        @php
+            $confirmHeading = match($confirmAction) {
+                'activateHeader', 'activateFooter' => 'Activate template?',
+                'deactivateHeader' => 'Revert header?',
+                'deactivateFooter' => 'Revert footer?',
+                default => 'Are you sure?',
+            };
+            $confirmText = match($confirmAction) {
+                'activateHeader' => 'This will replace the current header.',
+                'deactivateHeader' => 'This will revert to the built-in default header.',
+                'activateFooter' => 'This will replace the current footer.',
+                'deactivateFooter' => 'This will revert to the built-in default footer.',
+                default => 'This action cannot be undone.',
+            };
+        @endphp
+        <flux:heading size="lg">{{ $confirmHeading }}</flux:heading>
+        <flux:text class="mt-2">{{ $confirmText }}</flux:text>
+        <div class="mt-6 flex justify-end gap-3">
+            <flux:modal.close>
+                <flux:button variant="ghost">Cancel</flux:button>
+            </flux:modal.close>
+            <flux:button variant="primary" wire:click="executeConfirm">Confirm</flux:button>
+        </div>
+    </flux:modal>
 
     <flux:modal name="confirm-delete-shared-row" class="w-full max-w-sm">
         <flux:heading size="lg">Delete shared row?</flux:heading>

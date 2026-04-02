@@ -14,7 +14,7 @@
     <x-dl.nav slug="header-simple:header" prefix="main_nav"
         default-menu="main-navigation"
         default-classes="hidden md:flex items-center gap-8"
-        default-item-classes="text-sm uppercase tracking-wide font-medium text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition-colors"
+        default-item-classes="text-sm uppercase tracking-wide font-medium text-zinc-600 dark:text-zinc-400 hover:text-primary transition-colors"
         default-active-item-classes="!text-primary" />
     <x-dl.wrapper slug="header-simple:header" prefix="header_button"
         default-classes="flex items-center gap-3">
@@ -41,7 +41,7 @@
         <x-dl.nav slug="header-simple:header" prefix="mobile_nav"
             default-menu="main-navigation"
             default-classes="flex flex-col"
-            default-item-classes="block py-3 text-base font-medium text-zinc-700 dark:text-zinc-200 hover:text-zinc-900 dark:hover:text-white border-b border-zinc-100 dark:border-zinc-800 last:border-0 transition-colors" />
+            default-item-classes="block py-3 text-base font-medium text-zinc-700 dark:text-zinc-200 hover:text-primary border-b border-zinc-100 dark:border-zinc-800 last:border-0 transition-colors" />
         <x-dl.link slug="header-simple:header" prefix="mobile_cta"
             label-toggle="Show Button"
             label-text="Button Text"
