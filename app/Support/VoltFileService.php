@@ -43,6 +43,10 @@ class VoltFileService
             }
         }
 
+        foreach ($groups as &$group) {
+            ksort($group);
+        }
+
         return array_filter($groups);
     }
 
@@ -478,7 +482,7 @@ JS;
         $parentDir = basename(dirname($relativePath));
 
         if ($parentDir !== 'pages' && $parentDir !== '.') {
-            $name = $parentDir.' '.$name;
+            $name = $name === 'index' ? $parentDir : $parentDir.' '.$name;
         }
 
         return ucwords(str_replace(['-', '_'], ' ', $name));
