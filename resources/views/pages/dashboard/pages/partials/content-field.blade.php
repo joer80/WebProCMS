@@ -479,7 +479,7 @@ if ($field['type'] === 'classes') {
                                 @endif
                             </div>
                             <template x-if="fKey === 'icon'">
-                                <div x-data="{ pickerOpen: false, search: '', variant: 'outline' }">
+                                <div x-data="{ pickerOpen: false, search: '', library: 'heroicons', variant: 'outline' }">
                                     {{-- Compact current selection --}}
                                     <div class="flex items-center gap-2 px-2.5 py-2 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900">
                                         <div class="size-5 shrink-0 text-zinc-600 dark:text-zinc-300">
@@ -489,6 +489,11 @@ if ($field['type'] === 'classes') {
                                                 </template>
                                                 <template x-if="item[fKey] === '{{ $iconName }}:solid'">
                                                     <x-heroicon name="{{ $iconName }}" variant="solid" class="size-5" />
+                                                </template>
+                                            @endforeach
+                                            @foreach (['add-outline', 'alarm-outline', 'alert-circle-outline', 'arrow-back-outline', 'arrow-forward-outline', 'at-outline', 'bookmark-outline', 'briefcase-outline', 'bulb-outline', 'call-outline', 'camera-outline', 'checkmark-outline', 'close-outline', 'cloud-outline', 'cog-outline', 'compass-outline', 'earth-outline', 'flash-outline', 'folder-outline', 'grid-outline', 'heart-outline', 'home-outline', 'image-outline', 'link-outline', 'list-outline', 'location-outline', 'lock-closed-outline', 'mail-outline', 'map-outline', 'menu-outline', 'mic-outline', 'notifications-outline', 'people-outline', 'person-outline', 'search-outline', 'settings-outline', 'share-outline', 'star-outline', 'thumbs-up-outline', 'time-outline', 'trash-outline', 'wallet-outline'] as $ionName)
+                                                <template x-if="item[fKey] === 'ion:{{ $ionName }}'">
+                                                    <x-ionicon name="{{ $ionName }}" class="size-5" />
                                                 </template>
                                             @endforeach
                                         </div>
@@ -504,6 +509,13 @@ if ($field['type'] === 'classes') {
                                             $allIconsData = require resource_path('heroicons/data.php');
                                             $outlineIcons = array_keys($allIconsData['outline']);
                                             $solidIcons   = array_keys($allIconsData['solid']);
+                                        }
+                                        if (! isset($ionIconsFilled)) {
+                                            $allIonIconsData = require resource_path('ionicons/data.php');
+                                            $ionIconNames    = array_keys($allIonIconsData);
+                                            $ionIconsFilled  = array_values(array_filter($ionIconNames, fn ($n) => ! str_ends_with($n, '-outline') && ! str_ends_with($n, '-sharp')));
+                                            $ionIconsOutline = array_values(array_filter($ionIconNames, fn ($n) => str_ends_with($n, '-outline')));
+                                            $ionIconsSharp   = array_values(array_filter($ionIconNames, fn ($n) => str_ends_with($n, '-sharp')));
                                         }
                                     @endphp
                                     <div
@@ -522,9 +534,26 @@ if ($field['type'] === 'classes') {
                                             <div class="flex items-center justify-between px-5 pt-5 pb-3 border-b border-zinc-200 dark:border-zinc-700 shrink-0">
                                                 <p class="text-sm font-semibold text-zinc-900 dark:text-white">Select Icon</p>
                                                 <div class="flex items-center gap-3">
+                                                    {{-- Library toggle --}}
                                                     <div class="flex rounded-lg border border-zinc-200 dark:border-zinc-700 p-0.5">
-                                                        <button type="button" @click="variant = 'outline'" :class="variant === 'outline' ? 'bg-zinc-100 dark:bg-zinc-700 text-zinc-900 dark:text-white' : 'text-zinc-500 dark:text-zinc-400'" class="px-2.5 py-1 text-xs font-medium rounded-md transition-colors">Outline</button>
-                                                        <button type="button" @click="variant = 'solid'" :class="variant === 'solid' ? 'bg-zinc-100 dark:bg-zinc-700 text-zinc-900 dark:text-white' : 'text-zinc-500 dark:text-zinc-400'" class="px-2.5 py-1 text-xs font-medium rounded-md transition-colors">Solid</button>
+                                                        <button type="button" @click="library = 'heroicons'; variant = 'outline'" x-bind:class="library === 'heroicons' ? 'bg-zinc-100 dark:bg-zinc-700 text-zinc-900 dark:text-white' : 'text-zinc-500 dark:text-zinc-400'" class="px-2.5 py-1 text-xs font-medium rounded-md transition-colors">Heroicons</button>
+                                                        <button type="button" @click="library = 'ionicons'; variant = 'outline'" x-bind:class="library === 'ionicons' ? 'bg-zinc-100 dark:bg-zinc-700 text-zinc-900 dark:text-white' : 'text-zinc-500 dark:text-zinc-400'" class="px-2.5 py-1 text-xs font-medium rounded-md transition-colors">Ionicons</button>
+                                                    </div>
+                                                    {{-- Variant toggle --}}
+                                                    <div class="flex rounded-lg border border-zinc-200 dark:border-zinc-700 p-0.5">
+                                                        <template x-if="library === 'heroicons'">
+                                                            <div class="flex">
+                                                                <button type="button" @click="variant = 'outline'" x-bind:class="variant === 'outline' ? 'bg-zinc-100 dark:bg-zinc-700 text-zinc-900 dark:text-white' : 'text-zinc-500 dark:text-zinc-400'" class="px-2.5 py-1 text-xs font-medium rounded-md transition-colors">Outline</button>
+                                                                <button type="button" @click="variant = 'solid'" x-bind:class="variant === 'solid' ? 'bg-zinc-100 dark:bg-zinc-700 text-zinc-900 dark:text-white' : 'text-zinc-500 dark:text-zinc-400'" class="px-2.5 py-1 text-xs font-medium rounded-md transition-colors">Solid</button>
+                                                            </div>
+                                                        </template>
+                                                        <template x-if="library === 'ionicons'">
+                                                            <div class="flex">
+                                                                <button type="button" @click="variant = 'filled'" x-bind:class="variant === 'filled' ? 'bg-zinc-100 dark:bg-zinc-700 text-zinc-900 dark:text-white' : 'text-zinc-500 dark:text-zinc-400'" class="px-2.5 py-1 text-xs font-medium rounded-md transition-colors">Filled</button>
+                                                                <button type="button" @click="variant = 'outline'" x-bind:class="variant === 'outline' ? 'bg-zinc-100 dark:bg-zinc-700 text-zinc-900 dark:text-white' : 'text-zinc-500 dark:text-zinc-400'" class="px-2.5 py-1 text-xs font-medium rounded-md transition-colors">Outline</button>
+                                                                <button type="button" @click="variant = 'sharp'" x-bind:class="variant === 'sharp' ? 'bg-zinc-100 dark:bg-zinc-700 text-zinc-900 dark:text-white' : 'text-zinc-500 dark:text-zinc-400'" class="px-2.5 py-1 text-xs font-medium rounded-md transition-colors">Sharp</button>
+                                                            </div>
+                                                        </template>
                                                     </div>
                                                     <button type="button" @click="pickerOpen = false; search = ''" class="text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 transition-colors">
                                                         <flux:icon name="x-mark" class="size-4" />
@@ -538,19 +567,36 @@ if ($field['type'] === 'classes') {
                                                     type="text"
                                                     placeholder="Search icons… or press Enter to use any name"
                                                     class="w-full text-sm rounded-lg border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-900 text-zinc-900 dark:text-white px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition"
-                                                    @keydown.enter.prevent="if (search.trim()) { updateField(idx, fKey, search.trim()); search = ''; pickerOpen = false; }"
+                                                    @keydown.enter.prevent="if (search.trim()) { updateField(idx, fKey, library === 'ionicons' ? 'ion:' + search.trim() : search.trim()); search = ''; pickerOpen = false; }"
                                                 />
                                             </div>
                                             {{-- Icon grids --}}
                                             <div class="overflow-y-auto p-5">
-                                                <div x-show="variant === 'outline'" class="grid grid-cols-10 gap-1">
+                                                {{-- Heroicons --}}
+                                                <div x-show="library === 'heroicons' && variant === 'outline'" class="grid grid-cols-10 gap-1">
                                                     @foreach ($outlineIcons as $iconName)
-                                                        <button type="button" x-show="!search || '{{ $iconName }}'.includes(search)" @click="updateField(idx, fKey, '{{ $iconName }}'); search = ''; pickerOpen = false" :class="item[fKey] === '{{ $iconName }}' ? 'border-primary bg-primary/10 text-primary' : 'border-zinc-200 dark:border-zinc-700 hover:border-zinc-400 dark:hover:border-zinc-500 text-zinc-500 dark:text-zinc-400'" class="flex items-center justify-center p-2 rounded-lg border transition-colors" title="{{ $iconName }}"><x-heroicon name="{{ $iconName }}" class="size-5" /></button>
+                                                        <button type="button" x-show="!search || '{{ $iconName }}'.includes(search)" @click="updateField(idx, fKey, '{{ $iconName }}'); search = ''; pickerOpen = false" x-bind:class="item[fKey] === '{{ $iconName }}' ? 'border-primary bg-primary/10 text-primary' : 'border-zinc-200 dark:border-zinc-700 hover:border-zinc-400 dark:hover:border-zinc-500 text-zinc-500 dark:text-zinc-400'" class="flex items-center justify-center p-2 rounded-lg border transition-colors" title="{{ $iconName }}"><x-heroicon name="{{ $iconName }}" class="size-5" /></button>
                                                     @endforeach
                                                 </div>
-                                                <div x-show="variant === 'solid'" class="grid grid-cols-10 gap-1">
+                                                <div x-show="library === 'heroicons' && variant === 'solid'" class="grid grid-cols-10 gap-1">
                                                     @foreach ($solidIcons as $iconName)
-                                                        <button type="button" x-show="!search || '{{ $iconName }}'.includes(search)" @click="updateField(idx, fKey, '{{ $iconName }}:solid'); search = ''; pickerOpen = false" :class="item[fKey] === '{{ $iconName }}:solid' ? 'border-primary bg-primary/10 text-primary' : 'border-zinc-200 dark:border-zinc-700 hover:border-zinc-400 dark:hover:border-zinc-500 text-zinc-500 dark:text-zinc-400'" class="flex items-center justify-center p-2 rounded-lg border transition-colors" title="{{ $iconName }}"><x-heroicon name="{{ $iconName }}" variant="solid" class="size-5" /></button>
+                                                        <button type="button" x-show="!search || '{{ $iconName }}'.includes(search)" @click="updateField(idx, fKey, '{{ $iconName }}:solid'); search = ''; pickerOpen = false" x-bind:class="item[fKey] === '{{ $iconName }}:solid' ? 'border-primary bg-primary/10 text-primary' : 'border-zinc-200 dark:border-zinc-700 hover:border-zinc-400 dark:hover:border-zinc-500 text-zinc-500 dark:text-zinc-400'" class="flex items-center justify-center p-2 rounded-lg border transition-colors" title="{{ $iconName }}"><x-heroicon name="{{ $iconName }}" variant="solid" class="size-5" /></button>
+                                                    @endforeach
+                                                </div>
+                                                {{-- Ionicons --}}
+                                                <div x-show="library === 'ionicons' && variant === 'filled'" class="grid grid-cols-10 gap-1">
+                                                    @foreach ($ionIconsFilled as $ionName)
+                                                        <button type="button" x-show="!search || '{{ $ionName }}'.includes(search)" @click="updateField(idx, fKey, 'ion:{{ $ionName }}'); search = ''; pickerOpen = false" x-bind:class="item[fKey] === 'ion:{{ $ionName }}' ? 'border-primary bg-primary/10 text-primary' : 'border-zinc-200 dark:border-zinc-700 hover:border-zinc-400 dark:hover:border-zinc-500 text-zinc-500 dark:text-zinc-400'" class="flex items-center justify-center p-2 rounded-lg border transition-colors" title="{{ $ionName }}"><x-ionicon name="{{ $ionName }}" class="size-5" /></button>
+                                                    @endforeach
+                                                </div>
+                                                <div x-show="library === 'ionicons' && variant === 'outline'" class="grid grid-cols-10 gap-1">
+                                                    @foreach ($ionIconsOutline as $ionName)
+                                                        <button type="button" x-show="!search || '{{ $ionName }}'.includes(search)" @click="updateField(idx, fKey, 'ion:{{ $ionName }}'); search = ''; pickerOpen = false" x-bind:class="item[fKey] === 'ion:{{ $ionName }}' ? 'border-primary bg-primary/10 text-primary' : 'border-zinc-200 dark:border-zinc-700 hover:border-zinc-400 dark:hover:border-zinc-500 text-zinc-500 dark:text-zinc-400'" class="flex items-center justify-center p-2 rounded-lg border transition-colors" title="{{ $ionName }}"><x-ionicon name="{{ $ionName }}" class="size-5" /></button>
+                                                    @endforeach
+                                                </div>
+                                                <div x-show="library === 'ionicons' && variant === 'sharp'" class="grid grid-cols-10 gap-1">
+                                                    @foreach ($ionIconsSharp as $ionName)
+                                                        <button type="button" x-show="!search || '{{ $ionName }}'.includes(search)" @click="updateField(idx, fKey, 'ion:{{ $ionName }}'); search = ''; pickerOpen = false" x-bind:class="item[fKey] === 'ion:{{ $ionName }}' ? 'border-primary bg-primary/10 text-primary' : 'border-zinc-200 dark:border-zinc-700 hover:border-zinc-400 dark:hover:border-zinc-500 text-zinc-500 dark:text-zinc-400'" class="flex items-center justify-center p-2 rounded-lg border transition-colors" title="{{ $ionName }}"><x-ionicon name="{{ $ionName }}" class="size-5" /></button>
                                                     @endforeach
                                                 </div>
                                             </div>

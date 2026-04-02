@@ -463,7 +463,8 @@ new #[Layout('layouts.app')] #[Title('Menus')] class extends Component {
     }
 }; ?>
 
-<div>
+<div x-data="{ iconPickerOpen: false, iconPickerWireKey: '', iconPickerSearch: '', iconPickerLib: 'heroicons', iconPickerVariant: 'outline' }"
+     x-init="$watch('iconPickerOpen', v => { if (v) { $refs.iconPickerDialog.showModal(); } else { $refs.iconPickerDialog.close(); iconPickerSearch = ''; } })">
     {{-- Create menu modal --}}
     <flux:modal wire:model="showCreateMenuModal" class="max-w-sm w-full">
         <flux:heading size="lg" class="mb-4">{{ __('Create Menu') }}</flux:heading>
@@ -533,7 +534,7 @@ new #[Layout('layouts.app')] #[Title('Menus')] class extends Component {
         <flux:heading size="lg" class="mb-6">{{ __('Edit Menu Item') }}</flux:heading>
 
         <form wire:submit="saveEditItem" class="space-y-4">
-            <flux:radio.group wire:model.live="editItemType" :label="__('Item type')">
+            <flux:radio.group wire:model.live="editItemType" :label="__('Item type')" variant="segmented">
                 <flux:radio value="page" :label="__('Existing page')" />
                 <flux:radio value="custom" :label="__('Custom URL')" />
                 <flux:radio value="dynamic" :label="__('Dynamic content')" />
@@ -606,7 +607,28 @@ new #[Layout('layouts.app')] #[Title('Menus')] class extends Component {
                                         <flux:button wire:click="removeMegaLink('edit', {{ $colIndex }}, {{ $linkIndex }})" variant="ghost" size="sm" icon="x-mark" />
                                     </div>
                                     <div class="grid grid-cols-2 gap-2">
-                                        <flux:input wire:model="editMegaColumns.{{ $colIndex }}.links.{{ $linkIndex }}.icon" :label="__('Icon')" placeholder="bolt" description="{{ __('Heroicon name') }}" />
+                                        <div>
+                                            <p class="text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">{{ __('Icon') }}</p>
+                                            <div class="flex items-center gap-2 px-2.5 py-2 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 dark:text-white">
+                                                @php $editIconVal = $link['icon'] ?? ''; @endphp
+                                                <div class="size-5 shrink-0 text-zinc-500 dark:text-zinc-400">
+                                                    @if(str_starts_with($editIconVal, 'ion:'))
+                                                        <x-ionicon name="{{ substr($editIconVal, 4) }}" class="size-5" />
+                                                    @elseif($editIconVal && str_contains($editIconVal, ':'))
+                                                        @php [$_n, $_v] = explode(':', $editIconVal, 2); @endphp
+                                                        <x-heroicon name="{{ $_n }}" variant="{{ $_v }}" class="size-5" />
+                                                    @elseif($editIconVal)
+                                                        <x-heroicon name="{{ $editIconVal }}" class="size-5" />
+                                                    @endif
+                                                </div>
+                                                <span class="text-sm text-zinc-500 dark:text-zinc-400 flex-1 font-mono truncate">{{ $editIconVal ?: '—' }}</span>
+                                                <button type="button"
+                                                    @click="iconPickerOpen = true; iconPickerWireKey = 'editMegaColumns.{{ $colIndex }}.links.{{ $linkIndex }}.icon'"
+                                                    class="text-xs text-primary hover:text-primary/80 shrink-0 transition-colors">
+                                                    {{ __('Change') }}
+                                                </button>
+                                            </div>
+                                        </div>
                                         <flux:input wire:model="editMegaColumns.{{ $colIndex }}.links.{{ $linkIndex }}.title" :label="__('Title')" placeholder="Performance" required />
                                     </div>
                                     <flux:input wire:model="editMegaColumns.{{ $colIndex }}.links.{{ $linkIndex }}.desc" :label="__('Description')" placeholder="Short description (optional)" />
@@ -639,7 +661,7 @@ new #[Layout('layouts.app')] #[Title('Menus')] class extends Component {
         <flux:heading size="lg" class="mb-6">{{ __('Add Menu Item') }}</flux:heading>
 
         <form wire:submit="addItem" class="space-y-4">
-            <flux:radio.group wire:model.live="addType" :label="__('Item type')">
+            <flux:radio.group wire:model.live="addType" :label="__('Item type')" variant="segmented">
                 <flux:radio value="page" :label="__('Existing page')" />
                 <flux:radio value="custom" :label="__('Custom URL')" />
                 <flux:radio value="dynamic" :label="__('Dynamic content')" />
@@ -711,7 +733,28 @@ new #[Layout('layouts.app')] #[Title('Menus')] class extends Component {
                                         <flux:button wire:click="removeMegaLink('new', {{ $colIndex }}, {{ $linkIndex }})" variant="ghost" size="sm" icon="x-mark" />
                                     </div>
                                     <div class="grid grid-cols-2 gap-2">
-                                        <flux:input wire:model="newMegaColumns.{{ $colIndex }}.links.{{ $linkIndex }}.icon" :label="__('Icon')" placeholder="bolt" description="{{ __('Heroicon name') }}" />
+                                        <div>
+                                            <p class="text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">{{ __('Icon') }}</p>
+                                            <div class="flex items-center gap-2 px-2.5 py-2 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 dark:text-white">
+                                                @php $newIconVal = $link['icon'] ?? ''; @endphp
+                                                <div class="size-5 shrink-0 text-zinc-500 dark:text-zinc-400">
+                                                    @if(str_starts_with($newIconVal, 'ion:'))
+                                                        <x-ionicon name="{{ substr($newIconVal, 4) }}" class="size-5" />
+                                                    @elseif($newIconVal && str_contains($newIconVal, ':'))
+                                                        @php [$_n, $_v] = explode(':', $newIconVal, 2); @endphp
+                                                        <x-heroicon name="{{ $_n }}" variant="{{ $_v }}" class="size-5" />
+                                                    @elseif($newIconVal)
+                                                        <x-heroicon name="{{ $newIconVal }}" class="size-5" />
+                                                    @endif
+                                                </div>
+                                                <span class="text-sm text-zinc-500 dark:text-zinc-400 flex-1 font-mono truncate">{{ $newIconVal ?: '—' }}</span>
+                                                <button type="button"
+                                                    @click="iconPickerOpen = true; iconPickerWireKey = 'newMegaColumns.{{ $colIndex }}.links.{{ $linkIndex }}.icon'"
+                                                    class="text-xs text-primary hover:text-primary/80 shrink-0 transition-colors">
+                                                    {{ __('Change') }}
+                                                </button>
+                                            </div>
+                                        </div>
                                         <flux:input wire:model="newMegaColumns.{{ $colIndex }}.links.{{ $linkIndex }}.title" :label="__('Title')" placeholder="Performance" required />
                                     </div>
                                     <flux:input wire:model="newMegaColumns.{{ $colIndex }}.links.{{ $linkIndex }}.desc" :label="__('Description')" placeholder="Short description (optional)" />
@@ -863,8 +906,7 @@ new #[Layout('layouts.app')] #[Title('Menus')] class extends Component {
                                                                 $megaCols = $item['columns'] ?? [];
                                                                 $megaLinkCount = collect($megaCols)->sum(fn ($c) => count($c['links'] ?? []));
                                                             @endphp
-                                                            <span class="inline-flex items-center rounded-full bg-violet-100 dark:bg-violet-900/30 px-2 py-0.5 text-xs font-medium text-violet-700 dark:text-violet-300 mr-1">Mega</span>
-                                                            <span class="font-mono">{{ count($megaCols) }} {{ Str::plural('column', count($megaCols)) }} · {{ $megaLinkCount }} {{ Str::plural('link', $megaLinkCount) }}</span>
+                                                            <span class="font-mono">mega · {{ count($megaCols) }} {{ Str::plural('column', count($megaCols)) }} · {{ $megaLinkCount }} {{ Str::plural('link', $megaLinkCount) }}</span>
                                                         @elseif (($item['type'] ?? null) === 'dynamic')
                                                             <span class="font-mono">dynamic · {{ $this->availableSources[$item['source']] ?? $item['source'] }}</span>
                                                         @elseif (isset($item['route']))
@@ -883,6 +925,7 @@ new #[Layout('layouts.app')] #[Title('Menus')] class extends Component {
                                                         <flux:tooltip content="Edit item" position="bottom">
                                                             <flux:button
                                                                 wire:click="openEditItemModal({{ $index }})"
+                                                                wire:target="openEditItemModal({{ $index }})"
                                                                 variant="ghost"
                                                                 size="sm"
                                                                 icon="pencil-square"
@@ -981,4 +1024,104 @@ new #[Layout('layouts.app')] #[Title('Menus')] class extends Component {
             </div>
         @endif
     </flux:main>
+
+    {{-- Shared icon picker modal (used by mega menu icon Change buttons) --}}
+    @php
+        if (! isset($outlineIconsMenus)) {
+            $allIconsDataMenus = require resource_path('heroicons/data.php');
+            $outlineIconsMenus = array_keys($allIconsDataMenus['outline']);
+            $solidIconsMenus   = array_keys($allIconsDataMenus['solid']);
+        }
+        if (! isset($ionIconsFilledMenus)) {
+            $allIonIconsDataMenus = require resource_path('ionicons/data.php');
+            $ionIconNamesMenus    = array_keys($allIonIconsDataMenus);
+            $ionIconsFilledMenus  = array_values(array_filter($ionIconNamesMenus, fn ($n) => ! str_ends_with($n, '-outline') && ! str_ends_with($n, '-sharp')));
+            $ionIconsOutlineMenus = array_values(array_filter($ionIconNamesMenus, fn ($n) => str_ends_with($n, '-outline')));
+            $ionIconsSharpMenus   = array_values(array_filter($ionIconNamesMenus, fn ($n) => str_ends_with($n, '-sharp')));
+        }
+    @endphp
+    <style>
+        dialog#icon-picker-dialog::backdrop { background-color: rgb(0 0 0 / 0.5); }
+        dialog#icon-picker-dialog { padding: 0; border: none; border-radius: 0.75rem; width: 100%; max-width: 42rem; max-height: 80vh; overflow: hidden; box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.25); }
+    </style>
+    <dialog
+        wire:ignore
+        x-ref="iconPickerDialog"
+        id="icon-picker-dialog"
+        @close="iconPickerOpen = false"
+        @click.self="iconPickerOpen = false"
+        class="bg-white dark:bg-zinc-800"
+    >
+        <div class="flex flex-col h-full overflow-hidden">
+            {{-- Header --}}
+            <div class="flex items-center justify-between px-5 pt-5 pb-3 border-b border-zinc-200 dark:border-zinc-700 shrink-0">
+                <p class="text-sm font-semibold text-zinc-900 dark:text-white">{{ __('Select Icon') }}</p>
+                <div class="flex items-center gap-3">
+                    {{-- Library toggle --}}
+                    <div class="flex rounded-lg border border-zinc-200 dark:border-zinc-700 p-0.5">
+                        <button type="button" @click="iconPickerLib = 'heroicons'; iconPickerVariant = 'outline'" x-bind:class="iconPickerLib === 'heroicons' ? 'bg-zinc-100 dark:bg-zinc-700 text-zinc-900 dark:text-white' : 'text-zinc-500 dark:text-zinc-400'" class="px-2.5 py-1 text-xs font-medium rounded-md transition-colors">Heroicons</button>
+                        <button type="button" @click="iconPickerLib = 'ionicons'; iconPickerVariant = 'outline'" x-bind:class="iconPickerLib === 'ionicons' ? 'bg-zinc-100 dark:bg-zinc-700 text-zinc-900 dark:text-white' : 'text-zinc-500 dark:text-zinc-400'" class="px-2.5 py-1 text-xs font-medium rounded-md transition-colors">Ionicons</button>
+                    </div>
+                    {{-- Variant toggle --}}
+                    <div class="flex rounded-lg border border-zinc-200 dark:border-zinc-700 p-0.5">
+                        <template x-if="iconPickerLib === 'heroicons'">
+                            <div class="flex">
+                                <button type="button" @click="iconPickerVariant = 'outline'" x-bind:class="iconPickerVariant === 'outline' ? 'bg-zinc-100 dark:bg-zinc-700 text-zinc-900 dark:text-white' : 'text-zinc-500 dark:text-zinc-400'" class="px-2.5 py-1 text-xs font-medium rounded-md transition-colors">Outline</button>
+                                <button type="button" @click="iconPickerVariant = 'solid'" x-bind:class="iconPickerVariant === 'solid' ? 'bg-zinc-100 dark:bg-zinc-700 text-zinc-900 dark:text-white' : 'text-zinc-500 dark:text-zinc-400'" class="px-2.5 py-1 text-xs font-medium rounded-md transition-colors">Solid</button>
+                            </div>
+                        </template>
+                        <template x-if="iconPickerLib === 'ionicons'">
+                            <div class="flex">
+                                <button type="button" @click="iconPickerVariant = 'filled'" x-bind:class="iconPickerVariant === 'filled' ? 'bg-zinc-100 dark:bg-zinc-700 text-zinc-900 dark:text-white' : 'text-zinc-500 dark:text-zinc-400'" class="px-2.5 py-1 text-xs font-medium rounded-md transition-colors">Filled</button>
+                                <button type="button" @click="iconPickerVariant = 'outline'" x-bind:class="iconPickerVariant === 'outline' ? 'bg-zinc-100 dark:bg-zinc-700 text-zinc-900 dark:text-white' : 'text-zinc-500 dark:text-zinc-400'" class="px-2.5 py-1 text-xs font-medium rounded-md transition-colors">Outline</button>
+                                <button type="button" @click="iconPickerVariant = 'sharp'" x-bind:class="iconPickerVariant === 'sharp' ? 'bg-zinc-100 dark:bg-zinc-700 text-zinc-900 dark:text-white' : 'text-zinc-500 dark:text-zinc-400'" class="px-2.5 py-1 text-xs font-medium rounded-md transition-colors">Sharp</button>
+                            </div>
+                        </template>
+                    </div>
+                    <button type="button" @click="iconPickerOpen = false; iconPickerSearch = ''" class="text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 transition-colors">
+                        <flux:icon name="x-mark" class="size-4" />
+                    </button>
+                </div>
+            </div>
+            {{-- Search --}}
+            <div class="px-5 py-3 border-b border-zinc-200 dark:border-zinc-700 shrink-0">
+                <input
+                    x-model="iconPickerSearch"
+                    type="text"
+                    placeholder="{{ __('Search icons…') }}"
+                    class="w-full text-sm rounded-lg border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-900 text-zinc-900 dark:text-white px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition"
+                />
+            </div>
+            {{-- Icon grids --}}
+            <div class="overflow-y-auto p-5">
+                {{-- Heroicons --}}
+                <div x-show="iconPickerLib === 'heroicons' && iconPickerVariant === 'outline'" class="grid grid-cols-10 gap-1">
+                    @foreach ($outlineIconsMenus as $iconName)
+                        <button type="button" x-show="!iconPickerSearch || '{{ $iconName }}'.includes(iconPickerSearch)" @click="$wire.set(iconPickerWireKey, '{{ $iconName }}'); iconPickerOpen = false; iconPickerSearch = ''" class="flex items-center justify-center p-2 rounded-lg border border-zinc-200 dark:border-zinc-700 hover:border-zinc-400 dark:hover:border-zinc-500 text-zinc-500 dark:text-zinc-400 transition-colors" title="{{ $iconName }}"><x-heroicon name="{{ $iconName }}" class="size-5" /></button>
+                    @endforeach
+                </div>
+                <div x-show="iconPickerLib === 'heroicons' && iconPickerVariant === 'solid'" class="grid grid-cols-10 gap-1">
+                    @foreach ($solidIconsMenus as $iconName)
+                        <button type="button" x-show="!iconPickerSearch || '{{ $iconName }}'.includes(iconPickerSearch)" @click="$wire.set(iconPickerWireKey, '{{ $iconName }}:solid'); iconPickerOpen = false; iconPickerSearch = ''" class="flex items-center justify-center p-2 rounded-lg border border-zinc-200 dark:border-zinc-700 hover:border-zinc-400 dark:hover:border-zinc-500 text-zinc-500 dark:text-zinc-400 transition-colors" title="{{ $iconName }}"><x-heroicon name="{{ $iconName }}" variant="solid" class="size-5" /></button>
+                    @endforeach
+                </div>
+                {{-- Ionicons --}}
+                <div x-show="iconPickerLib === 'ionicons' && iconPickerVariant === 'filled'" class="grid grid-cols-10 gap-1">
+                    @foreach ($ionIconsFilledMenus as $ionName)
+                        <button type="button" x-show="!iconPickerSearch || '{{ $ionName }}'.includes(iconPickerSearch)" @click="$wire.set(iconPickerWireKey, 'ion:{{ $ionName }}'); iconPickerOpen = false; iconPickerSearch = ''" class="flex items-center justify-center p-2 rounded-lg border border-zinc-200 dark:border-zinc-700 hover:border-zinc-400 dark:hover:border-zinc-500 text-zinc-500 dark:text-zinc-400 transition-colors" title="{{ $ionName }}"><x-ionicon name="{{ $ionName }}" class="size-5" /></button>
+                    @endforeach
+                </div>
+                <div x-show="iconPickerLib === 'ionicons' && iconPickerVariant === 'outline'" class="grid grid-cols-10 gap-1">
+                    @foreach ($ionIconsOutlineMenus as $ionName)
+                        <button type="button" x-show="!iconPickerSearch || '{{ $ionName }}'.includes(iconPickerSearch)" @click="$wire.set(iconPickerWireKey, 'ion:{{ $ionName }}'); iconPickerOpen = false; iconPickerSearch = ''" class="flex items-center justify-center p-2 rounded-lg border border-zinc-200 dark:border-zinc-700 hover:border-zinc-400 dark:hover:border-zinc-500 text-zinc-500 dark:text-zinc-400 transition-colors" title="{{ $ionName }}"><x-ionicon name="{{ $ionName }}" class="size-5" /></button>
+                    @endforeach
+                </div>
+                <div x-show="iconPickerLib === 'ionicons' && iconPickerVariant === 'sharp'" class="grid grid-cols-10 gap-1">
+                    @foreach ($ionIconsSharpMenus as $ionName)
+                        <button type="button" x-show="!iconPickerSearch || '{{ $ionName }}'.includes(iconPickerSearch)" @click="$wire.set(iconPickerWireKey, 'ion:{{ $ionName }}'); iconPickerOpen = false; iconPickerSearch = ''" class="flex items-center justify-center p-2 rounded-lg border border-zinc-200 dark:border-zinc-700 hover:border-zinc-400 dark:hover:border-zinc-500 text-zinc-500 dark:text-zinc-400 transition-colors" title="{{ $ionName }}"><x-ionicon name="{{ $ionName }}" class="size-5" /></button>
+                    @endforeach
+                </div>
+            </div>
+        </div>
+    </dialog>
 </div>

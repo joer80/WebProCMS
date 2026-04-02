@@ -68,7 +68,11 @@ $navItems = collect($navItems)->map(function ($item) {
                                            @if(!empty($link['new_tab'])) target="_blank" rel="noopener noreferrer" @endif
                                            class="flex gap-3 rounded-lg p-2 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors">
                                             @if(!empty($link['icon']))
-                                                <x-heroicon :name="$link['icon']" variant="outline" class="mt-0.5 size-5 shrink-0 text-primary" />
+                                                @if(str_starts_with($link['icon'], 'ion:'))
+                                                    <x-ionicon :name="substr($link['icon'], 4)" class="mt-0.5 size-5 shrink-0 text-primary" />
+                                                @else
+                                                    <x-heroicon :name="$link['icon']" variant="outline" class="mt-0.5 size-5 shrink-0 text-primary" />
+                                                @endif
                                             @endif
                                             <div>
                                                 <p class="text-sm font-semibold text-zinc-900 dark:text-white">{{ $link['title'] }}</p>
