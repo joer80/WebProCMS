@@ -27,7 +27,7 @@ new #[Layout('layouts.public')] class extends Component {
     <x-dl.section slug="event-detail:kPmWqZ"
         default-section-classes="py-section px-6 bg-white dark:bg-zinc-900"
         default-container-classes="max-w-4xl mx-auto">
-        <x-dl.heading slug="event-detail:kPmWqZ" prefix="headline" default="Event Title"
+        <x-dl.heading slug="event-detail:kPmWqZ" prefix="headline" default="{{ $event->title ?? 'Event Title' }}"
             default-tag="h1"
             default-classes="font-heading text-4xl font-bold text-zinc-900 dark:text-white mb-4" />
         @if (isset($event) && $event->start_date)

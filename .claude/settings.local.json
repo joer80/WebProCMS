@@ -108,7 +108,8 @@
       "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://webprocms.test/blog)",
       "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://webprocms.test/events)",
       "Bash(head -5 grep -n \"^<div\\\\|^<flux\\\\|^<x-\\\\|^@section\\\\|^<x-slot\" /Users/joepersonal/Sites/WebProCMS/resources/views/pages/dashboard/⚡menus.blade.php)",
-      "Bash(head -10 grep -rn \"dialog\\\\|modal\" node_modules/livewire/flux/dist/flux.css)"
+      "Bash(head -10 grep -rn \"dialog\\\\|modal\" node_modules/livewire/flux/dist/flux.css)",
+      "Bash(1 -- --display-errors)"
     ]
   },
   "defaultMode": "acceptEdits"

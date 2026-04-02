@@ -30,7 +30,7 @@ it('filters events by search term on title', function (): void {
     Event::factory()->published()->upcoming()->create(['title' => 'Community Meetup']);
 
     Livewire::test('pages::events.index')
-        ->set('search', 'Annual Conference')
+        ->set('eventSearch', 'Annual Conference')
         ->assertSeeText('Annual Conference 2025')
         ->assertDontSeeText('Community Meetup');
 });
@@ -46,7 +46,7 @@ it('filters events by search term on venue name', function (): void {
     ]);
 
     Livewire::test('pages::events.index')
-        ->set('search', 'Downtown Arena')
+        ->set('eventSearch', 'Downtown Arena')
         ->assertSeeText('Tech Summit')
         ->assertDontSeeText('Art Show');
 });

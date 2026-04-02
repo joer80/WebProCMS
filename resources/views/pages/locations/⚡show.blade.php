@@ -8,9 +8,9 @@ use Livewire\Component;
 new #[Layout('layouts.public')] class extends Component {
     public Location $location;
 
-    public function mount(string $location): void
+    public function mount(Location $location): void
     {
-        $this->location = Location::findOrFail($location);
+        $this->location = $location;
     }
 
     public function title(): string
