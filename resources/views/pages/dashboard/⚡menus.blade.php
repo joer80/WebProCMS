@@ -721,24 +721,6 @@ new #[Layout('layouts.app')] #[Title('Menus')] class extends Component {
                                                 </td>
                                                 <td class="px-4 py-3">
                                                     <div class="flex items-center justify-end gap-2">
-                                                        <flux:tooltip content="Move up" position="bottom">
-                                                            <flux:button
-                                                                wire:click="moveItemUp({{ $index }})"
-                                                                variant="ghost"
-                                                                size="sm"
-                                                                icon="chevron-up"
-                                                                :disabled="$index === 0"
-                                                            />
-                                                        </flux:tooltip>
-                                                        <flux:tooltip content="Move down" position="bottom">
-                                                            <flux:button
-                                                                wire:click="moveItemDown({{ $index }})"
-                                                                variant="ghost"
-                                                                size="sm"
-                                                                icon="chevron-down"
-                                                                :disabled="$index === count($currentItems) - 1"
-                                                            />
-                                                        </flux:tooltip>
                                                         <flux:switch wire:model.live="menus.{{ $activeMenuIndex }}.items.{{ $index }}.active" />
                                                         <flux:tooltip content="Edit item" position="bottom">
                                                             <flux:button
