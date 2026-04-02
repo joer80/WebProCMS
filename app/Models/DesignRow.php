@@ -39,6 +39,10 @@ class DesignRow extends Model
         $path = resource_path('design-library/'.$this->source_file);
         $code = file_get_contents($path);
 
+        if (preg_match('/\{\{--\s*@php\s*(.*?)\s*@endphp\s*--\}\}\s*$/s', $code, $match)) {
+            return trim($match[1]);
+        }
+
         if (preg_match('/\{\{--\s*@php\s*(.*?)\s*--\}\}\s*$/s', $code, $match)) {
             return trim($match[1]);
         }
