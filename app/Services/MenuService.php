@@ -19,7 +19,7 @@ class MenuService
     /** @var list<string> */
     private const SKIP_PREFIXES = [
         'dashboard.', 'profile.', 'password.', 'two-factor.',
-        'verification.', 'sanctum.',
+        'verification.', 'sanctum.', 'livewire.',
     ];
 
     /**
@@ -125,6 +125,15 @@ class MenuService
                 // Exclude all .show routes from the pages source (they are detail/template pages)
                 if (str_ends_with($name, '.show')) {
                     return false;
+                }
+
+                // Exclude routes with required parameters — they can't be linked to without context.
+                $route = RoutesFacade::getRoutes()->getByName($name);
+                if ($route) {
+                    $requiredParams = array_diff($route->parameterNames(), array_keys($route->defaults));
+                    if (! empty($requiredParams)) {
+                        return false;
+                    }
                 }
 
                 return true;

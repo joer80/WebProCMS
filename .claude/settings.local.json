@@ -103,7 +103,10 @@
       "WebFetch(domain:www.anthropic.com)",
       "WebFetch(domain:claude.com)",
       "Bash(for test_name in \"it saves correct field name derived from label\" \"it deletes a content type and all its items from the index page\" \"it deletes a content type and all its items from the edit page\")",
-      "Bash(do echo:*)"
+      "Bash(do echo:*)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" https://webprocms.test/blog)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://webprocms.test/blog)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://webprocms.test/events)"
     ]
   },
   "defaultMode": "acceptEdits"

@@ -56,6 +56,12 @@ new #[Layout('layouts.public', ['description' => 'Browse upcoming and past event
                         wire:key="event-{{ $event->id }}"
                         href="{{ route('events.show', $event->slug) }}"
                         default-classes="group block bg-white dark:bg-zinc-900 rounded-lg shadow-[inset_0px_0px_0px_1px_rgba(26,26,0,0.16)] dark:shadow-[inset_0px_0px_0px_1px_#fffaed2d] overflow-hidden hover:shadow-[inset_0px_0px_0px_1px_rgba(26,26,0,0.3)] transition-shadow">
+                            @if ($event->featured_image)
+                            <x-dl.wrapper slug="events-index:eVnTsX" prefix="event_img" tag="img"
+                                src="{{ $event->featuredImageUrl() }}"
+                                alt="{{ $event->title }}"
+                                default-classes="w-full h-44 object-cover" />
+                        @endif
                         <x-dl.group slug="events-index:eVnTsX" prefix="card_body"
                             default-classes="p-6">
                             <x-dl.wrapper slug="events-index:eVnTsX" prefix="event_title" tag="h2"
