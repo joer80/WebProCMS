@@ -281,7 +281,9 @@ new #[Layout('layouts.app')] #[Title('Menus')] class extends Component {
 
     public function saveEditItem(): void
     {
-        $active = $this->menus[$this->activeMenuIndex]['items'][$this->editItemIndex]['active'] ?? true;
+        $existing = $this->menus[$this->activeMenuIndex]['items'][$this->editItemIndex];
+        $active = $existing['active'] ?? true;
+        $depth = $existing['depth'] ?? 0;
 
         if ($this->editItemType === 'page') {
             $this->validate([
@@ -293,6 +295,7 @@ new #[Layout('layouts.app')] #[Title('Menus')] class extends Component {
                 'label'  => $this->editItemLabel,
                 'route'  => $this->editItemRoute,
                 'active' => $active,
+                'depth'  => $depth,
             ];
         } elseif ($this->editItemType === 'dynamic') {
             $this->validate([
@@ -305,6 +308,7 @@ new #[Layout('layouts.app')] #[Title('Menus')] class extends Component {
                 'type'   => 'dynamic',
                 'source' => $this->editDynamicSource,
                 'active' => $active,
+                'depth'  => 0,
             ];
 
             if ($this->editDynamicShowAll) {
@@ -321,6 +325,7 @@ new #[Layout('layouts.app')] #[Title('Menus')] class extends Component {
                 'type'    => 'mega',
                 'active'  => $active,
                 'columns' => $this->editMegaColumns,
+                'depth'   => 0,
             ];
         } else {
             $this->validate([
@@ -332,6 +337,7 @@ new #[Layout('layouts.app')] #[Title('Menus')] class extends Component {
                 'label'  => $this->editItemLabel,
                 'url'    => $this->editItemUrl,
                 'active' => $active,
+                'depth'  => $depth,
             ];
 
             if ($this->editItemNewWindow) {
@@ -341,6 +347,40 @@ new #[Layout('layouts.app')] #[Title('Menus')] class extends Component {
 
         $this->menus[$this->activeMenuIndex]['items'][$this->editItemIndex] = $item;
         $this->editItemIndex = -1;
+    }
+
+    public function indentItem(int $index): void
+    {
+        $items = $this->menus[$this->activeMenuIndex]['items'];
+
+        if ($index <= 0) {
+            return;
+        }
+
+        $item = $items[$index];
+
+        // Already indented, or mega/dynamic items cannot be sub-items
+        if (($item['depth'] ?? 0) >= 1 || in_array($item['type'] ?? null, ['mega', 'dynamic'], true)) {
+            return;
+        }
+
+        // Previous item must be a plain top-level item (not mega/dynamic — those manage their own children)
+        $prev = $items[$index - 1];
+
+        if (($prev['depth'] ?? 0) > 0 || in_array($prev['type'] ?? null, ['mega', 'dynamic'], true)) {
+            return;
+        }
+
+        $this->menus[$this->activeMenuIndex]['items'][$index]['depth'] = 1;
+    }
+
+    public function outdentItem(int $index): void
+    {
+        if (($this->menus[$this->activeMenuIndex]['items'][$index]['depth'] ?? 0) <= 0) {
+            return;
+        }
+
+        $this->menus[$this->activeMenuIndex]['items'][$index]['depth'] = 0;
     }
 
     public function moveItemUp(int $index): void
@@ -373,9 +413,28 @@ new #[Layout('layouts.app')] #[Title('Menus')] class extends Component {
             return;
         }
 
-        $item = array_splice($this->menus[$this->activeMenuIndex]['items'], $from, 1)[0];
-        array_splice($this->menus[$this->activeMenuIndex]['items'], $to, 0, [$item]);
-        $this->menus[$this->activeMenuIndex]['items'] = array_values($this->menus[$this->activeMenuIndex]['items']);
+        $items = $this->menus[$this->activeMenuIndex]['items'];
+
+        // When moving a top-level item, carry its sub-children with it
+        $movedGroup = [$items[$from]];
+
+        if (($items[$from]['depth'] ?? 0) === 0) {
+            $i = $from + 1;
+
+            while ($i < count($items) && ($items[$i]['depth'] ?? 0) > 0) {
+                $movedGroup[] = $items[$i];
+                $i++;
+            }
+        }
+
+        $groupSize = count($movedGroup);
+        array_splice($items, $from, $groupSize);
+
+        // Adjust destination index after removal
+        $adjustedTo = $to > $from ? max(0, $to - ($groupSize - 1)) : $to;
+        array_splice($items, $adjustedTo, 0, $movedGroup);
+
+        $this->menus[$this->activeMenuIndex]['items'] = array_values($items);
     }
 
     public function reorderFooterSlugs(int $from, int $to): void
@@ -756,9 +815,21 @@ new #[Layout('layouts.app')] #[Title('Menus')] class extends Component {
                                         x-data="{ dragging: null, over: null }"
                                     >
                                         @foreach ($currentItems as $index => $item)
+                                            @php
+                                                $itemDepth = $item['depth'] ?? 0;
+                                                $itemType  = $item['type'] ?? null;
+                                                $isSubItem = $itemDepth >= 1;
+                                                $prevItem  = $index > 0 ? $currentItems[$index - 1] : null;
+                                                $canIndent = ! $isSubItem
+                                                    && $prevItem !== null
+                                                    && ! in_array($itemType, ['mega', 'dynamic'], true)
+                                                    && ($prevItem['depth'] ?? 0) === 0
+                                                    && ! in_array($prevItem['type'] ?? null, ['mega', 'dynamic'], true);
+                                                $canOutdent = $isSubItem;
+                                            @endphp
                                             <tr
                                                 wire:key="menu-{{ $activeMenuIndex }}-item-{{ $index }}"
-                                                class="bg-white dark:bg-zinc-900"
+                                                class="{{ $isSubItem ? 'bg-zinc-50 dark:bg-zinc-800/50' : 'bg-white dark:bg-zinc-900' }}"
                                                 draggable="true"
                                                 @dragstart="dragging = {{ $index }}"
                                                 @dragover.prevent="over = {{ $index }}"
@@ -774,30 +845,60 @@ new #[Layout('layouts.app')] #[Title('Menus')] class extends Component {
                                                     <flux:icon name="bars-2" class="size-4" />
                                                 </td>
                                                 <td class="px-4 py-3">
-                                                    <div class="font-medium {{ ($item['active'] ?? true) ? 'text-zinc-900 dark:text-zinc-100' : 'text-zinc-400 dark:text-zinc-500' }}">
-                                                        {{ $item['label'] }}
-                                                    </div>
-                                                    <div class="mt-0.5 text-xs text-zinc-400 dark:text-zinc-500">
-                                                        @if (($item['type'] ?? null) === 'mega')
-                                                            @php
-                                                                $megaCols = $item['columns'] ?? [];
-                                                                $megaLinkCount = collect($megaCols)->sum(fn ($c) => count($c['links'] ?? []));
-                                                            @endphp
-                                                            <span class="font-mono">mega · {{ count($megaCols) }} {{ Str::plural('column', count($megaCols)) }} · {{ $megaLinkCount }} {{ Str::plural('link', $megaLinkCount) }}</span>
-                                                        @elseif (($item['type'] ?? null) === 'dynamic')
-                                                            <span class="font-mono">dynamic · {{ $this->availableSources[$item['source']] ?? $item['source'] }}</span>
-                                                        @elseif (isset($item['route']))
-                                                            <span class="font-mono">route: {{ $item['route'] }}</span>
-                                                        @else
-                                                            <span class="font-mono">{{ $item['url'] }}</span>
-                                                            @if (!empty($item['new_window']))
-                                                                <span class="font-mono"> · {{ __('new window') }}</span>
-                                                            @endif
+                                                    <div class="{{ $isSubItem ? 'pl-6' : '' }} flex items-center gap-2">
+                                                        @if ($isSubItem)
+                                                            <svg xmlns="http://www.w3.org/2000/svg" class="size-3.5 shrink-0 text-zinc-400 dark:text-zinc-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" /></svg>
                                                         @endif
+                                                        <div>
+                                                            <div class="font-medium {{ ($item['active'] ?? true) ? 'text-zinc-900 dark:text-zinc-100' : 'text-zinc-400 dark:text-zinc-500' }}">
+                                                                {{ $item['label'] }}
+                                                            </div>
+                                                            <div class="mt-0.5 text-xs text-zinc-400 dark:text-zinc-500">
+                                                                @if ($itemType === 'mega')
+                                                                    @php
+                                                                        $megaCols = $item['columns'] ?? [];
+                                                                        $megaLinkCount = collect($megaCols)->sum(fn ($c) => count($c['links'] ?? []));
+                                                                    @endphp
+                                                                    <span class="font-mono">mega · {{ count($megaCols) }} {{ Str::plural('column', count($megaCols)) }} · {{ $megaLinkCount }} {{ Str::plural('link', $megaLinkCount) }}</span>
+                                                                @elseif ($itemType === 'dynamic')
+                                                                    <span class="font-mono">dynamic · {{ $this->availableSources[$item['source']] ?? $item['source'] }}</span>
+                                                                @elseif (isset($item['route']))
+                                                                    <span class="font-mono">route: {{ $item['route'] }}</span>
+                                                                @else
+                                                                    <span class="font-mono">{{ $item['url'] }}</span>
+                                                                    @if (!empty($item['new_window']))
+                                                                        <span class="font-mono"> · {{ __('new window') }}</span>
+                                                                    @endif
+                                                                @endif
+                                                            </div>
+                                                        </div>
                                                     </div>
                                                 </td>
                                                 <td class="px-4 py-3">
-                                                    <div class="flex items-center justify-end gap-2">
+                                                    <div class="flex items-center justify-end gap-1">
+                                                        @if ($canOutdent)
+                                                            <flux:tooltip content="{{ __('Move to top level') }}" position="bottom">
+                                                                <flux:button
+                                                                    wire:click="outdentItem({{ $index }})"
+                                                                    wire:target="outdentItem({{ $index }})"
+                                                                    variant="ghost"
+                                                                    size="sm"
+                                                                    icon="chevron-left"
+                                                                />
+                                                            </flux:tooltip>
+                                                        @elseif ($canIndent)
+                                                            <flux:tooltip content="{{ __('Make sub-item') }}" position="bottom">
+                                                                <flux:button
+                                                                    wire:click="indentItem({{ $index }})"
+                                                                    wire:target="indentItem({{ $index }})"
+                                                                    variant="ghost"
+                                                                    size="sm"
+                                                                    icon="chevron-right"
+                                                                />
+                                                            </flux:tooltip>
+                                                        @else
+                                                            <div class="size-8"></div>
+                                                        @endif
                                                         <flux:switch wire:model.live="menus.{{ $activeMenuIndex }}.items.{{ $index }}.active" />
                                                         <flux:tooltip content="Edit item" position="bottom">
                                                             <flux:button
@@ -811,6 +912,7 @@ new #[Layout('layouts.app')] #[Title('Menus')] class extends Component {
                                                         <flux:tooltip content="Remove item" position="bottom">
                                                             <flux:button
                                                                 wire:click="removeItem({{ $index }})"
+                                                                wire:target="removeItem({{ $index }})"
                                                                 variant="ghost"
                                                                 size="sm"
                                                                 icon="trash"

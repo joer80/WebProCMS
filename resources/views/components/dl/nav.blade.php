@@ -29,6 +29,21 @@ $navItems = collect($navItems)->map(function ($item) {
     }
     return $item;
 })->all();
+
+// Group depth-1 items under their preceding top-level parent
+$grouped = [];
+foreach ($navItems as $item) {
+    if (($item['depth'] ?? 0) >= 1) {
+        if (! empty($grouped)) {
+            $grouped[array_key_last($grouped)]['_sub_children'][] = $item;
+        }
+        // Orphaned sub-items (no parent above) are skipped
+    } else {
+        $item['_sub_children'] = [];
+        $grouped[] = $item;
+    }
+}
+$navItems = $grouped;
 @endphp
 @if($toggle)
 <nav {{ $attributes }} class="{{ $navClasses }}"{!! $extraAttrsStr !!}>
@@ -105,6 +120,29 @@ $navItems = collect($navItems)->map(function ($item) {
                             {{ $item['show_all_label'] ?? 'See All' }} →
                         </a>
                     @endif
+                </div>
+            </div>
+        @elseif(!empty($item['_sub_children']))
+            <div class="relative inline-flex items-center" x-data="{ open: false }">
+                <button type="button" @click="open = !open" @click.outside="open = false"
+                        class="{{ $itemClasses }} inline-flex cursor-pointer items-center gap-1.5">
+                    {{ $item['label'] }}
+                    <svg xmlns="http://www.w3.org/2000/svg" :class="open ? 'rotate-180' : ''" class="size-3 transition-transform" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.22 8.22a.75.75 0 0 1 1.06 0L10 11.94l3.72-3.72a.75.75 0 1 1 1.06 1.06l-4.25 4.25a.75.75 0 0 1-1.06 0L5.22 9.28a.75.75 0 0 1 0-1.06Z" clip-rule="evenodd" /></svg>
+                </button>
+                <div x-show="open" style="display:none;" class="{{ $dropdownClasses }}">
+                    @foreach($item['_sub_children'] as $child)
+                        @php
+                            $childHref = isset($child['route']) && Route::has($child['route']) ? route($child['route']) : ($child['url'] ?? '#');
+                            $childIsActive = $activeItemClasses && $childHref !== '#' && (
+                                isset($child['route']) && Route::has($child['route'])
+                                    ? request()->routeIs($child['route'])
+                                    : request()->url() === url($childHref)
+                            );
+                        @endphp
+                        <a href="{{ $childHref }}"
+                           @if(!empty($child['new_window'])) target="_blank" rel="noopener noreferrer" @endif
+                           class="{{ $dropdownItemClasses }}{{ $childIsActive ? ' font-semibold' : '' }}">{{ $child['label'] }}</a>
+                    @endforeach
                 </div>
             </div>
         @else
