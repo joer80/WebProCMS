@@ -4744,12 +4744,12 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
     }
 }; ?>
 
-<div>
+<div id="editor-component-root">
     {{-- Item Picker --}}
     <flux:modal wire:model="showItemPicker" class="w-full max-w-sm">
         <flux:heading size="lg" class="mb-1">{{ __('Add Item') }}</flux:heading>
         <flux:subheading class="mb-4">{{ __('Choose an item to add to this section.') }}</flux:subheading>
-        <div class="grid grid-cols-2 gap-2">
+        <div id="editor-item-picker-grid" class="grid grid-cols-2 gap-2">
             @foreach (\App\Support\RowItemLibrary::items() as $itemKey => $item)
                 <button
                     wire:click="addItemToRow('{{ $itemKey }}')"
@@ -4767,7 +4767,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
         <flux:heading size="lg" class="mb-4">{{ __('Insert Row') }}</flux:heading>
 
         {{-- Tabs --}}
-        <div class="flex gap-1 mb-4 border-b border-zinc-200 dark:border-zinc-700">
+        <div id="editor-library-tabs" class="flex gap-1 mb-4 border-b border-zinc-200 dark:border-zinc-700">
             <button
                 wire:click="switchLibraryTab('rows')"
                 class="px-4 py-2 text-sm font-medium border-b-2 transition-colors -mb-px {{ $libraryTab === 'rows' ? 'border-primary text-primary' : 'border-transparent text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200' }}"
@@ -4788,9 +4788,9 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
             </button>
         </div>
 
-        <div class="min-h-[40rem]">
+        <div id="editor-library-content" class="min-h-[40rem]">
         @if ($libraryTab === 'rows')
-            <div class="flex gap-3 mb-4">
+            <div id="editor-library-rows-toolbar" class="flex gap-3 mb-4">
                 <flux:input
                     wire:model.live="librarySearch"
                     placeholder="Search rows…"
@@ -4807,17 +4807,17 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
             </div>
 
             @if ($this->libraryRows->isEmpty())
-                <div class="text-center py-12 text-zinc-500 dark:text-zinc-400">
+                <div id="editor-library-rows-empty" class="text-center py-12 text-zinc-500 dark:text-zinc-400">
                     <flux:icon name="squares-2x2" class="size-10 mx-auto mb-3 opacity-40" />
                     <p class="text-sm">No rows found.</p>
                 </div>
             @else
-                <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 max-h-[40rem] overflow-y-auto pr-1">
+                <div id="editor-library-rows-grid" class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 max-h-[40rem] overflow-y-auto pr-1">
                     @foreach ($this->libraryRows as $libRow)
                         <div wire:key="lib-{{ $libRow->id }}" class="rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 overflow-hidden hover:border-primary/40 transition-colors flex flex-col">
                             {{-- Live preview --}}
-                            <div class="relative h-44 overflow-hidden bg-zinc-100 dark:bg-zinc-800 shrink-0 border-b border-zinc-200 dark:border-zinc-700">
-                                <div class="absolute inset-0 flex items-center justify-center animate-pulse pointer-events-none">
+                            <div id="editor-library-row-preview-{{ $libRow->id }}" class="relative h-44 overflow-hidden bg-zinc-100 dark:bg-zinc-800 shrink-0 border-b border-zinc-200 dark:border-zinc-700">
+                                <div id="editor-library-row-preview-spinner-{{ $libRow->id }}" class="absolute inset-0 flex items-center justify-center animate-pulse pointer-events-none">
                                     <flux:icon name="photo" class="size-8 text-zinc-300 dark:text-zinc-600" />
                                 </div>
                                 <iframe
@@ -4832,15 +4832,15 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                                 ></iframe>
                             </div>
                             {{-- Card body --}}
-                            <div class="p-3 flex flex-col flex-1">
-                                <div class="flex-1 min-w-0">
-                                    <div class="font-medium text-zinc-900 dark:text-white text-sm truncate">{{ $libRow->name }}</div>
+                            <div id="editor-library-row-body-{{ $libRow->id }}" class="p-3 flex flex-col flex-1">
+                                <div id="editor-library-row-info-{{ $libRow->id }}" class="flex-1 min-w-0">
+                                    <div id="editor-library-row-name-{{ $libRow->id }}" class="font-medium text-zinc-900 dark:text-white text-sm truncate">{{ $libRow->name }}</div>
                                     @if ($libRow->description)
-                                        <div class="text-xs text-zinc-500 dark:text-zinc-400 truncate mt-0.5">{{ $libRow->description }}</div>
+                                        <div id="editor-library-row-desc-{{ $libRow->id }}" class="text-xs text-zinc-500 dark:text-zinc-400 truncate mt-0.5">{{ $libRow->description }}</div>
                                     @endif
                                     <flux:badge size="sm" class="mt-1">{{ $libRow->category->label() }}</flux:badge>
                                 </div>
-                                <div class="mt-2 pt-2 border-t border-zinc-100 dark:border-zinc-800 flex items-center gap-2">
+                                <div id="editor-library-row-actions-{{ $libRow->id }}" class="mt-2 pt-2 border-t border-zinc-100 dark:border-zinc-800 flex items-center gap-2">
                                     <flux:button
                                         wire:click="insertRow({{ $libRow->id }}, {{ $insertAtIndex ?? count($rows) }})"
                                         variant="primary"
@@ -4860,18 +4860,18 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
             @endif
         @elseif ($libraryTab === 'shared')
             @if ($this->sharedLibraryRows->isEmpty())
-                <div class="text-center py-12 text-zinc-500 dark:text-zinc-400">
+                <div id="editor-library-shared-empty" class="text-center py-12 text-zinc-500 dark:text-zinc-400">
                     <flux:icon name="share" class="size-10 mx-auto mb-3 opacity-40" />
                     <p class="text-sm">No shared rows yet.</p>
                     <p class="text-xs mt-1">Use the "Make Shared" action on any row to share it.</p>
                 </div>
             @else
-                <div class="space-y-2 max-h-[40rem] overflow-y-auto">
+                <div id="editor-library-shared-list" class="space-y-2 max-h-[40rem] overflow-y-auto">
                     @foreach ($this->sharedLibraryRows as $sharedRow)
                         <div wire:key="shared-{{ $sharedRow->slug }}" class="flex items-center gap-3 p-3 rounded-lg border border-zinc-200 dark:border-zinc-700 hover:border-primary/40 transition-colors">
-                            <div class="flex-1 min-w-0">
-                                <div class="font-medium text-zinc-900 dark:text-white text-sm truncate">{{ $sharedRow->name }}</div>
-                                <div class="text-[10px] font-mono text-zinc-400 dark:text-zinc-500 truncate mt-0.5">{{ $sharedRow->slug }}</div>
+                            <div id="editor-library-shared-info-{{ $sharedRow->slug }}" class="flex-1 min-w-0">
+                                <div id="editor-library-shared-name-{{ $sharedRow->slug }}" class="font-medium text-zinc-900 dark:text-white text-sm truncate">{{ $sharedRow->name }}</div>
+                                <div id="editor-library-shared-slug-{{ $sharedRow->slug }}" class="text-[10px] font-mono text-zinc-400 dark:text-zinc-500 truncate mt-0.5">{{ $sharedRow->slug }}</div>
                             </div>
                             <flux:button
                                 wire:click="insertSharedRow('{{ $sharedRow->slug }}', {{ $insertAtIndex ?? count($rows) }})"
@@ -4885,7 +4885,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                 </div>
             @endif
         @else
-            <div class="flex gap-3 mb-4">
+            <div id="editor-library-groups-toolbar" class="flex gap-3 mb-4">
                 <flux:input
                     wire:model.live="librarySearch"
                     placeholder="Search row groups…"
@@ -4902,18 +4902,18 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
             </div>
 
             @if ($this->libraryPages->isEmpty())
-                <div class="text-center py-12 text-zinc-500 dark:text-zinc-400">
+                <div id="editor-library-groups-empty" class="text-center py-12 text-zinc-500 dark:text-zinc-400">
                     <flux:icon name="document-text" class="size-10 mx-auto mb-3 opacity-40" />
                     <p class="text-sm">No row groups found.</p>
                     <p class="text-xs mt-1">Create groups in the Design Library to quickly insert multiple rows at once.</p>
                 </div>
             @else
-                <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 max-h-[40rem] overflow-y-auto pr-1">
+                <div id="editor-library-groups-grid" class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 max-h-[40rem] overflow-y-auto pr-1">
                     @foreach ($this->libraryPages as $libPage)
                         <div wire:key="page-{{ $libPage->id }}" class="rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 overflow-hidden hover:border-primary/40 transition-colors flex flex-col">
                             {{-- Live preview --}}
-                            <div class="relative h-44 overflow-hidden bg-zinc-100 dark:bg-zinc-800 shrink-0 border-b border-zinc-200 dark:border-zinc-700">
-                                <div class="absolute inset-0 flex items-center justify-center animate-pulse pointer-events-none">
+                            <div id="editor-library-page-preview-{{ $libPage->id }}" class="relative h-44 overflow-hidden bg-zinc-100 dark:bg-zinc-800 shrink-0 border-b border-zinc-200 dark:border-zinc-700">
+                                <div id="editor-library-page-preview-spinner-{{ $libPage->id }}" class="absolute inset-0 flex items-center justify-center animate-pulse pointer-events-none">
                                     <flux:icon name="photo" class="size-8 text-zinc-300 dark:text-zinc-600" />
                                 </div>
                                 <iframe
@@ -4928,16 +4928,16 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                                 ></iframe>
                             </div>
                             {{-- Card body --}}
-                            <div class="p-3 flex flex-col flex-1">
-                                <div class="flex-1 min-w-0">
-                                    <div class="font-medium text-zinc-900 dark:text-white text-sm truncate">{{ $libPage->name }}</div>
+                            <div id="editor-library-page-body-{{ $libPage->id }}" class="p-3 flex flex-col flex-1">
+                                <div id="editor-library-page-info-{{ $libPage->id }}" class="flex-1 min-w-0">
+                                    <div id="editor-library-page-name-{{ $libPage->id }}" class="font-medium text-zinc-900 dark:text-white text-sm truncate">{{ $libPage->name }}</div>
                                     @if ($libPage->description)
-                                        <div class="text-xs text-zinc-500 dark:text-zinc-400 truncate mt-0.5">{{ $libPage->description }}</div>
+                                        <div id="editor-library-page-desc-{{ $libPage->id }}" class="text-xs text-zinc-500 dark:text-zinc-400 truncate mt-0.5">{{ $libPage->description }}</div>
                                     @endif
                                     <flux:badge size="sm" class="mt-1 shrink-0">{{ $libPage->website_category->label() }}</flux:badge>
                                 </div>
                                 @if (! empty($libPage->row_names))
-                                    <div class="flex flex-wrap gap-1 mt-2">
+                                    <div id="editor-library-page-row-names-{{ $libPage->id }}" class="flex flex-wrap gap-1 mt-2">
                                         @foreach ($libPage->row_names as $rowName)
                                             <span class="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded bg-zinc-100 dark:bg-zinc-700 text-zinc-500 dark:text-zinc-400">
                                                 <flux:icon name="rectangle-stack" class="size-2.5" />
@@ -4946,7 +4946,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                                         @endforeach
                                     </div>
                                 @endif
-                                <div class="mt-2 pt-2 border-t border-zinc-100 dark:border-zinc-800 flex items-center gap-2">
+                                <div id="editor-library-page-actions-{{ $libPage->id }}" class="mt-2 pt-2 border-t border-zinc-100 dark:border-zinc-800 flex items-center gap-2">
                                     <flux:button
                                         wire:click="insertPageBundle({{ $libPage->id }}, {{ $insertAtIndex ?? count($rows) }})"
                                         variant="primary"
@@ -4970,6 +4970,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
 
 
     <div
+        id="editor-root"
         x-data="{
             previewWidth: null,
             showAllBreakpoints: false,
@@ -4995,6 +4996,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                 try { savedScroll = active.contentWindow.scrollY || 0; } catch (e) {}
                 next.onload = () => {
                     try { next.contentWindow.scrollTo(0, savedScroll); } catch (e) {}
+                    try { const s = next.contentDocument.createElement('style'); s.textContent = 'html { background: #f4f4f5 !important; }'; next.contentDocument.head.appendChild(s); } catch (e) {}
                     next.style.zIndex = '2';
                     next.style.opacity = '1';
                     active.style.zIndex = '1';
@@ -5057,8 +5059,8 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
         class="flex flex-col min-h-screen bg-white dark:bg-zinc-900"
     >
         {{-- Editor toolbar --}}
-        <div class="sticky top-0 z-30 bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-700 px-6 py-3 flex items-center gap-3">
-            <div class="flex-1 flex items-center gap-3">
+        <div id="editor-toolbar" class="sticky top-0 z-30 bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-700 px-6 py-3 flex items-center gap-3">
+            <div id="editor-toolbar-left" class="flex-1 flex items-center gap-3">
                 <flux:tooltip content="{{ $this->isLayoutPartial ? 'Back to Templates' : 'Go to page list' }}" position="bottom">
                     <flux:button href="{{ $this->isLayoutPartial ? route('dashboard.templates') : route('dashboard.pages') }}" variant="outline" size="sm" icon="arrow-left" wire:navigate />
                 </flux:tooltip>
@@ -5109,7 +5111,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                         'unpublished' => 'Removed from public access — visitors will see a 404.',
                     ];
                 @endphp
-                <div class="flex-1 flex items-center justify-center gap-1.5">
+                <div id="editor-status-badges" class="flex-1 flex items-center justify-center gap-1.5">
                     <flux:tooltip content="{{ $statusTooltips[$pageStatus] ?? '' }}" position="bottom">
                         <span
                             x-data
@@ -5173,9 +5175,9 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
             @endif
 
             {{-- Center: preview width controls --}}
-            <div class="flex-1 flex justify-center items-center gap-1">
+            <div id="editor-preview-controls" class="flex-1 flex justify-center items-center gap-1">
                 @if ($file)
-                    <div x-show="! showAllBreakpoints" class="flex items-center gap-0.5">
+                    <div id="editor-breakpoint-standard" x-show="! showAllBreakpoints" class="flex items-center gap-0.5">
                         <flux:tooltip content="Mobile (390px)" position="bottom">
                             <flux:button
                                 size="sm"
@@ -5208,7 +5210,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                         </flux:tooltip>
                     </div>
 
-                    <div x-show="showAllBreakpoints" class="flex items-center gap-0.5" style="display: none">
+                    <div id="editor-breakpoint-extended" x-show="showAllBreakpoints" class="flex items-center gap-0.5" style="display: none">
                         <flux:tooltip content="Mobile (375px)" position="bottom">
                             <flux:button
                                 size="sm"
@@ -5276,7 +5278,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                         </flux:tooltip>
                     </div>
 
-                    <div class="w-px h-4 bg-zinc-200 dark:bg-zinc-700 mx-1"></div>
+                    <div id="editor-toolbar-breakpoint-separator" class="w-px h-4 bg-zinc-200 dark:bg-zinc-700 mx-1"></div>
 
                     <flux:tooltip content="Toggle breakpoint mode" position="bottom">
                         <flux:button
@@ -5291,7 +5293,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                 @endif
             </div>
 
-            <div class="flex-1 flex items-center justify-end gap-2">
+            <div id="editor-toolbar-right" class="flex-1 flex items-center justify-end gap-2">
                 @if ($isDirty)
                     <span class="text-xs text-amber-600 dark:text-amber-400 font-medium whitespace-nowrap">Unsaved changes</span>
                 @endif
@@ -5326,17 +5328,18 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
 
 
         @if (! $file)
-            <div class="flex items-center justify-center h-96 text-zinc-500 dark:text-zinc-400">
-                <div class="text-center">
+            <div id="editor-no-file-placeholder" class="flex items-center justify-center h-96 text-zinc-500 dark:text-zinc-400">
+                <div id="editor-no-file-placeholder-inner" class="text-center">
                     <flux:icon name="document-text" class="size-16 mx-auto mb-4 opacity-30" />
                     <flux:heading class="text-zinc-500">Select a page to edit</flux:heading>
                     <flux:text class="mt-2 text-sm">Choose a volt file from the dropdown above to get started.</flux:text>
                 </div>
             </div>
         @else
-            <div class="flex" style="height: calc(100vh - 120px);">
+            <div id="editor-main-layout" class="flex" style="height: calc(100vh - 120px);">
                 {{-- Right panel: row list / inline content editor --}}
                 <div
+                    id="editor-sidebar"
                     class="w-96 shrink-0 order-last border-l border-zinc-200 dark:border-zinc-700 flex flex-col"
                     x-data="{ editorOpen: false, designMode: false, advancedMode: false, groupMode: null, allGroupsOpen: false, selectedRowIndex: null, pendingGroup: null, pendingSubgroup: null, pendingItemIndex: null }"
                     x-on:pending-group.window="pendingGroup = $event.detail.group"
@@ -5370,9 +5373,9 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                     "
                 >
                     {{-- Content editor view --}}
-                    <div x-show="editorOpen" class="flex flex-col flex-1" style="display: none">
+                    <div id="editor-content-editor-view" x-show="editorOpen" class="flex flex-col flex-1" style="display: none">
                         @if ($editingRowIndex !== null && isset($rows[$editingRowIndex]))
-                        <div class="shrink-0 flex items-center gap-2 p-3 border-b border-zinc-200 dark:border-zinc-700">
+                        <div id="editor-content-editor-header" class="shrink-0 flex items-center gap-2 p-3 border-b border-zinc-200 dark:border-zinc-700">
                             <flux:button
                                 @click="editorOpen = false"
                                 variant="ghost"
@@ -5380,10 +5383,10 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                                 icon="arrow-left"
                                 title="Back to rows"
                             />
-                            <div class="min-w-0 flex-1">
-                                <div class="text-sm font-medium text-zinc-800 dark:text-zinc-200 truncate">{{ $rows[$editingRowIndex]['name'] }}</div>
+                            <div id="editor-content-editor-row-name" class="min-w-0 flex-1">
+                                <div id="editor-content-editor-row-name-text" class="text-sm font-medium text-zinc-800 dark:text-zinc-200 truncate">{{ $rows[$editingRowIndex]['name'] }}</div>
                             </div>
-                            <div class="flex rounded-md border border-zinc-200 dark:border-zinc-700 overflow-hidden shrink-0">
+                            <div id="editor-content-mode-switcher" class="flex rounded-md border border-zinc-200 dark:border-zinc-700 overflow-hidden shrink-0">
                                 <flux:tooltip content="Content" position="bottom">
                                     <button type="button" @click="if (!designMode && !advancedMode) { allGroupsOpen = !allGroupsOpen; $dispatch('set-group-open', { value: allGroupsOpen }); } else { designMode = false; advancedMode = false; allGroupsOpen = true; $wire.resetEmptyClassesFields(); $dispatch('set-group-mode', {}); $dispatch('set-group-open', { value: true }); }" :class="!designMode && !advancedMode ? 'bg-zinc-800 text-white dark:bg-zinc-100 dark:text-zinc-900' : 'bg-white text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200'" class="p-1.5 transition-colors"><flux:icon name="document-text" class="size-3.5" /></button>
                                 </flux:tooltip>
@@ -5396,16 +5399,16 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                             </div>
                         </div>
 
-                        <div class="flex-1 overflow-y-auto p-4">
+                        <div id="editor-content-editor-body" class="flex-1 overflow-y-auto p-4">
                             @if (! empty($rows[$editingRowIndex]['shared'] ?? false))
-                                <div class="mb-3 flex items-start gap-2 px-3 py-2 rounded-lg bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 text-xs text-blue-700 dark:text-blue-300">
+                                <div id="editor-shared-row-notice" class="mb-3 flex items-start gap-2 px-3 py-2 rounded-lg bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 text-xs text-blue-700 dark:text-blue-300">
                                     <flux:icon name="share" class="size-3.5 mt-0.5 shrink-0" />
                                     <span>Shared row — changes affect all pages using it.</span>
                                 </div>
                             @endif
 
                             {{-- Auto BEM — shown when Advanced tab is active --}}
-                            <div x-show="advancedMode" x-cloak class="mb-3">
+                            <div id="editor-auto-bem-panel" x-show="advancedMode" x-cloak class="mb-3">
                                 <button
                                     wire:click="applyAutoBem({{ $editingRowIndex }})"
                                     type="button"
@@ -5423,7 +5426,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                             @if (! empty($rowItemBlocks))
                                 {{-- Item-based rows: each item is a collapsible card with fields + actions inside --}}
                                 @php $allItemFieldGroups = collect($contentFields)->groupBy('group'); @endphp
-                                <div class="space-y-2 mb-4" x-data="{ dragging: null, over: null }">
+                                <div id="editor-item-list" class="space-y-2 mb-4" x-data="{ dragging: null, over: null }">
                                     @foreach ($rowItemBlocks as $item)
                                         @php
                                             $itemFields = $allItemFieldGroups->get($item['prefix'], collect());
@@ -5468,7 +5471,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                                         >
                                             {{-- Card header: click to expand/collapse --}}
                                             @php $itemAccordionIndex = $item['index']; @endphp
-                                            <div class="flex items-center gap-2 px-3 py-2 bg-zinc-100 dark:bg-zinc-700/50 cursor-pointer select-none" @click="open = !open; if (open) $dispatch('sidebar-item-opened', { index: {{ $itemAccordionIndex }} })">
+                                            <div id="editor-item-header-{{ $item['index'] }}" class="flex items-center gap-2 px-3 py-2 bg-zinc-100 dark:bg-zinc-700/50 cursor-pointer select-none" @click="open = !open; if (open) $dispatch('sidebar-item-opened', { index: {{ $itemAccordionIndex }} })">
                                                 <span class="text-sm font-medium text-zinc-800 dark:text-zinc-200 flex-1 truncate">{{ $item['name'] }}</span>
                                                 @if ($itemHasContentFields)
                                                     <flux:tooltip content="Item content">
@@ -5496,13 +5499,13 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                                                 @endif
                                             </div>
                                             {{-- Collapsible body: fields --}}
-                                            <div x-show="open" x-collapse>
+                                            <div id="editor-item-body-{{ $item['index'] }}" x-show="open" x-collapse>
                                                 @if ($bodyFields->isNotEmpty())
                                                     @php
                                                         $flatFields = $bodyFields->filter(fn ($f) => empty($f['subgroup'] ?? null));
                                                         $subgroupedFields = $bodyFields->filter(fn ($f) => ! empty($f['subgroup'] ?? null))->groupBy('subgroup');
                                                     @endphp
-                                                    <div class="border-t border-zinc-200 dark:border-zinc-700 p-3 space-y-4">
+                                                    <div id="editor-item-fields-{{ $item['index'] }}" class="border-t border-zinc-200 dark:border-zinc-700 p-3 space-y-4">
                                                         @foreach ($flatFields as $field)
                                                             @include('pages.dashboard.pages.partials.content-field', ['field' => $field])
                                                         @endforeach
@@ -5518,7 +5521,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                                                                 <button type="button" @click="open = !open"
                                                                     class="w-full flex items-center justify-between px-3 py-2 bg-zinc-50 dark:bg-zinc-800 text-xs font-medium text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors">
                                                                     <span>{{ ucwords(str_replace('_', ' ', $subgroupKey)) }}</span>
-                                                                    <div class="flex items-center gap-2">
+                                                                    <div id="editor-item-subgroup-actions-{{ $item['index'] }}" class="flex items-center gap-2">
                                                                         @if ($subgroupToggle)
                                                                             <flux:switch wire:model.live="contentValues.{{ $subgroupToggle['key'] }}" @click.stop />
                                                                         @endif
@@ -5536,8 +5539,8 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                                                 @endif
                                             </div>
                                             {{-- Action bar: always visible --}}
-                                            <div class="relative flex items-center px-2 py-1.5 border-t border-zinc-200 dark:border-zinc-700">
-                                                <div class="flex items-center gap-0.5">
+                                            <div id="editor-item-actions-{{ $item['index'] }}" class="relative flex items-center px-2 py-1.5 border-t border-zinc-200 dark:border-zinc-700">
+                                                <div id="editor-item-primary-actions-{{ $item['index'] }}" class="flex items-center gap-0.5">
                                                     <flux:button
                                                         wire:click="moveItemUp({{ $item['index'] }})"
                                                         variant="ghost" size="sm" icon="arrow-up"
@@ -5556,7 +5559,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                                                         <flux:icon name="bars-2" class="size-4 text-zinc-400 dark:text-zinc-500 cursor-grab active:cursor-grabbing mx-2" />
                                                     </flux:tooltip>
                                                 </div>
-                                                <div class="flex items-center gap-0.5 ml-auto">
+                                                <div id="editor-item-secondary-actions-{{ $item['index'] }}" class="flex items-center gap-0.5 ml-auto">
                                                     <flux:button
                                                         wire:click="openItemPickerAbove({{ $item['index'] }})"
                                                         variant="ghost"
@@ -5596,7 +5599,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                                     @endforeach
                                 </div>
                             @elseif (empty($contentFields))
-                                <div class="text-center py-8 text-zinc-400 dark:text-zinc-500">
+                                <div id="editor-no-content-fields" class="text-center py-8 text-zinc-400 dark:text-zinc-500">
                                     <flux:icon name="plus-circle" class="size-10 mx-auto mb-2 opacity-40" />
                                     <p class="text-sm">No content yet.</p>
                                     <p class="text-xs mt-1">Add items to build out this section.</p>
@@ -5641,13 +5644,14 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                                             $orphanHasAdvancedFields = $orphanedFields->contains(fn ($f) => in_array($f['type'], ['id', 'attrs']));
                                         @endphp
                                         <div
+                                            id="editor-orphaned-fields-group"
                                             x-data="{ open: false, groupMode: null }"
                                             @set-group-open.window="open = $event.detail.value"
                                             @set-group-mode.window="groupMode = null"
                                             @sidebar-group-opened.window="if ($event.detail.slug === '{{ $rows[$editingRowIndex]['slug'] }}' && $event.detail.id !== 'row-settings') open = false"
                                             class="mb-2 rounded-lg border border-zinc-200 dark:border-zinc-700 overflow-hidden"
                                         >
-                                            <div class="flex items-center gap-2 px-3 py-2 bg-zinc-100 dark:bg-zinc-700/50 cursor-pointer select-none" @click="open = !open; if (open) $dispatch('sidebar-group-opened', { slug: '{{ $rows[$editingRowIndex]['slug'] }}', id: 'row-settings' })">
+                                            <div id="editor-orphaned-fields-header" class="flex items-center gap-2 px-3 py-2 bg-zinc-100 dark:bg-zinc-700/50 cursor-pointer select-none" @click="open = !open; if (open) $dispatch('sidebar-group-opened', { slug: '{{ $rows[$editingRowIndex]['slug'] }}', id: 'row-settings' })">
                                                 <span class="text-sm font-medium text-zinc-800 dark:text-zinc-200 flex-1 truncate">Section Settings</span>
                                                 @if ($orphanHasClassesFields)
                                                     <flux:tooltip content="Component design">
@@ -5671,7 +5675,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                                             </div>
                                         </div>
                                     @endif
-                                    <div class="space-y-2" x-data="{ dragging: null, over: null }">
+                                    <div id="editor-components-list" class="space-y-2" x-data="{ dragging: null, over: null }">
                                         @foreach ($dlComponents as $comp)
                                             @php
                                                 $compFields = collect($contentFields)->filter(fn ($f) => in_array($f['key'], $comp['fieldKeys']));
@@ -5715,7 +5719,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                                                 }"
                                             >
                                                 @php $compAccordionId = $comp['attrs']['prefix'] ?? $comp['slug']; $compAccordionSlug = $rows[$editingRowIndex]['slug']; @endphp
-                                                <div class="flex items-center gap-2 px-3 py-2 bg-zinc-100 dark:bg-zinc-700/50 cursor-pointer select-none" @click="if ({{ $compHasContentFields ? 'true' : 'false' }} || designMode || advancedMode || groupMode !== null) { open = !open; if (open) $dispatch('sidebar-group-opened', { slug: '{{ $compAccordionSlug }}', id: '{{ $compAccordionId }}' }); }">
+                                                <div id="editor-comp-header-{{ $comp['index'] }}" class="flex items-center gap-2 px-3 py-2 bg-zinc-100 dark:bg-zinc-700/50 cursor-pointer select-none" @click="if ({{ $compHasContentFields ? 'true' : 'false' }} || designMode || advancedMode || groupMode !== null) { open = !open; if (open) $dispatch('sidebar-group-opened', { slug: '{{ $compAccordionSlug }}', id: '{{ $compAccordionId }}' }); }">
                                                     <span class="text-sm font-medium text-zinc-800 dark:text-zinc-200 flex-1 truncate">{{ $comp['name'] }}</span>
                                                     @if ($compHasContentFields)
                                                         <flux:tooltip content="Component content">
@@ -5742,13 +5746,13 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                                                         <flux:switch wire:model.live="contentValues.{{ $headerToggleField['key'] }}" @click.stop />
                                                     @endif
                                                 </div>
-                                                <div x-show="open" x-collapse>
+                                                <div id="editor-comp-body-{{ $comp['index'] }}" x-show="open" x-collapse>
                                                     @if ($bodyFields->isNotEmpty())
                                                         @php
                                                             $flatFields = $bodyFields->filter(fn ($f) => empty($f['subgroup'] ?? null));
                                                             $subgroupedFields = $bodyFields->filter(fn ($f) => ! empty($f['subgroup'] ?? null))->groupBy('subgroup');
                                                         @endphp
-                                                        <div class="border-t border-zinc-200 dark:border-zinc-700 p-3 space-y-4">
+                                                        <div id="editor-comp-fields-{{ $comp['index'] }}" class="border-t border-zinc-200 dark:border-zinc-700 p-3 space-y-4">
                                                             @foreach ($flatFields as $field)
                                                                 @include('pages.dashboard.pages.partials.content-field', ['field' => $field])
                                                             @endforeach
@@ -5764,7 +5768,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                                                                     <button type="button" @click="open = !open"
                                                                         class="w-full flex items-center justify-between px-3 py-2 bg-zinc-50 dark:bg-zinc-800 text-xs font-medium text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors">
                                                                         <span>{{ ucwords(str_replace('_', ' ', $subgroupKey)) }}</span>
-                                                                        <div class="flex items-center gap-2">
+                                                                        <div id="editor-comp-subgroup-actions-{{ $comp['index'] }}" class="flex items-center gap-2">
                                                                             @if ($subgroupToggle)
                                                                                 <flux:switch wire:model.live="contentValues.{{ $subgroupToggle['key'] }}" @click.stop />
                                                                             @endif
@@ -5781,8 +5785,8 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                                                         </div>
                                                     @endif
                                                 </div>
-                                                <div class="relative flex items-center px-2 py-1.5 border-t border-zinc-200 dark:border-zinc-700">
-                                                    <div class="flex items-center gap-0.5">
+                                                <div id="editor-comp-actions-{{ $comp['index'] }}" class="relative flex items-center px-2 py-1.5 border-t border-zinc-200 dark:border-zinc-700">
+                                                    <div id="editor-comp-primary-actions-{{ $comp['index'] }}" class="flex items-center gap-0.5">
                                                         <flux:button
                                                             wire:click="moveComponentUp({{ $comp['index'] }})"
                                                             variant="ghost" size="sm" icon="arrow-up"
@@ -5801,7 +5805,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                                                             <flux:icon name="bars-2" class="size-4 text-zinc-400 dark:text-zinc-500 cursor-grab active:cursor-grabbing mx-2" />
                                                         </flux:tooltip>
                                                     </div>
-                                                    <div class="flex items-center gap-0.5 ml-auto">
+                                                    <div id="editor-comp-secondary-actions-{{ $comp['index'] }}" class="flex items-center gap-0.5 ml-auto">
                                                         <flux:button
                                                             wire:click="deleteComponent({{ $comp['index'] }})"
                                                             wire:confirm="Delete this component?"
@@ -5825,7 +5829,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                             </button>
                         </div>
 
-                        <div class="shrink-0 flex gap-2 p-3 border-t border-zinc-200 dark:border-zinc-700">
+                        <div id="editor-content-editor-footer" class="shrink-0 flex gap-2 p-3 border-t border-zinc-200 dark:border-zinc-700">
                             <flux:button @click="editorOpen = false" variant="primary" icon="arrow-left" class="flex-1">
                                 {{ __('Back') }}
                             </flux:button>
@@ -5837,10 +5841,10 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                     </div>
 
                     {{-- Row list view --}}
-                    <div x-show="!editorOpen" class="flex flex-col flex-1">
-                        <div class="shrink-0 px-4 py-3 border-b border-zinc-200 dark:border-zinc-700 flex items-center justify-between">
+                    <div id="editor-row-list-view" x-show="!editorOpen" class="flex flex-col flex-1">
+                        <div id="editor-row-list-header" class="shrink-0 px-4 py-3 border-b border-zinc-200 dark:border-zinc-700 flex items-center justify-between">
                             <flux:heading size="sm" class="text-zinc-600 dark:text-zinc-400">{{ __('Page Sections') }}</flux:heading>
-                            <div class="flex items-center gap-0.5" x-data="{ allDesignsOpen: false, allAdvancedOpen: false, allBrowseOpen: false }">
+                            <div id="editor-row-list-toolbar" class="flex items-center gap-0.5" x-data="{ allDesignsOpen: false, allAdvancedOpen: false, allBrowseOpen: false }">
                                 <flux:tooltip content="Copy all rows" position="bottom">
                                     <button type="button"
                                         x-on:click="localStorage.setItem('webprocms_copied_rows', JSON.stringify($wire.rows)); $dispatch('notify', { message: 'Rows copied.' })"
@@ -5868,7 +5872,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                                         <flux:icon name="trash" class="size-3.5" />
                                     </button>
                                 </flux:tooltip>
-                                <div class="w-px h-3.5 bg-zinc-200 dark:bg-zinc-600 mx-0.5"></div>
+                                <div id="editor-row-list-toolbar-separator-1" class="w-px h-3.5 bg-zinc-200 dark:bg-zinc-600 mx-0.5"></div>
                                 <flux:tooltip content="Toggle all section designs" position="bottom">
                                     <button type="button"
                                         x-on:click="allAdvancedOpen = false; allBrowseOpen = false; allDesignsOpen = !allDesignsOpen; $dispatch(allDesignsOpen ? 'expand-all-rows' : 'collapse-all-rows')"
@@ -5896,7 +5900,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                                         <flux:icon name="rectangle-stack" class="size-3.5" />
                                     </button>
                                 </flux:tooltip>
-                                <div class="w-px h-4 bg-zinc-200 dark:bg-zinc-700 mx-0.5"></div>
+                                <div id="editor-row-list-toolbar-separator-2" class="w-px h-4 bg-zinc-200 dark:bg-zinc-700 mx-0.5"></div>
                                 <flux:tooltip content="Auto BEM IDs for all rows" position="bottom">
                                     <button type="button"
                                         x-on:click="$flux.modal('confirm-auto-bem').show()"
@@ -5948,7 +5952,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                                 }
                             } catch (\Throwable) {}
                         @endphp
-                        <div class="flex-1 overflow-y-auto p-3 space-y-2" x-data="{ dragging: null, over: null }" @click.self="$dispatch('row-deselected')">
+                        <div id="editor-row-list-body" class="flex-1 overflow-y-auto p-3 space-y-2" x-data="{ dragging: null, over: null }" @click.self="$dispatch('row-deselected')">
                             @forelse ($rows as $index => $row)
                                 <div
                                     wire:key="row-item-{{ $row['slug'] }}"
@@ -5974,9 +5978,9 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                                     }"
                                 >
                                     {{-- Row header: name + mode icons + visibility toggle --}}
-                                    <div class="flex items-center gap-2 px-3 py-2 bg-zinc-100 dark:bg-zinc-700/50">
-                                        <div class="flex-1 min-w-0">
-                                            <div class="flex items-center gap-1.5">
+                                    <div id="editor-row-header-{{ $index }}" class="flex items-center gap-2 px-3 py-2 bg-zinc-100 dark:bg-zinc-700/50">
+                                        <div id="editor-row-name-area-{{ $index }}" class="flex-1 min-w-0">
+                                            <div id="editor-row-name-flex-{{ $index }}" class="flex items-center gap-1.5">
                                                 <div x-show="!renamingRow" class="group flex items-center gap-1 min-w-0 flex-1">
                                                     <span
                                                         class="text-sm font-medium text-zinc-800 dark:text-zinc-200 truncate cursor-pointer hover:text-primary transition-colors"
@@ -6032,7 +6036,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                                                 ));
                                             @endphp
                                             @if (! empty($rowMultiLangs) && (\App\Models\Setting::get('ai.claude_key') || \App\Models\Setting::get('ai.openai_key')))
-                                                <div class="relative" x-data="{ tlOpen: false }" @click.outside="tlOpen = false">
+                                                <div id="editor-row-translate-{{ $index }}" class="relative" x-data="{ tlOpen: false }" @click.outside="tlOpen = false">
                                                     <flux:tooltip content="Translate section">
                                                         <button type="button" @click.stop="tlOpen = !tlOpen"
                                                             :class="tlOpen ? 'text-primary' : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 transition-colors'"
@@ -6046,6 +6050,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                                                         x-transition:leave="transition ease-in duration-75"
                                                         x-transition:leave-start="opacity-100 scale-100"
                                                         x-transition:leave-end="opacity-0 scale-95"
+                                                        id="editor-row-translate-dropdown-{{ $index }}"
                                                         class="absolute right-0 top-full mt-1 z-20 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg shadow-lg py-1 min-w-40"
                                                     >
                                                         <p class="px-3 pt-1 pb-0.5 text-[10px] font-medium text-zinc-400 dark:text-zinc-500 uppercase tracking-wide">Translate to</p>
@@ -6073,11 +6078,11 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
 
                                     {{-- Inline panel: design mode (classes) or advanced mode (section id) --}}
                                     @if (isset($rowDesignDefaults[$row['slug']]))
-                                        <div x-show="panelMode !== null" x-collapse class="border-t border-zinc-200 dark:border-zinc-700">
+                                        <div id="editor-row-panel-{{ $index }}" x-show="panelMode !== null" x-collapse class="border-t border-zinc-200 dark:border-zinc-700">
                                             {{-- Content mode: background image --}}
-                                            <div x-show="panelMode === 'content'" class="p-3 space-y-2">
+                                            <div id="editor-row-panel-content-{{ $index }}" x-show="panelMode === 'content'" class="p-3 space-y-2">
                                                 @php $aiRowBgEnabled = (bool) (\App\Models\Setting::get('ai.openai_key') || \App\Models\Setting::get('ai.fal_key') || \App\Models\Setting::get('ai.stability_key')); @endphp
-                                                <div class="flex items-center justify-between">
+                                                <div id="editor-row-bg-image-header-{{ $index }}" class="flex items-center justify-between">
                                                     <span class="text-[11px] uppercase tracking-wider font-semibold text-zinc-500 dark:text-zinc-400">Background Image</span>
                                                     @if ($aiRowBgEnabled)
                                                         <button
@@ -6089,7 +6094,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                                                     @endif
                                                 </div>
                                                 @if (($rowDesignValues[$row['slug']]['section_bg_image'] ?? '') !== '')
-                                                    <div class="relative inline-block">
+                                                    <div id="editor-row-bg-image-preview-{{ $index }}" class="relative inline-block">
                                                         <img
                                                             src="{{ \Illuminate\Support\Facades\Storage::url($rowDesignValues[$row['slug']]['section_bg_image']) }}"
                                                             alt=""
@@ -6118,7 +6123,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                                                 {{-- Generate Content with AI --}}
                                                 @php $aiSectionEnabled = (bool) (\App\Models\Setting::get('ai.claude_key') || \App\Models\Setting::get('ai.openai_key')); @endphp
                                                 @if ($aiSectionEnabled)
-                                                    <div class="border-t border-zinc-200 dark:border-zinc-700 pt-2"
+                                                    <div id="editor-row-ai-generate-{{ $index }}" class="border-t border-zinc-200 dark:border-zinc-700 pt-2"
                                                         x-data="{
                                                             aiOpen: false,
                                                             aiPrompt: '',
@@ -6183,14 +6188,14 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                                                 @endif
                                             </div>
                                             {{-- Design mode --}}
-                                            <div x-show="panelMode === 'design'" class="p-3 space-y-3">
+                                            <div id="editor-row-panel-design-{{ $index }}" x-show="panelMode === 'design'" class="p-3 space-y-3">
                                                 <div x-data="{ rowSettingsOpen: false }">
                                                     <button type="button" @click="rowSettingsOpen = !rowSettingsOpen" class="flex items-center gap-1.5 w-full text-left">
                                                         <flux:icon name="chevron-right" class="size-3 text-zinc-400 shrink-0 transition-transform duration-150" x-bind:class="rowSettingsOpen ? 'rotate-90' : ''" />
                                                         <span class="text-[11px] uppercase tracking-wider font-semibold text-zinc-500 dark:text-zinc-400">Section Settings</span>
                                                     </button>
                                                     <div x-show="rowSettingsOpen" x-collapse class="mt-2 pl-3">
-                                                        <div class="flex items-center justify-between">
+                                                        <div id="editor-row-settings-alt-{{ $index }}" class="flex items-center justify-between">
                                                             <span class="text-[11px] uppercase tracking-wider font-semibold text-zinc-500 dark:text-zinc-400">Disable Alt Row Background</span>
                                                             <flux:switch
                                                                 :checked="($rowDesignValues[$row['slug']]['section_no_alt'] ?? '') === '1'"
@@ -6207,7 +6212,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                                                             <span class="text-[11px] uppercase tracking-wider font-semibold text-zinc-500 dark:text-zinc-400">Animation</span>
                                                         </button>
                                                         <div x-show="animOpen" x-collapse class="mt-2 pl-3">
-                                                            <div class="grid grid-cols-2 gap-2">
+                                                            <div id="editor-row-animation-grid-{{ $index }}" class="grid grid-cols-2 gap-2">
                                                                 <div>
                                                                     <span class="text-[10px] uppercase font-semibold text-zinc-400 dark:text-zinc-500 mb-1 block">Entrance</span>
                                                                     <select
@@ -6251,7 +6256,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                                                     <div x-show="bgOpen" x-collapse class="mt-2 space-y-2 pl-3">
                                                         @foreach (['section_bg_position' => 'Position', 'section_bg_size' => 'Size', 'section_bg_repeat' => 'Repeat'] as $bgKey => $bgLabel)
                                                             @if (isset($rowDesignDefaults[$row['slug']][$bgKey]))
-                                                                <div>
+                                                                <div id="editor-row-bg-{{ $bgKey }}-{{ $index }}">
                                                                     <span class="text-[10px] uppercase font-semibold text-zinc-400 dark:text-zinc-500 mb-1 block">{{ $bgLabel }}</span>
                                                                     <select
                                                                         wire:model.live="rowDesignValues.{{ $row['slug'] }}.{{ $bgKey }}"
@@ -6295,11 +6300,11 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                                                 @foreach (['section_classes' => 'Section Classes', 'section_container_classes' => 'Container Classes'] as $fieldKey => $fieldLabel)
                                                     @if (isset($rowDesignDefaults[$row['slug']][$fieldKey]))
                                                         @php $rcKey = $row['slug'] . '_' . $fieldKey; @endphp
-                                                        <div>
-                                                            <div class="flex items-center justify-between mb-1.5">
+                                                        <div id="editor-row-classes-field-{{ $fieldKey }}-{{ $index }}">
+                                                            <div id="editor-row-classes-header-{{ $fieldKey }}-{{ $index }}" class="flex items-center justify-between mb-1.5">
                                                                 <span class="text-[11px] uppercase tracking-wider font-semibold text-zinc-500 dark:text-zinc-400">{{ $fieldLabel }}</span>
-                                                                <div class="flex items-center gap-2">
-                                                                    <div class="relative" x-data="{
+                                                                <div id="editor-row-classes-actions-{{ $fieldKey }}-{{ $index }}" class="flex items-center gap-2">
+                                                                    <div id="editor-row-token-picker-{{ $fieldKey }}-{{ $index }}" class="relative" x-data="{
                                                                         open: false,
                                                                         fieldKey: @js($rcKey),
                                                                         insert(cls) {
@@ -6327,9 +6332,9 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                                                                             class="absolute right-0 top-full mt-1 z-50 w-56 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg shadow-lg overflow-hidden text-left"
                                                                         >
                                                                             @if (! empty($rcThemeColorNames))
-                                                                                <div class="px-3 pt-2.5 pb-2">
+                                                                                <div id="editor-token-colors-{{ $index }}" class="px-3 pt-2.5 pb-2">
                                                                                     <p class="text-[10px] uppercase tracking-wider font-semibold text-zinc-400 dark:text-zinc-500 mb-1.5">Colors</p>
-                                                                                    <div class="flex flex-wrap gap-1">
+                                                                                    <div id="editor-token-colors-swatches-{{ $index }}" class="flex flex-wrap gap-1">
                                                                                         @foreach ($rcThemeColorNames as $rcColorName)
                                                                                             <button type="button" @click="insert('bg-{{ $rcColorName }}')" class="px-1.5 py-0.5 text-[10px] font-mono rounded bg-zinc-100 dark:bg-zinc-700 text-zinc-600 dark:text-zinc-300 hover:bg-primary hover:text-white transition-colors">bg-{{ $rcColorName }}</button>
                                                                                             <button type="button" @click="insert('text-{{ $rcColorName }}')" class="px-1.5 py-0.5 text-[10px] font-mono rounded bg-zinc-100 dark:bg-zinc-700 text-zinc-600 dark:text-zinc-300 hover:bg-primary hover:text-white transition-colors">text-{{ $rcColorName }}</button>
@@ -6337,20 +6342,20 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                                                                                         @endforeach
                                                                                     </div>
                                                                                 </div>
-                                                                                <div class="border-t border-zinc-100 dark:border-zinc-700/60"></div>
+                                                                                <div id="editor-token-colors-spacing-divider-{{ $index }}" class="border-t border-zinc-100 dark:border-zinc-700/60"></div>
                                                                             @endif
-                                                                            <div class="px-3 pt-2 pb-2">
+                                                                            <div id="editor-token-spacing-{{ $index }}" class="px-3 pt-2 pb-2">
                                                                                 <p class="text-[10px] uppercase tracking-wider font-semibold text-zinc-400 dark:text-zinc-500 mb-1.5">Spacing</p>
-                                                                                <div class="flex flex-wrap gap-1">
+                                                                                <div id="editor-token-spacing-tokens-{{ $index }}" class="flex flex-wrap gap-1">
                                                                                     <button type="button" @click="insert('py-section')" class="px-1.5 py-0.5 text-[10px] font-mono rounded bg-zinc-100 dark:bg-zinc-700 text-zinc-600 dark:text-zinc-300 hover:bg-primary hover:text-white transition-colors">py-section</button>
                                                                                     <button type="button" @click="insert('py-section-banner')" class="px-1.5 py-0.5 text-[10px] font-mono rounded bg-zinc-100 dark:bg-zinc-700 text-zinc-600 dark:text-zinc-300 hover:bg-primary hover:text-white transition-colors">py-section-banner</button>
                                                                                     <button type="button" @click="insert('py-section-hero')" class="px-1.5 py-0.5 text-[10px] font-mono rounded bg-zinc-100 dark:bg-zinc-700 text-zinc-600 dark:text-zinc-300 hover:bg-primary hover:text-white transition-colors">py-section-hero</button>
                                                                                 </div>
                                                                             </div>
-                                                                            <div class="border-t border-zinc-100 dark:border-zinc-700/60"></div>
-                                                                            <div class="px-3 pt-2 pb-2.5">
+                                                                            <div id="editor-token-spacing-utilities-divider-{{ $index }}" class="border-t border-zinc-100 dark:border-zinc-700/60"></div>
+                                                                            <div id="editor-token-utilities-{{ $index }}" class="px-3 pt-2 pb-2.5">
                                                                                 <p class="text-[10px] uppercase tracking-wider font-semibold text-zinc-400 dark:text-zinc-500 mb-1.5">Utilities</p>
-                                                                                <div class="flex flex-wrap gap-1">
+                                                                                <div id="editor-token-utilities-tokens-{{ $index }}" class="flex flex-wrap gap-1">
                                                                                     <button type="button" @click="insert('rounded-card')" class="px-1.5 py-0.5 text-[10px] font-mono rounded bg-zinc-100 dark:bg-zinc-700 text-zinc-600 dark:text-zinc-300 hover:bg-primary hover:text-white transition-colors">rounded-card</button>
                                                                                     <button type="button" @click="insert('shadow-card')" class="px-1.5 py-0.5 text-[10px] font-mono rounded bg-zinc-100 dark:bg-zinc-700 text-zinc-600 dark:text-zinc-300 hover:bg-primary hover:text-white transition-colors">shadow-card</button>
                                                                                     <button type="button" @click="insert('font-heading')" class="px-1.5 py-0.5 text-[10px] font-mono rounded bg-zinc-100 dark:bg-zinc-700 text-zinc-600 dark:text-zinc-300 hover:bg-primary hover:text-white transition-colors">font-heading</button>
@@ -6406,7 +6411,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                                                                         ></button>
                                                                     </template>
                                                                 </div>
-                                                                <div class="flex items-center gap-1.5 mt-1">
+                                                                <div id="editor-tw-autocomplete-hint" class="flex items-center gap-1.5 mt-1">
                                                                     <p class="text-xs text-zinc-400 dark:text-zinc-500">Tailwind CSS classes. Tab or Enter to complete.</p>
                                                                     <button
                                                                         @click="$flux.modal('tailwind-css-help').show()"
@@ -6425,10 +6430,10 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                                                 </div>
                                             </div>
                                             {{-- Advanced mode --}}
-                                            <div x-show="panelMode === 'advanced'" class="p-3 space-y-3">
+                                            <div id="editor-row-panel-advanced-{{ $index }}" x-show="panelMode === 'advanced'" class="p-3 space-y-3">
                                                 @if (isset($rowDesignDefaults[$row['slug']]['section_id']))
-                                                    <div>
-                                                        <div class="flex items-center justify-between mb-1.5">
+                                                    <div id="editor-row-section-id-field-{{ $index }}">
+                                                        <div id="editor-row-section-id-header-{{ $index }}" class="flex items-center justify-between mb-1.5">
                                                             <span class="text-[11px] uppercase tracking-wider font-semibold text-zinc-500 dark:text-zinc-400">Section ID</span>
                                                             <button wire:click="resetRowDesignField('{{ $row['slug'] }}', 'section_id')" type="button" class="text-xs text-zinc-400 dark:text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 transition-colors">Reset</button>
                                                         </div>
@@ -6451,10 +6456,10 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                                                 </button>
                                             </div>
                                             {{-- Browse mode info --}}
-                                            <div x-show="panelMode === 'browse'" class="px-3 py-2 border-t border-zinc-200 dark:border-zinc-700">
+                                            <div id="editor-row-panel-browse-{{ $index }}" x-show="panelMode === 'browse'" class="px-3 py-2 border-t border-zinc-200 dark:border-zinc-700">
                                                 @php $bd = $rowBrowseData[$row['slug']] ?? null; @endphp
                                                 @if ($bd)
-                                                    <div class="flex items-center gap-2">
+                                                    <div id="editor-row-browse-info-{{ $index }}" class="flex items-center gap-2">
                                                         <p class="text-[11px] text-zinc-500 dark:text-zinc-400 truncate flex-1" title="{{ $bd['rowOptions'][$bd['position']]['name'] ?? $row['name'] }}">
                                                             {{ $bd['rowOptions'][$bd['position']]['name'] ?? $row['name'] }}
                                                         </p>
@@ -6473,10 +6478,10 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                                     @endif
 
                                     {{-- Row actions --}}
-                                    <div class="relative flex items-center px-2 py-2">
+                                    <div id="editor-row-actions-{{ $index }}" class="relative flex items-center px-2 py-2">
                                         {{-- Standard action bar --}}
                                         <div x-show="panelMode !== 'browse'" class="contents">
-                                            <div class="flex items-center gap-0.5">
+                                            <div id="editor-row-primary-actions-{{ $index }}" class="flex items-center gap-0.5">
                                                 <flux:button
                                                     wire:click="moveRowUp({{ $index }})"
                                                     variant="ghost"
@@ -6503,7 +6508,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                                                 </flux:tooltip>
 
                                             </div>
-                                            <div class="flex items-center gap-0.5 ml-auto">
+                                            <div id="editor-row-secondary-actions-{{ $index }}" class="flex items-center gap-0.5 ml-auto">
                                                 <flux:button
                                                     wire:click="openLibraryDrawer({{ $index }})"
                                                     variant="ghost"
@@ -6559,7 +6564,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                                         </div>
 
                                         {{-- Browse mode action bar --}}
-                                        <div x-show="panelMode === 'browse'" class="flex items-center gap-2 w-full">
+                                        <div id="editor-row-browse-actions-{{ $index }}" x-show="panelMode === 'browse'" class="flex items-center gap-2 w-full">
                                             @php $bd = $rowBrowseData[$row['slug']] ?? null; @endphp
                                             @if ($bd)
                                                 <select
@@ -6570,7 +6575,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                                                         <option value="{{ $cat['value'] }}" {{ $bd['category'] === $cat['value'] ? 'selected' : '' }}>{{ $cat['label'] }}</option>
                                                     @endforeach
                                                 </select>
-                                                <div class="flex items-center gap-1 flex-1 min-w-0">
+                                                <div id="editor-row-browse-selector-{{ $index }}" class="flex items-center gap-1 flex-1 min-w-0">
                                                     <select
                                                         x-on:change="$wire.browseRowJump('{{ $row['slug'] }}', parseInt($event.target.value))"
                                                         class="flex-1 min-w-0 text-xs rounded-lg border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-900 text-zinc-900 dark:text-white px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition"
@@ -6603,7 +6608,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                                     </div>
                                 </div>
                             @empty
-                                <div class="text-center py-8 text-zinc-400 dark:text-zinc-500">
+                                <div id="editor-row-list-empty" class="text-center py-8 text-zinc-400 dark:text-zinc-500">
                                     <flux:icon name="squares-2x2" class="size-10 mx-auto mb-2 opacity-40" />
                                     <p class="text-xs">No rows yet.</p>
                                 </div>
@@ -6622,13 +6627,15 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                 </div>
 
                 {{-- Left panel: iframe preview --}}
-                <div class="flex-1 flex flex-col bg-zinc-100 dark:bg-zinc-950 overflow-auto order-first">
+                <div id="editor-preview-panel" class="flex-1 flex flex-col bg-zinc-100 dark:bg-zinc-950 overflow-auto order-first">
 @if ($previewUrl)
                         <div
+                            id="editor-preview-container"
                             class="flex-1 flex flex-col mx-auto w-full transition-all duration-300"
                             :style="previewWidth ? 'max-width: ' + previewWidth : 'max-width: 100%'"
                         >
                             <div
+                                id="editor-preview-frame-wrapper"
                                 class="flex-1 relative"
                                 x-init="document.getElementById('page-preview-a').src = {{ Js::from($previewUrl) }}"
                                 x-on:refresh-preview.window="refreshPreview($event.detail.url)"
@@ -6638,8 +6645,8 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                             </div>
                         </div>
                     @else
-                        <div class="flex-1 flex items-center justify-center text-zinc-400 dark:text-zinc-600">
-                            <div class="text-center">
+                        <div id="editor-preview-unavailable" class="flex-1 flex items-center justify-center text-zinc-400 dark:text-zinc-600">
+                            <div id="editor-preview-unavailable-inner" class="text-center">
                                 <flux:icon name="eye-slash" class="size-12 mx-auto mb-3 opacity-40" />
                                 <p class="text-sm">No preview available for this page.</p>
                             </div>
@@ -6663,7 +6670,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
     <flux:modal wire:model="showSeoModal" class="w-full max-w-2xl">
         <flux:heading size="lg">Page Settings</flux:heading>
 
-        <div class="mt-6 space-y-4">
+        <div id="editor-seo-modal-sections" class="mt-6 space-y-4">
             {{-- Basic --}}
             <div x-data="{ basicOpen: false }" x-on:open-settings-section.window="basicOpen = ($event.detail === 'basic')">
                 <button
@@ -6680,7 +6687,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                     </svg>
                 </button>
 
-                <div x-show="basicOpen" x-transition class="mt-3 pl-4 border-l-2 border-zinc-200 dark:border-zinc-700 space-y-4">
+                <div id="editor-seo-basic-content" x-show="basicOpen" x-transition class="mt-3 pl-4 border-l-2 border-zinc-200 dark:border-zinc-700 space-y-4">
                     {{-- Page Name --}}
                     @if (preg_match('#^pages/(?!dashboard/).*⚡[^/]+\.blade\.php$#u', $file))
                         <flux:input
@@ -6702,7 +6709,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
 
                         @if ($originalPageSlug && $pageSlug !== $originalPageSlug)
                             {{-- Redirect from old slug --}}
-                            <div class="rounded-lg border border-zinc-200 dark:border-zinc-700 p-4 space-y-3">
+                            <div id="editor-seo-slug-redirect-box" class="rounded-lg border border-zinc-200 dark:border-zinc-700 p-4 space-y-3">
                                 <flux:switch
                                     label="Redirect /{{ $originalPageSlug }} to /{{ $pageSlug ?: '…' }}"
                                     description="Forward visitors from the old URL to the new one."
@@ -6762,7 +6769,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                 x-on:ai-generate-error.window="if ($event.detail.fieldKey === 'seo') { aiError = $event.detail.message; aiGenerating = false; }"
                 class="pt-4 border-t border-zinc-200 dark:border-zinc-700"
             >
-                <div class="w-full flex items-center justify-between">
+                <div id="editor-seo-section-header" class="w-full flex items-center justify-between">
                     <button
                         type="button"
                         @click="$dispatch('open-settings-section', seoOpen ? null : 'seo')"
@@ -6771,7 +6778,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                         <p class="text-xs font-semibold uppercase tracking-wide text-zinc-700 dark:text-zinc-200">SEO</p>
                         <p class="text-xs text-zinc-400 dark:text-zinc-500 mt-0.5">Page title, meta description, indexing, and social sharing.</p>
                     </button>
-                    <div class="flex items-center gap-2 shrink-0 ml-3">
+                    <div id="editor-seo-header-actions" class="flex items-center gap-2 shrink-0 ml-3">
                         @if (\App\Models\Setting::get('ai.claude_key') || \App\Models\Setting::get('ai.openai_key'))
                             <button type="button"
                                 @click="seoOpen = true; aiOpen = !aiOpen"
@@ -6787,9 +6794,9 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                     </div>
                 </div>
 
-                <div x-show="seoOpen" x-transition class="mt-3 pl-4 border-l-2 border-zinc-200 dark:border-zinc-700 space-y-4">
+                <div id="editor-seo-content" x-show="seoOpen" x-transition class="mt-3 pl-4 border-l-2 border-zinc-200 dark:border-zinc-700 space-y-4">
                     {{-- Inline AI prompt --}}
-                    <div x-show="aiOpen" x-transition class="rounded-lg border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 p-3 space-y-2">
+                    <div id="editor-seo-ai-prompt" x-show="aiOpen" x-transition class="rounded-lg border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 p-3 space-y-2">
                         <p class="text-xs font-medium text-zinc-700 dark:text-zinc-300">Generate SEO with AI</p>
                         <p class="text-xs text-zinc-400 dark:text-zinc-500">Page content is read automatically. Optionally add any extra context, keywords, or tone guidance.</p>
                         <textarea
@@ -6801,7 +6808,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                             class="w-full text-xs rounded border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-900 text-zinc-900 dark:text-white px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-primary transition resize-none disabled:opacity-60"
                         ></textarea>
                         <div x-show="aiError" x-transition class="text-xs text-red-600 dark:text-red-400" x-text="aiError"></div>
-                        <div class="flex items-center justify-end gap-2">
+                        <div id="editor-seo-ai-prompt-actions" class="flex items-center justify-end gap-2">
                             <button type="button" @click="aiOpen = false; aiPrompt = ''; aiError = ''" class="text-xs text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 transition-colors">Cancel</button>
                             <button type="button"
                                 @click="if (!aiGenerating) { aiGenerating = true; aiError = ''; $wire.generateAiContent('seo', aiPrompt, 'seo'); }"
@@ -6858,7 +6865,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                     </svg>
                 </button>
 
-                <div x-show="designOpen" x-transition class="mt-3 pl-4 border-l-2 border-zinc-200 dark:border-zinc-700 space-y-4">
+                <div id="editor-seo-design-content" x-show="designOpen" x-transition class="mt-3 pl-4 border-l-2 border-zinc-200 dark:border-zinc-700 space-y-4">
                     <flux:switch
                         label="Alt Row Backgrounds"
                         description="Apply the alternating background color (--color-alt-row) to every other section on this page. Disable to show all sections with their default backgrounds."
@@ -6884,7 +6891,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                     </svg>
                 </button>
 
-                <div x-show="advancedOpen" x-transition class="mt-3 pl-4 border-l-2 border-zinc-200 dark:border-zinc-700 space-y-4">
+                <div id="editor-seo-advanced-content" x-show="advancedOpen" x-transition class="mt-3 pl-4 border-l-2 border-zinc-200 dark:border-zinc-700 space-y-4">
                     {{-- Cache --}}
                     <flux:switch
                         label="Cache response"
@@ -6893,7 +6900,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                     />
 
                     {{-- Login Required --}}
-                    <div x-data>
+                    <div id="editor-seo-login-required" x-data>
                         <flux:switch
                             label="Require login"
                             description="Only authenticated users can access this page."
@@ -6934,7 +6941,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                     </svg>
                 </button>
 
-                <div x-show="redirectOpen" x-transition class="mt-3 pl-4 border-l-2 border-zinc-200 dark:border-zinc-700 space-y-3">
+                <div id="editor-seo-redirect-content" x-show="redirectOpen" x-transition class="mt-3 pl-4 border-l-2 border-zinc-200 dark:border-zinc-700 space-y-3">
                     <flux:input
                         label="Redirect URL"
                         wire:model="redirectUrl"
@@ -6954,7 +6961,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
             </div>
         </div>
 
-        <div class="mt-6 flex justify-end gap-2">
+        <div id="editor-seo-modal-footer" class="mt-6 flex justify-end gap-2">
             <flux:modal.close>
                 <flux:button variant="ghost">Cancel</flux:button>
             </flux:modal.close>
@@ -6988,9 +6995,9 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
         <flux:heading size="lg">Tailwind CSS Reference</flux:heading>
         <flux:text class="mt-1 mb-6">Quick reference for writing classes in the editor. Tab or Enter to autocomplete.</flux:text>
 
-        <div class="grid grid-cols-3 gap-6 text-sm">
+        <div id="editor-tw-help-grid" class="grid grid-cols-3 gap-6 text-sm">
             {{-- Column 1: Responsive & Variants --}}
-            <div class="space-y-5">
+            <div id="editor-tw-help-col-1" class="space-y-5">
                 <div>
                     <p class="font-semibold text-zinc-700 dark:text-zinc-200 mb-1">Responsive</p>
                     <p class="text-xs text-zinc-500 dark:text-zinc-400 mb-1.5">Apply at a breakpoint and up:</p>
@@ -7014,7 +7021,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
             </div>
 
             {{-- Column 2: Colors & Tokens --}}
-            <div class="space-y-5">
+            <div id="editor-tw-help-col-2" class="space-y-5">
                 <div>
                     <p class="font-semibold text-zinc-700 dark:text-zinc-200 mb-1">Theme colors</p>
                     <p class="text-xs text-zinc-500 dark:text-zinc-400 mb-1.5">Your brand colors from Branding settings:</p>
@@ -7033,7 +7040,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
             </div>
 
             {{-- Column 3: Special cases --}}
-            <div class="space-y-5">
+            <div id="editor-tw-help-col-3" class="space-y-5">
                 <div>
                     <p class="font-semibold text-zinc-700 dark:text-zinc-200 mb-1">Background overlays</p>
                     <p class="text-xs text-zinc-500 dark:text-zinc-400 mb-1.5">Semi-transparent overlays for banners:</p>
@@ -7052,7 +7059,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
             </div>
         </div>
 
-        <div class="mt-6 flex justify-end">
+        <div id="editor-tw-help-footer" class="mt-6 flex justify-end">
             <flux:modal.close>
                 <flux:button>Close</flux:button>
             </flux:modal.close>
@@ -7061,7 +7068,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
 
     {{-- Accessibility Audit modal --}}
     <flux:modal wire:model="showAccessibilityModal" class="w-full max-w-2xl">
-        <div class="flex items-start justify-between gap-4">
+        <div id="editor-a11y-modal-header" class="flex items-start justify-between gap-4">
             <div>
                 <flux:heading size="lg">Accessibility Audit</flux:heading>
                 <flux:text class="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
@@ -7081,9 +7088,9 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
             </div>
         </div>
 
-        <div class="mt-6">
+        <div id="editor-a11y-modal-body" class="mt-6">
             @if ($accessibilityScannedSaveCount < 0)
-                <div class="flex flex-col items-center justify-center py-12 text-center">
+                <div id="editor-a11y-never-scanned" class="flex flex-col items-center justify-center py-12 text-center">
                     <svg xmlns="http://www.w3.org/2000/svg" class="size-12 text-zinc-300 dark:text-zinc-600 mb-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75m-3-7.036A11.959 11.959 0 0 1 3.598 6 11.955 11.955 0 0 0 3 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285Z" />
                     </svg>
@@ -7091,7 +7098,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                     <p class="mt-1 text-xs text-zinc-400 dark:text-zinc-500">Click "Run Scan" to check this page for accessibility issues.</p>
                 </div>
             @elseif (empty($accessibilityIssues))
-                <div class="flex flex-col items-center justify-center py-12 text-center">
+                <div id="editor-a11y-no-issues" class="flex flex-col items-center justify-center py-12 text-center">
                     <svg xmlns="http://www.w3.org/2000/svg" class="size-12 text-green-400 dark:text-green-500 mb-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75m-3-7.036A11.959 11.959 0 0 1 3.598 6 11.955 11.955 0 0 0 3 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285Z" />
                     </svg>
@@ -7103,7 +7110,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                     $errorCount = count(array_filter($accessibilityIssues, fn($i) => $i['severity'] === 'error'));
                     $warningCount = count(array_filter($accessibilityIssues, fn($i) => $i['severity'] === 'warning'));
                 @endphp
-                <div class="flex items-center gap-3 mb-4">
+                <div id="editor-a11y-issue-summary" class="flex items-center gap-3 mb-4">
                     @if ($errorCount > 0)
                         <span class="inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400">
                             <svg xmlns="http://www.w3.org/2000/svg" class="size-3" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M18 10a8 8 0 1 1-16 0 8 8 0 0 1 16 0Zm-8-5a.75.75 0 0 1 .75.75v4.5a.75.75 0 0 1-1.5 0v-4.5A.75.75 0 0 1 10 5Zm0 10a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z" clip-rule="evenodd" /></svg>
@@ -7118,7 +7125,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                     @endif
                 </div>
 
-                <div class="space-y-2">
+                <div id="editor-a11y-issue-list" class="space-y-2">
                     @foreach ($accessibilityIssues as $issue)
                         @php $isNavigable = ! empty($issue['row_slug']); @endphp
                         <div
@@ -7132,7 +7139,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                             @else
                                 <svg xmlns="http://www.w3.org/2000/svg" class="size-4 text-amber-500 dark:text-amber-400 shrink-0 mt-0.5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M8.485 2.495c.673-1.167 2.357-1.167 3.03 0l6.28 10.875c.673 1.167-.17 2.625-1.516 2.625H3.72c-1.347 0-2.189-1.458-1.515-2.625L8.485 2.495ZM10 5a.75.75 0 0 1 .75.75v3.5a.75.75 0 0 1-1.5 0v-3.5A.75.75 0 0 1 10 5Zm0 9a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z" clip-rule="evenodd" /></svg>
                             @endif
-                            <div class="flex-1 min-w-0">
+                            <div id="editor-a11y-issue-text-{{ $loop->index }}" class="flex-1 min-w-0">
                                 <p class="text-xs font-medium {{ $issue['severity'] === 'error' ? 'text-red-700 dark:text-red-400' : 'text-amber-700 dark:text-amber-400' }}">{{ $issue['message'] }}</p>
                                 <p class="mt-0.5 text-xs text-zinc-400 dark:text-zinc-500">
                                     Row: {{ $issue['row'] }}
@@ -7150,11 +7157,11 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
             @endif
         </div>
 
-        <div class="mt-6 flex items-start justify-between gap-4">
+        <div id="editor-a11y-modal-footer" class="mt-6 flex items-start justify-between gap-4">
             <p class="text-xs text-zinc-400 dark:text-zinc-500 leading-relaxed max-w-sm">
                 Checks: missing alt text, heading hierarchy (H1 count, skipped levels), and empty link labels.
             </p>
-            <div class="flex items-center gap-2 shrink-0">
+            <div id="editor-a11y-modal-actions" class="flex items-center gap-2 shrink-0">
                 <flux:button wire:click="runAccessibilityAudit" icon="shield-check" variant="outline">
                     {{ $accessibilityScannedSaveCount < 0 ? 'Run Scan' : 'Re-scan' }}
                 </flux:button>
@@ -7168,7 +7175,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
     <flux:modal name="confirm-remove-all-rows" class="w-full max-w-sm">
         <flux:heading size="lg">Remove all rows?</flux:heading>
         <flux:text class="mt-2">This will remove all rows from this page. Any saved content for these rows will also be deleted.</flux:text>
-        <div class="mt-6 flex justify-end gap-3">
+        <div id="editor-confirm-remove-all-footer" class="mt-6 flex justify-end gap-3">
             <flux:modal.close>
                 <flux:button variant="ghost">Cancel</flux:button>
             </flux:modal.close>
@@ -7252,7 +7259,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
             <flux:heading size="lg">Generate content for all sections</flux:heading>
             <flux:text class="mt-1">Describe what the page is about and AI will write content for every text field across all sections at once.</flux:text>
 
-            <div class="mt-4 space-y-4" x-show="!running">
+            <div id="editor-generate-all-form" class="mt-4 space-y-4" x-show="!running">
                 <div>
                     <flux:label>Prompt</flux:label>
                     <textarea
@@ -7264,9 +7271,9 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                     <p class="mt-1 text-xs text-zinc-400 dark:text-zinc-500">Describe the business, page purpose, and tone. AI will use this context to write each section appropriately.</p>
                 </div>
 
-                <div>
+                <div id="editor-generate-mode-selector">
                     <flux:label class="mb-2">What to generate</flux:label>
-                    <div class="mt-2 space-y-2.5">
+                    <div id="editor-generate-mode-options" class="mt-2 space-y-2.5">
                         <label class="flex items-start gap-2.5 cursor-pointer">
                             <input type="radio" x-model="mode" value="all" class="mt-0.5 text-primary shrink-0">
                             <div>
@@ -7284,7 +7291,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                     </div>
                 </div>
 
-                <div class="space-y-3 rounded-lg border border-zinc-200 dark:border-zinc-700 p-3">
+                <div id="editor-generate-options" class="space-y-3 rounded-lg border border-zinc-200 dark:border-zinc-700 p-3">
                     <label class="flex items-center justify-between gap-3 cursor-pointer">
                         <div>
                             <span class="text-sm font-medium text-zinc-700 dark:text-zinc-300">Use HTML in rich text fields</span>
@@ -7316,12 +7323,12 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                 </div>
             </div>
 
-            <div x-show="running" class="mt-4 space-y-3">
-                <div class="flex items-center justify-between text-sm">
+            <div id="editor-generate-all-progress" x-show="running" class="mt-4 space-y-3">
+                <div id="editor-generate-all-progress-header" class="flex items-center justify-between text-sm">
                     <span class="text-zinc-600 dark:text-zinc-400">Generating content…</span>
                     <span class="font-medium text-zinc-700 dark:text-zinc-300" x-text="total ? (done + ' / ' + total + ' steps') : 'Preparing…'"></span>
                 </div>
-                <div class="h-2 bg-zinc-100 dark:bg-zinc-700 rounded-full overflow-hidden">
+                <div id="editor-generate-all-progress-bar-track" class="h-2 bg-zinc-100 dark:bg-zinc-700 rounded-full overflow-hidden">
                     <div
                         class="h-full bg-primary rounded-full transition-all duration-300 ease-out"
                         x-bind:style="'width: ' + (total ? pct : 0) + '%'"
@@ -7329,7 +7336,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                     ></div>
                 </div>
                 <p class="text-xs text-zinc-400 dark:text-zinc-500">Processing each section — this may take a moment.</p>
-                <div x-show="errors.length" class="rounded-lg bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800 px-3 py-2">
+                <div id="editor-generate-all-errors" x-show="errors.length" class="rounded-lg bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800 px-3 py-2">
                     <p class="text-xs font-medium text-red-700 dark:text-red-400 mb-1">Some sections had errors:</p>
                     <template x-for="err in errors">
                         <p class="text-xs text-red-600 dark:text-red-400" x-text="err"></p>
@@ -7337,7 +7344,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                 </div>
             </div>
 
-            <div class="mt-6 flex justify-end gap-3">
+            <div id="editor-generate-all-footer" class="mt-6 flex justify-end gap-3">
                 <template x-if="!running">
                     <flux:modal.close>
                         <flux:button variant="ghost">Cancel</flux:button>
@@ -7362,7 +7369,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
     <flux:modal name="confirm-auto-bem" class="w-full max-w-sm">
         <flux:heading size="lg">Auto BEM all rows?</flux:heading>
         <flux:text class="mt-2">Auto-generate BEM IDs for all rows on this page. Existing IDs will be updated.</flux:text>
-        <div class="mt-6 flex justify-end gap-3">
+        <div id="editor-confirm-auto-bem-footer" class="mt-6 flex justify-end gap-3">
             <flux:modal.close>
                 <flux:button variant="ghost">Cancel</flux:button>
             </flux:modal.close>
@@ -7447,8 +7454,8 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
             <flux:heading size="lg" x-text="rowIndex !== null ? 'Translate section' : 'Translate all sections'"></flux:heading>
             <flux:text class="mt-1" x-text="rowIndex !== null ? 'Translate all text fields in this section.' : 'Translate all text fields across every section on this page.'"></flux:text>
 
-            <div class="mt-4 space-y-4" x-show="!running">
-                <div x-show="rowIndex === null">
+            <div id="editor-translate-form" class="mt-4 space-y-4" x-show="!running">
+                <div id="editor-translate-lang-selector" x-show="rowIndex === null">
                     <flux:label>Translate to</flux:label>
                     <select x-model="targetLang" class="mt-1 block w-full rounded-lg border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary">
                         <option value="">Select language…</option>
@@ -7457,12 +7464,12 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                         @endforeach
                     </select>
                 </div>
-                <div x-show="rowIndex !== null">
+                <div id="editor-translate-single-row-indicator" x-show="rowIndex !== null">
                     <flux:text class="text-sm">Translating to: <span class="font-medium text-zinc-800 dark:text-zinc-200" x-text="langLabel"></span></flux:text>
                 </div>
-                <div>
+                <div id="editor-translate-mode-selector">
                     <flux:label class="mb-2">What to translate</flux:label>
-                    <div class="mt-2 space-y-2.5">
+                    <div id="editor-translate-mode-options" class="mt-2 space-y-2.5">
                         <label class="flex items-start gap-2.5 cursor-pointer">
                             <input type="radio" x-model="mode" value="all" class="mt-0.5 text-primary shrink-0">
                             <div>
@@ -7481,12 +7488,12 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                 </div>
             </div>
 
-            <div x-show="running" class="mt-4 space-y-3">
-                <div class="flex items-center justify-between text-sm">
+            <div id="editor-translate-progress" x-show="running" class="mt-4 space-y-3">
+                <div id="editor-translate-progress-header" class="flex items-center justify-between text-sm">
                     <span class="text-zinc-600 dark:text-zinc-400">Translating…</span>
                     <span class="font-medium text-zinc-700 dark:text-zinc-300" x-text="total > 0 ? `${done} / ${total} fields` : 'Preparing…'"></span>
                 </div>
-                <div class="h-2 bg-zinc-100 dark:bg-zinc-700 rounded-full overflow-hidden">
+                <div id="editor-translate-progress-bar-track" class="h-2 bg-zinc-100 dark:bg-zinc-700 rounded-full overflow-hidden">
                     <div
                         class="h-full bg-primary rounded-full transition-all duration-300 ease-out"
                         x-bind:style="`width: ${total > 0 ? pct : 0}%`"
@@ -7496,7 +7503,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                 <p class="text-xs text-zinc-400 dark:text-zinc-500">This may take a moment — each field is translated individually.</p>
             </div>
 
-            <div class="mt-6 flex justify-end gap-3">
+            <div id="editor-translate-footer" class="mt-6 flex justify-end gap-3">
                 <template x-if="!running">
                     <flux:modal.close>
                         <flux:button variant="ghost">Cancel</flux:button>
@@ -7518,7 +7525,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
     <flux:modal name="confirm-make-shared-row" class="w-full max-w-sm">
         <flux:heading size="lg">Make row shared?</flux:heading>
         <flux:text class="mt-2">This row will be available to insert on other pages. Changes to it will affect all pages using it.</flux:text>
-        <div class="mt-6 flex justify-end gap-3">
+        <div id="editor-confirm-make-shared-footer" class="mt-6 flex justify-end gap-3">
             <flux:modal.close>
                 <flux:button variant="ghost">Cancel</flux:button>
             </flux:modal.close>
@@ -7531,7 +7538,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
     <flux:modal name="confirm-remove-row" class="w-full max-w-sm">
         <flux:heading size="lg">Remove row?</flux:heading>
         <flux:text class="mt-2">This will remove the row from the page. Any saved content for this row will also be deleted.</flux:text>
-        <div class="mt-6 flex justify-end gap-3">
+        <div id="editor-confirm-remove-row-footer" class="mt-6 flex justify-end gap-3">
             <flux:modal.close>
                 <flux:button variant="ghost">Cancel</flux:button>
             </flux:modal.close>
