@@ -5,7 +5,7 @@
 --}}
 <x-dl.section slug="__SLUG__"
     default-section-classes="px-6 bg-white dark:bg-zinc-900"
-    default-container-classes="max-w-6xl mx-auto py-0">
+    default-container-classes="max-w-container mx-auto py-0">
     <x-dl.wrapper slug="__SLUG__" prefix="divider" tag="hr"
         default-classes="border-t border-zinc-200 dark:border-zinc-800" />
 </x-dl.section>

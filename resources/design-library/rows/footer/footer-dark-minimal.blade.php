@@ -6,7 +6,7 @@
 <x-dl.section slug="__SLUG__"
     tag="footer"
     default-section-classes="py-8 px-6 bg-zinc-950"
-    default-container-classes="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
+    default-container-classes="max-w-container mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
     <x-dl.logo slug="__SLUG__" prefix="logo"
         default-classes="h-8 w-auto" />
     <x-dl.nav slug="__SLUG__" prefix="main_nav"

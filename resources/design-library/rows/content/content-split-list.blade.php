@@ -5,7 +5,7 @@
 --}}
 <x-dl.section slug="__SLUG__"
     default-section-classes="py-section px-6 bg-white dark:bg-zinc-900"
-    default-container-classes="max-w-6xl mx-auto grid md:grid-cols-2 gap-12 items-center">
+    default-container-classes="max-w-container mx-auto grid md:grid-cols-2 gap-12 items-center">
     <div>
         <x-dl.heading slug="__SLUG__" prefix="headline" default="Complete Care When You Need It Most"
             default-tag="h2"

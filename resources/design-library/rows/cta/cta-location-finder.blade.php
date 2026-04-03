@@ -5,7 +5,7 @@
 --}}
 <x-dl.section slug="__SLUG__"
     default-section-classes="py-section-banner px-6 bg-primary"
-    default-container-classes="max-w-6xl mx-auto grid md:grid-cols-2 gap-8 items-center">
+    default-container-classes="max-w-container mx-auto grid md:grid-cols-2 gap-8 items-center">
     <div>
         <x-dl.heading slug="__SLUG__" prefix="headline" default="Find a Location Near You"
             default-tag="h2"

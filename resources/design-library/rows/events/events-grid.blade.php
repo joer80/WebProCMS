@@ -5,7 +5,7 @@
 --}}
 <x-dl.section slug="__SLUG__"
     default-section-classes="py-section px-6 bg-white dark:bg-zinc-900"
-    default-container-classes="max-w-6xl mx-auto">
+    default-container-classes="max-w-container mx-auto">
     <div class="flex items-center justify-between mb-10">
         <x-dl.heading slug="__SLUG__" prefix="headline" default="Upcoming Events"
             default-tag="h2"

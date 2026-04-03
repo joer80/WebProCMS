@@ -5,7 +5,7 @@
 --}}
 <x-dl.section slug="__SLUG__"
     default-section-classes="py-section px-6 bg-primary"
-    default-container-classes="max-w-6xl mx-auto text-center">
+    default-container-classes="max-w-container mx-auto text-center">
     <x-dl.heading slug="__SLUG__" prefix="headline" default="Section Heading"
         default-tag="h2"
         default-classes="font-heading text-4xl font-bold text-white" />

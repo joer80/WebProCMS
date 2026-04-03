@@ -6,7 +6,7 @@
 <x-dl.section slug="__SLUG__"
     tag="footer"
     default-section-classes="py-12 px-6 bg-zinc-900"
-    default-container-classes="max-w-6xl mx-auto grid md:grid-cols-2 gap-10 items-start">
+    default-container-classes="max-w-container mx-auto grid md:grid-cols-2 gap-10 items-start">
     <x-dl.wrapper slug="__SLUG__" prefix="brand_col"
         default-classes="">
         <x-dl.logo slug="__SLUG__" prefix="logo"

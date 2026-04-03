@@ -6,7 +6,7 @@
 <x-dl.section slug="__SLUG__"
     tag="footer"
     default-section-classes="bg-zinc-900 px-6"
-    default-container-classes="max-w-6xl mx-auto">
+    default-container-classes="max-w-container mx-auto">
     <x-dl.wrapper slug="__SLUG__" prefix="newsletter_bar"
         default-classes="py-12 flex flex-col md:flex-row items-center justify-between gap-6 border-b border-zinc-700">
         <x-dl.group slug="__SLUG__" prefix="newsletter_text"

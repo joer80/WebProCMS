@@ -5340,7 +5340,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                 {{-- Right panel: row list / inline content editor --}}
                 <div
                     id="editor-sidebar"
-                    class="w-96 shrink-0 order-last border-l border-zinc-200 dark:border-zinc-700 flex flex-col"
+                    class="w-96 shrink-0 order-last border-l border-zinc-200 dark:border-zinc-700 flex flex-col overflow-hidden"
                     x-data="{ editorOpen: false, designMode: false, advancedMode: false, groupMode: null, allGroupsOpen: false, selectedRowIndex: null, pendingGroup: null, pendingSubgroup: null, pendingItemIndex: null }"
                     x-on:pending-group.window="pendingGroup = $event.detail.group"
                     x-on:pending-subgroup.window="pendingSubgroup = $event.detail.subgroup"
@@ -5373,7 +5373,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                     "
                 >
                     {{-- Content editor view --}}
-                    <div id="editor-content-editor-view" x-show="editorOpen" class="flex flex-col flex-1" style="display: none">
+                    <div id="editor-content-editor-view" x-show="editorOpen" class="flex flex-col flex-1 min-h-0" style="display: none">
                         @if ($editingRowIndex !== null && isset($rows[$editingRowIndex]))
                         <div id="editor-content-editor-header" class="shrink-0 flex items-center gap-2 p-3 border-b border-zinc-200 dark:border-zinc-700">
                             <flux:button
@@ -5841,7 +5841,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                     </div>
 
                     {{-- Row list view --}}
-                    <div id="editor-row-list-view" x-show="!editorOpen" class="flex flex-col flex-1">
+                    <div id="editor-row-list-view" x-show="!editorOpen" class="flex flex-col flex-1 min-h-0">
                         <div id="editor-row-list-header" class="shrink-0 px-4 py-3 border-b border-zinc-200 dark:border-zinc-700 flex items-center justify-between">
                             <flux:heading size="sm" class="text-zinc-600 dark:text-zinc-400">{{ __('Page Sections') }}</flux:heading>
                             <div id="editor-row-list-toolbar" class="flex items-center gap-0.5" x-data="{ allDesignsOpen: false, allAdvancedOpen: false, allBrowseOpen: false }">

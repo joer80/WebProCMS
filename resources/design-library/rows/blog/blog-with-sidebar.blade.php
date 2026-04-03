@@ -5,7 +5,7 @@
 --}}
 <x-dl.section slug="__SLUG__"
     default-section-classes="py-section px-6 bg-white dark:bg-zinc-900"
-    default-container-classes="max-w-6xl mx-auto grid lg:grid-cols-3 gap-12">
+    default-container-classes="max-w-container mx-auto grid lg:grid-cols-3 gap-12">
     <div class="lg:col-span-2">
         <x-dl.heading slug="__SLUG__" prefix="headline" default="All Posts"
             default-tag="h2"

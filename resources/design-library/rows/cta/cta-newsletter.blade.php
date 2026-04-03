@@ -5,7 +5,7 @@
 --}}
 <x-dl.section slug="__SLUG__"
     default-section-classes="py-section-banner px-6 bg-primary"
-    default-container-classes="max-w-6xl mx-auto grid md:grid-cols-2 gap-10 items-center">
+    default-container-classes="max-w-container mx-auto grid md:grid-cols-2 gap-10 items-center">
     <div>
         <x-dl.heading slug="__SLUG__" prefix="headline" default="Stay in the Loop"
             default-tag="h2"

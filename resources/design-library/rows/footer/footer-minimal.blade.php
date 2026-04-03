@@ -6,7 +6,7 @@
 <x-dl.section slug="__SLUG__"
     tag="footer"
     default-section-classes="py-6 px-6 border-t border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900"
-    default-container-classes="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
+    default-container-classes="max-w-container mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
     <x-dl.wrapper slug="__SLUG__" prefix="copyright" tag="p"
         default-classes="text-sm text-zinc-500 dark:text-zinc-400">
         © {{ date('Y') }} <x-dl.subheadline slug="__SLUG__" prefix="brand_name" tag="span" default="Your Company"

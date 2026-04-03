@@ -6,7 +6,7 @@
 @dlItems('__SLUG__', 'logos', $logos, '[{"name":"Acme Corp"},{"name":"TechCorp"},{"name":"BuildIt"},{"name":"StartupXYZ"},{"name":"Innovate Inc"},{"name":"Future Labs"},{"name":"CloudBase"},{"name":"NextGen"}]')
 <x-dl.section slug="__SLUG__"
     default-section-classes="py-12 px-6 bg-zinc-50 dark:bg-zinc-800/50 overflow-hidden"
-    default-container-classes="max-w-6xl mx-auto">
+    default-container-classes="max-w-container mx-auto">
     <x-dl.subheadline slug="__SLUG__" prefix="label" default="Our customers"
         default-classes="text-center text-sm text-zinc-400 dark:text-zinc-500 uppercase tracking-wider mb-8" />
     <x-dl.wrapper slug="__SLUG__" prefix="marquee_wrapper"

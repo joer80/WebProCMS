@@ -5,7 +5,7 @@
 --}}
 <x-dl.section slug="__SLUG__"
     default-section-classes="relative py-section-banner px-6 bg-zinc-800 bg-cover bg-center"
-    default-container-classes="max-w-6xl mx-auto">
+    default-container-classes="max-w-container mx-auto">
     <x-dl.wrapper slug="__SLUG__" prefix="overlay" tag="div"
         default-toggle="1"
         default-classes="absolute inset-0 bg-black/50" />

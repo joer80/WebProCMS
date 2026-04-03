@@ -7,7 +7,7 @@
     tag="header"
     x-data="{ mobileOpen: false }"
     default-section-classes="absolute top-0 inset-x-0 z-50"
-    default-container-classes="max-w-6xl mx-auto px-6 h-20 flex items-center justify-between">
+    default-container-classes="max-w-container mx-auto px-6 h-20 flex items-center justify-between">
     <x-dl.logo slug="__SLUG__" prefix="logo"
         default-classes="h-8 w-auto" />
     <x-dl.nav slug="__SLUG__" prefix="main_nav"

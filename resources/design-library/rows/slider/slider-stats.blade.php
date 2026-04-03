@@ -6,7 +6,7 @@
 @dlItems('__SLUG__', 'stats', $stats, '[{"number":"10000","suffix":"+","label":"Customers"},{"number":"99","suffix":"%","label":"Uptime"},{"number":"50","suffix":"+","label":"Countries"},{"number":"5","suffix":"/5","label":"Rating"}]')
 <x-dl.section slug="__SLUG__"
     default-section-classes="py-section px-6 bg-primary"
-    default-container-classes="max-w-6xl mx-auto"
+    default-container-classes="max-w-container mx-auto"
     x-data="{
         animated: false,
         counts: {},

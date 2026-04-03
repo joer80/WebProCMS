@@ -8,7 +8,7 @@
     x-data="{ mobileOpen: false }"
     default-sticky=""
     default-section-classes="py-4 px-6 bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800"
-    default-container-classes="max-w-6xl mx-auto flex items-center justify-between">
+    default-container-classes="max-w-container mx-auto flex items-center justify-between">
     <x-dl.logo slug="__SLUG__" prefix="logo"
         default-classes="h-8 w-auto" />
     <x-dl.wrapper slug="__SLUG__" prefix="header_button"

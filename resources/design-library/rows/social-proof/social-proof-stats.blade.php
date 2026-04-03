@@ -5,7 +5,7 @@
 --}}
 <x-dl.section slug="__SLUG__"
     default-section-classes="py-section px-6 bg-zinc-900"
-    default-container-classes="max-w-6xl mx-auto">
+    default-container-classes="max-w-container mx-auto">
     <x-dl.wrapper slug="__SLUG__" prefix="header_wrapper" default-classes="text-center mb-14">
         <x-dl.heading slug="__SLUG__" prefix="headline" default="The Numbers Speak for Themselves"
             default-tag="h2"

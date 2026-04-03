@@ -5,7 +5,7 @@
 --}}
 <x-dl.section slug="__SLUG__"
     default-section-classes="py-section px-6 bg-zinc-50 dark:bg-zinc-950"
-    default-container-classes="max-w-6xl mx-auto">
+    default-container-classes="max-w-container mx-auto">
     <x-dl.wrapper slug="__SLUG__" prefix="header_wrapper" default-classes="flex items-end justify-between mb-10">
         <x-dl.heading slug="__SLUG__" prefix="headline" default="Portfolio"
             default-tag="h2"

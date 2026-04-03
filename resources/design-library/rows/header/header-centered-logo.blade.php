@@ -10,7 +10,7 @@
     x-bind:class="scrolled ? 'h-16' : 'h-20'"
     default-sticky="1"
     default-section-classes="z-50 bg-white/90 dark:bg-zinc-900/90 backdrop-blur border-b border-zinc-200 dark:border-zinc-800 transition-all duration-300"
-    default-container-classes="max-w-6xl mx-auto px-6 h-full grid grid-cols-3 items-center">
+    default-container-classes="max-w-container mx-auto px-6 h-full grid grid-cols-3 items-center">
     <x-dl.nav slug="__SLUG__" prefix="left_nav"
         default-menu="main-navigation"
         default-classes="hidden md:flex items-center gap-6"

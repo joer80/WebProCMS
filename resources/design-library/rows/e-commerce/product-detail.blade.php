@@ -5,7 +5,7 @@
 --}}
 <x-dl.section slug="__SLUG__"
     default-section-classes="py-section px-6 bg-white dark:bg-zinc-900"
-    default-container-classes="max-w-6xl mx-auto">
+    default-container-classes="max-w-container mx-auto">
     <x-dl.wrapper slug="__SLUG__" prefix="columns_wrapper"
         default-classes="grid md:grid-cols-2 gap-12 items-start">
         <x-dl.image slug="__SLUG__" prefix="product_image"

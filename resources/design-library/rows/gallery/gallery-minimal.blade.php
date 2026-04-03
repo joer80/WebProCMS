@@ -5,7 +5,7 @@
 --}}
 <x-dl.section slug="__SLUG__"
     default-section-classes="py-section px-6 bg-white dark:bg-zinc-900"
-    default-container-classes="max-w-6xl mx-auto">
+    default-container-classes="max-w-container mx-auto">
     @dlItems('__SLUG__', 'images', $galleryImages, '[{"image":"https://placehold.co/600x400","alt":"Photo 1","caption":""},{"image":"https://placehold.co/600x400","alt":"Photo 2","caption":""},{"image":"https://placehold.co/600x400","alt":"Photo 3","caption":""},{"image":"https://placehold.co/600x400","alt":"Photo 4","caption":""},{"image":"https://placehold.co/600x400","alt":"Photo 5","caption":""},{"image":"https://placehold.co/600x400","alt":"Photo 6","caption":""},{"image":"https://placehold.co/600x400","alt":"Photo 7","caption":""},{"image":"https://placehold.co/600x400","alt":"Photo 8","caption":""}]')
     <x-dl.gallery slug="__SLUG__" prefix="images"
         default-grid-classes="grid grid-cols-2 md:grid-cols-4 gap-1"
