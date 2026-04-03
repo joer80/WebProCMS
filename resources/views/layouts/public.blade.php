@@ -243,7 +243,7 @@
         @endif
 
         @auth
-            @if(auth()->user()->isAtLeast(\App\Enums\Role::Manager))
+            @if(auth()->user()->previewIsAtLeast(\App\Enums\Role::Manager))
                 @php
                     $routeName = Route::currentRouteName();
                     $pageFile = null;
@@ -280,7 +280,7 @@
                     }
                 @endphp
                 @php
-                    $isAboveManager = auth()->user()->isAtLeast(\App\Enums\Role::Admin);
+                    $isAboveManager = auth()->user()->previewIsAtLeast(\App\Enums\Role::Admin);
                     $canEditPage = $editorUrl && ($isAboveManager || $routeName !== 'blog.show');
                 @endphp
                 @if($editPostUrl || $canEditPage)

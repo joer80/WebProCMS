@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\PreviewRoleController;
 use Illuminate\Support\Facades\Route;
 
 // Design Library live preview (temp files scoped per user+page, gitignored)
@@ -17,6 +18,9 @@ Route::get('design-editor-preview/{token}', function (string $token) {
 
 Route::middleware(['auth', 'verified'])->group(function (): void {
     Route::livewire('dashboard', 'pages::dashboard')->name('dashboard');
+
+    Route::post('dashboard/preview-as', [PreviewRoleController::class, 'store'])->name('dashboard.preview-as.store');
+    Route::delete('dashboard/preview-as', [PreviewRoleController::class, 'destroy'])->name('dashboard.preview-as.destroy');
 
     Route::middleware('role:manager')->group(function (): void {
         Route::livewire('dashboard/blog', 'pages::dashboard.blog.index')->name('dashboard.blog.index');

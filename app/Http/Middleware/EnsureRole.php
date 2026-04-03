@@ -24,7 +24,7 @@ class EnsureRole
 
         $required = collect(Role::cases())->firstWhere('name', ucfirst($minimumRole)) ?? Role::Standard;
 
-        if (! $user->isAtLeast($required)) {
+        if (! $user->previewIsAtLeast($required)) {
             return redirect()->route('dashboard')
                 ->with('error', __('You do not have permission to access that page.'));
         }
