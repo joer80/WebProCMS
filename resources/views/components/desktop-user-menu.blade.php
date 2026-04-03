@@ -26,7 +26,7 @@
             <flux:menu.item :href="route('profile.edit')" icon="cog" wire:navigate>
                 {{ __('Settings') }}
             </flux:menu.item>
-            @if (auth()->user()->role === \App\Enums\Role::Super)
+            @if (auth()->user()->isAtLeast(\App\Enums\Role::Admin))
                 <ui-submenu data-flux-menu-submenu>
                 <flux:menu.item icon="eye" icon:trailing="chevron-right">
                     {{ __('Preview as') }}

@@ -139,9 +139,12 @@ Route::middleware(['auth', 'verified'])->group(function (): void {
     });
 
     Route::middleware('role:admin')->group(function (): void {
-        Route::livewire('dashboard/tools', 'pages::dashboard.tools')->name('dashboard.tools');
         Route::livewire('dashboard/settings/design', 'pages::dashboard.settings.design')->name('dashboard.settings.design');
         Route::livewire('dashboard/settings/api-keys', 'pages::dashboard.settings.api-keys')->name('dashboard.settings.api-keys');
+    });
+
+    Route::middleware('role:super')->group(function (): void {
+        Route::livewire('dashboard/tools', 'pages::dashboard.tools')->name('dashboard.tools');
         Route::livewire('dashboard/settings/advanced', 'pages::dashboard.settings.advanced')->name('dashboard.settings.advanced');
     });
 });

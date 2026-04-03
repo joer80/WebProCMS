@@ -16,7 +16,7 @@ class PreviewRoleController extends Controller
 
         $user = $request->user();
 
-        if (! $user || $user->role !== Role::Super) {
+        if (! $user || ! $user->isAtLeast(Role::Admin)) {
             abort(403);
         }
 
@@ -29,7 +29,7 @@ class PreviewRoleController extends Controller
     {
         $user = $request->user();
 
-        if (! $user || $user->role !== Role::Super) {
+        if (! $user || ! $user->isAtLeast(Role::Admin)) {
             abort(403);
         }
 

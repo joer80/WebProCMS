@@ -78,7 +78,7 @@
                         <flux:sidebar.item icon="rectangle-stack" :href="route('dashboard.templates')" :current="request()->routeIs('dashboard.templates')" wire:navigate>
                             {{ __('Templates') }}
                         </flux:sidebar.item>
-                        @if (auth()->user()->previewIsAtLeast(\App\Enums\Role::Admin))
+                        @if (auth()->user()->previewIsAtLeast(\App\Enums\Role::Super))
                             <flux:sidebar.item icon="wrench-screwdriver" :href="route('dashboard.tools')" :current="request()->routeIs('dashboard.tools')" wire:navigate>
                                 {{ __('Tools') }}
                             </flux:sidebar.item>
@@ -98,6 +98,8 @@
                             <flux:sidebar.item :href="route('dashboard.settings.api-keys')" :current="request()->routeIs('dashboard.settings.api-keys')" wire:navigate>
                                 {{ __('API Keys') }}
                             </flux:sidebar.item>
+                        @endif
+                        @if (auth()->user()->previewIsAtLeast(\App\Enums\Role::Super))
                             <flux:sidebar.item :href="route('dashboard.settings.advanced')" :current="request()->routeIs('dashboard.settings.advanced')" wire:navigate>
                                 {{ __('Advanced') }}
                             </flux:sidebar.item>
@@ -159,7 +161,7 @@
                         <flux:menu.item :href="route('profile.edit')" icon="cog" wire:navigate>
                             {{ __('Settings') }}
                         </flux:menu.item>
-                        @if (auth()->user()->role === \App\Enums\Role::Super)
+                        @if (auth()->user()->isAtLeast(\App\Enums\Role::Admin))
                             <ui-submenu data-flux-menu-submenu>
                                 <flux:menu.item icon="eye" icon:trailing="chevron-right">
                                     {{ __('Preview as') }}
