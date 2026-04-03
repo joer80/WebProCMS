@@ -20,7 +20,7 @@
         @foreach ($features as $feature)
             <x-dl.card slug="__SLUG__" prefix="feature_card"
                 data-editor-item-index="{{ $loop->index }}"
-                default-classes="p-6 rounded-card border border-zinc-200 dark:border-zinc-700 hover:border-primary/40 transition-colors">
+                default-classes="p-6 rounded-card bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 hover:border-primary/40 transition-colors">
                 <x-dl.icon slug="__SLUG__" prefix="icon" name="{{ $feature['icon'] }}"
                     default-wrapper-classes="mb-4 text-primary"
                     default-classes="size-8" />
