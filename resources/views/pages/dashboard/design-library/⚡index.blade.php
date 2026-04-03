@@ -196,7 +196,7 @@ new #[Layout('layouts.app')] #[Title('Design Library')] class extends Component 
                     }
                 }
 
-                $message = 'Row updated.';
+                $message = 'Section updated.';
             } else {
                 $slug = $this->formCategory.'-'.now()->format('YmdHis');
                 $dbData['source_file'] = 'rows/'.$this->formCategory.'/'.$slug.'.blade.php';
@@ -207,7 +207,7 @@ new #[Layout('layouts.app')] #[Title('Design Library')] class extends Component 
                     $service->writeTemplateFile($service->fullPath($row->source_file), array_merge($fileData, ['source_file' => $row->source_file, 'sort_order' => 0]));
                 }
 
-                $message = 'Row created.';
+                $message = 'Section created.';
             }
 
             unset($this->rows);
@@ -402,10 +402,61 @@ new #[Layout('layouts.app')] #[Title('Design Library')] class extends Component 
 }; ?>
 
 <div>
+    <div x-data="dlPreview()">
+    {{-- Full-screen design preview overlay --}}
+    <div wire:ignore>
+        <template x-teleport="body">
+            <div
+                x-show="showPreview"
+                x-transition:enter="transition ease-out duration-200"
+                x-transition:enter-start="opacity-0"
+                x-transition:enter-end="opacity-100"
+                x-transition:leave="transition ease-in duration-150"
+                x-transition:leave-start="opacity-100"
+                x-transition:leave-end="opacity-0"
+                @keydown.escape.window="closePreview()"
+                class="fixed inset-0 z-[9999] flex flex-col"
+            >
+                {{-- Backdrop --}}
+                <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" @click="closePreview()"></div>
+                {{-- Panel --}}
+                <div class="relative z-10 flex flex-col w-full h-full max-w-screen-xl mx-auto shadow-2xl">
+                    {{-- Header bar --}}
+                    <div class="flex items-center justify-between px-6 py-3 bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-700 shrink-0">
+                        <span class="font-semibold text-zinc-900 dark:text-white text-sm truncate pr-4" x-text="previewName"></span>
+                        <div class="flex items-center gap-2 shrink-0">
+                            <a
+                                :href="previewUrl"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium border border-zinc-300 dark:border-zinc-600 text-zinc-700 dark:text-zinc-200 rounded-lg hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors"
+                            >Open in Tab</a>
+                            <button
+                                @click="closePreview()"
+                                class="p-1.5 text-zinc-500 hover:text-zinc-900 dark:hover:text-white rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+                                aria-label="Close preview"
+                            >
+                                <svg xmlns="http://www.w3.org/2000/svg" class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+                            </button>
+                        </div>
+                    </div>
+                    {{-- Preview iframe --}}
+                    <div class="flex-1 overflow-hidden bg-white dark:bg-zinc-950">
+                        <iframe
+                            :src="showPreview ? previewUrl : 'about:blank'"
+                            class="w-full h-full border-0"
+                            scrolling="yes"
+                        ></iframe>
+                    </div>
+                </div>
+            </div>
+        </template>
+    </div>
+
     {{-- Edit / Create Modal --}}
     <flux:modal wire:model="showModal" class="w-full max-w-3xl">
         <flux:heading size="lg" class="mb-6">
-            {{ $editingId ? __('Edit') : __('New') }} {{ $tab === 'rows' ? __('Row') : __('Page Bundle') }}
+            {{ $editingId ? __('Edit') : __('New') }} {{ $tab === 'rows' ? __('Section') : __('Page Bundle') }}
         </flux:heading>
 
         @if (! app()->isLocal())
@@ -454,11 +505,11 @@ new #[Layout('layouts.app')] #[Title('Design Library')] class extends Component 
                 <flux:field>
                     <flux:label>PHP Code to Inject (optional)</flux:label>
                     <flux:textarea wire:model="formPhpCode" rows="5" class="font-mono text-xs" placeholder="public string $heroTitle = '';" />
-                    <flux:description>This code will be injected into the Volt component class when the row is inserted into a page.</flux:description>
+                    <flux:description>This code will be injected into the Volt component class when the section is inserted into a page.</flux:description>
                 </flux:field>
             @else
                 <flux:field>
-                    <flux:label>Rows in this bundle</flux:label>
+                    <flux:label>Sections in this bundle</flux:label>
                     <select wire:model="formRowNames" multiple size="10"
                         class="block w-full rounded-lg border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 text-sm px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary/50">
                         @foreach ($this->allRows->groupBy(fn ($r) => $r->category->label()) as $categoryLabel => $categoryRows)
@@ -470,7 +521,7 @@ new #[Layout('layouts.app')] #[Title('Design Library')] class extends Component 
                             </optgroup>
                         @endforeach
                     </select>
-                    <flux:description>Hold Cmd/Ctrl to select multiple rows. Order matches selection order.</flux:description>
+                    <flux:description>Hold Cmd/Ctrl to select multiple sections. Order matches selection order.</flux:description>
                 </flux:field>
             @endif
 
@@ -544,24 +595,12 @@ new #[Layout('layouts.app')] #[Title('Design Library')] class extends Component 
         <div class="flex flex-wrap items-start justify-between gap-4 mb-8">
             <div>
                 <flux:heading size="xl">{{ __('Design Library') }}</flux:heading>
-                <flux:text class="mt-1">{{ __('Browse and manage reusable row and page templates.') }}</flux:text>
+                <flux:text class="mt-1">{{ __('Browse and manage reusable section and page templates.') }}</flux:text>
             </div>
             <div class="flex items-center gap-3">
-                <flux:button
-                    wire:click="syncLibrary"
-                    wire:loading.attr="disabled"
-                    variant="outline"
-                    icon="arrow-path"
-                >
-                    <span wire:loading.remove wire:target="syncLibrary">{{ __('Sync Library') }}</span>
-                    <span wire:loading wire:target="syncLibrary">{{ __('Syncing…') }}</span>
-                </flux:button>
-                <flux:button href="{{ route('dashboard.design-library.editor') }}" variant="outline" icon="pencil-square" wire:navigate>
-                    {{ __('Page Editor') }}
-                </flux:button>
                 @if ($tab !== 'menus')
                     <flux:button wire:click="openCreateModal" variant="primary" icon="plus">
-                        {{ $tab === 'rows' ? __('Add Row') : __('Add Page') }}
+                        {{ $tab === 'rows' ? __('Add Section') : __('Add Page') }}
                     </flux:button>
                 @endif
             </div>
@@ -610,7 +649,7 @@ new #[Layout('layouts.app')] #[Title('Design Library')] class extends Component 
                         wire:click="setTab('rows')"
                         class="px-4 py-2.5 text-sm font-medium border-b-2 transition-colors -mb-px {{ $tab === 'rows' ? 'border-primary text-primary' : 'border-transparent text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200' }}"
                     >
-                        {{ __('Row Library') }}
+                        {{ __('Section Library') }}
                         <span class="ml-1.5 text-xs px-1.5 py-0.5 rounded-full {{ $tab === 'rows' ? 'bg-primary/10 text-primary' : 'bg-zinc-100 dark:bg-zinc-700 text-zinc-500 dark:text-zinc-400' }}">
                             {{ $this->rows->total() }}
                         </span>
@@ -696,26 +735,32 @@ new #[Layout('layouts.app')] #[Title('Design Library')] class extends Component 
                     @if ($this->rows->isEmpty())
                         <div class="text-center py-20 rounded-lg border border-dashed border-zinc-300 dark:border-zinc-700">
                             <flux:icon name="squares-2x2" class="size-12 mx-auto mb-3 text-zinc-300 dark:text-zinc-600" />
-                            <flux:heading class="text-zinc-500">No rows yet</flux:heading>
-                            <flux:text class="mt-1 text-sm">Add rows manually or sync from your library files.</flux:text>
+                            <flux:heading class="text-zinc-500">No sections yet</flux:heading>
+                            <flux:text class="mt-1 text-sm">Add sections to build your design library.</flux:text>
                             <div class="mt-6 flex justify-center gap-3">
-                                <flux:button wire:click="syncLibrary" variant="outline" size="sm" icon="arrow-path">Sync Library</flux:button>
-                                <flux:button wire:click="openCreateModal" variant="primary" size="sm" icon="plus">Add Row</flux:button>
+                                <flux:button wire:click="openCreateModal" variant="primary" size="sm" icon="plus">Add Section</flux:button>
                             </div>
                         </div>
                     @else
-                        <div class="grid sm:grid-cols-2 xl:grid-cols-3 gap-4">
+                        <div class="grid sm:grid-cols-2 xl:grid-cols-2 2xl:grid-cols-3 gap-4">
                             @foreach ($this->rows as $row)
-                                <div wire:key="row-{{ $row->id }}" class="group rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 overflow-hidden hover:border-primary/40 transition-colors flex flex-col">
-                                    {{-- Live preview --}}
-                                    <div class="relative h-40 overflow-hidden bg-zinc-100 dark:bg-zinc-800">
+                                <div
+                                    wire:key="row-{{ $row->id }}"
+                                    class="group rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 overflow-hidden hover:border-primary/40 transition-colors flex flex-col"
+                                >
+                                    {{-- Live preview (clickable thumbnail) --}}
+                                    @php $rowPreviewUrl = route('dashboard.design-library.preview', ['type' => 'row', 'id' => $row->id]); @endphp
+                                    <div
+                                        class="relative overflow-hidden bg-zinc-100 dark:bg-zinc-800 shrink-0 border-b border-zinc-200 dark:border-zinc-700 cursor-pointer" style="height:13rem"
+                                        @click="openPreview('{{ $rowPreviewUrl }}', '{{ addslashes($row->name) }}')"
+                                    >
                                         <div class="absolute inset-0 flex items-center justify-center animate-pulse pointer-events-none">
                                             <flux:icon name="photo" class="size-8 text-zinc-300 dark:text-zinc-600" />
                                         </div>
                                         <iframe
-                                            src="{{ route('dashboard.design-library.preview', ['type' => 'row', 'id' => $row->id]) }}"
-                                            class="absolute top-0 left-0 border-0"
-                                            style="width:1280px;height:800px;transform:scale(0.25);transform-origin:0 0;pointer-events:none;"
+                                            src="{{ $rowPreviewUrl }}"
+                                            class="absolute top-0 border-0"
+                                            style="width:1280px;height:800px;transform:scale(0.25);transform-origin:top center;pointer-events:none;left:50%;margin-left:-640px;"
                                             loading="lazy"
                                             scrolling="no"
                                             tabindex="-1"
@@ -737,16 +782,7 @@ new #[Layout('layouts.app')] #[Title('Design Library')] class extends Component 
                                         </div>
 
                                         <div class="mt-4 pt-3 border-t border-zinc-100 dark:border-zinc-800 flex items-center gap-2">
-                                            <flux:button
-                                                href="{{ route('dashboard.design-library.editor', ['rowId' => $row->id]) }}"
-                                                variant="primary"
-                                                size="sm"
-                                                class="flex-1"
-                                                wire:navigate
-                                            >
-                                                {{ __('Use in Page') }}
-                                            </flux:button>
-                                            <a href="{{ route('dashboard.design-library.preview', ['type' => 'row', 'id' => $row->id]) }}" target="_blank" rel="noopener noreferrer">
+                                            <a href="{{ route('dashboard.design-library.preview', ['type' => 'row', 'id' => $row->id]) }}" target="_blank" rel="noopener noreferrer" class="mr-auto">
                                                 <flux:button variant="ghost" size="sm" icon="eye" />
                                             </a>
                                             <flux:button wire:click="openEditModal({{ $row->id }})" variant="ghost" size="sm" icon="pencil" />
@@ -772,23 +808,29 @@ new #[Layout('layouts.app')] #[Title('Design Library')] class extends Component 
                             <flux:heading class="text-zinc-500">No page bundles yet</flux:heading>
                             <flux:text class="mt-1 text-sm">Create a bundle to quickly insert multiple rows at once.</flux:text>
                             <div class="mt-6 flex justify-center gap-3">
-                                <flux:button wire:click="syncLibrary" variant="outline" size="sm" icon="arrow-path">Sync Library</flux:button>
                                 <flux:button wire:click="openCreateModal" variant="primary" size="sm" icon="plus">Add Page</flux:button>
                             </div>
                         </div>
                     @else
-                        <div class="grid sm:grid-cols-2 xl:grid-cols-3 gap-4">
+                        <div class="grid sm:grid-cols-2 xl:grid-cols-2 2xl:grid-cols-3 gap-4">
                             @foreach ($this->pages as $page)
-                                <div wire:key="page-{{ $page->id }}" class="group rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 overflow-hidden hover:border-primary/40 transition-colors flex flex-col">
-                                    {{-- Live preview --}}
-                                    <div class="relative h-40 overflow-hidden bg-zinc-100 dark:bg-zinc-800">
+                                <div
+                                    wire:key="page-{{ $page->id }}"
+                                    class="group rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 overflow-hidden hover:border-primary/40 transition-colors flex flex-col"
+                                >
+                                    {{-- Live preview (clickable thumbnail) --}}
+                                    @php $pagePreviewUrl = route('dashboard.design-library.preview', ['type' => 'page', 'id' => $page->id]); @endphp
+                                    <div
+                                        class="relative overflow-hidden bg-zinc-100 dark:bg-zinc-800 shrink-0 border-b border-zinc-200 dark:border-zinc-700 cursor-pointer" style="height:13rem"
+                                        @click="openPreview('{{ $pagePreviewUrl }}', '{{ addslashes($page->name) }}')"
+                                    >
                                         <div class="absolute inset-0 flex items-center justify-center animate-pulse pointer-events-none">
                                             <flux:icon name="photo" class="size-8 text-zinc-300 dark:text-zinc-600" />
                                         </div>
                                         <iframe
-                                            src="{{ route('dashboard.design-library.preview', ['type' => 'page', 'id' => $page->id]) }}"
-                                            class="absolute top-0 left-0 border-0"
-                                            style="width:1280px;height:800px;transform:scale(0.25);transform-origin:0 0;pointer-events:none;"
+                                            src="{{ $pagePreviewUrl }}"
+                                            class="absolute top-0 border-0"
+                                            style="width:1280px;height:800px;transform:scale(0.25);transform-origin:top center;pointer-events:none;left:50%;margin-left:-640px;"
                                             loading="lazy"
                                             scrolling="no"
                                             tabindex="-1"
@@ -814,16 +856,7 @@ new #[Layout('layouts.app')] #[Title('Design Library')] class extends Component 
                                         </div>
 
                                         <div class="mt-4 pt-3 border-t border-zinc-100 dark:border-zinc-800 flex items-center gap-2">
-                                            <flux:button
-                                                href="{{ route('dashboard.design-library.editor', ['pageId' => $page->id]) }}"
-                                                variant="primary"
-                                                size="sm"
-                                                class="flex-1"
-                                                wire:navigate
-                                            >
-                                                {{ __('Use in Page') }}
-                                            </flux:button>
-                                            <a href="{{ route('dashboard.design-library.preview', ['type' => 'page', 'id' => $page->id]) }}" target="_blank" rel="noopener noreferrer">
+                                            <a href="{{ route('dashboard.design-library.preview', ['type' => 'page', 'id' => $page->id]) }}" target="_blank" rel="noopener noreferrer" class="mr-auto">
                                                 <flux:button variant="ghost" size="sm" icon="eye" />
                                             </a>
                                             <flux:button wire:click="openEditModal({{ $page->id }})" variant="ghost" size="sm" icon="pencil" />
@@ -844,6 +877,8 @@ new #[Layout('layouts.app')] #[Title('Design Library')] class extends Component 
                     @endif
                 @endif
             </div>
+
         </div>
     </flux:main>
+    </div>
 </div>

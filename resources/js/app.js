@@ -6,6 +6,20 @@ import Link from '@tiptap/extension-link';
 import Image from '@tiptap/extension-image';
 
 document.addEventListener('alpine:init', () => {
+    Alpine.data('dlPreview', () => ({
+        showPreview: false,
+        previewUrl: '',
+        previewName: '',
+        openPreview(url, name) {
+            this.previewUrl = url;
+            this.previewName = name;
+            this.showPreview = true;
+        },
+        closePreview() {
+            this.showPreview = false;
+        },
+    }));
+
     Alpine.data('richEditor', (initialContent, wireKey = 'content') => {
         // Stored outside Alpine's reactive scope to avoid Proxy wrapping,
         // which corrupts ProseMirror transactions.

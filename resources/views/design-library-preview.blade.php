@@ -17,7 +17,7 @@
             <link href="https://fonts.bunny.net/css?family={{ $bunnyFamilies[$loadFont] ?? $loadFont }}&display=swap" rel="stylesheet">
         @endforeach
     @endif
-    @vite(['resources/css/public.css', 'resources/js/app.js'])
+    @vite(['resources/css/public.css', 'resources/css/editor.css', 'resources/js/app.js'])
 </head>
 <body class="bg-white text-zinc-900 antialiased">
     {!! $content !!}
