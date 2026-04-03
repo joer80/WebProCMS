@@ -5917,38 +5917,6 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                                                     fn ($l) => $l['code'] !== 'en'
                                                 ));
                                             @endphp
-                                            @if (! empty($rowMultiLangs) && (\App\Models\Setting::get('ai.claude_key') || \App\Models\Setting::get('ai.openai_key')))
-                                                <div id="editor-row-translate-{{ $index }}" class="relative" x-data="{ tlOpen: false }" @click.outside="tlOpen = false">
-                                                    <flux:tooltip content="Translate section">
-                                                        <button type="button" @click.stop="tlOpen = !tlOpen"
-                                                            :class="tlOpen ? 'text-primary' : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 transition-colors'"
-                                                        ><flux:icon name="language" class="size-3.5" /></button>
-                                                    </flux:tooltip>
-                                                    <div
-                                                        x-show="tlOpen"
-                                                        x-transition:enter="transition ease-out duration-100"
-                                                        x-transition:enter-start="opacity-0 scale-95"
-                                                        x-transition:enter-end="opacity-100 scale-100"
-                                                        x-transition:leave="transition ease-in duration-75"
-                                                        x-transition:leave-start="opacity-100 scale-100"
-                                                        x-transition:leave-end="opacity-0 scale-95"
-                                                        id="editor-row-translate-dropdown-{{ $index }}"
-                                                        class="absolute right-0 top-full mt-1 z-20 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg shadow-lg py-1 min-w-40"
-                                                    >
-                                                        <p class="px-3 pt-1 pb-0.5 text-[10px] font-medium text-zinc-400 dark:text-zinc-500 uppercase tracking-wide">Translate to</p>
-                                                        @foreach ($rowMultiLangs as $rl)
-                                                            <button
-                                                                type="button"
-                                                                @click.stop="tlOpen = false; $dispatch('open-translate-modal', { rowIndex: {{ $index }}, lang: '{{ $rl['code'] }}', rowCount: 1 }); $flux.modal('translate-options').show()"
-                                                                class="w-full text-left px-3 py-1.5 text-xs text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-700 transition-colors flex items-center gap-2"
-                                                            >
-                                                                <span>{{ $rl['flag'] }}</span>
-                                                                <span>{{ $rl['label'] }}</span>
-                                                            </button>
-                                                        @endforeach
-                                                    </div>
-                                                </div>
-                                            @endif
                                         @endif
                                         <flux:tooltip :content="!empty($row['hidden']) ? 'Row hidden — click to show' : 'Click to hide row'">
                                             <flux:switch
@@ -6001,6 +5969,28 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                                                         {{ ($rowDesignValues[$row['slug']]['section_bg_image'] ?? '') ? 'Replace image…' : 'Pick from Media Library…' }}
                                                     </span>
                                                 </button>
+
+                                                {{-- Translate Section --}}
+                                                @if (! empty($rowMultiLangs) && (\App\Models\Setting::get('ai.claude_key') || \App\Models\Setting::get('ai.openai_key')))
+                                                    <div id="editor-row-translate-section-{{ $index }}" class="border-t border-zinc-200 dark:border-zinc-700 pt-2" x-data="{ tlOpen: false }">
+                                                        <button type="button" @click="tlOpen = !tlOpen" class="flex items-center gap-1.5 w-full text-left">
+                                                            <span class="text-[11px] uppercase tracking-wider font-semibold text-zinc-500 dark:text-zinc-400">Translate Section</span>
+                                                            <flux:icon name="chevron-right" class="size-3 text-zinc-400 shrink-0 transition-transform duration-150 ml-auto" x-bind:class="tlOpen ? 'rotate-90' : ''" />
+                                                        </button>
+                                                        <div x-show="tlOpen" x-collapse class="mt-2 space-y-1">
+                                                            @foreach ($rowMultiLangs as $rl)
+                                                                <button
+                                                                    type="button"
+                                                                    @click="tlOpen = false; $dispatch('open-translate-modal', { rowIndex: {{ $index }}, lang: '{{ $rl['code'] }}', rowCount: 1 }); $flux.modal('translate-options').show()"
+                                                                    class="w-full text-left px-3 py-2 text-xs text-zinc-700 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-700 rounded-lg hover:bg-zinc-50 dark:hover:bg-zinc-700 transition-colors flex items-center gap-2"
+                                                                >
+                                                                    <span>{{ $rl['flag'] }}</span>
+                                                                    <span>{{ $rl['label'] }}</span>
+                                                                </button>
+                                                            @endforeach
+                                                        </div>
+                                                    </div>
+                                                @endif
 
                                                 {{-- Generate Content with AI --}}
                                                 @php $aiSectionEnabled = (bool) (\App\Models\Setting::get('ai.claude_key') || \App\Models\Setting::get('ai.openai_key')); @endphp
