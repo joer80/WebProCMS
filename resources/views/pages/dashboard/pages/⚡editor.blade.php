@@ -4874,7 +4874,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                 try { savedScroll = active.contentWindow.scrollY || 0; } catch (e) {}
                 next.onload = () => {
                     try { next.contentWindow.scrollTo(0, savedScroll); } catch (e) {}
-                    try { const s = next.contentDocument.createElement('style'); s.textContent = 'html { background: #f4f4f5 !important; }'; next.contentDocument.head.appendChild(s); } catch (e) {}
+                    try { const s = next.contentDocument.createElement('style'); s.textContent = 'html { background: #fdfdfc !important; }'; next.contentDocument.head.appendChild(s); } catch (e) {}
                     next.style.zIndex = '2';
                     next.style.opacity = '1';
                     active.style.zIndex = '1';
@@ -6489,7 +6489,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                 </div>
 
                 {{-- Left panel: iframe preview --}}
-                <div id="editor-preview-panel" class="flex-1 flex flex-col bg-zinc-100 dark:bg-zinc-950 overflow-auto order-first">
+                <div id="editor-preview-panel" class="flex-1 flex flex-col bg-white dark:bg-zinc-950 overflow-auto order-first">
 @if ($previewUrl)
                         <div
                             id="editor-preview-container"
