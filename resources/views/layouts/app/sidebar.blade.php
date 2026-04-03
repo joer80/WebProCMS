@@ -78,9 +78,11 @@
                         <flux:sidebar.item icon="rectangle-stack" :href="route('dashboard.templates')" :current="request()->routeIs('dashboard.templates')" wire:navigate>
                             {{ __('Templates') }}
                         </flux:sidebar.item>
-                        <flux:sidebar.item icon="wrench-screwdriver" :href="route('dashboard.tools')" :current="request()->routeIs('dashboard.tools')" wire:navigate>
-                            {{ __('Tools') }}
-                        </flux:sidebar.item>
+                        @if (auth()->user()->previewIsAtLeast(\App\Enums\Role::Admin))
+                            <flux:sidebar.item icon="wrench-screwdriver" :href="route('dashboard.tools')" :current="request()->routeIs('dashboard.tools')" wire:navigate>
+                                {{ __('Tools') }}
+                            </flux:sidebar.item>
+                        @endif
                     </flux:sidebar.group>
                     <flux:sidebar.group expandable icon="cog-6-tooth" heading="{{ __('Settings') }}" :expanded="request()->routeIs('dashboard.settings.*')" class="grid">
                         <flux:sidebar.item :href="route('dashboard.settings.general')" :current="request()->routeIs('dashboard.settings.general')" wire:navigate>
@@ -89,15 +91,17 @@
                         <flux:sidebar.item :href="route('dashboard.settings.branding')" :current="request()->routeIs('dashboard.settings.branding')" wire:navigate>
                             {{ __('Branding') }}
                         </flux:sidebar.item>
-                        <flux:sidebar.item :href="route('dashboard.settings.design')" :current="request()->routeIs('dashboard.settings.design')" wire:navigate>
-                            {{ __('Design') }}
-                        </flux:sidebar.item>
-                        <flux:sidebar.item :href="route('dashboard.settings.api-keys')" :current="request()->routeIs('dashboard.settings.api-keys')" wire:navigate>
-                            {{ __('API Keys') }}
-                        </flux:sidebar.item>
-                        <flux:sidebar.item :href="route('dashboard.settings.advanced')" :current="request()->routeIs('dashboard.settings.advanced')" wire:navigate>
-                            {{ __('Advanced') }}
-                        </flux:sidebar.item>
+                        @if (auth()->user()->previewIsAtLeast(\App\Enums\Role::Admin))
+                            <flux:sidebar.item :href="route('dashboard.settings.design')" :current="request()->routeIs('dashboard.settings.design')" wire:navigate>
+                                {{ __('Design') }}
+                            </flux:sidebar.item>
+                            <flux:sidebar.item :href="route('dashboard.settings.api-keys')" :current="request()->routeIs('dashboard.settings.api-keys')" wire:navigate>
+                                {{ __('API Keys') }}
+                            </flux:sidebar.item>
+                            <flux:sidebar.item :href="route('dashboard.settings.advanced')" :current="request()->routeIs('dashboard.settings.advanced')" wire:navigate>
+                                {{ __('Advanced') }}
+                            </flux:sidebar.item>
+                        @endif
                     </flux:sidebar.group>
                     </ui-disclosure-group>
                 @endif

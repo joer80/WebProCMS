@@ -52,14 +52,10 @@ Route::middleware(['auth', 'verified'])->group(function (): void {
         Route::livewire('dashboard/forms/{form}/edit', 'pages::dashboard.forms.edit')->name('dashboard.forms.edit');
         Route::livewire('dashboard/forms/{form}/submissions', 'pages::dashboard.forms.submissions')->name('dashboard.forms.submissions');
 
-        Route::livewire('dashboard/tools', 'pages::dashboard.tools')->name('dashboard.tools');
         Route::livewire('dashboard/templates', 'pages::dashboard.templates')->name('dashboard.templates');
         Route::redirect('dashboard/settings', '/dashboard/settings/general')->name('dashboard.settings');
         Route::livewire('dashboard/settings/general', 'pages::dashboard.settings.general')->name('dashboard.settings.general');
         Route::livewire('dashboard/settings/branding', 'pages::dashboard.settings.branding')->name('dashboard.settings.branding');
-        Route::livewire('dashboard/settings/design', 'pages::dashboard.settings.design')->name('dashboard.settings.design');
-        Route::livewire('dashboard/settings/advanced', 'pages::dashboard.settings.advanced')->name('dashboard.settings.advanced');
-        Route::livewire('dashboard/settings/api-keys', 'pages::dashboard.settings.api-keys')->name('dashboard.settings.api-keys');
 
         Route::livewire('dashboard/users', 'pages::dashboard.users')->name('dashboard.users');
 
@@ -140,6 +136,13 @@ Route::middleware(['auth', 'verified'])->group(function (): void {
         Route::livewire('dashboard/content/{typeSlug}', 'pages::dashboard.content.index')->name('dashboard.content.index');
         Route::livewire('dashboard/content/{typeSlug}/create', 'pages::dashboard.content.create')->name('dashboard.content.create');
         Route::livewire('dashboard/content/{typeSlug}/{itemId}/edit', 'pages::dashboard.content.edit')->name('dashboard.content.edit');
+    });
+
+    Route::middleware('role:admin')->group(function (): void {
+        Route::livewire('dashboard/tools', 'pages::dashboard.tools')->name('dashboard.tools');
+        Route::livewire('dashboard/settings/design', 'pages::dashboard.settings.design')->name('dashboard.settings.design');
+        Route::livewire('dashboard/settings/api-keys', 'pages::dashboard.settings.api-keys')->name('dashboard.settings.api-keys');
+        Route::livewire('dashboard/settings/advanced', 'pages::dashboard.settings.advanced')->name('dashboard.settings.advanced');
     });
 });
 
