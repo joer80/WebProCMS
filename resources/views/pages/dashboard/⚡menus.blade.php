@@ -17,6 +17,9 @@ new #[Layout('layouts.app')] #[Title('Menus')] class extends Component {
      */
     public array $menus = [];
 
+    /** @var list<string> */
+    public array $footerSlugs = [];
+
     public int $activeMenuIndex = 0;
 
     public bool $showAddModal = false;
@@ -400,6 +403,18 @@ new #[Layout('layouts.app')] #[Title('Menus')] class extends Component {
         array_splice($items, $adjustedTo, 0, $movedGroup);
 
         $this->menus[$this->activeMenuIndex]['items'] = array_values($items);
+    }
+
+    public function reorderFooterSlugs(int $from, int $to): void
+    {
+        if ($from === $to) {
+            return;
+        }
+
+        $slugs = $this->footerSlugs;
+        $moved = array_splice($slugs, $from, 1);
+        array_splice($slugs, $to, 0, $moved);
+        $this->footerSlugs = array_values($slugs);
     }
 
     public function save(): void

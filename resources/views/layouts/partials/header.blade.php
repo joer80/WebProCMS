@@ -1,6 +1,6 @@
 <?php /** @layout-partial header */ ?>
-<div class="contents">
 {{-- ROW:start:header-simple:header --}}
+<div class="contents">
 <x-dl.section slug="header-simple:header"
     tag="header"
     x-data="{ mobileOpen: false, scrolled: false }"
@@ -53,5 +53,5 @@
             default-classes="mt-4 inline-flex px-4 py-2.5 bg-primary text-white text-sm font-semibold rounded-lg hover:bg-primary/90 transition-colors" />
     </x-dl.wrapper>
 </x-dl.section>
-{{-- ROW:end:header-simple:header --}}
 </div>
+{{-- ROW:end:header-simple:header --}}

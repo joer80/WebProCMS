@@ -124,11 +124,11 @@ class LayoutService
         $bladeCode = str_replace('__SLUG__', $slug, $bladeCode);
 
         $fileContent = "<?php /** @layout-partial {$type} */ ?>\n"
-            ."<div class=\"contents\">\n"
             ."{{-- ROW:start:{$slug} --}}\n"
+            ."<div class=\"contents\">\n"
             .trim($bladeCode)."\n"
-            ."{{-- ROW:end:{$slug} --}}\n"
-            ."</div>\n";
+            ."</div>\n"
+            ."{{-- ROW:end:{$slug} --}}\n";
 
         $dir = resource_path('views/layouts/partials');
 

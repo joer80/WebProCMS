@@ -1,6 +1,6 @@
 <?php /** @layout-partial footer */ ?>
-<div class="contents">
 {{-- ROW:start:footer-light:footer --}}
+<div class="contents">
 <x-dl.section slug="footer-light:footer"
     tag="footer"
     default-section-classes="py-16 px-6 bg-zinc-50 dark:bg-zinc-950 border-t border-zinc-200 dark:border-zinc-800"
@@ -49,5 +49,5 @@
         </x-dl.wrapper>
     </x-dl.wrapper>
 </x-dl.section>
-{{-- ROW:end:footer-light:footer --}}
 </div>
+{{-- ROW:end:footer-light:footer --}}
