@@ -29,5 +29,6 @@
 @endphp
 <style type="text/tailwindcss">
 {!! $themeContent !!}
+{!! app(\App\Services\BrandingStyleService::class)->styleBlock() !!}
 </style>
 <script src="https://unpkg.com/@tailwindcss/browser@4"></script>

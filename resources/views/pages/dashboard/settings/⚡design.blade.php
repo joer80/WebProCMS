@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\Setting;
+use App\Services\BrandingStyleService;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
 use Livewire\Component;
@@ -21,10 +22,6 @@ new #[Layout('layouts.app')] #[Title('Design')] class extends Component {
 
     public function saveTypography(): void
     {
-        if (! app()->isLocal()) {
-            return;
-        }
-
         $this->validate([
             'bodyFont'       => ['required', 'string', 'in:instrument-sans,inter,system'],
             'headingFont'    => ['required', 'string', 'in:instrument-sans,inter,system'],
@@ -32,34 +29,10 @@ new #[Layout('layouts.app')] #[Title('Design')] class extends Component {
             'containerWidth' => ['required', 'string', 'in:small,medium,large'],
         ]);
 
-        $fontSansValue = $this->fontStack($this->bodyFont);
-        $fontHeadingValue = $this->fontStack($this->headingFont);
-        $spacingValues = $this->spacingValues($this->sectionSpacing);
-        $containerValue = $this->containerWidthValue($this->containerWidth);
-
-        $appCssPath = resource_path('css/app.css');
-        $appCss = file_get_contents($appCssPath);
-        $appCss = preg_replace('/(--font-sans:\s*)([^;]+)(;)/', '${1}' . $fontSansValue . '${3}', $appCss);
-        $appCss = preg_replace('/(--font-heading:\s*)([^;]+)(;)/', '${1}' . $fontHeadingValue . '${3}', $appCss);
-        $appCss = preg_replace('/(--spacing-section:)\s*[^;]+(;[^\/]*)/', '${1} ' . $spacingValues['section'] . '${2}', $appCss);
-        $appCss = preg_replace('/(--spacing-section-banner:)\s*[^;]+(;[^\/]*)/', '${1} ' . $spacingValues['banner'] . '${2}', $appCss);
-        $appCss = preg_replace('/(--spacing-section-hero:)\s*[^;]+(;[^\/]*)/', '${1} ' . $spacingValues['hero'] . '${2}', $appCss);
-        $appCss = preg_replace('/(--width-container:)\s*[^;]+(;[^\/]*)/', '${1} ' . $containerValue . '${2}', $appCss);
-        file_put_contents($appCssPath, $appCss);
-
-        foreach ([resource_path('css/public.css'), resource_path('css/editor.css')] as $path) {
-            $css = file_get_contents($path);
-            $css = preg_replace('/(--font-sans:\s*)([^;]+)(;)/', '${1}' . $fontSansValue . '${3}', $css);
-            $css = preg_replace('/(--spacing-section:)\s*[^;]+(;[^\/]*)/', '${1} ' . $spacingValues['section'] . '${2}', $css);
-            $css = preg_replace('/(--spacing-section-banner:)\s*[^;]+(;[^\/]*)/', '${1} ' . $spacingValues['banner'] . '${2}', $css);
-            $css = preg_replace('/(--spacing-section-hero:)\s*[^;]+(;[^\/]*)/', '${1} ' . $spacingValues['hero'] . '${2}', $css);
-            $css = preg_replace('/(--width-container:)\s*[^;]+(;[^\/]*)/', '${1} ' . $containerValue . '${2}', $css);
-            file_put_contents($path, $css);
-        }
-
         $this->writeBrandingConfig();
+        app(BrandingStyleService::class)->bust();
 
-        $this->dispatch('notify', message: 'Typography saved. Rebuild assets to apply.');
+        $this->dispatch('notify', message: 'Design saved.');
     }
 
     protected function loadTypography(): void
@@ -79,35 +52,6 @@ new #[Layout('layouts.app')] #[Title('Design')] class extends Component {
         Setting::set('branding.container_width', $this->containerWidth);
     }
 
-    /** @return array{section: string, banner: string, hero: string} */
-    private function spacingValues(string $size): array
-    {
-        return match ($size) {
-            'small' => ['section' => '4rem', 'banner' => '3rem', 'hero' => '5rem'],
-            'large' => ['section' => '6rem', 'banner' => '5rem', 'hero' => '7rem'],
-            default => ['section' => '5rem', 'banner' => '3rem', 'hero' => '6rem'],
-        };
-    }
-
-    private function containerWidthValue(string $size): string
-    {
-        return match ($size) {
-            'small' => '56rem',
-            'large' => '80rem',
-            default => '72rem',
-        };
-    }
-
-    private function fontStack(string $slug): string
-    {
-        $fallbacks = "ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji'";
-
-        return match ($slug) {
-            'instrument-sans' => "'Instrument Sans', {$fallbacks}",
-            'inter' => "'Inter', {$fallbacks}",
-            default => $fallbacks,
-        };
-    }
 }; ?>
 
 <div>
@@ -118,17 +62,12 @@ new #[Layout('layouts.app')] #[Title('Design')] class extends Component {
         </div>
 
         <div class="max-w-2xl space-y-4">
-            <div class="rounded-lg border border-zinc-200 dark:border-zinc-700 p-6 {{ ! app()->isLocal() ? 'opacity-50' : '' }}">
+            <div class="rounded-lg border border-zinc-200 dark:border-zinc-700 p-6">
                 <div class="flex items-start justify-between gap-6">
                     <div class="flex-1">
                         <flux:heading>Typography &amp; Spacing</flux:heading>
-                        <flux:text class="mt-1">Font families and section spacing. Changes must be committed to git and assets rebuilt to take effect in production.</flux:text>
-                        @if (! app()->isLocal())
-                            <flux:text class="mt-2 text-xs text-amber-600 dark:text-amber-400">
-                                ⚠ Typography editing is only available in your local environment. Make changes locally and commit to git.
-                            </flux:text>
-                        @endif
-                        <div class="mt-4 space-y-4 {{ ! app()->isLocal() ? 'pointer-events-none select-none' : '' }}">
+                        <flux:text class="mt-1">Font families and section spacing.</flux:text>
+                        <div class="mt-4 space-y-4">
                             <flux:select wire:model="bodyFont" label="Body Font" description="Font used for all body text (--font-sans).">
                                 <option value="instrument-sans">Instrument Sans</option>
                                 <option value="inter">Inter</option>
@@ -167,7 +106,7 @@ new #[Layout('layouts.app')] #[Title('Design')] class extends Component {
                             </div>
                         </div>
                     </div>
-                    <flux:button wire:click="saveTypography" variant="outline" class="shrink-0" :disabled="! app()->isLocal()">Save</flux:button>
+                    <flux:button wire:click="saveTypography" variant="outline" class="shrink-0">Save</flux:button>
                 </div>
             </div>
         </div>

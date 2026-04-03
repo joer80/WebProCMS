@@ -50,6 +50,7 @@
     @vite(['resources/js/app.js'])
 @else
     @vite([$cssBundle ?? 'resources/css/app.css', 'resources/js/app.js'])
+    <style>{!! app(\App\Services\BrandingStyleService::class)->styleBlock() !!}</style>
 @endif
 @fluxAppearance
 <script>localStorage.setItem('flux.appearance','light');document.documentElement.classList.remove('dark')</script>
