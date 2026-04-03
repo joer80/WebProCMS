@@ -4,6 +4,9 @@
 @source inline("animate-in fade-in-0 slide-in-from-bottom-8 slide-in-from-top-8 slide-in-from-right-8 slide-in-from-left-8 zoom-in-95 duration-700 delay-100 delay-200 delay-300 delay-500 delay-700 delay-1000");
 
 @source '../views/layouts/public.blade.php';
+@source '../views/layouts/partials/*.blade.php';
+
+@source inline("bg-white/80 bg-zinc-900/80 h-16 h-20");
 @source '../views/pages/*.blade.php';
 @source '../views/pages/blog/**/*.blade.php';
 @source '../views/pages/services/**/*.blade.php';
@@ -72,6 +75,10 @@
     .row-alt {
         background-color: var(--color-alt-row) !important;
     }
+}
+
+@utility max-w-container {
+    max-width: var(--width-container);
 }
 
 @utility none {

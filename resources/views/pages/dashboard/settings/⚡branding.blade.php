@@ -35,6 +35,13 @@ new #[Layout('layouts.app')] #[Title('Branding')] class extends Component {
         $this->showMediaPicker = true;
     }
 
+    public function removeLogo(): void
+    {
+        $this->logoUrl = '';
+        $this->writeBrandingConfig();
+        $this->dispatch('notify', message: 'Logo removed.');
+    }
+
     #[On('media-image-picked')]
     public function handleMediaImagePicked(string $key, string $path, string $alt = ''): void
     {
@@ -133,9 +140,16 @@ new #[Layout('layouts.app')] #[Title('Branding')] class extends Component {
                         </div>
                     @endif
 
-                    <flux:button variant="outline" icon="photo" wire:click="openMediaPicker">
-                        {{ $logoUrl ? 'Change logo' : 'Pick from Media Library' }}
-                    </flux:button>
+                    <div class="flex items-center gap-2">
+                        <flux:button variant="outline" icon="photo" wire:click="openMediaPicker">
+                            {{ $logoUrl ? 'Change logo' : 'Pick from Media Library' }}
+                        </flux:button>
+                        @if ($logoUrl)
+                            <flux:button variant="ghost" icon="trash" wire:click="removeLogo" wire:confirm="Remove the logo? The default CMS logo will be used instead.">
+                                Remove
+                            </flux:button>
+                        @endif
+                    </div>
                 </div>
             </div>
 

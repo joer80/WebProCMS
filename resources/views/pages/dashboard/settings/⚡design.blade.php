@@ -14,26 +14,9 @@ new #[Layout('layouts.app')] #[Title('Design')] class extends Component {
 
     public string $containerWidth = 'medium';
 
-    public bool $altRowsEnabled = true;
-
-    public string $altRowsStart = 'even';
-
     public function mount(): void
     {
-        $this->altRowsEnabled = (bool) Setting::get('branding.alt_rows_enabled', '0');
-        $this->altRowsStart = (string) Setting::get('branding.alt_rows_start', 'even');
         $this->loadTypography();
-    }
-
-    public function saveAltRows(): void
-    {
-        $this->validate([
-            'altRowsStart' => ['required', 'string', 'in:even,odd'],
-        ]);
-
-        $this->writeBrandingConfig();
-
-        $this->dispatch('notify', message: 'Alt row setting saved.');
     }
 
     public function saveTypography(): void
@@ -94,8 +77,6 @@ new #[Layout('layouts.app')] #[Title('Design')] class extends Component {
         Setting::set('branding.heading_font', $this->headingFont);
         Setting::set('branding.section_spacing', $this->sectionSpacing);
         Setting::set('branding.container_width', $this->containerWidth);
-        Setting::set('branding.alt_rows_enabled', $this->altRowsEnabled ? '1' : '0');
-        Setting::set('branding.alt_rows_start', $this->altRowsStart);
     }
 
     /** @return array{section: string, banner: string, hero: string} */
@@ -137,34 +118,6 @@ new #[Layout('layouts.app')] #[Title('Design')] class extends Component {
         </div>
 
         <div class="max-w-2xl space-y-4">
-            <div class="rounded-lg border border-zinc-200 dark:border-zinc-700 p-6">
-                <div class="flex items-start justify-between gap-6">
-                    <div class="flex-1">
-                        <flux:heading>Alt Row Backgrounds</flux:heading>
-                        <flux:text class="mt-1">Apply an alternating background color to every other section across all pages by default. Individual pages and rows can override this setting. The alt row color (<code class="text-xs font-mono">--color-alt-row</code>) is configured on the <flux:link href="{{ route('dashboard.settings.branding') }}">Branding</flux:link> page.</flux:text>
-                        <div class="mt-4 space-y-4">
-                            <flux:switch wire:model="altRowsEnabled" label="Enable alt row backgrounds site-wide" />
-                            @if ($altRowsEnabled)
-                                <div>
-                                    <flux:label>Start alternating on</flux:label>
-                                    <flux:text class="mt-1 text-xs text-zinc-500">Choose which row receives the first alt background. Use "2nd row" when your first row is white; use "1st row" when your first row already matches your alt background color so you don't get two consecutive matching rows.</flux:text>
-                                    <div class="mt-2 flex gap-2">
-                                        @foreach (['even' => '2nd row (default)', 'odd' => '1st row'] as $value => $label)
-                                            <button
-                                                type="button"
-                                                wire:click="$set('altRowsStart', '{{ $value }}')"
-                                                class="px-4 py-2 rounded-lg border text-sm font-medium transition-colors {{ $altRowsStart === $value ? 'bg-primary text-white border-primary' : 'bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 border-zinc-300 dark:border-zinc-600 hover:border-zinc-400' }}"
-                                            >{{ $label }}</button>
-                                        @endforeach
-                                    </div>
-                                </div>
-                            @endif
-                        </div>
-                    </div>
-                    <flux:button wire:click="saveAltRows" variant="outline" class="shrink-0">Save</flux:button>
-                </div>
-            </div>
-
             <div class="rounded-lg border border-zinc-200 dark:border-zinc-700 p-6 {{ ! app()->isLocal() ? 'opacity-50' : '' }}">
                 <div class="flex items-start justify-between gap-6">
                     <div class="flex-1">

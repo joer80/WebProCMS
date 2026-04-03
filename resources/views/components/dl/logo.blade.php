@@ -14,15 +14,11 @@ foreach ($logoAttrsRaw as $attr) {
         $extraAttrsStr .= ' ' . e($attr['name']) . '="' . e($attr['value'] ?? '') . '"';
     }
 }
-// Custom image (from media library) takes precedence; falls back to branding config logo.
-$logoSrc = $customImage ?: \App\Models\Setting::get('branding.logo_url', '');
+// Custom image (from media library) takes precedence; falls back to branding config logo, then CMS default.
+$logoSrc = $customImage ?: \App\Models\Setting::get('branding.logo_url') ?: asset('images/logo.svg');
 @endphp
 @if($toggle)
 <a href="{{ route('home') }}"{!! $extraAttrsStr !!}>
-    @if($logoSrc)
-        <img src="{{ $logoSrc }}" alt="{{ $imageAlt }}" class="{{ $imgClasses }}">
-    @else
-        <span class="{{ $imgClasses }}">Business Name</span>
-    @endif
+    <img src="{{ $logoSrc }}" alt="{{ $imageAlt }}" class="{{ $imgClasses }}">
 </a>
 @endif

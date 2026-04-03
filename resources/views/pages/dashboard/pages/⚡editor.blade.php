@@ -113,8 +113,6 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
     #[Validate('required|in:draft,published,unlisted,unpublished')]
     public string $pageStatus = 'published';
 
-    public bool $altRowsEnabled = true;
-
     // Content editor state
     public bool $showContentEditor = false;
 
@@ -330,28 +328,6 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
         }
     }
 
-    public function toggleNoAltRow(string $slug): void
-    {
-        $current = $this->rowDesignValues[$slug]['section_no_alt'] ?? '';
-        $newValue = $current === '1' ? '' : '1';
-
-        $this->rowDesignValues[$slug]['section_no_alt'] = $newValue;
-
-        $drafts = session('editor_draft_overrides', []);
-        $drafts[$slug.':section_no_alt'] = ['type' => 'toggle', 'value' => $newValue];
-        session(['editor_draft_overrides' => $drafts]);
-
-        $this->isDirty = true;
-        $this->syncAltRowClasses();
-        $this->refreshPreview();
-    }
-
-    public function updatedAltRowsEnabled(): void
-    {
-        $this->syncAltRowClasses();
-        $this->refreshPreview();
-    }
-
     #[Computed]
     public function isLayoutPartial(): bool
     {
@@ -499,7 +475,6 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
         $this->rows = array_values($rows);
         $this->pushHistory();
         $this->isDirty = true;
-        $this->syncAltRowClasses();
 
         $this->refreshPreview();
     }
@@ -515,7 +490,6 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
         $this->rows = array_values($rows);
         $this->pushHistory();
         $this->isDirty = true;
-        $this->syncAltRowClasses();
 
         $this->refreshPreview();
     }
@@ -531,7 +505,6 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
         $this->rows = array_values($this->rows);
         $this->pushHistory();
         $this->isDirty = true;
-        $this->syncAltRowClasses();
 
         $this->refreshPreview();
     }
@@ -2077,10 +2050,6 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
             }
         }
 
-        foreach (array_keys($this->rowDesignDefaults) as $slug) {
-            $this->rowDesignDefaults[$slug]['section_no_alt'] = '';
-        }
-
         $slugs = array_keys($this->rowDesignDefaults);
 
         if (empty($slugs)) {
@@ -2091,7 +2060,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
 
         $overrides = ContentOverride::query()
             ->whereIn('row_slug', $slugs)
-            ->whereIn('key', ['section_classes', 'section_container_classes', 'section_no_alt', 'section_id', 'section_animation', 'section_animation_delay', 'section_bg_image', 'section_bg_position', 'section_bg_size', 'section_bg_repeat'])
+            ->whereIn('key', ['section_classes', 'section_container_classes', 'section_id', 'section_animation', 'section_animation_delay', 'section_bg_image', 'section_bg_position', 'section_bg_size', 'section_bg_repeat'])
             ->get()
             ->keyBy(fn (ContentOverride $o) => $o->row_slug.':'.$o->key);
 
@@ -2106,87 +2075,6 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
             }
         }
 
-        $this->syncAltRowClasses();
-    }
-
-    /**
-     * Ensure row-alt is applied to every even-position row (2nd, 4th, 6th…)
-     * and removed from every odd-position row, reflecting current row order.
-     */
-    private function syncAltRowClasses(): void
-    {
-        $altClass = 'row-alt';
-        $drafts = session('editor_draft_overrides', []);
-        $changed = false;
-        $altRowsStart = \App\Models\Setting::get('branding.alt_rows_start', 'even');
-
-        foreach ($this->rows as $index => $row) {
-            $slug = $row['slug'];
-
-            if (! isset($this->rowDesignDefaults[$slug]['section_classes'])) {
-                continue;
-            }
-
-            $current = $this->rowDesignValues[$slug]['section_classes'] ?? '';
-            $classList = array_values(array_filter(preg_split('/\s+/', trim($current))));
-
-            // Determine which position index receives alt coloring
-            $shouldAlt = $altRowsStart === 'odd' ? ($index % 2 === 0) : ($index % 2 === 1);
-
-            // Never override rows that have a colored/non-white background (e.g. CTAs with bg-primary)
-            $classesWithoutAlt = array_filter($classList, fn ($c) => $c !== $altClass);
-            $hasColoredBg = $this->rowHasColoredBackground(implode(' ', $classesWithoutAlt));
-
-            $noAlt = ! $this->altRowsEnabled
-                || ($this->rowDesignValues[$slug]['section_no_alt'] ?? '') === '1'
-                || $hasColoredBg;
-
-            if ($shouldAlt && ! $noAlt && ! in_array($altClass, $classList, true)) {
-                $classList[] = $altClass;
-            } elseif (! $shouldAlt || $noAlt) {
-                $classList = array_values(array_filter($classList, fn ($c) => $c !== $altClass));
-            }
-
-            $newValue = implode(' ', $classList);
-
-            if ($newValue !== $current) {
-                $this->rowDesignValues[$slug]['section_classes'] = $newValue;
-                $default = $this->rowDesignDefaults[$slug]['section_classes'];
-                $storeValue = $newValue === $default ? '' : $newValue;
-                $drafts[$slug.':section_classes'] = ['type' => 'classes', 'value' => $storeValue];
-                $changed = true;
-            }
-        }
-
-        if ($changed) {
-            session(['editor_draft_overrides' => $drafts]);
-        }
-    }
-
-    /**
-     * Returns true when the given class string contains a non-neutral background color.
-     * Neutral backgrounds (white, near-white) can receive the alt row color.
-     * Colored backgrounds (bg-primary, dark zinc, brand colors) should not be overridden.
-     * Only matches unprefixed bg-* classes (ignores dark:bg-*, hover:bg-*, etc.).
-     */
-    private function rowHasColoredBackground(string $classes): bool
-    {
-        $neutralBgs = ['bg-white', 'bg-zinc-50', 'bg-gray-50', 'bg-slate-50', 'bg-neutral-50', 'bg-transparent'];
-
-        preg_match_all('/(?:^|\s)(bg-[\w-]+)/', $classes, $matches);
-        $bgClasses = $matches[1] ?? [];
-
-        if (empty($bgClasses)) {
-            return false;
-        }
-
-        foreach ($bgClasses as $bgClass) {
-            if (! in_array($bgClass, $neutralBgs, true)) {
-                return true;
-            }
-        }
-
-        return false;
     }
 
     /**
@@ -2577,12 +2465,6 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
         preg_match("/'status'\s*=>\s*'([^']*)'/", $this->phpSection, $statusMatch);
         $this->pageStatus = $statusMatch[1] ?? 'published';
 
-        if ((bool) preg_match("/'alt_rows_disabled'\s*=>\s*true/", $this->phpSection)) {
-            $this->altRowsEnabled = false;
-        } else {
-            $this->altRowsEnabled = (bool) \App\Models\Setting::get('branding.alt_rows_enabled', false);
-        }
-
         preg_match('/\/\/ ROW:php:start:page-redirect.*?redirect\(\'([^\']*)\',\s*(\d+)\)/s', $this->phpSection, $redirectMatch);
         $this->redirectUrl = $redirectMatch[1] ?? '';
         $this->redirectType = $redirectMatch[2] ?? '301';
@@ -2616,10 +2498,6 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
 
         if ($this->pageStatus !== 'published') {
             $data[] = "'status' => '{$this->pageStatus}'";
-        }
-
-        if (! $this->altRowsEnabled) {
-            $data[] = "'alt_rows_disabled' => true";
         }
 
         $newLayout = empty($data)
@@ -6189,22 +6067,6 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                                             </div>
                                             {{-- Design mode --}}
                                             <div id="editor-row-panel-design-{{ $index }}" x-show="panelMode === 'design'" class="p-3 space-y-3">
-                                                <div x-data="{ rowSettingsOpen: false }">
-                                                    <button type="button" @click="rowSettingsOpen = !rowSettingsOpen" class="flex items-center gap-1.5 w-full text-left">
-                                                        <flux:icon name="chevron-right" class="size-3 text-zinc-400 shrink-0 transition-transform duration-150" x-bind:class="rowSettingsOpen ? 'rotate-90' : ''" />
-                                                        <span class="text-[11px] uppercase tracking-wider font-semibold text-zinc-500 dark:text-zinc-400">Section Settings</span>
-                                                    </button>
-                                                    <div x-show="rowSettingsOpen" x-collapse class="mt-2 pl-3">
-                                                        <div id="editor-row-settings-alt-{{ $index }}" class="flex items-center justify-between">
-                                                            <span class="text-[11px] uppercase tracking-wider font-semibold text-zinc-500 dark:text-zinc-400">Disable Alt Row Background</span>
-                                                            <flux:switch
-                                                                :checked="($rowDesignValues[$row['slug']]['section_no_alt'] ?? '') === '1'"
-                                                                wire:click="toggleNoAltRow('{{ $row['slug'] }}')"
-                                                                title="Exclude this row from the alternating background pattern"
-                                                            />
-                                                        </div>
-                                                    </div>
-                                                </div>
                                                 @if (isset($rowDesignDefaults[$row['slug']]['section_animation']))
                                                     <div x-data="{ animOpen: false }">
                                                         <button type="button" @click="animOpen = !animOpen" class="flex items-center gap-1.5 w-full text-left">
@@ -6866,11 +6728,6 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                 </button>
 
                 <div id="editor-seo-design-content" x-show="designOpen" x-transition class="mt-3 pl-4 border-l-2 border-zinc-200 dark:border-zinc-700 space-y-4">
-                    <flux:switch
-                        label="Alt Row Backgrounds"
-                        description="Apply the alternating background color (--color-alt-row) to every other section on this page. Disable to show all sections with their default backgrounds."
-                        wire:model.live="altRowsEnabled"
-                    />
                 </div>
             </div>
 

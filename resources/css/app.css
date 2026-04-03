@@ -79,6 +79,10 @@
 
 }
 
+@utility max-w-container {
+    max-width: var(--width-container);
+}
+
 [data-flux-field]:not(ui-radio, ui-checkbox) {
     @apply grid gap-2;
 }
