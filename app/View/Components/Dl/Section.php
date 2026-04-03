@@ -32,6 +32,7 @@ class Section extends Component
             ['key' => 'section_bg_position', 'default' => '', 'label' => 'Background Position'],
             ['key' => 'section_bg_size', 'default' => '', 'label' => 'Background Size'],
             ['key' => 'section_bg_repeat', 'default' => '', 'label' => 'Background Repeat'],
+            ['key' => 'section_style', 'default' => '', 'label' => 'Section Style'],
             ['key' => 'section_id', 'default' => '', 'label' => 'Section ID'],
             ['key' => 'section_attrs', 'default' => '[]', 'label' => 'Custom Attributes'],
         ];

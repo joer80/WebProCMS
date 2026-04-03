@@ -158,6 +158,9 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
     /** @var array<string, array<string, string>> */
     public array $rowDesignValues = [];
 
+    /** @var list<array{id: string, label: string}> */
+    public array $rowStylePresets = [];
+
     /** @var array<string, array<string, string>> */
     public array $rowDesignDefaults = [];
 
@@ -228,7 +231,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
         $storeValue = (string) $value === $default ? '' : (string) $value;
 
         $drafts = session('editor_draft_overrides', []);
-        $textKeys = ['section_id', 'section_animation', 'section_animation_delay', 'section_bg_position', 'section_bg_size', 'section_bg_repeat'];
+        $textKeys = ['section_id', 'section_animation', 'section_animation_delay', 'section_bg_position', 'section_bg_size', 'section_bg_repeat', 'section_style'];
         $type = in_array($fieldKey, $textKeys, true) ? 'text' : 'classes';
         $drafts[$slug.':'.$fieldKey] = ['type' => $type, 'value' => $storeValue];
         session(['editor_draft_overrides' => $drafts]);
@@ -243,7 +246,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
         $this->rowDesignValues[$slug][$fieldKey] = $default;
 
         $drafts = session('editor_draft_overrides', []);
-        $textKeys = ['section_id', 'section_animation', 'section_animation_delay', 'section_bg_position', 'section_bg_size', 'section_bg_repeat'];
+        $textKeys = ['section_id', 'section_animation', 'section_animation_delay', 'section_bg_position', 'section_bg_size', 'section_bg_repeat', 'section_style'];
         $resetType = $fieldKey === 'section_bg_image' ? 'image' : (in_array($fieldKey, $textKeys, true) ? 'text' : 'classes');
         $drafts[$slug.':'.$fieldKey] = ['type' => $resetType, 'value' => ''];
         session(['editor_draft_overrides' => $drafts]);
@@ -943,7 +946,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
         $row = $this->rows[$index];
         $this->contentFields = array_values(array_filter(
             $this->parseContentFields($row['blade'], $row['slug']),
-            fn ($f) => ! in_array($f['key'], ['section_classes', 'section_container_classes', 'section_id', 'section_attrs', 'section_animation', 'section_animation_delay', 'section_bg_image', 'section_bg_position', 'section_bg_size', 'section_bg_repeat'], true)
+            fn ($f) => ! in_array($f['key'], ['section_classes', 'section_container_classes', 'section_id', 'section_attrs', 'section_animation', 'section_animation_delay', 'section_bg_image', 'section_bg_position', 'section_bg_size', 'section_bg_repeat', 'section_style'], true)
         ));
         $this->pendingImageKey = '';
         $this->pendingImageUpload = null;
@@ -2044,7 +2047,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
             $fields = $this->parseContentFields($row['blade'], $row['slug']);
 
             foreach ($fields as $field) {
-                if (in_array($field['key'], ['section_classes', 'section_container_classes', 'section_id', 'section_animation', 'section_animation_delay', 'section_bg_image', 'section_bg_position', 'section_bg_size', 'section_bg_repeat'], true)) {
+                if (in_array($field['key'], ['section_classes', 'section_container_classes', 'section_id', 'section_animation', 'section_animation_delay', 'section_bg_image', 'section_bg_position', 'section_bg_size', 'section_bg_repeat', 'section_style'], true)) {
                     $this->rowDesignDefaults[$row['slug']][$field['key']] = $field['default'];
                 }
             }
@@ -2060,7 +2063,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
 
         $overrides = ContentOverride::query()
             ->whereIn('row_slug', $slugs)
-            ->whereIn('key', ['section_classes', 'section_container_classes', 'section_id', 'section_animation', 'section_animation_delay', 'section_bg_image', 'section_bg_position', 'section_bg_size', 'section_bg_repeat'])
+            ->whereIn('key', ['section_classes', 'section_container_classes', 'section_id', 'section_animation', 'section_animation_delay', 'section_bg_image', 'section_bg_position', 'section_bg_size', 'section_bg_repeat', 'section_style'])
             ->get()
             ->keyBy(fn (ContentOverride $o) => $o->row_slug.':'.$o->key);
 
@@ -2075,6 +2078,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
             }
         }
 
+        $this->rowStylePresets = \App\Models\Setting::get('section_style_presets', []) ?: [];
     }
 
     /**
@@ -3935,7 +3939,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
         $skipKeys = [
             'section_classes', 'section_container_classes', 'section_id', 'section_attrs',
             'section_animation', 'section_animation_delay', 'section_bg_image',
-            'section_bg_position', 'section_bg_size', 'section_bg_repeat',
+            'section_bg_position', 'section_bg_size', 'section_bg_repeat', 'section_style',
         ];
 
         $isStructuralGridSubKey = function (string $k): bool {
@@ -4370,7 +4374,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
         $skipKeys = [
             'section_classes', 'section_container_classes', 'section_id', 'section_attrs',
             'section_animation', 'section_animation_delay', 'section_bg_image',
-            'section_bg_position', 'section_bg_size', 'section_bg_repeat',
+            'section_bg_position', 'section_bg_size', 'section_bg_repeat', 'section_style',
         ];
 
         $isStructuralGridSubKey = function (string $k): bool {
@@ -6066,14 +6070,37 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                                                 @endif
                                             </div>
                                             {{-- Design mode --}}
-                                            <div id="editor-row-panel-design-{{ $index }}" x-show="panelMode === 'design'" class="p-3 space-y-3">
+                                            <div id="editor-row-panel-design-{{ $index }}" x-show="panelMode === 'design'" class="p-3 space-y-3" x-data="{ openGroup: 'appearance' }">
+                                                {{-- Appearance (section style preset) --}}
+                                                <div>
+                                                    <button type="button" @click="openGroup = openGroup === 'appearance' ? null : 'appearance'" class="flex items-center gap-1.5 w-full text-left">
+                                                        <flux:icon name="chevron-right" class="size-3 text-zinc-400 shrink-0 transition-transform duration-150" x-bind:class="openGroup === 'appearance' ? 'rotate-90' : ''" />
+                                                        <span class="text-[11px] uppercase tracking-wider font-semibold text-zinc-500 dark:text-zinc-400">Appearance</span>
+                                                    </button>
+                                                    <div x-show="openGroup === 'appearance'" x-collapse class="mt-2 pl-3">
+                                                        <span class="text-[10px] uppercase font-semibold text-zinc-400 dark:text-zinc-500 mb-1 block">Section Style</span>
+                                                        @if (! empty($rowStylePresets))
+                                                            <select
+                                                                wire:model.live="rowDesignValues.{{ $row['slug'] }}.section_style"
+                                                                class="w-full text-xs rounded-lg border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-900 text-zinc-900 dark:text-white px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition"
+                                                            >
+                                                                <option value="">— Default —</option>
+                                                                @foreach ($rowStylePresets as $stylePreset)
+                                                                    <option value="{{ $stylePreset['id'] }}">{{ $stylePreset['label'] }}</option>
+                                                                @endforeach
+                                                            </select>
+                                                        @else
+                                                            <p class="text-xs text-zinc-400 dark:text-zinc-500">No section styles defined. <a href="{{ route('dashboard.settings.section-colors') }}" class="text-primary underline hover:text-primary/80 transition-colors" wire:navigate>Add styles →</a></p>
+                                                        @endif
+                                                    </div>
+                                                </div>
                                                 @if (isset($rowDesignDefaults[$row['slug']]['section_animation']))
-                                                    <div x-data="{ animOpen: false }">
-                                                        <button type="button" @click="animOpen = !animOpen" class="flex items-center gap-1.5 w-full text-left">
-                                                            <flux:icon name="chevron-right" class="size-3 text-zinc-400 shrink-0 transition-transform duration-150" x-bind:class="animOpen ? 'rotate-90' : ''" />
+                                                    <div>
+                                                        <button type="button" @click="openGroup = openGroup === 'anim' ? null : 'anim'" class="flex items-center gap-1.5 w-full text-left">
+                                                            <flux:icon name="chevron-right" class="size-3 text-zinc-400 shrink-0 transition-transform duration-150" x-bind:class="openGroup === 'anim' ? 'rotate-90' : ''" />
                                                             <span class="text-[11px] uppercase tracking-wider font-semibold text-zinc-500 dark:text-zinc-400">Animation</span>
                                                         </button>
-                                                        <div x-show="animOpen" x-collapse class="mt-2 pl-3">
+                                                        <div x-show="openGroup === 'anim'" x-collapse class="mt-2 pl-3">
                                                             <div id="editor-row-animation-grid-{{ $index }}" class="grid grid-cols-2 gap-2">
                                                                 <div>
                                                                     <span class="text-[10px] uppercase font-semibold text-zinc-400 dark:text-zinc-500 mb-1 block">Entrance</span>
@@ -6110,12 +6137,12 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                                                     </div>
                                                 @endif
                                                 {{-- Background options collapsible group --}}
-                                                <div x-data="{ bgOpen: false }">
-                                                    <button type="button" @click="bgOpen = !bgOpen" class="flex items-center gap-1.5 w-full text-left">
-                                                        <flux:icon name="chevron-right" class="size-3 text-zinc-400 shrink-0 transition-transform duration-150" x-bind:class="bgOpen ? 'rotate-90' : ''" />
+                                                <div>
+                                                    <button type="button" @click="openGroup = openGroup === 'bg' ? null : 'bg'" class="flex items-center gap-1.5 w-full text-left">
+                                                        <flux:icon name="chevron-right" class="size-3 text-zinc-400 shrink-0 transition-transform duration-150" x-bind:class="openGroup === 'bg' ? 'rotate-90' : ''" />
                                                         <span class="text-[11px] uppercase tracking-wider font-semibold text-zinc-500 dark:text-zinc-400">Background Options</span>
                                                     </button>
-                                                    <div x-show="bgOpen" x-collapse class="mt-2 space-y-2 pl-3">
+                                                    <div x-show="openGroup === 'bg'" x-collapse class="mt-2 space-y-2 pl-3">
                                                         @foreach (['section_bg_position' => 'Position', 'section_bg_size' => 'Size', 'section_bg_repeat' => 'Repeat'] as $bgKey => $bgLabel)
                                                             @if (isset($rowDesignDefaults[$row['slug']][$bgKey]))
                                                                 <div id="editor-row-bg-{{ $bgKey }}-{{ $index }}">
@@ -6153,12 +6180,12 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                                                         @endforeach
                                                     </div>
                                                 </div>
-                                                <div x-data="{ classesOpen: false }">
-                                                    <button type="button" @click="classesOpen = !classesOpen" class="flex items-center gap-1.5 w-full text-left">
-                                                        <flux:icon name="chevron-right" class="size-3 text-zinc-400 shrink-0 transition-transform duration-150" x-bind:class="classesOpen ? 'rotate-90' : ''" />
+                                                <div>
+                                                    <button type="button" @click="openGroup = openGroup === 'classes' ? null : 'classes'" class="flex items-center gap-1.5 w-full text-left">
+                                                        <flux:icon name="chevron-right" class="size-3 text-zinc-400 shrink-0 transition-transform duration-150" x-bind:class="openGroup === 'classes' ? 'rotate-90' : ''" />
                                                         <span class="text-[11px] uppercase tracking-wider font-semibold text-zinc-500 dark:text-zinc-400">Classes</span>
                                                     </button>
-                                                    <div x-show="classesOpen" x-collapse class="mt-2 pl-3 space-y-3">
+                                                    <div x-show="openGroup === 'classes'" x-collapse class="mt-2 pl-3 space-y-3">
                                                 @foreach (['section_classes' => 'Section Classes', 'section_container_classes' => 'Container Classes'] as $fieldKey => $fieldLabel)
                                                     @if (isset($rowDesignDefaults[$row['slug']][$fieldKey]))
                                                         @php $rcKey = $row['slug'] . '_' . $fieldKey; @endphp

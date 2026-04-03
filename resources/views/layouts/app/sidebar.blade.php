@@ -95,6 +95,9 @@
                             <flux:sidebar.item :href="route('dashboard.settings.design')" :current="request()->routeIs('dashboard.settings.design')" wire:navigate>
                                 {{ __('Design') }}
                             </flux:sidebar.item>
+                            <flux:sidebar.item :href="route('dashboard.settings.section-colors')" :current="request()->routeIs('dashboard.settings.section-colors')" wire:navigate>
+                                {{ __('Section Colors') }}
+                            </flux:sidebar.item>
                             <flux:sidebar.item :href="route('dashboard.settings.api-keys')" :current="request()->routeIs('dashboard.settings.api-keys')" wire:navigate>
                                 {{ __('API Keys') }}
                             </flux:sidebar.item>
