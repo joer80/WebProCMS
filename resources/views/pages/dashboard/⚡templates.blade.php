@@ -343,7 +343,44 @@ new #[Layout('layouts.app')] #[Title('Templates')] class extends Component {
     }
 }; ?>
 
-<div>
+<div x-data="dlPreview()">
+    <div wire:ignore>
+        <template x-teleport="body">
+            <div
+                x-show="showPreview"
+                x-transition:enter="transition ease-out duration-200"
+                x-transition:enter-start="opacity-0"
+                x-transition:enter-end="opacity-100"
+                x-transition:leave="transition ease-in duration-150"
+                x-transition:leave-start="opacity-100"
+                x-transition:leave-end="opacity-0"
+                @keydown.escape.window="closePreview()"
+                class="fixed inset-0 z-[9999] flex flex-col"
+            >
+                <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" @click="closePreview()"></div>
+                <div class="relative z-10 flex flex-col w-full h-full max-w-screen-xl mx-auto shadow-2xl">
+                    <div class="flex items-center justify-between px-6 py-3 bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-700 shrink-0">
+                        <span class="font-semibold text-zinc-900 dark:text-white text-sm truncate pr-4" x-text="previewName"></span>
+                        <div class="flex items-center gap-2 shrink-0">
+                            <a :href="previewUrl" target="_blank" rel="noopener noreferrer"
+                                class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium border border-zinc-300 dark:border-zinc-600 text-zinc-700 dark:text-zinc-200 rounded-lg hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors"
+                            >Open in Tab</a>
+                            <button @click="closePreview()"
+                                class="p-1.5 text-zinc-500 hover:text-zinc-900 dark:hover:text-white rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+                                aria-label="Close preview"
+                            >
+                                <svg xmlns="http://www.w3.org/2000/svg" class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="flex-1 overflow-hidden bg-white dark:bg-zinc-950">
+                        <iframe :src="showPreview ? previewUrl : 'about:blank'" class="w-full h-full border-0" scrolling="yes"></iframe>
+                    </div>
+                </div>
+            </div>
+        </template>
+    </div>
+
     <flux:main>
         <div class="mb-8">
             <flux:heading size="xl">Templates</flux:heading>
@@ -369,7 +406,7 @@ new #[Layout('layouts.app')] #[Title('Templates')] class extends Component {
 
         {{-- Header tab --}}
         @if($tab === 'header')
-            <div class="max-w-4xl space-y-6">
+            <div class="space-y-6">
                 {{-- Active header status --}}
                 <div class="rounded-lg border border-zinc-200 dark:border-zinc-700 p-5">
                     <div class="flex items-center justify-between gap-4">
@@ -414,34 +451,64 @@ new #[Layout('layouts.app')] #[Title('Templates')] class extends Component {
                 {{-- Available headers grid --}}
                 <div>
                     <flux:heading class="mb-4">Available Header Templates</flux:heading>
-                    <div class="grid sm:grid-cols-2 gap-4">
+                    <div class="grid grid-cols-1 gap-4">
                         @foreach($this->availableHeaders as $header)
                             @php
                                 $service = new \App\Support\LayoutService;
                                 $isActive = $this->activeHeader === $service->templateName($header);
+                                $headerPreviewUrl = route('dashboard.design-library.preview', ['type' => 'row', 'id' => $header->id]);
                             @endphp
-                            <div class="rounded-lg border {{ $isActive ? 'border-primary bg-primary/5 dark:bg-primary/10' : 'border-zinc-200 dark:border-zinc-700' }} p-4 flex items-start justify-between gap-4">
-                                <div class="min-w-0">
-                                    <p class="text-sm font-semibold text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
-                                        {{ $header->name }}
-                                        @if($isActive)
-                                            <span class="text-xs font-medium px-1.5 py-0.5 rounded-full bg-primary/10 text-primary">Active</span>
-                                        @endif
-                                    </p>
-                                    @if($header->description)
-                                        <p class="text-xs text-zinc-500 dark:text-zinc-400 mt-1">{{ $header->description }}</p>
-                                    @endif
+                            <div class="group rounded-xl border {{ $isActive ? 'border-primary bg-primary/5 dark:bg-primary/10' : 'border-zinc-200 dark:border-zinc-700 hover:border-primary/40' }} overflow-hidden transition-colors flex flex-col">
+                                {{-- Preview thumbnail --}}
+                                <div
+                                    class="relative overflow-hidden bg-zinc-100 dark:bg-zinc-800 shrink-0 border-b {{ $isActive ? 'border-primary/20' : 'border-zinc-200 dark:border-zinc-700' }} cursor-pointer"
+                                    style="height:9rem"
+                                    x-data="{ scale: 1 }"
+                                    x-init="$nextTick(() => scale = ($el.offsetWidth - 32) / 1280)"
+                                    @click="openPreview('{{ $headerPreviewUrl }}', '{{ addslashes($header->name) }}')"
+                                >
+                                    <div class="absolute inset-0 flex items-center justify-center animate-pulse pointer-events-none">
+                                        <flux:icon name="photo" class="size-8 text-zinc-300 dark:text-zinc-600" />
+                                    </div>
+                                    <iframe
+                                        src="{{ $headerPreviewUrl }}"
+                                        class="absolute border-0"
+                                        :style="'top:16px;left:16px;width:1280px;height:800px;transform:scale('+scale+');transform-origin:top left;pointer-events:none;'"
+                                        loading="lazy"
+                                        scrolling="no"
+                                        tabindex="-1"
+                                        aria-hidden="true"
+                                        onload="this.previousElementSibling.style.display='none'"
+                                    ></iframe>
                                 </div>
-                                @if(! $isActive)
-                                    <flux:button
-                                        wire:click="confirmActivateHeader({{ $header->id }})"
-                                        variant="outline"
-                                        size="sm"
-                                        class="shrink-0"
-                                    >
-                                        Activate
-                                    </flux:button>
-                                @endif
+                                {{-- Card body --}}
+                                <div class="p-4 flex items-center justify-between gap-4">
+                                    <div class="min-w-0">
+                                        <p class="text-sm font-semibold text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
+                                            {{ $header->name }}
+                                            @if($isActive)
+                                                <span class="text-xs font-medium px-1.5 py-0.5 rounded-full bg-primary/10 text-primary">Active</span>
+                                            @endif
+                                        </p>
+                                        @if($header->description)
+                                            <p class="text-xs text-zinc-500 dark:text-zinc-400 mt-1">{{ $header->description }}</p>
+                                        @endif
+                                    </div>
+                                    <div class="flex items-center gap-2 shrink-0">
+                                        <a href="{{ $headerPreviewUrl }}" target="_blank" rel="noopener noreferrer">
+                                            <flux:button variant="ghost" size="sm" icon="eye" />
+                                        </a>
+                                        @if($isActive)
+                                            @php $headerCardEditorUrl = $this->headerEditorUrl(); @endphp
+                                            @if($headerCardEditorUrl)
+                                                <flux:button :href="$headerCardEditorUrl" variant="outline" size="sm" icon="pencil-square" wire:navigate>Edit</flux:button>
+                                            @endif
+                                            <flux:button wire:click="confirmDeactivateHeader" variant="ghost" size="sm" icon="x-mark">Deactivate</flux:button>
+                                        @else
+                                            <flux:button wire:click="confirmActivateHeader({{ $header->id }})" variant="outline" size="sm">Activate</flux:button>
+                                        @endif
+                                    </div>
+                                </div>
                             </div>
                         @endforeach
                     </div>
@@ -459,7 +526,7 @@ new #[Layout('layouts.app')] #[Title('Templates')] class extends Component {
 
         {{-- Footer tab --}}
         @if($tab === 'footer')
-            <div class="max-w-4xl space-y-6">
+            <div class="space-y-6">
                 {{-- Active footer status --}}
                 <div class="rounded-lg border border-zinc-200 dark:border-zinc-700 p-5">
                     <div class="flex items-center justify-between gap-4">
@@ -504,34 +571,64 @@ new #[Layout('layouts.app')] #[Title('Templates')] class extends Component {
                 {{-- Available footers grid --}}
                 <div>
                     <flux:heading class="mb-4">Available Footer Templates</flux:heading>
-                    <div class="grid sm:grid-cols-2 gap-4">
+                    <div class="grid grid-cols-1 gap-4">
                         @foreach($this->availableFooters as $footer)
                             @php
                                 $service = new \App\Support\LayoutService;
                                 $isActive = $this->activeFooter === $service->templateName($footer);
+                                $footerPreviewUrl = route('dashboard.design-library.preview', ['type' => 'row', 'id' => $footer->id]);
                             @endphp
-                            <div class="rounded-lg border {{ $isActive ? 'border-primary bg-primary/5 dark:bg-primary/10' : 'border-zinc-200 dark:border-zinc-700' }} p-4 flex items-start justify-between gap-4">
-                                <div class="min-w-0">
-                                    <p class="text-sm font-semibold text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
-                                        {{ $footer->name }}
-                                        @if($isActive)
-                                            <span class="text-xs font-medium px-1.5 py-0.5 rounded-full bg-primary/10 text-primary">Active</span>
-                                        @endif
-                                    </p>
-                                    @if($footer->description)
-                                        <p class="text-xs text-zinc-500 dark:text-zinc-400 mt-1">{{ $footer->description }}</p>
-                                    @endif
+                            <div class="group rounded-xl border {{ $isActive ? 'border-primary bg-primary/5 dark:bg-primary/10' : 'border-zinc-200 dark:border-zinc-700 hover:border-primary/40' }} overflow-hidden transition-colors flex flex-col">
+                                {{-- Preview thumbnail --}}
+                                <div
+                                    class="relative overflow-hidden bg-zinc-100 dark:bg-zinc-800 shrink-0 border-b {{ $isActive ? 'border-primary/20' : 'border-zinc-200 dark:border-zinc-700' }} cursor-pointer"
+                                    style="height:18rem"
+                                    x-data="{ scale: 1 }"
+                                    x-init="$nextTick(() => scale = ($el.offsetWidth - 32) / 1280)"
+                                    @click="openPreview('{{ $footerPreviewUrl }}', '{{ addslashes($footer->name) }}')"
+                                >
+                                    <div class="absolute inset-0 flex items-center justify-center animate-pulse pointer-events-none">
+                                        <flux:icon name="photo" class="size-8 text-zinc-300 dark:text-zinc-600" />
+                                    </div>
+                                    <iframe
+                                        src="{{ $footerPreviewUrl }}"
+                                        class="absolute border-0"
+                                        :style="'top:16px;left:16px;width:1280px;height:800px;transform:scale('+scale+');transform-origin:top left;pointer-events:none;'"
+                                        loading="lazy"
+                                        scrolling="no"
+                                        tabindex="-1"
+                                        aria-hidden="true"
+                                        onload="this.previousElementSibling.style.display='none'"
+                                    ></iframe>
                                 </div>
-                                @if(! $isActive)
-                                    <flux:button
-                                        wire:click="confirmActivateFooter({{ $footer->id }})"
-                                        variant="outline"
-                                        size="sm"
-                                        class="shrink-0"
-                                    >
-                                        Activate
-                                    </flux:button>
-                                @endif
+                                {{-- Card body --}}
+                                <div class="p-4 flex items-center justify-between gap-4">
+                                    <div class="min-w-0">
+                                        <p class="text-sm font-semibold text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
+                                            {{ $footer->name }}
+                                            @if($isActive)
+                                                <span class="text-xs font-medium px-1.5 py-0.5 rounded-full bg-primary/10 text-primary">Active</span>
+                                            @endif
+                                        </p>
+                                        @if($footer->description)
+                                            <p class="text-xs text-zinc-500 dark:text-zinc-400 mt-1">{{ $footer->description }}</p>
+                                        @endif
+                                    </div>
+                                    <div class="flex items-center gap-2 shrink-0">
+                                        <a href="{{ $footerPreviewUrl }}" target="_blank" rel="noopener noreferrer">
+                                            <flux:button variant="ghost" size="sm" icon="eye" />
+                                        </a>
+                                        @if($isActive)
+                                            @php $footerCardEditorUrl = $this->footerEditorUrl(); @endphp
+                                            @if($footerCardEditorUrl)
+                                                <flux:button :href="$footerCardEditorUrl" variant="outline" size="sm" icon="pencil-square" wire:navigate>Edit</flux:button>
+                                            @endif
+                                            <flux:button wire:click="confirmDeactivateFooter" variant="ghost" size="sm" icon="x-mark">Deactivate</flux:button>
+                                        @else
+                                            <flux:button wire:click="confirmActivateFooter({{ $footer->id }})" variant="outline" size="sm">Activate</flux:button>
+                                        @endif
+                                    </div>
+                                </div>
                             </div>
                         @endforeach
                     </div>

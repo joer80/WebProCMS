@@ -18,6 +18,7 @@
         @endforeach
     @endif
     @vite(['resources/css/public.css', 'resources/css/editor.css', 'resources/js/app.js'])
+    <style>{!! app(\App\Services\BrandingStyleService::class)->styleBlock() !!}</style>
 </head>
 <body class="bg-white text-zinc-900 antialiased">
     {!! $content !!}

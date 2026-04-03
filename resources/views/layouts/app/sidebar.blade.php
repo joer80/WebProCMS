@@ -74,10 +74,10 @@
                         </flux:sidebar.item>
                         @if (auth()->user()->previewIsAtLeast(\App\Enums\Role::Admin))
                             <flux:sidebar.item icon="adjustments-vertical" :href="route('dashboard.settings.design')" :current="request()->routeIs('dashboard.settings.design')" wire:navigate>
-                                {{ __('Design') }}
+                                {{ __('Typography') }}
                             </flux:sidebar.item>
                             <flux:sidebar.item icon="swatch" :href="route('dashboard.settings.section-colors')" :current="request()->routeIs('dashboard.settings.section-colors')" wire:navigate>
-                                {{ __('Section Colors') }}
+                                {{ __('Sections') }}
                             </flux:sidebar.item>
                         @endif
                     </flux:sidebar.group>

@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\Setting;
+use App\Services\BrandingStyleService;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Livewire\Attributes\Layout;
@@ -8,7 +9,11 @@ use Livewire\Attributes\On;
 use Livewire\Attributes\Title;
 use Livewire\Component;
 
-new #[Layout('layouts.app')] #[Title('Section Colors')] class extends Component {
+new #[Layout('layouts.app')] #[Title('Sections')] class extends Component {
+    public string $sectionSpacing = 'medium';
+
+    public string $containerWidth = 'medium';
+
     /** @var list<array{id: string, label: string, bg_classes: string, text_classes: string, bg_image: string, bg_position: string, bg_size: string, bg_repeat: string}> */
     public array $presets = [];
 
@@ -36,6 +41,9 @@ new #[Layout('layouts.app')] #[Title('Section Colors')] class extends Component 
 
     public function mount(): void
     {
+        $this->sectionSpacing = (string) Setting::get('branding.section_spacing', 'medium');
+        $this->containerWidth = (string) Setting::get('branding.container_width', 'medium');
+
         $saved = Setting::get('section_style_presets', null);
 
         if ($saved === null) {
@@ -132,6 +140,24 @@ new #[Layout('layouts.app')] #[Title('Section Colors')] class extends Component 
         $this->showForm = false;
     }
 
+    public function saveLayout(): void
+    {
+        $this->validate([
+            'sectionSpacing' => ['required', 'string', 'in:small,medium,large'],
+            'containerWidth' => ['required', 'string', 'in:small,medium,large'],
+        ]);
+
+        Setting::set('branding.logo_url', Setting::get('branding.logo_url', ''));
+        Setting::set('branding.body_font', Setting::get('branding.body_font', 'instrument-sans'));
+        Setting::set('branding.heading_font', Setting::get('branding.heading_font', 'instrument-sans'));
+        Setting::set('branding.section_spacing', $this->sectionSpacing);
+        Setting::set('branding.container_width', $this->containerWidth);
+
+        app(BrandingStyleService::class)->bust();
+
+        $this->dispatch('notify', message: 'Layout saved.');
+    }
+
     public function confirmDelete(string $id): void
     {
         $this->confirmingDeleteId = $id;
@@ -187,17 +213,26 @@ new #[Layout('layouts.app')] #[Title('Section Colors')] class extends Component 
 
 <div>
     <flux:main>
-        <div class="mb-8 flex items-start justify-between gap-4">
-            <div>
-                <flux:heading size="xl">Section Colors</flux:heading>
-                <flux:text class="mt-1">Named colour and background presets for page sections. Editors apply these from the Section Design panel in the page editor.</flux:text>
-            </div>
-            @if (! $showForm)
-                <flux:button variant="primary" icon="plus" wire:click="openAdd">Add Style</flux:button>
-            @endif
+        <div class="mb-8">
+            <flux:heading size="xl">Sections</flux:heading>
+            <flux:text class="mt-1">Section spacing, container width, and colour presets for your site.</flux:text>
         </div>
 
-        <div class="max-w-2xl space-y-4">
+        <div class="max-w-2xl space-y-8">
+
+            {{-- Section Presets --}}
+            <div>
+                <div class="mb-4 flex items-center justify-between gap-4">
+                    <div>
+                        <flux:heading>Section Presets</flux:heading>
+                        <flux:text class="mt-1">Named colour and background presets for page sections. Editors apply these from the Section Design panel in the page editor.</flux:text>
+                    </div>
+                    @if (! $showForm)
+                        <flux:button variant="primary" icon="plus" wire:click="openAdd">Add Style</flux:button>
+                    @endif
+                </div>
+
+            <div class="space-y-4">
 
             {{-- Add / Edit form --}}
             @if ($showForm)
@@ -330,6 +365,48 @@ new #[Layout('layouts.app')] #[Title('Section Colors')] class extends Component 
                     <flux:text class="text-zinc-400">No section styles yet. Add one to get started.</flux:text>
                 </div>
             @endforelse
+            </div>
+            </div>
+
+            {{-- Section Spacing & Container Width --}}
+            <div class="rounded-lg border border-zinc-200 dark:border-zinc-700 p-6">
+                <div class="flex items-start justify-between gap-6">
+                    <div class="flex-1">
+                        <flux:heading>Layout</flux:heading>
+                        <flux:text class="mt-1">Spacing and width defaults for page sections.</flux:text>
+                        <div class="mt-4 space-y-4">
+                            <div>
+                                <flux:label>Section Spacing</flux:label>
+                                <flux:text class="mt-1 text-xs text-zinc-500">Vertical padding for page sections. Controls py-section (standard), py-section-banner (compact CTAs), and py-section-hero (heroes).</flux:text>
+                                <div class="mt-2 flex gap-2">
+                                    @foreach (['small' => 'Small', 'medium' => 'Medium', 'large' => 'Large'] as $value => $label)
+                                        <button
+                                            type="button"
+                                            wire:click="$set('sectionSpacing', '{{ $value }}')"
+                                            class="px-4 py-2 rounded-lg border text-sm font-medium transition-colors {{ $sectionSpacing === $value ? 'bg-primary text-white border-primary' : 'bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 border-zinc-300 dark:border-zinc-600 hover:border-zinc-400' }}"
+                                        >{{ $label }}</button>
+                                    @endforeach
+                                </div>
+                            </div>
+                            <div>
+                                <flux:label>Container Width</flux:label>
+                                <flux:text class="mt-1 text-xs text-zinc-500">Max width of page containers and the mega menu panel. Small = 56rem (896px), Medium = 72rem (1152px), Large = 80rem (1280px).</flux:text>
+                                <div class="mt-2 flex gap-2">
+                                    @foreach (['small' => 'Small', 'medium' => 'Medium', 'large' => 'Large'] as $value => $label)
+                                        <button
+                                            type="button"
+                                            wire:click="$set('containerWidth', '{{ $value }}')"
+                                            class="px-4 py-2 rounded-lg border text-sm font-medium transition-colors {{ $containerWidth === $value ? 'bg-primary text-white border-primary' : 'bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 border-zinc-300 dark:border-zinc-600 hover:border-zinc-400' }}"
+                                        >{{ $label }}</button>
+                                    @endforeach
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <flux:button wire:click="saveLayout" variant="outline" class="shrink-0">Save</flux:button>
+                </div>
+            </div>
+
         </div>
     </flux:main>
 
