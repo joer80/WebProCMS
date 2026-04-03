@@ -5056,7 +5056,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                 }, 400);
             }
         "
-        class="flex flex-col min-h-screen bg-white dark:bg-zinc-900"
+        class="flex flex-col h-screen overflow-hidden bg-white dark:bg-zinc-900"
     >
         {{-- Editor toolbar --}}
         <div id="editor-toolbar" class="sticky top-0 z-30 bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-700 px-6 py-3 flex items-center gap-3">
@@ -5336,7 +5336,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                 </div>
             </div>
         @else
-            <div id="editor-main-layout" class="flex" style="height: calc(100vh - 120px);">
+            <div id="editor-main-layout" class="flex flex-1 overflow-hidden">
                 {{-- Right panel: row list / inline content editor --}}
                 <div
                     id="editor-sidebar"
