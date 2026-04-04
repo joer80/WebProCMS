@@ -327,11 +327,10 @@ Applies to: `resources/design-library/rows/footer/`, `resources/views/layouts/pu
 
 ## CSS Bundles
 
-Three separate bundles — do NOT cross-contaminate sources:
+Two separate bundles — do NOT cross-contaminate sources:
 
-- `resources/css/app.css` — dashboard/admin UI; includes Flux CSS, sources `views/components`, `views/flux`, `views/layouts/app*`, `views/layouts/auth*`, `views/partials`, `views/pages/auth`, `views/pages/dashboard`, `views/pages/settings`, vendor Flux stubs; does NOT source public pages, design library, or editor views
+- `resources/css/app.css` — dashboard/admin UI and page editor; includes Flux CSS, sources `views/components`, `app/View/Components/Dl/*.php`, `views/flux`, `views/layouts/app*`, `views/layouts/auth*`, `views/layouts/editor.blade.php`, `views/partials`, `views/pages/auth`, `views/pages/dashboard`, `views/pages/settings`, `design-library/**/*.blade.php`, `views/shared-rows/**/*.blade.php`, vendor Flux stubs; does NOT source public pages
 - `resources/css/public.css` — public-facing site; sources page views and components only; no Flux, no design library
-- `resources/css/editor.css` — page editor; includes Flux CSS, sources design library (`../design-library/**/*.blade.php`) and vendor Flux stubs; design library belongs here because the editor is what inserts rows into pages
 
 ## CSS Theme Tokens
 

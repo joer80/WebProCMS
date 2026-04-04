@@ -2,17 +2,19 @@
 @import '../../vendor/livewire/flux/dist/flux.css';
 
 @source '../views/components';
-@source not '../views/components/dl';
+@source '../../app/View/Components/Dl/*.php';
 @source '../views/flux';
 @source '../views/layouts/app.blade.php';
 @source '../views/layouts/app';
 @source '../views/layouts/auth.blade.php';
 @source '../views/layouts/auth';
+@source '../views/layouts/editor.blade.php';
 @source '../views/partials';
 @source '../views/pages/auth';
 @source '../views/pages/dashboard';
-@source not '../views/pages/dashboard/design-library';
 @source '../views/pages/settings';
+@source '../design-library/**/*.blade.php';
+@source '../views/shared-rows/**/*.blade.php';
 @source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
 @source '../../vendor/livewire/flux-pro/stubs/**/*.blade.php';
 @source '../../vendor/livewire/flux/stubs/**/*.blade.php';

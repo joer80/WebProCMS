@@ -9,8 +9,8 @@
     @scroll.window="scrolled = window.scrollY > 20"
     x-bind:class="scrolled ? 'h-16' : 'h-20'"
     default-sticky="1"
-    default-section-classes="z-50 bg-white/80 dark:bg-zinc-900/80 backdrop-blur border-b border-zinc-200 dark:border-zinc-800 transition-all duration-300"
-    default-container-classes="max-w-container mx-auto h-full flex items-center justify-between">
+    default-section-classes="h-20 z-50 bg-white/80 dark:bg-zinc-900/80 backdrop-blur border-b border-zinc-200 dark:border-zinc-800 transition-all duration-300"
+    default-container-classes="max-w-container mx-auto px-6 h-full flex items-center justify-between">
     <x-dl.logo slug="__SLUG__" prefix="logo"
         default-classes="h-8 w-auto" />
     <x-dl.nav slug="__SLUG__" prefix="main_nav"
