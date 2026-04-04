@@ -311,7 +311,7 @@ if ($field['type'] === 'classes') {
                     >
                         <option value="">— Style preset —</option>
                         @foreach ($buttonStylePresets as $presetKey => $presetClasses)
-                            <option value="{{ $presetClasses }}">{{ $buttonStyleLabels[$presetKey] ?? ucwords(str_replace('_', ' ', $presetKey)) }}</option>
+                            <option value="btn-{{ str_replace('_', '-', $presetKey) }}">{{ $buttonStyleLabels[$presetKey] ?? ucwords(str_replace('_', ' ', $presetKey)) }}</option>
                         @endforeach
                     </select>
                 </div>
