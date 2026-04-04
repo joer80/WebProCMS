@@ -11,6 +11,7 @@ class Logo extends Component
         public string $slug,
         public string $prefix = 'logo',
         public string $defaultClasses = 'h-8 w-auto',
+        public string $defaultDarkBg = '',
     ) {}
 
     /**
@@ -25,6 +26,7 @@ class Logo extends Component
 
         return [
             ['key' => "toggle_{$prefix}", 'default' => '1'],
+            ['key' => "toggle_{$prefix}_dark_bg", 'default' => $attrs['default-dark-bg'] ?? '', 'label' => 'Use Dark Logo'],
             ['key' => "{$prefix}_image", 'default' => '', 'label' => 'Logo Image', 'fallback_url' => '__branding_logo__'],
             ['key' => "{$prefix}_image_alt", 'default' => '', 'label' => 'Logo Alt Text (default: "'.config('app.name').' Logo")'],
             ['key' => "{$prefix}_classes", 'default' => $attrs['default-classes'] ?? 'h-8 w-auto'],

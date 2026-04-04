@@ -9,7 +9,7 @@
     default-container-classes="max-w-container mx-auto grid md:grid-cols-5 gap-10">
     <x-dl.wrapper slug="__SLUG__" prefix="brand_col"
         default-classes="md:col-span-2 py-16">
-        <x-dl.logo slug="__SLUG__" prefix="logo"
+        <x-dl.logo slug="__SLUG__" prefix="logo" default-dark-bg="1"
             default-classes="h-8 w-auto mb-3" />
         <x-dl.subheadline slug="__SLUG__" prefix="brand_desc" tag="p" default="We build tools that help teams ship faster and grow smarter."
             default-classes="text-sm text-zinc-400 leading-relaxed mb-6 max-w-xs" />

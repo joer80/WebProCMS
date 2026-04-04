@@ -141,7 +141,8 @@ Route::middleware(['auth', 'verified'])->group(function (): void {
 
     Route::middleware('role:admin')->group(function (): void {
         Route::livewire('dashboard/settings/design', 'pages::dashboard.settings.design')->name('dashboard.settings.design');
-        Route::livewire('dashboard/settings/section-colors', 'pages::dashboard.settings.section-colors')->name('dashboard.settings.section-colors');
+        Route::livewire('dashboard/settings/section', 'pages::dashboard.settings.section')->name('dashboard.settings.section');
+        Route::livewire('dashboard/settings/buttons', 'pages::dashboard.settings.buttons')->name('dashboard.settings.buttons');
         Route::livewire('dashboard/settings/api-keys', 'pages::dashboard.settings.api-keys')->name('dashboard.settings.api-keys');
     });
 

@@ -9,7 +9,7 @@
     default-container-classes="max-w-container mx-auto grid grid-cols-2 md:grid-cols-4 gap-10">
     <x-dl.wrapper slug="__SLUG__" prefix="brand_col"
         default-classes="col-span-2 md:col-span-1">
-        <x-dl.logo slug="__SLUG__" prefix="logo"
+        <x-dl.logo slug="__SLUG__" prefix="logo" default-dark-bg="1"
             default-classes="h-8 w-auto" />
         <x-dl.subheadline slug="__SLUG__" prefix="description" tag="p" default="A short description of your company and what makes you unique."
             default-classes="mt-3 text-sm text-zinc-400 leading-relaxed" />

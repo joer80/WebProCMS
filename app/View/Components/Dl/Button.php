@@ -30,7 +30,7 @@ class Button extends Component
             ['key' => $prefix, 'default' => $attrs['default'] ?? 'Get Started'],
             ['key' => "{$prefix}_url", 'default' => $attrs['default-url'] ?? '#'],
             ['key' => "{$prefix}_new_tab", 'default' => ''],
-            ['key' => "{$prefix}_classes", 'default' => $attrs['default-classes'] ?? 'px-6 py-3 bg-primary text-white font-semibold rounded-lg hover:bg-primary/90 transition-colors'],
+            ['key' => "{$prefix}_classes", 'default' => $attrs['default-classes'] ?? 'px-6 py-3 bg-primary text-white font-semibold rounded-lg hover:bg-primary/90 transition-colors', 'button_preset' => true],
         ];
     }
 

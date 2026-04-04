@@ -9,7 +9,7 @@
     default-container-classes="max-w-container mx-auto grid md:grid-cols-2 gap-10 items-start">
     <x-dl.wrapper slug="__SLUG__" prefix="brand_col"
         default-classes="">
-        <x-dl.logo slug="__SLUG__" prefix="logo"
+        <x-dl.logo slug="__SLUG__" prefix="logo" default-dark-bg="1"
             default-classes="h-8 w-auto mb-3" />
         <x-dl.subheadline slug="__SLUG__" prefix="brand_desc" tag="p" default="Building great products for great people."
             default-classes="text-sm text-zinc-400 leading-relaxed max-w-xs" />

@@ -209,6 +209,10 @@ class DesignLibraryService
                     $entry['fallback_url'] = $field['fallback_url'];
                 }
 
+                if (isset($field['button_preset'])) {
+                    $entry['button_preset'] = $field['button_preset'];
+                }
+
                 $newFields[] = $entry;
             }
 

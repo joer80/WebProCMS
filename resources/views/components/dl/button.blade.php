@@ -8,5 +8,5 @@ $newTab = content($slug, "{$prefix}_new_tab", '');
 $cls = content($slug, "{$prefix}_classes", $defaultClasses);
 @endphp
 @if($toggle)
-<a href="{{ $url }}" @if($newTab) target="_blank" rel="noopener noreferrer" @endif {{ $attributes->merge(['class' => $cls]) }}>{{ $label }}</a>
+<a href="{{ $url }}" @if($newTab) target="_blank" rel="noopener noreferrer" @endif data-editor-group="{{ $prefix }}" {{ $attributes->merge(['class' => $cls]) }}>{{ $label }}</a>
 @endif

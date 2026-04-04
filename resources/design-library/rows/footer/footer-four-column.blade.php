@@ -9,7 +9,7 @@
     default-container-classes="max-w-container mx-auto grid grid-cols-2 md:grid-cols-5 gap-10">
     <x-dl.wrapper slug="__SLUG__" prefix="brand_col"
         default-classes="col-span-2 md:col-span-1">
-        <x-dl.logo slug="__SLUG__" prefix="logo"
+        <x-dl.logo slug="__SLUG__" prefix="logo" default-dark-bg="1"
             default-classes="h-8 w-auto mb-3" />
         <x-dl.subheadline slug="__SLUG__" prefix="tagline" tag="p" default="Sick today, seen today. Walk-in or book online."
             default-classes="text-sm text-zinc-400 leading-relaxed" />

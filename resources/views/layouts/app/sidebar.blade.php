@@ -59,16 +59,7 @@
                             {{ __('Backups') }}
                         </flux:sidebar.item>
                     </flux:sidebar.group>
-                    <flux:sidebar.group expandable icon="swatch" heading="{{ __('Design') }}" :expanded="request()->routeIs('dashboard.design-library.*', 'dashboard.templates', 'dashboard.shared-rows', 'dashboard.settings.branding', 'dashboard.settings.design', 'dashboard.settings.section-colors')" class="grid">
-                        <flux:sidebar.item icon="squares-2x2" :href="route('dashboard.design-library.index')" :current="request()->routeIs('dashboard.design-library.*')" wire:navigate>
-                            {{ __('Design Library') }}
-                        </flux:sidebar.item>
-                        <flux:sidebar.item icon="rectangle-stack" :href="route('dashboard.templates')" :current="request()->routeIs('dashboard.templates')" wire:navigate>
-                            {{ __('Templates') }}
-                        </flux:sidebar.item>
-                        <flux:sidebar.item icon="share" :href="route('dashboard.shared-rows')" :current="request()->routeIs('dashboard.shared-rows')" wire:navigate>
-                            {{ __('Shared Rows') }}
-                        </flux:sidebar.item>
+                    <flux:sidebar.group expandable icon="swatch" heading="{{ __('Design') }}" :expanded="request()->routeIs('dashboard.design-library.*', 'dashboard.templates', 'dashboard.shared-rows', 'dashboard.settings.branding', 'dashboard.settings.design', 'dashboard.settings.section', 'dashboard.settings.buttons')" class="grid">
                         <flux:sidebar.item icon="paint-brush" :href="route('dashboard.settings.branding')" :current="request()->routeIs('dashboard.settings.branding')" wire:navigate>
                             {{ __('Branding') }}
                         </flux:sidebar.item>
@@ -76,10 +67,22 @@
                             <flux:sidebar.item icon="adjustments-vertical" :href="route('dashboard.settings.design')" :current="request()->routeIs('dashboard.settings.design')" wire:navigate>
                                 {{ __('Typography') }}
                             </flux:sidebar.item>
-                            <flux:sidebar.item icon="swatch" :href="route('dashboard.settings.section-colors')" :current="request()->routeIs('dashboard.settings.section-colors')" wire:navigate>
+                            <flux:sidebar.item icon="swatch" :href="route('dashboard.settings.section')" :current="request()->routeIs('dashboard.settings.section')" wire:navigate>
                                 {{ __('Sections') }}
                             </flux:sidebar.item>
+                            <flux:sidebar.item icon="cursor-arrow-rays" :href="route('dashboard.settings.buttons')" :current="request()->routeIs('dashboard.settings.buttons')" wire:navigate>
+                                {{ __('Buttons') }}
+                            </flux:sidebar.item>
                         @endif
+                        <flux:sidebar.item icon="share" :href="route('dashboard.shared-rows')" :current="request()->routeIs('dashboard.shared-rows')" wire:navigate>
+                            {{ __('Shared Rows') }}
+                        </flux:sidebar.item>
+                        <flux:sidebar.item icon="rectangle-stack" :href="route('dashboard.templates')" :current="request()->routeIs('dashboard.templates')" wire:navigate>
+                            {{ __('Templates') }}
+                        </flux:sidebar.item>
+                        <flux:sidebar.item icon="squares-2x2" :href="route('dashboard.design-library.index')" :current="request()->routeIs('dashboard.design-library.*')" wire:navigate>
+                            {{ __('Design Library') }}
+                        </flux:sidebar.item>
                     </flux:sidebar.group>
                     <flux:sidebar.group expandable icon="wrench-screwdriver" heading="{{ __('Develop') }}" :expanded="request()->routeIs('dashboard.shortcodes.*', 'dashboard.snippets.*', 'dashboard.tools', 'dashboard.content-types.*')" class="grid">
                         <flux:sidebar.item icon="rectangle-group" :href="route('dashboard.content-types.index')" :current="request()->routeIs('dashboard.content-types.*')" wire:navigate>

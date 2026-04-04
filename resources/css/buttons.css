@@ -1,0 +1,65 @@
+/* ============================================================
+   Button Utilities — managed by Dashboard → Design → Buttons
+   The @apply values between @@btn-X-start/end comments are
+   overwritten on save. Do not manually edit those lines.
+   ============================================================ */
+
+/* @@btn-primary-start */
+@utility btn-primary {
+    @apply inline-flex items-center justify-center px-6 py-3 bg-primary text-white font-semibold rounded-lg hover:bg-primary/90 transition-colors;
+}
+/* @@btn-primary-end */
+
+/* @@btn-secondary-start */
+@utility btn-secondary {
+    @apply inline-flex items-center justify-center px-6 py-3 border border-zinc-300 dark:border-zinc-600 text-zinc-700 dark:text-zinc-200 font-semibold rounded-lg hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors;
+}
+/* @@btn-secondary-end */
+
+/* @@btn-ghost-start */
+@utility btn-ghost {
+    @apply inline-flex items-center justify-center px-6 py-3 text-zinc-600 dark:text-zinc-300 font-semibold hover:text-zinc-900 dark:hover:text-white transition-colors;
+}
+/* @@btn-ghost-end */
+
+/* @@btn-inverted-start */
+@utility btn-inverted {
+    @apply inline-flex items-center justify-center px-8 py-3 bg-white text-primary font-semibold rounded-lg hover:bg-zinc-100 transition-colors;
+}
+/* @@btn-inverted-end */
+
+/* @@btn-outline-white-start */
+@utility btn-outline-white {
+    @apply inline-flex items-center justify-center px-8 py-3 border border-white/30 text-white font-semibold rounded-lg hover:bg-white/10 transition-colors;
+}
+/* @@btn-outline-white-end */
+
+/* @@btn-danger-start */
+@utility btn-danger {
+    @apply inline-flex items-center justify-center px-6 py-3 bg-red-600 text-white font-semibold rounded-lg hover:bg-red-700 transition-colors;
+}
+/* @@btn-danger-end */
+
+/* ============================================================
+   Size & width modifiers — not managed by the settings page.
+   Compose with any variant: class="btn-primary btn-sm"
+   ============================================================ */
+
+@utility btn-sm {
+    padding-inline: 1rem;
+    padding-block: 0.5rem;
+    font-size: 0.875rem;
+    line-height: 1.25rem;
+}
+
+@utility btn-lg {
+    padding-inline: 2rem;
+    padding-block: 1rem;
+    font-size: 1.125rem;
+    line-height: 1.75rem;
+}
+
+@utility btn-full {
+    width: 100%;
+    justify-content: center;
+}

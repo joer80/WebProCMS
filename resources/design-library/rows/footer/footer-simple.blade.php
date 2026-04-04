@@ -8,7 +8,7 @@
     default-section-classes="bg-zinc-900 text-zinc-400 py-12 px-6"
     default-container-classes="max-w-container mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
     <div>
-        <x-dl.logo slug="__SLUG__" prefix="logo"
+        <x-dl.logo slug="__SLUG__" prefix="logo" default-dark-bg="1"
             default-classes="h-8 w-auto" />
         <x-dl.subheadline slug="__SLUG__" prefix="tagline" tag="p" default="Helping you build better things."
             default-classes="mt-2 text-sm" />

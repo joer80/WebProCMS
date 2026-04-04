@@ -6080,7 +6080,7 @@ new #[Layout('layouts.editor')] #[Title('Page Editor')] class extends Component
                                                                 @endforeach
                                                             </select>
                                                         @else
-                                                            <p class="text-xs text-zinc-400 dark:text-zinc-500">No section styles defined. <a href="{{ route('dashboard.settings.section-colors') }}" class="text-primary underline hover:text-primary/80 transition-colors" wire:navigate>Add styles →</a></p>
+                                                            <p class="text-xs text-zinc-400 dark:text-zinc-500">No section styles defined. <a href="{{ route('dashboard.settings.section') }}" class="text-primary underline hover:text-primary/80 transition-colors" wire:navigate>Add styles →</a></p>
                                                         @endif
                                                     </div>
                                                 </div>

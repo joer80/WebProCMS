@@ -280,6 +280,43 @@ if ($field['type'] === 'classes') {
             <textarea x-show="sourceMode" x-model="sourceHtml" rows="5" class="w-full p-3 font-mono text-xs text-zinc-800 dark:text-zinc-200 bg-white dark:bg-zinc-900 outline-none resize-y border-0"></textarea>
         </div>
     @elseif ($field['type'] === 'classes')
+        @if (! empty($field['button_preset']))
+            @php
+                $buttonStyleDefaults = \App\Support\ButtonStyleSyncer::defaults();
+                $buttonStyleSaved = (array) \App\Models\Setting::get('buttons.classes', []);
+                $buttonStylePresets = array_merge($buttonStyleDefaults, $buttonStyleSaved);
+                $buttonStyleLabels = [
+                    'primary' => 'Primary',
+                    'secondary' => 'Secondary',
+                    'ghost' => 'Ghost',
+                    'inverted' => 'Inverted',
+                    'outline_white' => 'Outline White',
+                    'danger' => 'Danger',
+                ];
+            @endphp
+            @if (! empty($buttonStylePresets))
+                <div class="mb-2">
+                    <select
+                        class="w-full text-xs rounded border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-900 text-zinc-700 dark:text-zinc-200 px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-primary"
+                        onchange="(function(sel) {
+                            if (!sel.value) return;
+                            var ta = document.querySelector('[data-classes-key=\'{{ $field['key'] }}\']');
+                            if (ta) {
+                                ta.value = sel.value;
+                                ta.dispatchEvent(new Event('input', { bubbles: true }));
+                                ta.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+                            }
+                            sel.value = '';
+                        })(this)"
+                    >
+                        <option value="">— Style preset —</option>
+                        @foreach ($buttonStylePresets as $presetKey => $presetClasses)
+                            <option value="{{ $presetClasses }}">{{ $buttonStyleLabels[$presetKey] ?? ucwords(str_replace('_', ' ', $presetKey)) }}</option>
+                        @endforeach
+                    </select>
+                </div>
+            @endif
+        @endif
         <div x-data="twAutocomplete('{{ $field['key'] }}')" class="relative"
             x-on:ai-content-generated.window="
                 if ($event.detail.fieldKey === '{{ $field['key'] }}') {
