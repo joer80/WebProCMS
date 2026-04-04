@@ -29,6 +29,7 @@ class ButtonStyleSyncer
             'ghost' => 'inline-flex items-center justify-center px-6 py-3 text-zinc-600 dark:text-zinc-300 font-semibold hover:text-zinc-900 dark:hover:text-white transition-colors',
             'inverted' => 'inline-flex items-center justify-center px-8 py-3 bg-white text-primary font-semibold rounded-lg hover:bg-zinc-100 transition-colors',
             'outline_white' => 'inline-flex items-center justify-center px-8 py-3 border border-white/30 text-white font-semibold rounded-lg hover:bg-white/10 transition-colors',
+            'outline_dark' => 'inline-flex items-center justify-center px-6 py-3 border border-zinc-700 text-zinc-300 font-semibold rounded-lg hover:bg-zinc-800 transition-colors',
             'danger' => 'inline-flex items-center justify-center px-6 py-3 bg-red-600 text-white font-semibold rounded-lg hover:bg-red-700 transition-colors',
         ];
     }

@@ -18,7 +18,7 @@
     <x-dl.buttons slug="__SLUG__"
         default-wrapper-classes="mt-6 flex flex-wrap items-center justify-center gap-4"
         default-primary-label="Go Home"
-        default-primary-classes="px-5 py-2.5 bg-primary text-white text-sm font-semibold rounded-lg hover:bg-primary/90 transition-colors"
+        default-primary-classes="btn-primary !px-5 !py-2.5 !text-sm"
         default-secondary-label="Contact Us"
         default-secondary-classes="text-sm text-zinc-500 dark:text-zinc-400 font-medium hover:text-zinc-900 dark:hover:text-white transition-colors" />
 </x-dl.section>

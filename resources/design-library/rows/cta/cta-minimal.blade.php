@@ -14,7 +14,7 @@
     <x-dl.buttons slug="__SLUG__"
         default-wrapper-classes="mt-6 flex justify-center"
         default-primary-label="Start Now — It's Free"
-        default-primary-classes="px-10 py-3 bg-primary text-white font-semibold rounded-lg hover:bg-primary/90 transition-colors"
+        default-primary-classes="btn-primary !px-10"
         default-secondary-label=""
         default-secondary-classes="" />
 </x-dl.section>

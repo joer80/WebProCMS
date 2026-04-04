@@ -15,7 +15,7 @@
         <x-dl.buttons slug="__SLUG__"
             default-wrapper-classes="mt-8"
             default-primary-label="Our Locations"
-            default-primary-classes="px-6 py-3 bg-primary text-white font-semibold rounded-lg hover:bg-primary/90 transition-colors"
+            default-primary-classes="btn-primary"
             default-secondary-label=""
             default-secondary-classes="" />
     </div>

@@ -14,9 +14,9 @@
     <x-dl.buttons slug="__SLUG__"
         default-wrapper-classes="mt-10 flex flex-wrap items-center justify-center gap-4"
         default-primary-label="Get Started Free"
-        default-primary-classes="px-8 py-3 bg-primary text-white font-semibold rounded-lg hover:bg-primary/90 transition-colors"
+        default-primary-classes="btn-primary !px-8"
         default-secondary-label="See How It Works →"
-        default-secondary-classes="px-8 py-3 text-zinc-600 dark:text-zinc-300 font-semibold hover:text-zinc-900 dark:hover:text-white transition-colors" />
+        default-secondary-classes="btn-ghost !px-8" />
     <x-dl.media slug="__SLUG__"
         default-wrapper-classes="mt-16 rounded-card overflow-hidden shadow-card ring-1 ring-zinc-200 dark:ring-zinc-700"
         default-image-classes="w-full h-auto"

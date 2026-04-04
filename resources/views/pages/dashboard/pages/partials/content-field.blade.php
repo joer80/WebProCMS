@@ -291,6 +291,7 @@ if ($field['type'] === 'classes') {
                     'ghost' => 'Ghost',
                     'inverted' => 'Inverted',
                     'outline_white' => 'Outline White',
+                    'outline_dark' => 'Outline Dark',
                     'danger' => 'Danger',
                 ];
             @endphp

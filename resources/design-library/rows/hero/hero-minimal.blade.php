@@ -16,5 +16,5 @@
         default-primary-label="Get Started →"
         default-primary-classes="px-6 py-3 bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 font-semibold rounded-lg hover:bg-zinc-700 dark:hover:bg-zinc-100 transition-colors"
         default-secondary-label="Contact Us"
-        default-secondary-classes="px-6 py-3 text-zinc-600 dark:text-zinc-400 font-semibold hover:text-zinc-900 dark:hover:text-white transition-colors underline underline-offset-4" />
+        default-secondary-classes="btn-ghost underline underline-offset-4" />
 </x-dl.section>

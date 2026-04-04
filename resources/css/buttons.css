@@ -34,6 +34,12 @@
 }
 /* @@btn-outline-white-end */
 
+/* @@btn-outline-dark-start */
+@utility btn-outline-dark {
+    @apply inline-flex items-center justify-center px-6 py-3 border border-zinc-700 text-zinc-300 font-semibold rounded-lg hover:bg-zinc-800 transition-colors;
+}
+/* @@btn-outline-dark-end */
+
 /* @@btn-danger-start */
 @utility btn-danger {
     @apply inline-flex items-center justify-center px-6 py-3 bg-red-600 text-white font-semibold rounded-lg hover:bg-red-700 transition-colors;

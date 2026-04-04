@@ -16,7 +16,7 @@
     <x-dl.buttons slug="__SLUG__"
         default-wrapper-classes="flex flex-wrap items-center justify-end gap-4"
         default-primary-label="Our Locations"
-        default-primary-classes="px-8 py-3 bg-white text-primary font-semibold rounded-lg hover:bg-zinc-100 transition-colors"
+        default-primary-classes="btn-inverted"
         default-secondary-label="Contact Us"
-        default-secondary-classes="px-8 py-3 border border-white/30 text-white font-semibold rounded-lg hover:bg-white/10 transition-colors" />
+        default-secondary-classes="btn-outline-white" />
 </x-dl.section>

@@ -2,6 +2,7 @@
 
 use App\Jobs\RebuildAssets;
 use App\Models\Setting;
+use App\Services\BrandingStyleService;
 use App\Support\ButtonStyleSyncer;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
@@ -11,11 +12,15 @@ new #[Layout('layouts.app')] #[Title('Button Styles')] class extends Component {
     /** @var array<string, string> */
     public array $buttonClasses = [];
 
+    /** @var array<string, string> */
+    public array $brandColors = [];
+
     public bool $saving = false;
 
     public function mount(): void
     {
         $this->loadButtonClasses();
+        $this->brandColors = (array) Setting::get('branding.colors', app(BrandingStyleService::class)->defaultColors());
     }
 
     public function save(): void
@@ -59,10 +64,15 @@ new #[Layout('layouts.app')] #[Title('Button Styles')] class extends Component {
                 'label' => 'Primary',
                 'description' => 'Main call-to-action. Used on heroes, CTAs, and pricing cards.',
                 'preview_bg' => 'bg-zinc-100 dark:bg-zinc-800',
-                'presets' => [
-                    'Rounded' => 'inline-flex items-center justify-center px-6 py-3 bg-primary text-white font-semibold rounded-lg hover:bg-primary/90 transition-colors',
-                    'Pill' => 'inline-flex items-center justify-center px-8 py-3 bg-primary text-white font-semibold rounded-full hover:bg-primary/90 transition-colors',
-                    'Sharp' => 'inline-flex items-center justify-center px-6 py-3 bg-primary text-white font-semibold hover:bg-primary/90 transition-colors',
+                'corners' => [
+                    'Sharp'   => '',
+                    'Rounded' => 'rounded-lg',
+                    'Pill'    => 'rounded-full',
+                ],
+                'hover_presets' => [
+                    'Lighter' => 'hover:bg-primary/70',
+                    'Default' => 'hover:bg-primary/90',
+                    'Solid'   => 'hover:bg-primary',
                 ],
             ],
             'secondary' => [
@@ -70,9 +80,9 @@ new #[Layout('layouts.app')] #[Title('Button Styles')] class extends Component {
                 'description' => 'Paired with primary buttons as an alternative action.',
                 'preview_bg' => 'bg-zinc-100 dark:bg-zinc-800',
                 'presets' => [
-                    'Outline' => 'inline-flex items-center justify-center px-6 py-3 border border-zinc-300 dark:border-zinc-600 text-zinc-700 dark:text-zinc-200 font-semibold rounded-lg hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors',
+                    'Outline'      => 'inline-flex items-center justify-center px-6 py-3 border border-zinc-300 dark:border-zinc-600 text-zinc-700 dark:text-zinc-200 font-semibold rounded-lg hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors',
                     'Pill Outline' => 'inline-flex items-center justify-center px-8 py-3 border border-zinc-300 dark:border-zinc-600 text-zinc-700 dark:text-zinc-200 font-semibold rounded-full hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors',
-                    'Solid Zinc' => 'inline-flex items-center justify-center px-6 py-3 bg-zinc-100 dark:bg-zinc-700 text-zinc-900 dark:text-white font-semibold rounded-lg hover:bg-zinc-200 dark:hover:bg-zinc-600 transition-colors',
+                    'Solid Zinc'   => 'inline-flex items-center justify-center px-6 py-3 bg-zinc-100 dark:bg-zinc-700 text-zinc-900 dark:text-white font-semibold rounded-lg hover:bg-zinc-200 dark:hover:bg-zinc-600 transition-colors',
                 ],
             ],
             'ghost' => [
@@ -80,8 +90,8 @@ new #[Layout('layouts.app')] #[Title('Button Styles')] class extends Component {
                 'description' => 'Text-only, no background or border. Used for minimal secondary actions.',
                 'preview_bg' => 'bg-zinc-100 dark:bg-zinc-800',
                 'presets' => [
-                    'Text' => 'inline-flex items-center justify-center px-6 py-3 text-zinc-600 dark:text-zinc-300 font-semibold hover:text-zinc-900 dark:hover:text-white transition-colors',
-                    'Underline' => 'inline-flex items-center justify-center px-6 py-3 text-zinc-600 dark:text-zinc-300 font-semibold underline underline-offset-4 hover:text-zinc-900 dark:hover:text-white transition-colors',
+                    'Text'         => 'inline-flex items-center justify-center px-6 py-3 text-zinc-600 dark:text-zinc-300 font-semibold hover:text-zinc-900 dark:hover:text-white transition-colors',
+                    'Underline'    => 'inline-flex items-center justify-center px-6 py-3 text-zinc-600 dark:text-zinc-300 font-semibold underline underline-offset-4 hover:text-zinc-900 dark:hover:text-white transition-colors',
                     'Primary Text' => 'inline-flex items-center justify-center px-6 py-3 text-primary font-semibold hover:text-primary/80 transition-colors',
                 ],
             ],
@@ -91,8 +101,8 @@ new #[Layout('layouts.app')] #[Title('Button Styles')] class extends Component {
                 'preview_bg' => 'bg-primary',
                 'presets' => [
                     'White/Primary' => 'inline-flex items-center justify-center px-8 py-3 bg-white text-primary font-semibold rounded-lg hover:bg-zinc-100 transition-colors',
-                    'White/Dark' => 'inline-flex items-center justify-center px-8 py-3 bg-white text-zinc-900 font-semibold rounded-lg hover:bg-zinc-100 transition-colors',
-                    'White Pill' => 'inline-flex items-center justify-center px-8 py-3 bg-white text-primary font-semibold rounded-full hover:bg-zinc-100 transition-colors',
+                    'White/Dark'    => 'inline-flex items-center justify-center px-8 py-3 bg-white text-zinc-900 font-semibold rounded-lg hover:bg-zinc-100 transition-colors',
+                    'White Pill'    => 'inline-flex items-center justify-center px-8 py-3 bg-white text-primary font-semibold rounded-full hover:bg-zinc-100 transition-colors',
                 ],
             ],
             'outline_white' => [
@@ -100,9 +110,19 @@ new #[Layout('layouts.app')] #[Title('Button Styles')] class extends Component {
                 'description' => 'White border and text. Used on gradient or dark image backgrounds.',
                 'preview_bg' => 'bg-primary',
                 'presets' => [
-                    'Outline White' => 'inline-flex items-center justify-center px-8 py-3 border border-white/30 text-white font-semibold rounded-lg hover:bg-white/10 transition-colors',
+                    'Outline White'  => 'inline-flex items-center justify-center px-8 py-3 border border-white/30 text-white font-semibold rounded-lg hover:bg-white/10 transition-colors',
                     'Solid White/30' => 'inline-flex items-center justify-center px-8 py-3 bg-white/10 border border-white/20 text-white font-semibold rounded-lg hover:bg-white/20 transition-colors',
-                    'Pill' => 'inline-flex items-center justify-center px-8 py-3 border border-white/30 text-white font-semibold rounded-full hover:bg-white/10 transition-colors',
+                    'Pill'           => 'inline-flex items-center justify-center px-8 py-3 border border-white/30 text-white font-semibold rounded-full hover:bg-white/10 transition-colors',
+                ],
+            ],
+            'outline_dark' => [
+                'label' => 'Outline Dark',
+                'description' => 'Dark border and muted text. Used on dark section backgrounds.',
+                'preview_bg' => 'bg-zinc-900',
+                'presets' => [
+                    'Zinc Outline'  => 'inline-flex items-center justify-center px-6 py-3 border border-zinc-700 text-zinc-300 font-semibold rounded-lg hover:bg-zinc-800 transition-colors',
+                    'Zinc Pill'     => 'inline-flex items-center justify-center px-6 py-3 border border-zinc-700 text-zinc-300 font-semibold rounded-full hover:bg-zinc-800 transition-colors',
+                    'White Outline' => 'inline-flex items-center justify-center px-6 py-3 border border-zinc-600 text-zinc-200 font-semibold rounded-lg hover:bg-zinc-700 transition-colors',
                 ],
             ],
             'danger' => [
@@ -110,9 +130,9 @@ new #[Layout('layouts.app')] #[Title('Button Styles')] class extends Component {
                 'description' => 'Destructive actions such as deleting records.',
                 'preview_bg' => 'bg-zinc-100 dark:bg-zinc-800',
                 'presets' => [
-                    'Red Solid' => 'inline-flex items-center justify-center px-6 py-3 bg-red-600 text-white font-semibold rounded-lg hover:bg-red-700 transition-colors',
+                    'Red Solid'   => 'inline-flex items-center justify-center px-6 py-3 bg-red-600 text-white font-semibold rounded-lg hover:bg-red-700 transition-colors',
                     'Red Outline' => 'inline-flex items-center justify-center px-6 py-3 border border-red-300 text-red-600 font-semibold rounded-lg hover:bg-red-50 transition-colors',
-                    'Red Pill' => 'inline-flex items-center justify-center px-6 py-3 bg-red-600 text-white font-semibold rounded-full hover:bg-red-700 transition-colors',
+                    'Red Pill'    => 'inline-flex items-center justify-center px-6 py-3 bg-red-600 text-white font-semibold rounded-full hover:bg-red-700 transition-colors',
                 ],
             ],
         ];
@@ -131,59 +151,160 @@ new #[Layout('layouts.app')] #[Title('Button Styles')] class extends Component {
         </div>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             @foreach ($variants as $key => $variant)
-                <div
-                    class="rounded-lg border border-zinc-200 dark:border-zinc-700 overflow-hidden"
-                    data-classes="{{ $buttonClasses[$key] }}"
-                    x-data="{
-                        classes: '',
-                        init() { this.classes = this.$el.dataset.classes; },
-                        apply(preset) { this.classes = preset; this.$wire.set('buttonClasses.{{ $key }}', preset); },
-                        onInput(val) { this.classes = val; this.$wire.set('buttonClasses.{{ $key }}', val); },
-                    }"
-                >
-                    {{-- Header --}}
-                    <div class="px-6 py-4 border-b border-zinc-200 dark:border-zinc-700">
-                        <div class="flex items-center gap-2">
-                            <div class="font-semibold text-zinc-900 dark:text-white">{{ $variant['label'] }}</div>
-                            <code class="text-xs text-zinc-400 dark:text-zinc-500 font-mono">btn-{{ str_replace('_', '-', $key) }}</code>
+                @if ($key === 'primary')
+                    {{-- Primary card: separate corners + hover color controls --}}
+                    <div
+                        class="rounded-lg border border-zinc-200 dark:border-zinc-700 overflow-hidden"
+                        data-classes="{{ $buttonClasses[$key] }}"
+                        x-data="{
+                            classes: '',
+                            brandColors: {{ json_encode($brandColors) }},
+                            init() {
+                                this.classes = this.$el.dataset.classes;
+                            },
+                            applyCorner(radius) {
+                                let parts = this.classes.split(/\s+/).filter(function(c) { return c !== '' && !c.match(/^rounded/); });
+                                if (radius) { parts.push(radius); }
+                                this.classes = parts.join(' ');
+                                this.$wire.set('buttonClasses.primary', this.classes);
+                            },
+                            applyHover(hoverClass) {
+                                let parts = this.classes.split(/\s+/).filter(function(c) { return c !== '' && !c.startsWith('hover:bg-'); });
+                                if (hoverClass) { parts.push(hoverClass); }
+                                this.classes = parts.join(' ');
+                                this.$wire.set('buttonClasses.primary', this.classes);
+                            },
+                            onInput(val) { this.classes = val; this.$wire.set('buttonClasses.primary', val); },
+                        }"
+                    >
+                        {{-- Header --}}
+                        <div class="px-6 py-4 border-b border-zinc-200 dark:border-zinc-700">
+                            <div class="flex items-center gap-2">
+                                <div class="font-semibold text-zinc-900 dark:text-white">{{ $variant['label'] }}</div>
+                                <code class="text-xs text-zinc-400 dark:text-zinc-500 font-mono">btn-primary</code>
+                            </div>
+                            <div class="text-sm text-zinc-500 dark:text-zinc-400 mt-0.5">{{ $variant['description'] }}</div>
                         </div>
-                        <div class="text-sm text-zinc-500 dark:text-zinc-400 mt-0.5">{{ $variant['description'] }}</div>
-                    </div>
 
-                    {{-- Preview --}}
-                    <div class="px-6 py-6 {{ $variant['preview_bg'] }} flex items-center justify-center min-h-[5rem]">
-                        <a href="#" x-bind:class="classes" @click.prevent>Button Text</a>
-                    </div>
+                        {{-- Preview --}}
+                        <div class="px-6 py-6 {{ $variant['preview_bg'] }} flex items-center justify-center min-h-[5rem]">
+                            <a href="#" x-bind:class="classes" @click.prevent>Button Text</a>
+                        </div>
 
-                    {{-- Presets --}}
-                    <div class="px-6 py-3 border-t border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/50">
-                        <div class="flex flex-wrap items-center gap-2">
-                            <span class="text-xs font-medium text-zinc-500 dark:text-zinc-400 mr-1">Presets:</span>
-                            @foreach ($variant['presets'] as $presetLabel => $presetClasses)
-                                <button
-                                    type="button"
-                                    @click="apply(@js($presetClasses))"
-                                    class="text-xs px-2.5 py-1 rounded border border-zinc-300 dark:border-zinc-600 text-zinc-600 dark:text-zinc-300 hover:border-primary hover:text-primary dark:hover:border-primary dark:hover:text-primary transition-colors"
-                                >
-                                    {{ $presetLabel }}
-                                </button>
-                            @endforeach
+                        {{-- Corners --}}
+                        <div class="px-6 py-3 border-t border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/50">
+                            <div class="flex flex-wrap items-center gap-2">
+                                <span class="text-xs font-medium text-zinc-500 dark:text-zinc-400 mr-1">Corners:</span>
+                                @foreach ($variant['corners'] as $cornerLabel => $cornerClass)
+                                    <button
+                                        type="button"
+                                        @click="applyCorner(@js($cornerClass))"
+                                        class="text-xs px-2.5 py-1 rounded border border-zinc-300 dark:border-zinc-600 text-zinc-600 dark:text-zinc-300 hover:border-primary hover:text-primary dark:hover:border-primary dark:hover:text-primary transition-colors"
+                                    >
+                                        {{ $cornerLabel }}
+                                    </button>
+                                @endforeach
+                            </div>
+                        </div>
+
+                        {{-- Hover Color --}}
+                        <div class="px-6 pb-3 bg-zinc-50 dark:bg-zinc-800/50 space-y-2">
+                            <div class="flex flex-wrap items-center gap-2">
+                                <span class="text-xs font-medium text-zinc-500 dark:text-zinc-400 mr-1">Hover:</span>
+                                @foreach ($variant['hover_presets'] as $hoverLabel => $hoverClass)
+                                    <button
+                                        type="button"
+                                        @click="applyHover(@js($hoverClass))"
+                                        class="text-xs px-2.5 py-1 rounded border border-zinc-300 dark:border-zinc-600 text-zinc-600 dark:text-zinc-300 hover:border-primary hover:text-primary dark:hover:border-primary dark:hover:text-primary transition-colors"
+                                    >
+                                        {{ $hoverLabel }}
+                                    </button>
+                                @endforeach
+                            </div>
+                            {{-- Brand color swatches --}}
+                            <div class="flex flex-wrap items-center gap-2">
+                                <span class="text-xs font-medium text-zinc-500 dark:text-zinc-400 mr-1">Brand:</span>
+                                <template x-for="entry in Object.entries(brandColors)" :key="entry[0]">
+                                    <button
+                                        type="button"
+                                        :style="'background-color:' + entry[1]"
+                                        :title="entry[0] + ' · ' + entry[1]"
+                                        @click="applyHover('hover:bg-(--color-' + entry[0] + ')')"
+                                        class="size-6 rounded border border-zinc-300 dark:border-zinc-600 cursor-pointer transition-transform hover:scale-110 hover:ring-2 hover:ring-offset-1 hover:ring-zinc-400"
+                                    ></button>
+                                </template>
+                            </div>
+                        </div>
+
+                        {{-- Classes field --}}
+                        <div class="px-6 py-4 border-t border-zinc-200 dark:border-zinc-700">
+                            <label class="block text-xs font-medium text-zinc-500 dark:text-zinc-400 mb-1.5">Tailwind classes</label>
+                            <textarea
+                                rows="4"
+                                x-bind:value="classes"
+                                @input="onInput($event.target.value)"
+                                placeholder="inline-flex items-center justify-center px-6 py-3 ..."
+                                class="w-full font-mono text-xs rounded-lg border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-900 text-zinc-900 dark:text-white px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent resize-none"
+                                spellcheck="false"
+                            ></textarea>
                         </div>
                     </div>
+                @else
+                    {{-- Standard card with presets --}}
+                    <div
+                        class="rounded-lg border border-zinc-200 dark:border-zinc-700 overflow-hidden"
+                        data-classes="{{ $buttonClasses[$key] }}"
+                        x-data="{
+                            classes: '',
+                            init() { this.classes = this.$el.dataset.classes; },
+                            apply(preset) { this.classes = preset; this.$wire.set('buttonClasses.{{ $key }}', preset); },
+                            onInput(val) { this.classes = val; this.$wire.set('buttonClasses.{{ $key }}', val); },
+                        }"
+                    >
+                        {{-- Header --}}
+                        <div class="px-6 py-4 border-b border-zinc-200 dark:border-zinc-700">
+                            <div class="flex items-center gap-2">
+                                <div class="font-semibold text-zinc-900 dark:text-white">{{ $variant['label'] }}</div>
+                                <code class="text-xs text-zinc-400 dark:text-zinc-500 font-mono">btn-{{ str_replace('_', '-', $key) }}</code>
+                            </div>
+                            <div class="text-sm text-zinc-500 dark:text-zinc-400 mt-0.5">{{ $variant['description'] }}</div>
+                        </div>
 
-                    {{-- Classes field --}}
-                    <div class="px-6 py-4 border-t border-zinc-200 dark:border-zinc-700">
-                        <label class="block text-xs font-medium text-zinc-500 dark:text-zinc-400 mb-1.5">Tailwind classes</label>
-                        <textarea
-                            rows="4"
-                            x-bind:value="classes"
-                            @input="onInput($event.target.value)"
-                            placeholder="inline-flex items-center justify-center px-6 py-3 ..."
-                            class="w-full font-mono text-xs rounded-lg border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-900 text-zinc-900 dark:text-white px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent resize-none"
-                            spellcheck="false"
-                        ></textarea>
+                        {{-- Preview --}}
+                        <div class="px-6 py-6 {{ $variant['preview_bg'] }} flex items-center justify-center min-h-[5rem]">
+                            <a href="#" x-bind:class="classes" @click.prevent>Button Text</a>
+                        </div>
+
+                        {{-- Presets --}}
+                        <div class="px-6 py-3 border-t border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/50">
+                            <div class="flex flex-wrap items-center gap-2">
+                                <span class="text-xs font-medium text-zinc-500 dark:text-zinc-400 mr-1">Presets:</span>
+                                @foreach ($variant['presets'] as $presetLabel => $presetClasses)
+                                    <button
+                                        type="button"
+                                        @click="apply(@js($presetClasses))"
+                                        class="text-xs px-2.5 py-1 rounded border border-zinc-300 dark:border-zinc-600 text-zinc-600 dark:text-zinc-300 hover:border-primary hover:text-primary dark:hover:border-primary dark:hover:text-primary transition-colors"
+                                    >
+                                        {{ $presetLabel }}
+                                    </button>
+                                @endforeach
+                            </div>
+                        </div>
+
+                        {{-- Classes field --}}
+                        <div class="px-6 py-4 border-t border-zinc-200 dark:border-zinc-700">
+                            <label class="block text-xs font-medium text-zinc-500 dark:text-zinc-400 mb-1.5">Tailwind classes</label>
+                            <textarea
+                                rows="4"
+                                x-bind:value="classes"
+                                @input="onInput($event.target.value)"
+                                placeholder="inline-flex items-center justify-center px-6 py-3 ..."
+                                class="w-full font-mono text-xs rounded-lg border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-900 text-zinc-900 dark:text-white px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent resize-none"
+                                spellcheck="false"
+                            ></textarea>
+                        </div>
                     </div>
-                </div>
+                @endif
             @endforeach
         </div>
 

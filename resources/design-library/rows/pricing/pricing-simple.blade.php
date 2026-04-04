@@ -39,8 +39,8 @@
         <x-dl.buttons slug="__SLUG__"
             default-wrapper-classes="mt-10 flex flex-col gap-3"
             default-primary-label="Get Started"
-            default-primary-classes="w-full px-6 py-3 bg-primary text-white font-semibold rounded-lg hover:bg-primary/90 transition-colors"
+            default-primary-classes="btn-primary btn-full"
             default-secondary-label="Start free trial"
-            default-secondary-classes="w-full px-6 py-3 border border-zinc-300 dark:border-zinc-600 text-zinc-700 dark:text-zinc-200 font-semibold rounded-lg hover:bg-zinc-50 dark:hover:bg-zinc-700 transition-colors" />
+            default-secondary-classes="btn-secondary btn-full" />
     </x-dl.wrapper>
 </x-dl.section>

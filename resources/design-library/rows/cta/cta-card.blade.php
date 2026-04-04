@@ -14,7 +14,7 @@
     <x-dl.buttons slug="__SLUG__"
         default-wrapper-classes="mt-8 flex flex-wrap items-center justify-center gap-4"
         default-primary-label="Get Started"
-        default-primary-classes="px-8 py-3 bg-primary text-white font-semibold rounded-lg hover:bg-primary/90 transition-colors"
+        default-primary-classes="btn-primary !px-8"
         default-secondary-label="Learn More"
-        default-secondary-classes="px-8 py-3 border border-zinc-300 dark:border-zinc-600 text-zinc-700 dark:text-zinc-200 font-semibold rounded-lg hover:bg-zinc-50 dark:hover:bg-zinc-700 transition-colors" />
+        default-secondary-classes="btn-secondary !px-8" />
 </x-dl.section>
