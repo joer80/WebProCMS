@@ -59,12 +59,15 @@
                             {{ __('Backups') }}
                         </flux:sidebar.item>
                     </flux:sidebar.group>
-                    <flux:sidebar.group expandable icon="swatch" heading="{{ __('Design') }}" :expanded="request()->routeIs('dashboard.design-library.*', 'dashboard.templates', 'dashboard.settings.branding', 'dashboard.settings.design', 'dashboard.settings.section-colors')" class="grid">
+                    <flux:sidebar.group expandable icon="swatch" heading="{{ __('Design') }}" :expanded="request()->routeIs('dashboard.design-library.*', 'dashboard.templates', 'dashboard.shared-rows', 'dashboard.settings.branding', 'dashboard.settings.design', 'dashboard.settings.section-colors')" class="grid">
                         <flux:sidebar.item icon="squares-2x2" :href="route('dashboard.design-library.index')" :current="request()->routeIs('dashboard.design-library.*')" wire:navigate>
                             {{ __('Design Library') }}
                         </flux:sidebar.item>
                         <flux:sidebar.item icon="rectangle-stack" :href="route('dashboard.templates')" :current="request()->routeIs('dashboard.templates')" wire:navigate>
                             {{ __('Templates') }}
+                        </flux:sidebar.item>
+                        <flux:sidebar.item icon="share" :href="route('dashboard.shared-rows')" :current="request()->routeIs('dashboard.shared-rows')" wire:navigate>
+                            {{ __('Shared Rows') }}
                         </flux:sidebar.item>
                         <flux:sidebar.item icon="paint-brush" :href="route('dashboard.settings.branding')" :current="request()->routeIs('dashboard.settings.branding')" wire:navigate>
                             {{ __('Branding') }}

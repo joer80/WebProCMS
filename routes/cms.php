@@ -53,6 +53,7 @@ Route::middleware(['auth', 'verified'])->group(function (): void {
         Route::livewire('dashboard/forms/{form}/submissions', 'pages::dashboard.forms.submissions')->name('dashboard.forms.submissions');
 
         Route::livewire('dashboard/templates', 'pages::dashboard.templates')->name('dashboard.templates');
+        Route::livewire('dashboard/shared-rows', 'pages::dashboard.shared-rows')->name('dashboard.shared-rows');
         Route::redirect('dashboard/settings', '/dashboard/settings/general')->name('dashboard.settings');
         Route::livewire('dashboard/settings/general', 'pages::dashboard.settings.general')->name('dashboard.settings.general');
         Route::livewire('dashboard/settings/branding', 'pages::dashboard.settings.branding')->name('dashboard.settings.branding');
